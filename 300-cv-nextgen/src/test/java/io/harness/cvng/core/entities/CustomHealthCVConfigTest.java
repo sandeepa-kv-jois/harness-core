@@ -9,10 +9,9 @@ package io.harness.cvng.core.entities;
 
 import static io.harness.rule.OwnerRule.ANJAN;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
@@ -21,12 +20,9 @@ import io.harness.rule.Owner;
 
 import java.util.ArrayList;
 import java.util.List;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.experimental.categories.Category;
 
 public class CustomHealthCVConfigTest extends CategoryTest {
-  List<CustomHealthCVConfig.MetricDefinition> metricDefinitions;
+  List<CustomHealthMetricDefinition> metricDefinitions;
   CustomHealthCVConfig customHealthCVConfig;
   MetricResponseMapping responseMapping;
 
@@ -38,8 +34,8 @@ public class CustomHealthCVConfigTest extends CategoryTest {
                           .timestampJsonPath("timeStringPath")
                           .build();
 
-    CustomHealthCVConfig.MetricDefinition metricDefinition =
-        CustomHealthCVConfig.MetricDefinition.builder()
+    CustomHealthMetricDefinition metricDefinition =
+        CustomHealthMetricDefinition.builder()
             .method(CustomHealthMethod.GET)
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")

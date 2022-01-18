@@ -12,25 +12,18 @@ import static io.harness.cvng.core.utils.ErrorMessageUtils.generateErrorMessageF
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.beans.TimeSeriesMetricType;
-import io.harness.cvng.beans.customhealth.TimestampInfo;
-import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
-import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.services.CVNextGenConstants;
-import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.exception.InvalidRequestException;
 
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -44,22 +37,7 @@ import org.mongodb.morphia.query.UpdateOperations;
 public class CustomHealthCVConfig extends MetricCVConfig {
   String groupName;
   HealthSourceQueryType queryType;
-  List<MetricDefinition> metricDefinitions;
-
-  @Data
-  @SuperBuilder
-  @FieldDefaults(level = AccessLevel.PRIVATE)
-  @FieldNameConstants(innerTypeName = "CustomHealthMetricDefinitionKeys")
-  public static class MetricDefinition extends AnalysisInfo {
-    TimeSeriesMetricType metricType;
-    String metricName;
-    String urlPath;
-    String requestBody;
-    CustomHealthMethod method;
-    TimestampInfo startTime;
-    TimestampInfo endTime;
-    MetricResponseMapping metricResponseMapping;
-  }
+  List<CustomHealthMetricDefinition> metricDefinitions;
 
   @Override
   public String getDataCollectionDsl() {
@@ -78,14 +56,16 @@ public class CustomHealthCVConfig extends MetricCVConfig {
     Set<String> uniqueMetricDefinitionsNames = new HashSet<>();
 
     for (int metricDefinitionIndex = 0; metricDefinitionIndex < metricDefinitions.size(); metricDefinitionIndex++) {
-      MetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
+      CustomHealthMetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
+      CustomHealthDefinition customHealthDefinition = metricDefinition.getHealthDefinition();
+
       checkNotNull(metricDefinition.getMetricName(),
           generateErrorMessageFromParam("metricName") + " for index " + metricDefinitionIndex);
-      checkNotNull(metricDefinition.method,
-          generateErrorMessageFromParam(MetricDefinition.CustomHealthMetricDefinitionKeys.method) + " for index "
+      checkNotNull(customHealthDefinition.getMethod(),
+          generateErrorMessageFromParam(CustomHealthDefinition.CustomHealthDefinitionKeys.method) + " for index "
               + metricDefinitionIndex);
-      checkNotNull(metricDefinition.urlPath,
-          generateErrorMessageFromParam(MetricDefinition.CustomHealthMetricDefinitionKeys.urlPath) + " for index "
+      checkNotNull(customHealthDefinition.getUrlPath(),
+          generateErrorMessageFromParam(CustomHealthDefinition.CustomHealthDefinitionKeys.urlPath) + " for index "
               + metricDefinitionIndex);
 
       AnalysisInfo.SLI sliDTO = metricDefinition.getSli();

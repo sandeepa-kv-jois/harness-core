@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.utils.monitoredService;
 
+import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition.SLIDTO;
@@ -36,6 +37,7 @@ public class CustomHealthSourceSpecTransformer
                                       .thresholdTypes(customHealthCVConfig.getThresholdTypeOfMetric(
                                           definition.getMetricName(), customHealthCVConfig))
                                       .build();
+        CustomHealthDefinition baseDefinition = definition.getHealthDefinition();
         CustomHealthMetricDefinition customHealthMetricDefinition =
             CustomHealthMetricDefinition.builder()
                 .method(definition.getMethod())
@@ -61,6 +63,12 @@ public class CustomHealthSourceSpecTransformer
                 .identifier(definition.getIdentifier())
                 .riskProfile(riskProfile)
                 .requestBody(definition.getRequestBody())
+                .analysis(definition.getAnalysis())
+                .endTime(baseDefinition.getEndTimeInfo())
+                .startTime(baseDefinition.getStartTimeInfo())
+                .identifier(definition.getIdentifier())
+                .riskProfile(definition.getRiskProfile())
+                .requestBody(baseDefinition.getRequestBody())
                 .build();
         customHealthSourceSpec.getMetricDefinitions().add(customHealthMetricDefinition);
       });
