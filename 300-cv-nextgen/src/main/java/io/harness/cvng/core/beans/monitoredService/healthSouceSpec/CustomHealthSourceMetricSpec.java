@@ -13,11 +13,11 @@ import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
-import io.harness.cvng.core.beans.HealthSourceQueryType;
+import io.harness.cvng.core.beans.CustomHealthSpecMetricDefinition;
 import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
-import io.harness.cvng.core.entities.CustomHealthCVConfig;
+import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.utils.analysisinfo.DevelopmentVerificationTransformer;
 import io.harness.cvng.core.utils.analysisinfo.LiveMonitoringTransformer;
@@ -44,8 +44,8 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
-  @UniqueIdentifierCheck List<CustomHealthMetricDefinition> metricDefinitions = new ArrayList<>();
+public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
+  @UniqueIdentifierCheck List<CustomHealthSpecMetricDefinition> metricDefinitions = new ArrayList<>();
 
   @Data
   @Builder
@@ -53,30 +53,26 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
     String groupName;
     CVMonitoringCategory category;
     HealthSourceQueryType queryType;
-  }
+}
 
   @Override
   public DataSourceType getType() {
-    return DataSourceType.CUSTOM_HEALTH;
+    return DataSourceType.CUSTOM_HEALTH_METRIC;
   }
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
-    List<CustomHealthCVConfig> existingDBCVConfigs = (List<CustomHealthCVConfig>) (List<?>) existingCVConfigs;
-    Map<Key, CustomHealthCVConfig> existingConfigs = new HashMap<>();
+      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name,
+      List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
+    List<CustomHealthMetricCVConfig> existingDBCVConfigs =
+        (List<CustomHealthMetricCVConfig>) (List<?>) existingCVConfigs;
+    Map<Key, CustomHealthMetricCVConfig> existingConfigs = new HashMap<>();
     existingDBCVConfigs.forEach(config
-        -> existingConfigs.put(Key.builder()
-                                   .groupName(config.getGroupName())
-                                   .category(config.getCategory())
-                                   .queryType(config.getQueryType())
-                                   .build(),
-            config));
+        -> existingConfigs.put(
+            Key.builder().groupName(config.getGroupName()).category(config.getCategory()).build(), config));
 
-    Map<Key, CustomHealthCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
-        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
-
+    Map<Key, CustomHealthMetricCVConfig> currentCVConfigs =
+        getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
     Set<Key> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
     Set<Key> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
     Set<Key> updated = Sets.intersection(existingConfigs.keySet(), currentCVConfigs.keySet());
@@ -93,12 +89,13 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
         .build();
   }
 
+
   public Map<Key, CustomHealthCVConfig> getCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
       String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
     Map<Key, CustomHealthCVConfig> cvConfigMap = new HashMap<>();
     metricDefinitions.forEach(metricDefinition -> {
       CustomHealthDefinition customHealthDefinition = metricDefinition.getHealthDefinition();
-      String groupName = customHealthDefinition.getGroupName();
+      String groupName = metricDefinition.getGroupName();
       RiskProfile riskProfile = metricDefinition.getRiskProfile();
 
       if (riskProfile == null || riskProfile.getCategory() == null) {
@@ -151,14 +148,13 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
                                                 .build();
       mappedCVConfig.setMetricPack(mappedCVConfig.generateMetricPack(
           metricDefinition.getIdentifier(), metricDefinition.getMetricName(), metricDefinition.getRiskProfile()));
-
       cvConfigMap.put(cvConfigKey, mappedCVConfig);
     });
 
     return cvConfigMap;
   }
 
-  public List<CustomHealthMetricDefinition> getMetricDefinitions() {
+  public List<CustomHealthSpecMetricDefinition> getMetricDefinitions() {
     return metricDefinitions;
   }
 }

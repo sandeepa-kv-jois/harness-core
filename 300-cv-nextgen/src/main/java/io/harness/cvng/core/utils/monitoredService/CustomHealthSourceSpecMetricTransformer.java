@@ -14,20 +14,20 @@ import io.harness.cvng.core.beans.HealthSourceMetricDefinition.SLIDTO;
 import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceSpec;
 import io.harness.cvng.core.entities.CustomHealthCVConfig;
-
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CustomHealthSourceSpecTransformer
-    implements CVConfigToHealthSourceTransformer<CustomHealthCVConfig, CustomHealthSourceSpec> {
+public class CustomHealthSourceSpecMetricTransformer
+    implements CVConfigToHealthSourceTransformer<CustomHealthMetricCVConfig, CustomHealthSourceMetricSpec> {
   @Override
-  public CustomHealthSourceSpec transformToHealthSourceConfig(List<CustomHealthCVConfig> cvConfigGroup) {
+  public CustomHealthSourceMetricSpec transformToHealthSourceConfig(List<CustomHealthMetricCVConfig> cvConfigGroup) {
     Preconditions.checkNotNull(cvConfigGroup);
-    CustomHealthSourceSpec customHealthSourceSpec = CustomHealthSourceSpec.builder()
-                                                        .connectorRef(cvConfigGroup.get(0).getConnectorIdentifier())
-                                                        .metricDefinitions(new ArrayList<>())
-                                                        .build();
+    CustomHealthSourceMetricSpec customHealthSourceSpec =
+        CustomHealthSourceMetricSpec.builder()
+            .connectorRef(cvConfigGroup.get(0).getConnectorIdentifier())
+            .metricDefinitions(new ArrayList<>())
+            .build();
 
     cvConfigGroup.forEach(customHealthCVConfig -> {
       customHealthCVConfig.getMetricDefinitions().forEach(definition -> {
@@ -38,12 +38,17 @@ public class CustomHealthSourceSpecTransformer
                                           definition.getMetricName(), customHealthCVConfig))
                                       .build();
         CustomHealthDefinition baseDefinition = definition.getHealthDefinition();
-        CustomHealthMetricDefinition customHealthMetricDefinition =
-            CustomHealthMetricDefinition.builder()
-                .method(definition.getMethod())
-                .urlPath(definition.getUrlPath())
-                .queryType(customHealthCVConfig.getQueryType())
+        CustomHealthSpecMetricDefinition customHealthMetricDefinition =
+            CustomHealthSpecMetricDefinition.builder()
                 .groupName(customHealthCVConfig.getGroupName())
+                .healthDefinition(CustomHealthDefinition.builder()
+                                      .urlPath(baseDefinition.getUrlPath())
+                                      .queryType(baseDefinition.getQueryType())
+                                      .method(baseDefinition.getMethod())
+                                      .requestBody(baseDefinition.getRequestBody())
+                                      .startTimeInfo(baseDefinition.getStartTimeInfo())
+                                      .endTimeInfo(baseDefinition.getEndTimeInfo())
+                                      .build())
                 .metricName(definition.getMetricName())
                 .metricResponseMapping(definition.getMetricResponseMapping())
                 .metricName(definition.getMetricName())
@@ -64,11 +69,8 @@ public class CustomHealthSourceSpecTransformer
                 .riskProfile(riskProfile)
                 .requestBody(definition.getRequestBody())
                 .analysis(definition.getAnalysis())
-                .endTime(baseDefinition.getEndTimeInfo())
-                .startTime(baseDefinition.getStartTimeInfo())
                 .identifier(definition.getIdentifier())
                 .riskProfile(definition.getRiskProfile())
-                .requestBody(baseDefinition.getRequestBody())
                 .build();
         customHealthSourceSpec.getMetricDefinitions().add(customHealthMetricDefinition);
       });

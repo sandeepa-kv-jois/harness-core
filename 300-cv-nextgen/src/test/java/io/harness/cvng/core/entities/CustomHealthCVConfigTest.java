@@ -11,6 +11,7 @@ import static io.harness.rule.OwnerRule.ANJAN;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
@@ -23,7 +24,7 @@ import java.util.List;
 
 public class CustomHealthCVConfigTest extends CategoryTest {
   List<CustomHealthMetricDefinition> metricDefinitions;
-  CustomHealthCVConfig customHealthCVConfig;
+  CustomHealthMetricCVConfig customHealthCVConfig;
   MetricResponseMapping responseMapping;
 
   @Before
@@ -46,11 +47,16 @@ public class CustomHealthCVConfigTest extends CategoryTest {
             .build();
 
     metricDefinitions.add(metricDefinition);
+<<<<<<< HEAD
     customHealthCVConfig = CustomHealthCVConfig.builder()
                                .groupName("group1")
                                .queryType(HealthSourceQueryType.SERVICE_BASED)
                                .metricDefinitions(metricDefinitions)
                                .build();
+=======
+    customHealthCVConfig =
+        CustomHealthMetricCVConfig.builder().groupName("group1").metricDefinitions(metricDefinitions).build();
+>>>>>>> [CVNG-4113]: custom logs
   }
 
   @Test
@@ -73,7 +79,7 @@ public class CustomHealthCVConfigTest extends CategoryTest {
     metricDefinitions.get(0).setLiveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build());
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(InvalidRequestException.class)
-        .hasMessage("Host based queries can only be used for deployment verification.");
+        .hasMessage("Host based queries can only be used for continuous verification.");
   }
 
   @Test
@@ -92,9 +98,14 @@ public class CustomHealthCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenThereAreDuplicateMetricDefinitions() {
-    CustomHealthCVConfig.MetricDefinition metricDefinition =
-        CustomHealthCVConfig.MetricDefinition.builder()
-            .method(CustomHealthMethod.GET)
+
+    CustomHealthMetricDefinition metricDefinition =
+        CustomHealthMetricDefinition.builder()
+            .healthDefinition(CustomHealthDefinition.builder()
+                                  .method(CustomHealthMethod.GET)
+                                  .queryType(HealthSourceQueryType.HOST_BASED)
+                                  .urlPath("https://dd.com")
+                                  .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
             .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())

@@ -71,7 +71,7 @@ import io.harness.cvng.client.VerificationManagerService;
 import io.harness.cvng.client.VerificationManagerServiceImpl;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig.AppDynamicsCVConfigUpdatableEntity;
 import io.harness.cvng.core.entities.CVConfig.CVConfigUpdatableEntity;
-import io.harness.cvng.core.entities.CustomHealthCVConfig.CustomHealthCVConfigUpdatableEntity;
+import io.harness.cvng.core.entities.CustomHealthMetricCVConfig.CustomHealthCVConfigUpdatableEntity;
 import io.harness.cvng.core.entities.DataCollectionTask.Type;
 import io.harness.cvng.core.entities.DatadogLogCVConfig.DatadogLogCVConfigUpdatableEntity;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig.DatadogMetricCVConfigUpdatableEntity;
@@ -218,7 +218,8 @@ import io.harness.cvng.core.transformer.changeSource.KubernetesChangeSourceSpecT
 import io.harness.cvng.core.transformer.changeSource.PagerDutyChangeSourceSpecTransformer;
 import io.harness.cvng.core.utils.monitoredService.AppDynamicsHealthSourceSpecTransformer;
 import io.harness.cvng.core.utils.monitoredService.CVConfigToHealthSourceTransformer;
-import io.harness.cvng.core.utils.monitoredService.CustomHealthSourceSpecTransformer;
+import io.harness.cvng.core.utils.monitoredService.CustomHealthSourceSpecLogTransformer;
+import io.harness.cvng.core.utils.monitoredService.CustomHealthSourceSpecMetricTransformer;
 import io.harness.cvng.core.utils.monitoredService.DatadogLogHealthSourceSpecTransformer;
 import io.harness.cvng.core.utils.monitoredService.DatadogMetricHealthSourceSpecTransformer;
 import io.harness.cvng.core.utils.monitoredService.DynatraceHealthSourceSpecTransformer;
@@ -427,8 +428,11 @@ public class CVServiceModule extends AbstractModule {
     dataSourceTypeToHealthSourceTransformerMapBinder.addBinding(DataSourceType.DATADOG_LOG)
         .to(DatadogLogHealthSourceSpecTransformer.class)
         .in(Scopes.SINGLETON);
-    dataSourceTypeToHealthSourceTransformerMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH)
-        .to(CustomHealthSourceSpecTransformer.class)
+    dataSourceTypeToHealthSourceTransformerMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_METRIC)
+        .to(CustomHealthSourceSpecMetricTransformer.class)
+        .in(Scopes.SINGLETON);
+    dataSourceTypeToHealthSourceTransformerMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_LOG)
+        .to(CustomHealthSourceSpecLogTransformer.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeToHealthSourceTransformerMapBinder.addBinding(DataSourceType.DYNATRACE)
         .to(DynatraceHealthSourceSpecTransformer.class)
@@ -447,7 +451,7 @@ public class CVServiceModule extends AbstractModule {
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionInfoMapperMapBinder.addBinding(DataSourceType.STACKDRIVER_LOG)
         .to(StackdriverLogDataCollectionInfoMapper.class);
-    dataSourceTypeDataCollectionInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH)
+    dataSourceTypeDataCollectionInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_METRIC)
         .to(CustomHealthDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionInfoMapperMapBinder.addBinding(DataSourceType.SPLUNK)
@@ -575,7 +579,10 @@ public class CVServiceModule extends AbstractModule {
     dataSourceTypeCVConfigMapBinder.addBinding(DataSourceType.PROMETHEUS)
         .to(PrometheusUpdatableEntity.class)
         .in(Scopes.SINGLETON);
-    dataSourceTypeCVConfigMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH)
+    dataSourceTypeCVConfigMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_METRIC)
+        .to(CustomHealthCVConfigUpdatableEntity.class)
+        .in(Scopes.SINGLETON);
+    dataSourceTypeCVConfigMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_LOG)
         .to(CustomHealthCVConfigUpdatableEntity.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeCVConfigMapBinder.addBinding(DataSourceType.STACKDRIVER)

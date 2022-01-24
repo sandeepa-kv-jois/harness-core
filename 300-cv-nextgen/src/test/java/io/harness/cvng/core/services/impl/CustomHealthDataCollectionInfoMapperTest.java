@@ -15,6 +15,9 @@ import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.beans.CustomHealthDataCollectionInfo;
 import io.harness.cvng.beans.MetricResponseMappingDTO;
+import io.harness.cvng.core.beans.CustomHealthDefinition;
+import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.entities.AnalysisInfo;
@@ -33,7 +36,7 @@ import org.junit.experimental.categories.Category;
 
 public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase {
   @Inject private CustomHealthDataCollectionInfoMapper customHealthMapper;
-  CustomHealthCVConfig customHealthCVConfig;
+  CustomHealthMetricCVConfig customHealthCVConfig;
 
   String groupName = "group";
   String metricName = "metric";
@@ -49,49 +52,27 @@ public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase 
 
   @Before
   public void setup() {
-    List<CustomHealthCVConfig.MetricDefinition> metricDefinitions = new ArrayList<>();
+    List<CustomHealthMetricDefinition> metricDefinitions = new ArrayList<>();
     MetricResponseMapping responseMapping = MetricResponseMapping.builder()
                                                 .metricValueJsonPath(metricValueJSONPath)
                                                 .timestampJsonPath(timestampJSONPath)
                                                 .build();
-
-    CustomHealthCVConfig.MetricDefinition metricDefinition =
-        CustomHealthCVConfig.MetricDefinition.builder()
-            .method(CustomHealthMethod.GET)
+    CustomHealthMetricDefinition metricDefinition =
+        CustomHealthMetricDefinition.builder()
+            .healthDefinition(CustomHealthDefinition.builder()
+                                  .method(CustomHealthMethod.GET)
+                                  .queryType(HealthSourceQueryType.HOST_BASED)
+                                  .urlPath(urlPath)
+                                  .build())
             .metricResponseMapping(responseMapping)
             .metricName(metricName)
-            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
-            .urlPath(urlPath)
-            .build();
-
-    CustomHealthCVConfig.MetricDefinition metricDefinition2 =
-        CustomHealthCVConfig.MetricDefinition.builder()
-            .method(CustomHealthMethod.GET)
-            .metricResponseMapping(responseMapping)
-            .metricName(metricName1)
-            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
-            .urlPath(urlPath1)
-            .build();
-
-    CustomHealthCVConfig.MetricDefinition metricDefinition3 =
-        CustomHealthCVConfig.MetricDefinition.builder()
-            .method(CustomHealthMethod.GET)
-            .metricResponseMapping(responseMapping)
-            .metricName(metricName2)
-            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
-            .urlPath(urlPath2)
+            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
+            .riskProfile(RiskProfile.builder().build())
+            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
             .build();
 
     metricDefinitions.add(metricDefinition);
-    metricDefinitions.add(metricDefinition2);
-    metricDefinitions.add(metricDefinition3);
-    customHealthCVConfig = CustomHealthCVConfig.builder()
+    customHealthCVConfig = CustomHealthMetricCVConfig.builder()
                                .groupName(groupName)
                                .queryType(HealthSourceQueryType.HOST_BASED)
                                .metricDefinitions(metricDefinitions)

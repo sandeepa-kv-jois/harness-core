@@ -39,7 +39,7 @@ public class CustomHealthCustomPackForExistingProjects implements CVNGMigration 
 
     for (MetricPack pack : metricPack) {
       MetricPack customPack = hPersistence.createQuery(MetricPack.class)
-                                  .filter(MetricPackKeys.dataSourceType, DataSourceType.CUSTOM_HEALTH)
+                                  .filter(MetricPackKeys.dataSourceType, DataSourceType.CUSTOM_HEALTH_METRIC)
                                   .filter(MetricPackKeys.identifier, CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                                   .filter(MetricPackKeys.accountId, pack.getAccountId())
                                   .filter(MetricPackKeys.projectIdentifier, pack.getOrgIdentifier())
@@ -52,7 +52,7 @@ public class CustomHealthCustomPackForExistingProjects implements CVNGMigration 
                          .orgIdentifier(pack.getOrgIdentifier())
                          .projectIdentifier(pack.getProjectIdentifier())
                          .category(CVMonitoringCategory.ERRORS)
-                         .dataSourceType(DataSourceType.CUSTOM_HEALTH)
+                         .dataSourceType(DataSourceType.CUSTOM_HEALTH_METRIC)
                          .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                          .metrics(new HashSet<>(Arrays.asList(MetricDefinition.builder()
                                                                   .name(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
