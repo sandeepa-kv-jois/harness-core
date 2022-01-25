@@ -42,7 +42,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
+public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
   List<CustomHealthSpecMetricDefinition> customHealthSourceSpecs;
   CustomHealthSourceMetricSpec customHealthSourceSpec;
   String groupName = "group_1";

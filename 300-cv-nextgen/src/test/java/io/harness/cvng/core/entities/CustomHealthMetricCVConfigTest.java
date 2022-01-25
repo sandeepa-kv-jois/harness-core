@@ -22,7 +22,7 @@ import io.harness.rule.Owner;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CustomHealthCVConfigTest extends CategoryTest {
+public class CustomHealthMetricCVConfigTest extends CategoryTest {
   List<CustomHealthMetricDefinition> metricDefinitions;
   CustomHealthMetricCVConfig customHealthCVConfig;
   MetricResponseMapping responseMapping;

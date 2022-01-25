@@ -42,8 +42,7 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
   @Data
   @Builder
   public static class Key {
-    CustomHealthLogDefinition logDefinition;
-    String query;
+    String queryName;
   }
 
   @Override
@@ -52,9 +51,8 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
       String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     List<CustomHealthLogCVConfig> existingDBCVConfigs = (List<CustomHealthLogCVConfig>) (List<?>) existingCVConfigs;
     Map<Key, CustomHealthLogCVConfig> existingConfigs = new HashMap<>();
-    existingDBCVConfigs.forEach(config
-        -> existingConfigs.put(
-            Key.builder().logDefinition(config.getQueryDefinition()).query(config.getQuery()).build(), config));
+    existingDBCVConfigs.forEach(
+        config -> existingConfigs.put(Key.builder().queryName(config.getQueryName()).build(), config));
 
     Map<Key, CustomHealthLogCVConfig> currentCVConfigs =
         getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
@@ -80,8 +78,9 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
     Map<Key, CustomHealthLogCVConfig> cvConfigMap = new HashMap<>();
     logDefinitions.forEach(logDefinition -> {
       String query = logDefinition.getCustomHealthDefinition().getRequestBody();
+      String queryName = logDefinition.getQueryName();
 
-      Key cvConfigKey = Key.builder().query(query).logDefinition(logDefinition).build();
+      Key cvConfigKey = Key.builder().queryName(queryName).build();
       CustomHealthLogCVConfig existingCvConfig = cvConfigMap.get(cvConfigKey);
 
       if (existingCvConfig != null) {
@@ -97,6 +96,7 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
               .serviceIdentifier(serviceRef)
               .monitoringSourceName(name)
               .identifier(identifier)
+              .query(query)
               .queryDefinition(CustomHealthLogDefinition.builder()
                                    .customHealthDefinition(logDefinition.getCustomHealthDefinition())
                                    .queryValueJsonPath(logDefinition.getQueryValueJsonPath())

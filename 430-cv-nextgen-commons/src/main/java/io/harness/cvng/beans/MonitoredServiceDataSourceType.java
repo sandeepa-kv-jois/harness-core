@@ -22,7 +22,8 @@ public enum MonitoredServiceDataSourceType {
   @JsonProperty("DatadogLog") DATADOG_LOG,
   @JsonProperty("Dynatrace") DYNATRACE,
   @JsonProperty("ErrorTracking") ERROR_TRACKING,
-  @JsonProperty("CustomHealth") CUSTOM_HEALTH;
+  @JsonProperty("CustomHealthMetric") CUSTOM_HEALTH_METRIC,
+  @JsonProperty("CustomHealthLog") CUSTOM_HEALTH_LOG;
 
   public static Map<DataSourceType, MonitoredServiceDataSourceType> dataSourceTypeMonitoredServiceDataSourceTypeMap =
       new HashMap<DataSourceType, MonitoredServiceDataSourceType>() {
@@ -36,7 +37,8 @@ public enum MonitoredServiceDataSourceType {
           put(DataSourceType.DATADOG_METRICS, DATADOG_METRICS);
           put(DataSourceType.DATADOG_LOG, DATADOG_LOG);
           put(DataSourceType.DYNATRACE, DYNATRACE);
-          put(DataSourceType.CUSTOM_HEALTH_METRIC, CUSTOM_HEALTH);
+          put(DataSourceType.CUSTOM_HEALTH_METRIC, CUSTOM_HEALTH_METRIC);
+          put(DataSourceType.CUSTOM_HEALTH_LOG, CUSTOM_HEALTH_LOG);
           put(DataSourceType.ERROR_TRACKING, ERROR_TRACKING);
         }
       };

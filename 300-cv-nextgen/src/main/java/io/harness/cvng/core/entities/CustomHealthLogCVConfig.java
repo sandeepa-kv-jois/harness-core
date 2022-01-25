@@ -37,16 +37,17 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = true)
 public class CustomHealthLogCVConfig extends LogCVConfig {
-  static String DSL;
-
-  static {
-    try {
-      DSL = Resources.toString(
-          DatadogLogCVConfig.class.getResource("datadog-log-fetch-data.datacollection"), StandardCharsets.UTF_8);
-    } catch (IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
+  // TODO: will enable when ready for DSL
+  //  static String DSL;
+  //
+  //  static {
+  //    try {
+  //      DSL = Resources.toString(
+  //          DatadogLogCVConfig.class.getResource("datadog-log-fetch-data.datacollection"), StandardCharsets.UTF_8);
+  //    } catch (IOException e) {
+  //      throw new IllegalStateException(e);
+  //    }
+  //  }
 
   CustomHealthLogDefinition queryDefinition;
 
@@ -80,7 +81,7 @@ public class CustomHealthLogCVConfig extends LogCVConfig {
 
   @Override
   public String getDataCollectionDsl() {
-    return DSL;
+    return null;
   }
 
   @Override
