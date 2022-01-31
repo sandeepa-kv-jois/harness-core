@@ -14,6 +14,7 @@ import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricRespons
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
@@ -21,6 +22,7 @@ import lombok.experimental.SuperBuilder;
 @Data
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @SuperBuilder
+@NoArgsConstructor
 @FieldNameConstants(innerTypeName = "CustomHealthMetricDefinitionKeys")
 public class CustomHealthMetricDefinition extends HealthSourceMetricDefinition {
   CustomHealthDefinition healthDefinition;

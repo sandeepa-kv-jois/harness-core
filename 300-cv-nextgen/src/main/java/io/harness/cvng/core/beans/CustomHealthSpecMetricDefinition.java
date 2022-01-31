@@ -9,11 +9,13 @@ package io.harness.cvng.core.beans;
 
 import lombok.AccessLevel;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
 @SuperBuilder
 @Data
+@NoArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class CustomHealthSpecMetricDefinition extends CustomHealthMetricDefinition {
   String groupName;
