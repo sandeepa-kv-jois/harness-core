@@ -382,14 +382,10 @@ public class MetricPackServiceImpl implements MetricPackService {
       case NEW_RELIC:
         metricPack.setDataCollectionDsl(getNewRelicMetricPackDsl(metricPack));
         break;
-<<<<<<< HEAD
       case DYNATRACE:
         metricPack.setDataCollectionDsl(getDynatraceMetricPackDsl(metricPack));
         break;
-      case CUSTOM_HEALTH:
-=======
       case CUSTOM_HEALTH_METRIC:
->>>>>>> [CVNG-4113]: custom logs
         metricPack.setDataCollectionDsl(CUSTOM_HEALTH_DSL);
         break;
       default:

@@ -48,12 +48,8 @@ public enum DataSourceType {
   }
 
   public static List<DataSourceType> getTimeSeriesTypes() {
-<<<<<<< HEAD
-    return new ArrayList<>(EnumSet.of(APP_DYNAMICS, STACKDRIVER, NEW_RELIC, PROMETHEUS, DATADOG_METRICS, DYNATRACE));
-=======
     return new ArrayList<>(
-        EnumSet.of(APP_DYNAMICS, STACKDRIVER, NEW_RELIC, PROMETHEUS, DATADOG_METRICS, CUSTOM_HEALTH_METRIC));
->>>>>>> [CVNG-4113]: custom logs
+        EnumSet.of(APP_DYNAMICS, STACKDRIVER, NEW_RELIC, PROMETHEUS, DATADOG_METRICS, DYNATRACE, CUSTOM_HEALTH_METRIC));
   }
 
   public String getDemoTemplatePrefix() {
