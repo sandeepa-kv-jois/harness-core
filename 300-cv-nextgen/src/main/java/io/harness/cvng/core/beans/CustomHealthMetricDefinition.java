@@ -27,5 +27,5 @@ import lombok.experimental.SuperBuilder;
 public class CustomHealthMetricDefinition extends HealthSourceMetricDefinition {
   CustomHealthDefinition healthDefinition;
   MetricResponseMapping metricResponseMapping;
-  TimeSeriesMetricType metricType;
+  String groupName;
 }

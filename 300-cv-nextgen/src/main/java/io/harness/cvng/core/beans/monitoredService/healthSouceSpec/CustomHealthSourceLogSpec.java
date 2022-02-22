@@ -9,7 +9,6 @@ package io.harness.cvng.core.beans.monitoredService.healthSouceSpec;
 
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
-import io.harness.cvng.core.beans.CustomHealthSpecLogDefinition;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
@@ -37,7 +36,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CustomHealthSourceLogSpec extends HealthSourceSpec {
-  @UniqueIdentifierCheck List<CustomHealthSpecLogDefinition> logDefinitions = new ArrayList<>();
+  @UniqueIdentifierCheck List<CustomHealthLogDefinition> logDefinitions = new ArrayList<>();
 
   @Data
   @Builder

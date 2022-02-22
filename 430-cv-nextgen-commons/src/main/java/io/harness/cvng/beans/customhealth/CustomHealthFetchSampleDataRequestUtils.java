@@ -21,9 +21,9 @@ public class CustomHealthFetchSampleDataRequestUtils {
     Map<String, Object> commonEnvVariables = new HashMap<>();
     commonEnvVariables.put("method", method);
     commonEnvVariables.put("urlPath", urlPath);
-    commonEnvVariables.put("body", isNotEmpty(body) ? JsonUtils.asMap(body) : null);
-
     commonEnvVariables.put("startTimePlaceholder", startTime.getPlaceholder());
+    commonEnvVariables.put("body", null);
+
     Instant instant = Instant.now();
 
     if (startTime.getTimestampFormat().equals(TimestampInfo.TimestampFormat.CUSTOM)) {
@@ -41,6 +41,12 @@ public class CustomHealthFetchSampleDataRequestUtils {
       commonEnvVariables.put("endTimeValue", String.valueOf(instant.toEpochMilli()));
     } else if (endTime.getTimestampFormat().equals(TimestampInfo.TimestampFormat.SECONDS)) {
       commonEnvVariables.put("endTimeValue", String.valueOf(instant.getEpochSecond()));
+    }
+
+    if (isNotEmpty(body)) {
+      body = body.replaceAll(startTime.getPlaceholder(), (String) commonEnvVariables.get("startTimeValue"));
+      body = body.replaceAll(endTime.getPlaceholder(), (String) commonEnvVariables.get("endTimeValue"));
+      commonEnvVariables.put("body", JsonUtils.asMap(body));
     }
 
     return commonEnvVariables;

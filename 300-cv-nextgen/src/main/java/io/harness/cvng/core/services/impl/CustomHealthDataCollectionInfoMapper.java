@@ -69,7 +69,7 @@ public class CustomHealthDataCollectionInfoMapper
   }
 
   private CustomHealthDataCollectionInfo.CustomHealthMetricInfo mapMetricDefinitionToMetricInfo(
-      CustomHealthMetricDefinition metricDefinition) {
+      CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition) {
     MetricResponseMapping metricResponseMapping = metricDefinition.getMetricResponseMapping();
     CustomHealthDefinition healthDefinition = metricDefinition.getHealthDefinition();
     return CustomHealthDataCollectionInfo.CustomHealthMetricInfo.builder()

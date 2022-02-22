@@ -9,7 +9,6 @@ package io.harness.cvng.core.utils.monitoredService;
 
 import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
-import io.harness.cvng.core.beans.CustomHealthSpecLogDefinition;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceLogSpec;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
 
@@ -31,8 +30,8 @@ public class CustomHealthSourceSpecLogTransformer
     cvConfigGroup.forEach(cvConfig -> {
       CustomHealthLogDefinition customHealthLogDefinition = cvConfig.getQueryDefinition();
       CustomHealthDefinition customHealthDefinition = customHealthLogDefinition.getCustomHealthDefinition();
-      CustomHealthSpecLogDefinition specLogDefinition =
-          CustomHealthSpecLogDefinition.builder()
+      CustomHealthLogDefinition specLogDefinition =
+          CustomHealthLogDefinition.builder()
               .customHealthDefinition(CustomHealthDefinition.builder()
                                           .endTimeInfo(customHealthDefinition.getEndTimeInfo())
                                           .startTimeInfo(customHealthDefinition.getStartTimeInfo())

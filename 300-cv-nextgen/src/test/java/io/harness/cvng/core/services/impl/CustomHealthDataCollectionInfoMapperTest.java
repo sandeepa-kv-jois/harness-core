@@ -19,9 +19,10 @@ import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
+import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.entities.AnalysisInfo;
-import io.harness.cvng.core.entities.CustomHealthCVConfig;
+import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
@@ -52,13 +53,14 @@ public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase 
 
   @Before
   public void setup() {
-    List<CustomHealthMetricDefinition> metricDefinitions = new ArrayList<>();
+    List<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition> metricDefinitions = new ArrayList<>();
     MetricResponseMapping responseMapping = MetricResponseMapping.builder()
                                                 .metricValueJsonPath(metricValueJSONPath)
                                                 .timestampJsonPath(timestampJSONPath)
                                                 .build();
-    CustomHealthMetricDefinition metricDefinition =
-        CustomHealthMetricDefinition.builder()
+
+    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
+        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
             .healthDefinition(CustomHealthDefinition.builder()
                                   .method(CustomHealthMethod.GET)
                                   .queryType(HealthSourceQueryType.HOST_BASED)
@@ -66,9 +68,9 @@ public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase 
                                   .build())
             .metricResponseMapping(responseMapping)
             .metricName(metricName)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .riskProfile(RiskProfile.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
+            .sli(AnalysisInfo.SLI.builder().build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().build())
             .build();
 
     metricDefinitions.add(metricDefinition);

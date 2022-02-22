@@ -12,7 +12,11 @@ import static io.harness.cvng.core.utils.ErrorMessageUtils.generateErrorMessageF
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import io.harness.cvng.beans.DataSourceType;
+import io.harness.cvng.beans.TimeSeriesMetricType;
+import io.harness.cvng.core.beans.CustomHealthDefinition;
+import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.RiskProfile;
+import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.exception.InvalidRequestException;
 
@@ -20,10 +24,13 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -37,7 +44,17 @@ import org.mongodb.morphia.query.UpdateOperations;
 public class CustomHealthMetricCVConfig extends MetricCVConfig {
   String groupName;
   HealthSourceQueryType queryType;
-  List<CustomHealthMetricDefinition> metricDefinitions;
+  List<CustomHealthCVConfigMetricDefinition> metricDefinitions;
+
+  @Data
+  @SuperBuilder
+  @FieldDefaults(level = AccessLevel.PRIVATE)
+  public static class CustomHealthCVConfigMetricDefinition extends AnalysisInfo {
+    CustomHealthDefinition healthDefinition;
+    MetricResponseMapping metricResponseMapping;
+    TimeSeriesMetricType metricType;
+    String metricName;
+  }
 
   @Override
   public String getDataCollectionDsl() {
@@ -56,7 +73,7 @@ public class CustomHealthMetricCVConfig extends MetricCVConfig {
     Set<String> uniqueMetricDefinitionsNames = new HashSet<>();
 
     for (int metricDefinitionIndex = 0; metricDefinitionIndex < metricDefinitions.size(); metricDefinitionIndex++) {
-      CustomHealthMetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
+      CustomHealthCVConfigMetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
       CustomHealthDefinition customHealthDefinition = metricDefinition.getHealthDefinition();
 
       checkNotNull(metricDefinition.getMetricName(),
@@ -75,7 +92,7 @@ public class CustomHealthMetricCVConfig extends MetricCVConfig {
       switch (queryType) {
         case HOST_BASED:
           if ((liveMonitoring != null && liveMonitoring.enabled) || (sliDTO != null && sliDTO.enabled)) {
-            throw new InvalidRequestException("Host based queries can only be used for deployment verification.");
+            throw new InvalidRequestException("Host based queries can only be used for continuous verification.");
           }
           break;
         case SERVICE_BASED:

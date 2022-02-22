@@ -23,4 +23,5 @@ public class CustomHealthLogDefinition {
   String timestampJsonPath;
   String serviceInstanceJsonPath;
   String timestampFormat;
+  String queryName;
 }

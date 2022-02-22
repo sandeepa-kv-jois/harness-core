@@ -9,10 +9,11 @@ package io.harness.cvng.core.entities;
 
 import static io.harness.rule.OwnerRule.ANJAN;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.core.beans.CustomHealthDefinition;
-import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
@@ -21,9 +22,12 @@ import io.harness.rule.Owner;
 
 import java.util.ArrayList;
 import java.util.List;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.experimental.categories.Category;
 
 public class CustomHealthMetricCVConfigTest extends CategoryTest {
-  List<CustomHealthMetricDefinition> metricDefinitions;
+  List<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition> metricDefinitions;
   CustomHealthMetricCVConfig customHealthCVConfig;
   MetricResponseMapping responseMapping;
 
@@ -35,15 +39,18 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
                           .timestampJsonPath("timeStringPath")
                           .build();
 
-    CustomHealthMetricDefinition metricDefinition =
-        CustomHealthMetricDefinition.builder()
-            .method(CustomHealthMethod.GET)
+    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
+        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
+            .healthDefinition(CustomHealthDefinition.builder()
+                                  .method(CustomHealthMethod.GET)
+                                  .queryType(HealthSourceQueryType.SERVICE_BASED)
+                                  .urlPath("https://dd.com")
+                                  .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
             .sli(AnalysisInfo.SLI.builder().enabled(true).build())
             .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
             .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
-            .urlPath("https://dd.com")
             .build();
 
     metricDefinitions.add(metricDefinition);
@@ -53,10 +60,6 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
                                .queryType(HealthSourceQueryType.SERVICE_BASED)
                                .metricDefinitions(metricDefinitions)
                                .build();
-=======
-    customHealthCVConfig =
-        CustomHealthMetricCVConfig.builder().groupName("group1").metricDefinitions(metricDefinitions).build();
->>>>>>> [CVNG-4113]: custom logs
   }
 
   @Test
@@ -73,7 +76,7 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenLiveMonitoringIsTrueForHostBasedQuery() {
-    customHealthCVConfig.setQueryType(HealthSourceQueryType.HOST_BASED);
+    metricDefinitions.get(0).getHealthDefinition().setQueryType(HealthSourceQueryType.HOST_BASED);
     metricDefinitions.get(0).setDeploymentVerification(
         AnalysisInfo.DeploymentVerification.builder().enabled(true).build());
     metricDefinitions.get(0).setLiveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build());
@@ -98,9 +101,8 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenThereAreDuplicateMetricDefinitions() {
-
-    CustomHealthMetricDefinition metricDefinition =
-        CustomHealthMetricDefinition.builder()
+    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
+        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
             .healthDefinition(CustomHealthDefinition.builder()
                                   .method(CustomHealthMethod.GET)
                                   .queryType(HealthSourceQueryType.HOST_BASED)
@@ -111,7 +113,6 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
             .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
             .sli(AnalysisInfo.SLI.builder().enabled(true).build())
             .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
-            .urlPath("https://dd.com")
             .build();
     metricDefinitions.add(metricDefinition);
 

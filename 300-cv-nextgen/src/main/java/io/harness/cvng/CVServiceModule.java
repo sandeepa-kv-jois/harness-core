@@ -493,7 +493,7 @@ public class CVServiceModule extends AbstractModule {
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.STACKDRIVER_LOG)
         .to(StackdriverDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
-    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH)
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_METRIC)
         .to(CustomHealthDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.DYNATRACE)

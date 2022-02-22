@@ -32,5 +32,4 @@ public class CustomHealthDefinition {
   CustomHealthMethod method;
   TimestampInfo startTimeInfo;
   TimestampInfo endTimeInfo;
-  String groupName;
 }

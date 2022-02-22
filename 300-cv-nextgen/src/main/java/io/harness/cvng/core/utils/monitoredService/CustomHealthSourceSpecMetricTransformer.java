@@ -12,8 +12,9 @@ import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition.SLIDTO;
 import io.harness.cvng.core.beans.RiskProfile;
-import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceSpec;
-import io.harness.cvng.core.entities.CustomHealthCVConfig;
+import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceMetricSpec;
+import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
+
 import com.google.common.base.Preconditions;
 import java.util.ArrayList;
 import java.util.List;
@@ -30,16 +31,16 @@ public class CustomHealthSourceSpecMetricTransformer
             .build();
 
     cvConfigGroup.forEach(customHealthCVConfig -> {
-      customHealthCVConfig.getMetricDefinitions().forEach(definition -> {
+      customHealthCVConfig.getMetricDefinitions().forEach(cvMetricDefinition -> {
         RiskProfile riskProfile = RiskProfile.builder()
                                       .category(customHealthCVConfig.getMetricPack().getCategory())
-                                      .metricType(definition.getMetricType())
+                                      .metricType(cvMetricDefinition.getMetricType())
                                       .thresholdTypes(customHealthCVConfig.getThresholdTypeOfMetric(
-                                          definition.getMetricName(), customHealthCVConfig))
+                                          cvMetricDefinition.getMetricName(), customHealthCVConfig))
                                       .build();
-        CustomHealthDefinition baseDefinition = definition.getHealthDefinition();
-        CustomHealthSpecMetricDefinition customHealthMetricDefinition =
-            CustomHealthSpecMetricDefinition.builder()
+        CustomHealthDefinition baseDefinition = cvMetricDefinition.getHealthDefinition();
+        CustomHealthMetricDefinition customHealthMetricDefinition =
+            CustomHealthMetricDefinition.builder()
                 .groupName(customHealthCVConfig.getGroupName())
                 .healthDefinition(CustomHealthDefinition.builder()
                                       .urlPath(baseDefinition.getUrlPath())
@@ -49,28 +50,24 @@ public class CustomHealthSourceSpecMetricTransformer
                                       .startTimeInfo(baseDefinition.getStartTimeInfo())
                                       .endTimeInfo(baseDefinition.getEndTimeInfo())
                                       .build())
-                .metricName(definition.getMetricName())
-                .metricResponseMapping(definition.getMetricResponseMapping())
-                .metricName(definition.getMetricName())
-                .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder()
-                              .deploymentVerification(
-                                  HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
-                                      .enabled(definition.getDeploymentVerification().isEnabled())
-                                      .build())
-                              .liveMonitoring(HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder()
-                                                  .enabled(definition.getLiveMonitoring().isEnabled())
-                                                  .build())
-                              .riskProfile(riskProfile)
-                              .build())
-                .endTime(definition.getEndTime())
-                .sli(SLIDTO.builder().enabled(definition.getSli().isEnabled()).build())
-                .startTime(definition.getStartTime())
-                .identifier(definition.getIdentifier())
+                .metricResponseMapping(cvMetricDefinition.getMetricResponseMapping())
+                .metricName(cvMetricDefinition.getMetricName())
+                .sli(SLIDTO.builder().enabled(cvMetricDefinition.getSli().isEnabled()).build())
+                .identifier(cvMetricDefinition.getIdentifier())
                 .riskProfile(riskProfile)
-                .requestBody(definition.getRequestBody())
-                .analysis(definition.getAnalysis())
-                .identifier(definition.getIdentifier())
-                .riskProfile(definition.getRiskProfile())
+                .analysis(
+                    (HealthSourceMetricDefinition.AnalysisDTO.builder()
+                            .liveMonitoring(HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder()
+                                                .enabled(cvMetricDefinition.getLiveMonitoring().isEnabled())
+                                                .build())
+                            .deploymentVerification(
+                                HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
+                                    .enabled(cvMetricDefinition.getDeploymentVerification().isEnabled())
+                                    .serviceInstanceMetricPath(
+                                        cvMetricDefinition.getDeploymentVerification().getServiceInstanceMetricPath())
+                                    .build())
+                            .riskProfile(riskProfile)
+                            .build()))
                 .build();
         customHealthSourceSpec.getMetricDefinitions().add(customHealthMetricDefinition);
       });

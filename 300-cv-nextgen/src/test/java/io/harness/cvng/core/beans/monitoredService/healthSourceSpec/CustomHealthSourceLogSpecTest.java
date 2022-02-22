@@ -17,17 +17,12 @@ import io.harness.category.element.UnitTests;
 import io.harness.cvng.beans.customhealth.TimestampInfo;
 import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
-import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
-import io.harness.cvng.core.beans.CustomHealthSpecLogDefinition;
-import io.harness.cvng.core.beans.CustomHealthSpecMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceLogSpec;
-import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceMetricSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
-import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.rule.Owner;
@@ -40,7 +35,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
-  List<CustomHealthSpecLogDefinition> customHealthSourceSpecs;
+  List<CustomHealthLogDefinition> customHealthSourceSpecs;
   CustomHealthSourceLogSpec customHealthSourceSpec;
   String queryName = "errorQuery";
   String timestampValueJSONPath = "json.path.to.timestampValue";
@@ -60,8 +55,8 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   @Before
   public void setup() {
     customHealthSourceSpecs = new ArrayList<>();
-    CustomHealthSpecLogDefinition customHealthSpecLogDefinition =
-        CustomHealthSpecLogDefinition.builder()
+    CustomHealthLogDefinition customHealthSpecLogDefinition =
+        CustomHealthLogDefinition.builder()
             .queryValueJsonPath(queryValueJSONPath)
             .queryName(queryName)
             .customHealthDefinition(CustomHealthDefinition.builder()
@@ -154,8 +149,8 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testGetCVConfigUpdateResult_forUpdate() {
-    CustomHealthSpecLogDefinition addedLogDefinitionURL =
-        CustomHealthSpecLogDefinition.builder()
+    CustomHealthLogDefinition addedLogDefinitionURL =
+        CustomHealthLogDefinition.builder()
             .queryValueJsonPath("sdfsdf")
             .timestampJsonPath("sdf")
             .queryName(queryName)
@@ -184,7 +179,7 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
                                  .build())
             .build();
 
-    List<CustomHealthSpecLogDefinition> logDefinitions = new ArrayList<>();
+    List<CustomHealthLogDefinition> logDefinitions = new ArrayList<>();
     logDefinitions.add(addedLogDefinitionURL);
     customHealthSourceSpec.setLogDefinitions(logDefinitions);
 
@@ -225,8 +220,8 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testGetCVConfigUpdateResult_forDelete() {
-    CustomHealthSpecLogDefinition addedLogDefinitionURL =
-        CustomHealthSpecLogDefinition.builder()
+    CustomHealthLogDefinition addedLogDefinitionURL =
+        CustomHealthLogDefinition.builder()
             .queryValueJsonPath("sdfsdf")
             .timestampJsonPath("sdf")
             .queryName("vbccn")
