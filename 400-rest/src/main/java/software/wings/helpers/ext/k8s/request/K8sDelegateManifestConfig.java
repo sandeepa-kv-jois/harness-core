@@ -56,6 +56,8 @@ public class K8sDelegateManifestConfig implements NestedAnnotationResolver {
 
   private boolean customManifestEnabled;
 
+  private boolean bindValuesAndManifestFetchTask;
+
   private boolean optimizedFilesFetch;
 
   private boolean shouldSaveManifest;

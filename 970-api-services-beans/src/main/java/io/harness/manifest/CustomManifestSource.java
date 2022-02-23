@@ -26,5 +26,8 @@ import lombok.Data;
 public class CustomManifestSource implements NestedAnnotationResolver {
   @Expression(ALLOW_SECRETS) @Nullable String script;
   @Expression(DISALLOW_SECRETS) List<String> filePaths;
-  @Nullable String zippedManifestFileId;
+  String zippedManifestFileId;
+
+  // needed for downloading zip file
+  String accountId;
 }

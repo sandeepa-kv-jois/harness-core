@@ -9,6 +9,7 @@ package software.wings.sm.states.k8s;
 
 import static io.harness.annotations.dev.HarnessModule._870_CG_ORCHESTRATION;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.beans.FeatureName.BIND_CUSTOM_VALUE_AND_MANIFEST_FETCH_TASK;
 import static io.harness.beans.FeatureName.KUSTOMIZE_PATCHES_CG;
 import static io.harness.beans.FeatureName.OPTIMIZED_GIT_FETCH_FILES;
 import static io.harness.beans.FeatureName.OVERRIDE_VALUES_YAML_FROM_HELM_CHART;
@@ -66,6 +67,8 @@ import io.harness.k8s.KubernetesHelperService;
 import io.harness.k8s.model.K8sPod;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.manifest.CustomManifestSource;
+import io.harness.manifest.CustomManifestSource.CustomManifestSourceBuilder;
+import io.harness.manifest.CustomSourceConfig;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
@@ -280,12 +283,20 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
       case CUSTOM:
       case CUSTOM_OPENSHIFT_TEMPLATE:
         if (customManifestEnabled) {
-          CustomManifestSource customManifestSource =
+          CustomManifestSourceBuilder customManifestSourceBuilder =
               CustomManifestSource.builder()
                   .filePaths(Arrays.asList(appManifest.getCustomSourceConfig().getPath()))
-                  .script(appManifest.getCustomSourceConfig().getScript())
-                  .build();
-          manifestConfigBuilder.customManifestSource(customManifestSource);
+                  .script(appManifest.getCustomSourceConfig().getScript());
+
+          if (featureFlagService.isEnabled(BIND_CUSTOM_VALUE_AND_MANIFEST_FETCH_TASK, context.getAccountId())) {
+            K8sStateExecutionData k8sStateExecutionData = context.getStateExecutionData();
+            customManifestSourceBuilder
+                .zippedManifestFileId(
+                    k8sStateExecutionData == null ? null : k8sStateExecutionData.getZippedManifestFileId())
+                .accountId(context.getAccountId());
+            manifestConfigBuilder.bindValuesAndManifestFetchTask(true);
+          }
+          manifestConfigBuilder.customManifestSource(customManifestSourceBuilder.build());
           break;
         }
 
@@ -430,8 +441,29 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
     fetchValuesParams.setActivityId(activityId);
     fetchValuesParams.setCommandUnitName(FetchFiles);
     fetchValuesParams.setAppId(context.getAppId());
-    fetchValuesParams.setDelegateSelectors(
-        getDelegateSelectors(appManifestMap.get(K8sValuesLocation.Service), context));
+    ApplicationManifest applicationManifest = appManifestMap.get(K8sValuesLocation.Service);
+    fetchValuesParams.setDelegateSelectors(getDelegateSelectors(applicationManifest, context));
+
+    boolean bindValueAndManifestTask =
+        featureFlagService.isEnabled(BIND_CUSTOM_VALUE_AND_MANIFEST_FETCH_TASK, context.getAccountId());
+
+    if (bindValueAndManifestTask) {
+      CustomSourceConfig customSourceConfig = null;
+      if (applicationManifest != null) {
+        customSourceConfig = applicationManifest.getCustomSourceConfig();
+      }
+
+      if (customSourceConfig != null && customSourceConfig.getScript() == null) {
+        throw new InvalidRequestException("Script can not be null for custom manifest source", USER);
+      }
+      // CustomSourceConfig will be null if task is only to fetch value
+      fetchValuesParams.setCustomManifestSource(customSourceConfig == null
+              ? null
+              : CustomManifestSource.builder()
+                    .filePaths(Arrays.asList(customSourceConfig.getPath()))
+                    .script(customSourceConfig.getScript())
+                    .build());
+    }
 
     Environment env = K8sStateHelper.fetchEnvFromExecutionContext(context);
     ContainerInfrastructureMapping infraMapping = k8sStateHelper.fetchContainerInfrastructureMapping(context);
@@ -449,7 +481,8 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
             .setupAbstraction(Cd1SetupFields.INFRASTRUCTURE_MAPPING_ID_FIELD, infraMapping.getUuid())
             .data(TaskData.builder()
                       .async(true)
-                      .taskType(TaskType.CUSTOM_MANIFEST_VALUES_FETCH_TASK.name())
+                      .taskType(bindValueAndManifestTask ? TaskType.CUSTOM_MANIFEST_FETCH_TASK.name()
+                                                         : TaskType.CUSTOM_MANIFEST_VALUES_FETCH_TASK.name())
                       .parameters(new Object[] {fetchValuesParams})
                       .timeout(K8sStateHelper.fetchSafeTimeoutInMillis(getTimeoutMillis(context)))
                       .expressionFunctorToken(expressionFunctorToken)
@@ -470,15 +503,15 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
     return ExecutionResponse.builder()
         .async(true)
         .correlationIds(singletonList(delegateTaskId))
-        .stateExecutionData(
-            K8sStateExecutionData.builder()
-                .activityId(activityId)
-                .commandName(k8sStateExecutor.commandName())
-                .currentTaskType(TaskType.CUSTOM_MANIFEST_VALUES_FETCH_TASK)
-                .valuesFiles(valuesFiles)
-                .applicationManifestMap(appManifestMap)
-                .delegateSelectors(getDelegateSelectors(appManifestMap.get(K8sValuesLocation.Service), context))
-                .build())
+        .stateExecutionData(K8sStateExecutionData.builder()
+                                .activityId(activityId)
+                                .commandName(k8sStateExecutor.commandName())
+                                .currentTaskType(bindValueAndManifestTask ? TaskType.CUSTOM_MANIFEST_FETCH_TASK
+                                                                          : TaskType.CUSTOM_MANIFEST_VALUES_FETCH_TASK)
+                                .valuesFiles(valuesFiles)
+                                .applicationManifestMap(appManifestMap)
+                                .delegateSelectors(getDelegateSelectors(applicationManifest, context))
+                                .build())
         .build();
   }
 
@@ -759,6 +792,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
           return k8sStateExecutor.handleAsyncResponseForK8sTask(context, response);
 
         case CUSTOM_MANIFEST_VALUES_FETCH_TASK:
+        case CUSTOM_MANIFEST_FETCH_TASK:
           if (isCustomManifestFeatureEnabled) {
             return handleAsyncResponseForCustomFetchValuesTaskWrapper(k8sStateExecutor, context, response);
           }
@@ -918,7 +952,10 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
 
     if (executionStatus == ExecutionStatus.FAILED) {
       activityService.updateStatus(activityId, appId, executionStatus);
-      return ExecutionResponse.builder().executionStatus(executionStatus).build();
+      return ExecutionResponse.builder()
+          .executionStatus(executionStatus)
+          .errorMessage(executionResponse.getErrorMessage())
+          .build();
     }
 
     K8sStateExecutionData k8sStateExecutionData = context.getStateExecutionData();
@@ -928,6 +965,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
         applicationManifestUtils.getValuesFilesFromCustomFetchValuesResponse(
             context, appManifestMap, executionResponse, VALUES_YAML_KEY);
     k8sStateExecutionData.getValuesFiles().putAll(valuesFiles);
+    k8sStateExecutionData.setZippedManifestFileId(executionResponse.getZippedManifestFileId());
 
     return k8sStateExecutor.executeK8sTask(context, activityId);
   }

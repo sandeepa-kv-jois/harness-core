@@ -15,6 +15,7 @@ import static io.harness.delegate.task.helm.HelmTaskHelperBase.RESOURCE_DIR_BASE
 import static io.harness.delegate.task.helm.HelmTaskHelperBase.getChartDirectory;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
+import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
 import static io.harness.helm.HelmConstants.CHARTS_YAML_KEY;
 import static io.harness.helm.HelmConstants.CHART_VERSION;
@@ -63,6 +64,7 @@ import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
 import software.wings.helpers.ext.helm.request.HelmCommandRequest;
 import software.wings.helpers.ext.helm.request.HelmInstallCommandRequest;
+import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
 import software.wings.helpers.ext.k8s.request.K8sValuesLocation;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.settings.SettingValue;
@@ -109,6 +111,24 @@ public class HelmTaskHelper {
   @Inject private ChartMuseumClient chartMuseumClient;
   @Inject private HelmTaskHelperBase helmTaskHelperBase;
   @Inject private DelegateFileManagerBase delegateFileManagerBase;
+
+  public static void copyManifestFilesToWorkingDir(File src, File dest) throws IOException {
+    FileUtils.copyDirectory(src, dest);
+    deleteDirectoryAndItsContentIfExists(src.getAbsolutePath());
+    waitForDirectoryToBeAccessibleOutOfProcess(dest.getPath(), 10);
+  }
+
+  public static void handleIncorrectConfiguration(K8sDelegateManifestConfig sourceRepoConfig) {
+    if (sourceRepoConfig == null) {
+      throw new InvalidRequestException("Source Config can not be null", USER);
+    }
+    if (!sourceRepoConfig.isCustomManifestEnabled()) {
+      throw new InvalidRequestException("Can not use store type: CUSTOM, with feature flag off", USER);
+    }
+    if (sourceRepoConfig.getCustomManifestSource() == null) {
+      throw new InvalidRequestException("Custom Manifest Source can not be null", USER);
+    }
+  }
 
   private void fetchChartFiles(HelmChartConfigParams helmChartConfigParams, String destinationDirectory,
       long timeoutInMillis, HelmCommandFlag helmCommandFlag) throws Exception {

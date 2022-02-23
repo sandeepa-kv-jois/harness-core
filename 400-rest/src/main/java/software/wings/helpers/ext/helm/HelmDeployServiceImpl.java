@@ -17,6 +17,8 @@ import static io.harness.helm.HelmConstants.DEFAULT_TILLER_CONNECTION_TIMEOUT_MI
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.validation.Validator.notNullCheck;
 
+import static software.wings.delegatetasks.helm.HelmTaskHelper.copyManifestFilesToWorkingDir;
+import static software.wings.delegatetasks.helm.HelmTaskHelper.handleIncorrectConfiguration;
 import static software.wings.helpers.ext.helm.HelmHelper.filterWorkloads;
 
 import static java.lang.String.format;
@@ -117,7 +119,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
 import org.apache.commons.csv.CSVRecord;
-import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 
 /**
@@ -377,24 +378,6 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
     commandRequest.setWorkingDir(workingDirectory);
     commandRequest.getExecutionLogCallback().saveExecutionLog("Custom source manifest downloaded locally");
-  }
-
-  private static void copyManifestFilesToWorkingDir(File src, File dest) throws IOException {
-    FileUtils.copyDirectory(src, dest);
-    deleteDirectoryAndItsContentIfExists(src.getAbsolutePath());
-    FileIo.waitForDirectoryToBeAccessibleOutOfProcess(dest.getPath(), 10);
-  }
-
-  private void handleIncorrectConfiguration(K8sDelegateManifestConfig sourceRepoConfig) {
-    if (sourceRepoConfig == null) {
-      throw new InvalidRequestException("Source Config can not be null", USER);
-    }
-    if (!sourceRepoConfig.isCustomManifestEnabled()) {
-      throw new InvalidRequestException("Can not use store type: CUSTOM, with feature flag off", USER);
-    }
-    if (sourceRepoConfig.getCustomManifestSource() == null) {
-      throw new InvalidRequestException("Custom Manifest Source can not be null", USER);
-    }
   }
 
   @VisibleForTesting
