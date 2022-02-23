@@ -18,7 +18,7 @@ import lombok.EqualsAndHashCode;
 @Singleton
 public class DelegateAgentConfig extends Configuration {
   @JsonProperty private final String accountId;
-  @JsonProperty private final String accountSecret;
+  @JsonProperty private final String delegateToken;
   @JsonProperty private final String managerUrl;
   @JsonProperty private final String verificationServiceUrl;
   @JsonProperty private final String cvNextGenUrl;

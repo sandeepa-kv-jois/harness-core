@@ -14,7 +14,7 @@
 accountId: ${accountId}
 
 # Secret identifier associated with the account
-accountSecret: ${accountSecret}
+delegateToken: ${delegateToken}
 
 # Short 6 character identifier of the account
 accountIdShort: ${kubernetesAccountLabel}
