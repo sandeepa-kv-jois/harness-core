@@ -9,7 +9,9 @@ package io.harness.delegate.beans.connector.awssecretmanager;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.*;
+import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.MANUAL_CONFIG;
+import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.ASSUME_IAM_ROLE;
+import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.ASSUME_STS_ROLE;
 import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
 import static io.harness.exception.WingsException.USER;
 
@@ -75,7 +77,7 @@ public class AwsSecretManagerDTO extends ConnectorConfigDTO implements DelegateS
   public List<DecryptableEntity> getDecryptableEntities() {
     List<DecryptableEntity> decryptableEntities = new ArrayList<>();
     decryptableEntities.add(this);
-    if (credential.getCredentialType() == AwsSecretManagerCredentialType.MANUAL_CONFIG) {
+    if (credential.getCredentialType() == MANUAL_CONFIG) {
       AwsSMCredentialSpecManualConfigDTO awsKmsManualCredentials =
           (AwsSMCredentialSpecManualConfigDTO) credential.getConfig();
       decryptableEntities.add(awsKmsManualCredentials);
