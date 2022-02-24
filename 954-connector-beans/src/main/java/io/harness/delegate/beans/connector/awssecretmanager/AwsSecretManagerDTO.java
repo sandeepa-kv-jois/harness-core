@@ -9,8 +9,7 @@ package io.harness.delegate.beans.connector.awssecretmanager;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.ASSUME_IAM_ROLE;
-import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.ASSUME_STS_ROLE;
+import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.*;
 import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
 import static io.harness.exception.WingsException.USER;
 
@@ -24,6 +23,7 @@ import io.harness.exception.InvalidRequestException;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.google.common.base.Preconditions;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.ArrayList;
 import java.util.List;
@@ -86,6 +86,19 @@ public class AwsSecretManagerDTO extends ConnectorConfigDTO implements DelegateS
   @Override
   public void validate() {
     AwsSecretManagerCredentialType credentialType = this.credential.getCredentialType();
+    Preconditions.checkNotNull(secretNamePrefix, "Secret Name Prefix cannot be empty ");
+    Preconditions.checkNotNull(region, "Region cannot be empty");
+    if (MANUAL_CONFIG.equals(credentialType)) {
+      AwsSMCredentialSpecManualConfigDTO awsKmsManualCredentials =
+          (AwsSMCredentialSpecManualConfigDTO) credential.getConfig();
+      if (isEmpty(awsKmsManualCredentials.getAccessKey().getIdentifier())) {
+        throw new InvalidRequestException("Access key cannot be empty.", INVALID_REQUEST, USER);
+      }
+      if (isEmpty(awsKmsManualCredentials.getSecretKey().getIdentifier())) {
+        throw new InvalidRequestException("Secret key cannot be empty.", INVALID_REQUEST, USER);
+      }
+    }
+
     if (ASSUME_IAM_ROLE.equals(credentialType) || ASSUME_STS_ROLE.equals(credentialType)) {
       if (isEmpty(delegateSelectors)) {
         throw new InvalidRequestException(

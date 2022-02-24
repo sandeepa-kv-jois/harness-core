@@ -117,6 +117,9 @@ public class AwsKmsConnectorDTO extends ConnectorConfigDTO implements DelegateSe
     if (isEmpty(config.getRoleArn())) {
       throw new InvalidRequestException("Role Arn cannot be Empty.", INVALID_REQUEST, USER);
     }
+    if (config.getAssumeStsRoleDuration() <= 0) {
+      throw new InvalidRequestException("Invalid value for Assumed Role Duration", INVALID_REQUEST, USER);
+    }
   }
 
   private void validateIAMConfig(AwsKmsCredentialSpecAssumeIAMDTO config) {

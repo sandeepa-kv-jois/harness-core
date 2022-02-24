@@ -117,6 +117,25 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
       throw new InvalidRequestException(
           String.format("Invalid value for secret engine version: %s", secretEngineVersion), INVALID_REQUEST, USER);
     }
+
+    if (getAccessType() == AccessType.APP_ROLE) {
+      if (isBlank(appRoleId)) {
+        throw new InvalidRequestException(
+            "You must provide a App Role Id if you are using AppRole Authentication for Vault", INVALID_REQUEST, USER);
+      }
+      if (secretId.isNull()) {
+        throw new InvalidRequestException(
+            "You must provide the secretId if you are using AppRole Authentication for Vault", INVALID_REQUEST, USER);
+      }
+    }
+
+    if (getAccessType() == AccessType.TOKEN) {
+      if (authToken.isNull()) {
+        throw new InvalidRequestException(
+            "You must provide a Auth Token if you are using Token Authentication for Vault", INVALID_REQUEST, USER);
+      }
+    }
+
     if (renewalIntervalMinutes <= 0) {
       throw new InvalidRequestException(
           String.format("Invalid value for renewal interval: %s", renewalIntervalMinutes), INVALID_REQUEST, USER);
