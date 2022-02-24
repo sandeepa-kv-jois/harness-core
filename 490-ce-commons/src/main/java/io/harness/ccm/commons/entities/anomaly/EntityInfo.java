@@ -27,4 +27,6 @@ public class EntityInfo {
   String gcpSKUDescription;
   String awsAccount;
   String awsService;
+  String awsInstancetype;
+  String awsUsageType;
 }

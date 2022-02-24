@@ -32,6 +32,7 @@ import io.harness.ccm.commons.entities.anomaly.AnomalyQueryDTO;
 import io.harness.ccm.commons.entities.anomaly.AnomalySummary;
 import io.harness.ccm.commons.entities.anomaly.AnomalyWidget;
 import io.harness.ccm.commons.entities.anomaly.AnomalyWidgetData;
+import io.harness.ccm.commons.entities.anomaly.EntityInfo;
 import io.harness.ccm.commons.entities.anomaly.PerspectiveAnomalyData;
 import io.harness.ccm.commons.utils.AnomalyQueryBuilder;
 import io.harness.ccm.commons.utils.TimeUtils;
@@ -190,6 +191,7 @@ public class AnomalyServiceImpl implements AnomalyService {
         .actualAmount(anomaly.getActualcost())
         .expectedAmount(anomaly.getExpectedcost())
         .trend(getAnomalyTrend(anomaly.getActualcost(), anomaly.getExpectedcost()))
+        .entity(getEntityInfo(anomaly))
         .resourceName(getResourceName(anomaly))
         .resourceInfo(getResourceInfo(anomaly))
         // Todo : Remove default assignment when status column is added to anomaly table
@@ -251,6 +253,24 @@ public class AnomalyServiceImpl implements AnomalyService {
     }
 
     return "";
+  }
+
+  private EntityInfo getEntityInfo(Anomalies anomaly) {
+    return EntityInfo.builder()
+        .clusterId(anomaly.getClusterid())
+        .clusterName(anomaly.getClustername())
+        .namespace(anomaly.getNamespace())
+        .workloadName(anomaly.getWorkloadname())
+        .workloadType(anomaly.getWorkloadtype())
+        .gcpProject(anomaly.getGcpproject())
+        .gcpSKUId(anomaly.getGcpskuid())
+        .gcpSKUDescription(anomaly.getGcpskudescription())
+        .gcpProduct(anomaly.getGcpproduct())
+        .awsAccount(anomaly.getAwsaccount())
+        .awsService(anomaly.getAwsservice())
+        .awsUsageType(anomaly.getAwsusagetype())
+        .awsInstancetype(anomaly.getAwsinstancetype())
+        .build();
   }
 
   private String getCloudProvider(Anomalies anomaly) {
