@@ -15,10 +15,9 @@ import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.beans.CustomHealthDataCollectionInfo;
 import io.harness.cvng.beans.MetricResponseMappingDTO;
-import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
-import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
+import io.harness.cvng.core.entities.AnalysisInfo;
 import io.harness.cvng.core.entities.CustomHealthCVConfig;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
@@ -56,9 +55,9 @@ public class CustomHealthCollectionInfoMapperTest extends CvNextGenTestBase {
             .queryType(HealthSourceQueryType.HOST_BASED)
             .metricResponseMapping(responseMapping)
             .metricName(metricName)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .riskProfile(RiskProfile.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .urlPath(urlPath)
             .build();
 

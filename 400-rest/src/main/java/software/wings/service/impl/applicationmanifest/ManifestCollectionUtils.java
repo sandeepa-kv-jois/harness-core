@@ -166,6 +166,7 @@ public class ManifestCollectionUtils {
             .repoName(convertBase64UuidToCanonicalForm(appManifestId))
             .repoDisplayName(settingAttribute.getName())
             .helmVersion(helmVersion)
+            .bypassHelmFetch(featureFlagService.isEnabled(FeatureName.BYPASS_HELM_FETCH, accountId))
             .helmRepoConfig(helmRepoConfig);
 
     if (isNotBlank(helmRepoConfig.getConnectorId())) {

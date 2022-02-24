@@ -89,7 +89,7 @@ public class TriggerHelper {
         break;
       case PUSH:
         jsonObject.put(BRANCH, parsedPayload.getPush().getRef().replaceFirst("^refs/heads/", ""));
-        jsonObject.put(TARGET_BRANCH, parsedPayload.getPush().getRepo().getBranch());
+        jsonObject.put(TARGET_BRANCH, parsedPayload.getPush().getRef().replaceFirst("^refs/heads/", ""));
         jsonObject.put(COMMIT_SHA, parsedPayload.getPush().getAfter());
         jsonObject.put(EVENT, PUSH);
         jsonObject.put(TYPE, WEBHOOK_TYPE);

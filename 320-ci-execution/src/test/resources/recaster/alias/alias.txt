@@ -3,6 +3,7 @@ io.harness.ngpipeline.status.BuildStatusUpdateParameter
 io.harness.yaml.core.properties.NGProperties
 io.harness.steps.approval.step.jira.JiraApprovalOutcome
 io.harness.beans.steps.stepinfo.PluginStepInfo
+io.harness.beans.steps.stepinfo.SecurityStepInfo
 io.harness.plancreator.steps.internal.FlagConfigurationStepInfo
 barrierSpecParameters
 io.harness.steps.jira.update.beans.TransitionTo
@@ -119,6 +120,7 @@ io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
 io.harness.beans.stages.IntegrationStageNode
 io.harness.steps.approval.stage.ApprovalStageNode
 io.harness.cf.pipeline.FeatureFlagStageNode
+io.harness.plancreator.steps.internal.FlagConfigurationStepNode
 io.harness.steps.policy.PolicyStepInfo
 io.harness.steps.policy.PolicyStepNode
 io.harness.steps.policy.custom.CustomPolicyStepSpec
@@ -135,3 +137,4 @@ io.harness.beans.steps.nodes.RestoreCacheS3Node
 io.harness.beans.steps.nodes.S3UploadNode
 io.harness.beans.steps.nodes.SaveCacheGCSNode
 io.harness.beans.steps.nodes.SaveCacheS3Node
+io.harness.beans.steps.nodes.SecurityNode

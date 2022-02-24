@@ -28,7 +28,20 @@ public class DeploymentLogAnalysisDTO {
   ResultSummary resultSummary;
   List<HostSummary> hostSummaries;
 
-  public enum ClusterType { KNOWN_EVENT, UNKNOWN_EVENT, UNEXPECTED_FREQUENCY }
+  public enum ClusterType {
+    KNOWN_EVENT("Known"),
+    UNKNOWN_EVENT("Unknown"),
+    UNEXPECTED_FREQUENCY("Unexpected Frequency");
+    private final String displayName;
+
+    ClusterType(String displayName) {
+      this.displayName = displayName;
+    }
+
+    public String getDisplayName() {
+      return displayName;
+    }
+  }
 
   public List<Cluster> getClusters() {
     if (this.clusters == null) {

@@ -406,15 +406,12 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
           cfRequestConfig, data.getCfAppNamePrefix(), newApplicationDetails.getApplicationGuid());
       data.setNewApplicationName(isEmpty(newApps) ? data.getNewApplicationName() : newApps.get(0));
 
+      updateRoutesForExistingApplication(cfRequestConfig, executionLogCallback, data);
       if (data.isUpSizeInActiveApp()) {
-        updateRoutesForExistingApplication(cfRequestConfig, executionLogCallback, data);
         updateRoutesForInActiveApplication(cfRequestConfig, executionLogCallback, data);
-        clearRoutesAndEnvVariablesForNewApplication(
-            cfRequestConfig, executionLogCallback, data.getNewApplicationName(), data.getFinalRoutes());
-      } else {
-        updateRoutesForExistingApplication(cfRequestConfig, executionLogCallback, data);
-        updateRoutesForNewApplication(cfRequestConfig, executionLogCallback, data);
       }
+      clearRoutesAndEnvVariablesForNewApplication(
+          cfRequestConfig, executionLogCallback, data.getNewApplicationName(), data.getFinalRoutes());
     }
   }
 
@@ -433,12 +430,6 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
           color("No in-active application found for updating routes. Hence skipping\n", White, Bold));
       return;
     }
-    if (isEmpty(inActiveApplicationDetails.getUrls())) {
-      executionLogCallback.saveExecutionLog(
-          String.format("No previous route defined for in active application - [%s]. Hence skipping",
-              encodeColor(inActiveApplicationDetails.getApplicationName())));
-      return;
-    }
     String inActiveAppName =
         getAppNameBasedOnGuid(inActiveApplicationDetails, data.getCfAppNamePrefix(), cfRequestConfig);
     if (isEmpty(inActiveAppName)) {
@@ -448,11 +439,18 @@ public class PcfRouteUpdateCommandTaskHandler extends PcfCommandTaskHandler {
       return;
     }
 
-    executionLogCallback.saveExecutionLog(
-        String.format("%nUpdating routes for In Active application - [%s]", encodeColor(inActiveAppName)));
-    List<String> inActiveApplicationUrls = inActiveApplicationDetails.getUrls();
-    pcfCommandTaskBaseHelper.mapRouteMaps(
-        inActiveAppName, inActiveApplicationUrls, cfRequestConfig, executionLogCallback);
+    if (isNotEmpty(inActiveApplicationDetails.getUrls())) {
+      executionLogCallback.saveExecutionLog(
+          String.format("%nUpdating routes for In Active application - [%s]", encodeColor(inActiveAppName)));
+      List<String> inActiveApplicationUrls = inActiveApplicationDetails.getUrls();
+      pcfCommandTaskBaseHelper.mapRouteMaps(
+          inActiveAppName, inActiveApplicationUrls, cfRequestConfig, executionLogCallback);
+    } else {
+      executionLogCallback.saveExecutionLog(
+          color(String.format("No previous route defined for in active application - [%s]. Hence skipping",
+                    encodeColor(inActiveAppName)),
+              White, Bold));
+    }
     updateEnvVariableForApplication(cfRequestConfig, executionLogCallback, inActiveAppName, false);
   }
 

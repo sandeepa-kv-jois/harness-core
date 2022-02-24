@@ -48,6 +48,13 @@ public class BQConst {
   public static final String CLOUD_PROVIDER_AGG_DATA =
       "SELECT count(*) AS count, cloudProvider FROM `%s` GROUP BY cloudProvider";
 
+  public static final String CLOUD_PROVIDER_ENTITY_TAGS_INSERT =
+      "DELETE FROM `%s` WHERE cloudProviderId='%s' and entityId='%s' and entityType='%s';"
+      + " INSERT INTO `%s` (cloudProviderId, entityId, entityType, entityName, labels, updatedAt) "
+      + " VALUES ('%s', '%s', '%s', '%s', %s, '%s');";
+
+  public static final String CLOUD_PROVIDER_ENTITY_TAGS_TABLE_NAME = "cloudProviderEntityTags";
+
   public static final String cost = "cost";
   public static final String azureRate = "azureRate";
   public static final String effectiveCost = "effectivecost";

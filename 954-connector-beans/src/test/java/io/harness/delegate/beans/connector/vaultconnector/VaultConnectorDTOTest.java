@@ -9,6 +9,7 @@ package io.harness.delegate.beans.connector.vaultconnector;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.KARAN;
+import static io.harness.rule.OwnerRule.SHASHANK;
 
 import static junit.framework.TestCase.fail;
 import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
@@ -20,6 +21,7 @@ import io.harness.encryption.SecretRefHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.rule.Owner;
 
+import java.util.HashSet;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -29,17 +31,7 @@ public class VaultConnectorDTOTest extends CategoryTest {
   @Owner(developers = KARAN)
   @Category(UnitTests.class)
   public void testValidate() {
-    VaultConnectorDTO vaultConnectorDTO = VaultConnectorDTO.builder()
-                                              .authToken(SecretRefHelper.createSecretRef(randomAlphabetic(10)))
-                                              .vaultUrl("https://localhost:9090")
-                                              .basePath("harness")
-                                              .isReadOnly(false)
-                                              .isDefault(false)
-                                              .secretEngineManuallyConfigured(false)
-                                              .secretEngineName(randomAlphabetic(10))
-                                              .secretEngineVersion(2)
-                                              .renewalIntervalMinutes(10)
-                                              .build();
+    VaultConnectorDTO vaultConnectorDTO = getVaultConnectorDTO();
     vaultConnectorDTO.validate();
 
     try {
@@ -76,5 +68,100 @@ public class VaultConnectorDTOTest extends CategoryTest {
     } catch (InvalidRequestException exception) {
       // continue
     }
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testValidateVaultConectorAwsIamMissingVaultXVaultAwsIamServerId() {
+    VaultConnectorDTO vaultConnectorDTO = getVaultConnectorDTO();
+    vaultConnectorDTO.setUseAwsIam(true);
+    vaultConnectorDTO.setVaultAwsIamRole(randomAlphabetic(10));
+    vaultConnectorDTO.setAwsRegion(randomAlphabetic(10));
+    // Did not set XVaultAwsIamServerId header
+    vaultConnectorDTO.validate();
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testValidateVaultConectorAwsIamMissingVaultAwsIamRole() {
+    VaultConnectorDTO vaultConnectorDTO = getVaultConnectorDTO();
+    vaultConnectorDTO.setUseAwsIam(true);
+    vaultConnectorDTO.setHeaderAwsIam(SecretRefHelper.createSecretRef(randomAlphabetic(10)));
+    vaultConnectorDTO.setAwsRegion(randomAlphabetic(10));
+    // Did not set vaultAwsIamRole
+    vaultConnectorDTO.validate();
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testValidateVaultConectorAwsIamMissingVaultAwsRegion() {
+    VaultConnectorDTO vaultConnectorDTO = getVaultConnectorDTO();
+    vaultConnectorDTO.setUseAwsIam(true);
+    vaultConnectorDTO.setHeaderAwsIam(SecretRefHelper.createSecretRef(randomAlphabetic(10)));
+    vaultConnectorDTO.setVaultAwsIamRole(randomAlphabetic(10));
+    // Did not set a aws region
+    vaultConnectorDTO.validate();
+  }
+
+  @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testValidateVaultConectorAwsIam() {
+    VaultConnectorDTO vaultConnectorDTO = getVaultConnectorDTO();
+    vaultConnectorDTO.setUseAwsIam(true);
+    vaultConnectorDTO.setAwsRegion(randomAlphabetic(10));
+    vaultConnectorDTO.setVaultAwsIamRole(randomAlphabetic(10));
+    vaultConnectorDTO.setHeaderAwsIam(SecretRefHelper.createSecretRef(randomAlphabetic(10)));
+    vaultConnectorDTO.validate();
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testValidateVaultConectorUseEitherAwsIamOrVaultAgent_Fail() {
+    VaultConnectorDTO vaultConnectorDTO = getVaultConnectorDTO();
+    vaultConnectorDTO.setUseAwsIam(true);
+    vaultConnectorDTO.setVaultAwsIamRole(randomAlphabetic(10));
+    vaultConnectorDTO.setHeaderAwsIam(SecretRefHelper.createSecretRef(randomAlphabetic(10)));
+    vaultConnectorDTO.setUseVaultAgent(true);
+    vaultConnectorDTO.setSinkPath(randomAlphabetic(10));
+    vaultConnectorDTO.validate();
+  }
+
+  @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testValidateVaultConectorUseEitherAwsIamOrVaultAgent_Pass() {
+    VaultConnectorDTO vaultConnectorDTO = getVaultConnectorDTO();
+    vaultConnectorDTO.setUseAwsIam(true);
+    vaultConnectorDTO.setAwsRegion(randomAlphabetic(10));
+    vaultConnectorDTO.setVaultAwsIamRole(randomAlphabetic(10));
+    vaultConnectorDTO.setHeaderAwsIam(SecretRefHelper.createSecretRef(randomAlphabetic(10)));
+    vaultConnectorDTO.setUseVaultAgent(false);
+    vaultConnectorDTO.setSinkPath(randomAlphabetic(10));
+    vaultConnectorDTO.validate();
+    vaultConnectorDTO.setUseAwsIam(false);
+    vaultConnectorDTO.setUseVaultAgent(true);
+    vaultConnectorDTO.validate();
+  }
+
+  private VaultConnectorDTO getVaultConnectorDTO() {
+    HashSet<String> delegateSelectors = new HashSet<>();
+    delegateSelectors.add(randomAlphabetic(10));
+    return VaultConnectorDTO.builder()
+        .authToken(SecretRefHelper.createSecretRef(randomAlphabetic(10)))
+        .vaultUrl("https://localhost:9090")
+        .basePath("harness")
+        .isReadOnly(false)
+        .isDefault(false)
+        .secretEngineManuallyConfigured(false)
+        .secretEngineName(randomAlphabetic(10))
+        .secretEngineVersion(2)
+        .renewalIntervalMinutes(10)
+        .delegateSelectors(delegateSelectors)
+        .build();
   }
 }

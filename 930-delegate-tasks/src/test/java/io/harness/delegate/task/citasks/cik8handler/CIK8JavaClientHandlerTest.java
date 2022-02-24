@@ -178,7 +178,8 @@ public class CIK8JavaClientHandlerTest extends CategoryTest {
         new KubernetesApiResponse(new V1StatusBuilder().withStatus("Failure").build(), 404);
 
     when(podClient.delete(anyString(), anyString())).thenReturn(kubernetesApiResponse);
-    assertEquals(cik8JavaClientHandler.deletePod(podClient, podName, namespace).getStatus(), "Failure");
+    assertThatThrownBy(() -> cik8JavaClientHandler.deletePod(podClient, podName, namespace).getStatus(), "Failure")
+        .isInstanceOf(PodNotFoundException.class);
   }
 
   @Test

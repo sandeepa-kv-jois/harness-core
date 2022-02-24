@@ -28,6 +28,7 @@ import io.harness.azure.model.AzureConstants;
 import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.beans.SweepingOutput;
 import io.harness.data.algorithm.HashGenerator;
 import io.harness.delegate.beans.TaskData;
@@ -145,26 +146,30 @@ public abstract class AbstractAzureAppServiceState extends State {
       return ExecutionResponse.builder().executionStatus(SKIPPED).errorMessage(skipMessage()).build();
     }
     Activity activity;
-    Artifact artifact = azureVMSSStateHelper.getWebAppNonContainerArtifact(context, isRollback());
-    boolean isNonDocker = azureVMSSStateHelper.isWebAppNonContainerDeployment(context);
+    Artifact artifact = getWebAppPackageArtifact(context);
     if (supportRemoteManifest() && !isGitFetchDone(context)) {
       Map<String, ApplicationManifest> appServiceConfigurationRemoteManifests = getAppServiceConfiguration(context);
       Map<String, ApplicationManifest> remoteManifest =
           azureAppServiceManifestUtils.filterOutRemoteManifest(appServiceConfigurationRemoteManifests);
       if (!isEmpty(remoteManifest)) {
-        activity = azureVMSSStateHelper.createAndSaveActivity(
-            context, artifact, getStateType(), commandType(), commandUnitType(), commandUnits(isNonDocker, true));
+        activity = azureVMSSStateHelper.createAndSaveActivity(context, artifact, getStateType(), commandType(),
+            commandUnitType(), commandUnits(context.getOrchestrationWorkflowType(), true));
         return executeRemoteGITFetchTask(context, activity, appServiceConfigurationRemoteManifests, remoteManifest);
       }
     }
-    activity = azureVMSSStateHelper.createAndSaveActivity(
-        context, artifact, getStateType(), commandType(), commandUnitType(), commandUnits(isNonDocker, false));
+    activity = azureVMSSStateHelper.createAndSaveActivity(context, artifact, getStateType(), commandType(),
+        commandUnitType(), commandUnits(context.getOrchestrationWorkflowType(), false));
 
-    return submitTask(context, activity.getUuid());
+    return submitTask(context, activity.getUuid(), artifact);
   }
 
-  protected ExecutionResponse submitTask(ExecutionContext context, String activityId) {
-    AzureAppServiceStateData azureAppServiceStateData = azureVMSSStateHelper.populateAzureAppServiceData(context);
+  protected ExecutionResponse submitTask(ExecutionContext context, String activityId, Artifact artifact) {
+    AzureAppServiceStateData azureAppServiceStateData;
+    if (azureVMSSStateHelper.isWebAppDockerDeployment(context)) {
+      azureAppServiceStateData = azureVMSSStateHelper.populateAzureAppServiceData(context);
+    } else {
+      azureAppServiceStateData = azureVMSSStateHelper.populateAzureAppServiceData(context, artifact);
+    }
     AzureTaskExecutionRequest executionRequest =
         buildTaskExecutionRequest(context, azureAppServiceStateData, activityId);
     StateExecutionData stateExecutionData =
@@ -174,9 +179,9 @@ public abstract class AbstractAzureAppServiceState extends State {
 
   private Map<String, ApplicationManifest> getAppServiceConfiguration(ExecutionContext context) {
     String serviceId = azureVMSSStateHelper.getServiceId(context);
-    if (azureVMSSStateHelper.isWebAppNonContainerDeployment(context) && isRollback()) {
+    if (!azureVMSSStateHelper.isWebAppDockerDeployment(context) && isRollback()) {
       Activity rollbackActivity =
-          azureVMSSStateHelper.getWebAppRollbackActivity(context, serviceId)
+          azureVMSSStateHelper.getWebAppPackageRollbackActivity(context, serviceId)
               .orElseThrow(()
                                -> new InvalidArgumentsException(
                                    format("Not found activity for web app rollback, serviceId: %s", serviceId)));
@@ -390,7 +395,9 @@ public abstract class AbstractAzureAppServiceState extends State {
     return null;
   }
 
-  protected abstract List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch);
+  protected abstract Artifact getWebAppPackageArtifact(ExecutionContext context);
+
+  protected abstract List<CommandUnit> commandUnits(OrchestrationWorkflowType workflowType, boolean isGitFetch);
 
   @NotNull protected abstract CommandUnitType commandUnitType();
 

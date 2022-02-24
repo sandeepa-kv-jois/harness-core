@@ -99,7 +99,7 @@ public class DelegateOutboxEventHandler implements OutboxEventHandler {
     DelegateNgTokenCreateEvent delegateNgTokenCreateEvent =
         objectMapper.readValue(outboxEvent.getEventData(), DelegateNgTokenCreateEvent.class);
     AuditEntry auditEntry = AuditEntry.builder()
-                                .action(Action.CREATE)
+                                .action(Action.CREATE_TOKEN)
                                 .module(ModuleType.CORE)
                                 .newYaml(getYamlString(delegateNgTokenCreateEvent.getToken()))
                                 .timestamp(outboxEvent.getCreatedAt())

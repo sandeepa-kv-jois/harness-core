@@ -18,7 +18,6 @@ import io.harness.OrchestrationTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.engine.ExecutionEngineDispatcher;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.utils.PmsLevelUtils;
@@ -72,18 +71,25 @@ public class RetryHelperTest extends OrchestrationTestBase {
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
   public void shouldTest() {
+    String nodeExecutionId = generateUuid();
+    PlanNode planNode = PlanNode.builder()
+                            .uuid(generateUuid())
+                            .identifier("DUMMY")
+                            .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                            .serviceName("CD")
+                            .build();
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(generateUuid())
+                            .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecutionId, planNode))
+                            .build();
+
     NodeExecution nodeExecution =
         NodeExecution.builder()
-            .uuid(generateUuid())
-            .ambiance(Ambiance.newBuilder().setPlanExecutionId(generateUuid()).build())
+            .uuid(nodeExecutionId)
+            .ambiance(ambiance)
             .status(Status.FAILED)
             .mode(ExecutionMode.TASK)
-            .planNode(PlanNode.builder()
-                          .uuid(generateUuid())
-                          .identifier("DUMMY")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
+            .planNode(planNode)
             .executableResponse(ExecutableResponse.newBuilder()
                                     .setTask(TaskExecutableResponse.newBuilder()
                                                  .setTaskId(generateUuid())
@@ -101,8 +107,8 @@ public class RetryHelperTest extends OrchestrationTestBase {
                              .setManualIssuer(ManualIssuer.newBuilder().setIdentifier("admin@admin").build())
                              .build())
             .build();
-    retryHelper.retryNodeExecution(nodeExecution.getUuid(), null, generateUuid(), interruptConfig);
-    verify(executorService).submit(any(ExecutionEngineDispatcher.class));
+    retryHelper.retryNodeExecution(nodeExecution.getUuid(), generateUuid(), interruptConfig);
+    verify(executorService).submit(any(Runnable.class));
   }
   @Test
   @Owner(developers = PRASHANT)

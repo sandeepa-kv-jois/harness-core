@@ -12,10 +12,12 @@ import static software.wings.sm.StateType.AZURE_WEBAPP_SLOT_SHIFT_TRAFFIC;
 
 import io.harness.azure.model.AzureConstants;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.appservice.webapp.request.AzureWebAppSlotShiftTrafficParameters;
 import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSlotShiftTrafficResponse;
 
+import software.wings.beans.artifact.Artifact;
 import software.wings.beans.command.AzureWebAppCommandUnit;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails;
@@ -109,7 +111,12 @@ public class AzureWebAppSlotShiftTraffic extends AbstractAzureAppServiceState {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
+  protected Artifact getWebAppPackageArtifact(ExecutionContext context) {
+    return null;
+  }
+
+  @Override
+  protected List<CommandUnit> commandUnits(OrchestrationWorkflowType workflowType, boolean isGitFetch) {
     return ImmutableList.of(new AzureWebAppCommandUnit(AzureConstants.SLOT_TRAFFIC_PERCENTAGE),
         new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
   }

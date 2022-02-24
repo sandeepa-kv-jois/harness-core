@@ -28,9 +28,11 @@ Ankush Shaw ankush.shaw@harness.io
 Anshul Anshul anshul@harness.io
 Anubhaw Srivastava anubhaw@harness.io
 Archit Singla archit.singla@harness.io
+arpit-harness arpit.jain@harness.io
 Arpit Tiwari arpit.tiwari@harness.io
 Arvind Choudhary arvind.choudhary@harness.io
 Ashish Sanodia ashish.sanodia@harness.io
+Atharva Trivedi atharva.trivedi@harness.io
 Bharat Goel bharat.goel@harness.io
 Bogdan Azaric bogdan.azaric@harness.io
 Bojan Micovic bojan.micovic@harness.io
@@ -85,6 +87,7 @@ Kapil Kumawat kapil.kumawat@harness.io
 Karan Siwach karan.siwach@harness.io
 Lazar Matovic lazar.matovic@harness.io
 Lucas Mari lucas.mari@harness.io
+Mankrit Singh mankrit.singh@harness.io
 Magdalene Lee magdalene.lee@harness.io
 Mark Lu mark.lu@harness.io
 Marko Barjaktarovic marko.barjaktarovic@harness.io
@@ -109,6 +112,7 @@ Nasser Gonzalez Gonzalez nasser.gonzalez@harness.io
 Nataraja Maruthi nataraja@harness.io
 Nathan Nguyen nnguyen01@users.noreply.github.com
 Nathan Nguyen lenathan.nguyen@harness.io
+Navneet Das navneet.das@harness.io
 Nemanja Lukovic nemanja.lukovic@harness.io
 Nicolas Bantar nicolas.bantar@harness.io
 Nikhil Ranjan nikhil.ranjan@harness.io
@@ -239,3 +243,6 @@ Sergey Bobrov sergey.bobrov@harness.io
 William Wissemann william.wissemann@harness.io
 Shubham Maheshwari shubham.maheshwari@harness.io
 Scott Walker scott.walker@harness.io
+Dev Mittal devki.mittal@harness.io
+Lalit Kumar lalit.kumar@harness.io
+Naman Goenka naman.goenka@harness.io

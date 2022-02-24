@@ -23,9 +23,11 @@ import static io.harness.delegate.task.helm.HelmExceptionConstants.Explanations.
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Explanations.EXPLAIN_MISSING_PROTOCOL_HANDLER;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Explanations.EXPLAIN_NO_CHART_FOUND;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Explanations.EXPLAIN_NO_CHART_VERSION_FOUND;
+import static io.harness.delegate.task.helm.HelmExceptionConstants.Explanations.EXPLAIN_RESOURCE_CONFLICT;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Explanations.EXPLAIN_UNKNOWN_COMMAND_FLAG;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Explanations.EXPLAIN_VALIDATE_ERROR;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.HelmCliErrorMessages.CHART_VERSION_IMPROPER_CONSTRAINT;
+import static io.harness.delegate.task.helm.HelmExceptionConstants.HelmCliErrorMessages.EXISTING_RESOURCE_CONFLICT;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.HelmCliErrorMessages.FORBIDDEN_403;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.HelmCliErrorMessages.INVALID_VALUE_TYPE;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.HelmCliErrorMessages.NOT_FOUND_404;
@@ -50,6 +52,7 @@ import static io.harness.delegate.task.helm.HelmExceptionConstants.Hints.HINT_MA
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Hints.HINT_MISSING_PROTOCOL_HANDLER;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Hints.HINT_NO_CHART_FOUND;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Hints.HINT_NO_CHART_VERSION_FOUND;
+import static io.harness.delegate.task.helm.HelmExceptionConstants.Hints.HINT_RESOURCE_CONFLICT;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Hints.HINT_UNKNOWN_COMMAND_FLAG;
 import static io.harness.delegate.task.helm.HelmExceptionConstants.Hints.HINT_VALIDATE_ERROR;
 
@@ -182,6 +185,11 @@ public class HelmClientRuntimeExceptionHandler implements ExceptionHandler {
     if (lowerCaseMessage.contains(INVALID_VALUE_TYPE)) {
       return NestedExceptionUtils.hintWithExplanationException(
           HINT_VALIDATE_ERROR, EXPLAIN_VALIDATE_ERROR, helmClientException);
+    }
+
+    if (lowerCaseMessage.contains(EXISTING_RESOURCE_CONFLICT)) {
+      return NestedExceptionUtils.hintWithExplanationException(
+          HINT_RESOURCE_CONFLICT, EXPLAIN_RESOURCE_CONFLICT, helmClientException);
     }
 
     // TODO : Handle some more negative scenarios here

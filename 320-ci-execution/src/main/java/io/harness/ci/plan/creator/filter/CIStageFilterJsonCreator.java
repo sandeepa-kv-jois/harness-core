@@ -18,9 +18,11 @@ import static io.harness.walktree.visitor.utilities.VisitorParentPathUtils.PATH_
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
 import io.harness.ci.plan.creator.filter.CIFilter.CIFilterBuilder;
+import io.harness.ci.utils.ValidationUtils;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.EntityTypeProtoEnum;
@@ -101,9 +103,23 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
         }
       }
     }
-    log.info("Successfully created filter for integration stage {}", stageElementConfig.getIdentifier());
 
+    validateStage(stageElementConfig);
+
+    log.info("Successfully created filter for integration stage {}", stageElementConfig.getIdentifier());
     return ciFilterBuilder.build();
+  }
+
+  private void validateStage(StageElementConfig stageElementConfig) {
+    IntegrationStageConfig integrationStageConfig = (IntegrationStageConfig) stageElementConfig.getStageType();
+
+    Infrastructure infrastructure = integrationStageConfig.getInfrastructure();
+    if (infrastructure == null) {
+      throw new CIStageExecutionException("Infrastructure is mandatory for execution");
+    }
+    if (infrastructure.getType() == Infrastructure.Type.VM) {
+      ValidationUtils.validateVmInfraDependencies(integrationStageConfig.getServiceDependencies());
+    }
   }
 
   public Set<EntityDetailProtoDTO> getReferredEntities(

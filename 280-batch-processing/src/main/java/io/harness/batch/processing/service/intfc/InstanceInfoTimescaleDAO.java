@@ -39,6 +39,6 @@ public interface InstanceInfoTimescaleDAO {
   void stopInactiveNodesAtTime(@NotNull JobConstants jobConstants, @NotNull String clusterId,
       @NotNull Instant syncEventTimestamp, @NotNull List<String> activeNodeUidsList);
 
-  void stopInactivePodsAtTime(@NotNull JobConstants jobConstants, @NotNull String clusterId,
-      @NotNull Instant syncEventTimestamp, @NotNull List<String> activePodUidsList);
+  void stopInactivePodsAtTime(@NotNull String accountId, @NotNull String clusterId, @NotNull Instant syncEventTimestamp,
+      @NotNull List<String> activePodUidsList);
 }

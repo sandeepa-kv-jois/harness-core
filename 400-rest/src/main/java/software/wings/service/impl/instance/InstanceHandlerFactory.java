@@ -90,6 +90,7 @@ public class InstanceHandlerFactory implements InstanceHandlerFactoryService {
       case GCP_KUBERNETES:
       case AZURE_KUBERNETES:
       case DIRECT_KUBERNETES:
+      case RANCHER_KUBERNETES:
       case AWS_ECS:
         return containerInstanceHandler;
       case AZURE_INFRA:

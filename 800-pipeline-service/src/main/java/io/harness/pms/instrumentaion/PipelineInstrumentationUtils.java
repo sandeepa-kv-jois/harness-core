@@ -9,6 +9,8 @@ package io.harness.pms.instrumentaion;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.eraro.ErrorCode;
+import io.harness.eraro.ResponseMessage;
 import io.harness.execution.NodeExecution;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.failure.FailureData;
@@ -75,5 +77,18 @@ public class PipelineInstrumentationUtils {
                              .map(o -> o.getMessage())
                              .collect(Collectors.toList()));
     return errorMessages;
+  }
+
+  public String extractExceptionMessage(PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity) {
+    if (pipelineExecutionSummaryEntity.getFailureInfo() == null) {
+      return null;
+    }
+    return pipelineExecutionSummaryEntity.getFailureInfo()
+        .getResponseMessages()
+        .stream()
+        .filter(o -> o.getCode() != ErrorCode.HINT && o.getCode() != ErrorCode.EXPLANATION)
+        .map(ResponseMessage::getMessage)
+        .collect(Collectors.toList())
+        .toString();
   }
 }

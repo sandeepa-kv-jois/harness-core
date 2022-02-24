@@ -17,7 +17,7 @@ import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 
-import static software.wings.delegatetasks.azure.appservice.deployment.SlotStatusVerifier.SlotStatus.STOPPED;
+import static software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier.SlotStatus.STOPPED;
 import static software.wings.delegatetasks.azure.appservice.webapp.AppServiceDeploymentProgress.SAVE_CONFIGURATION;
 
 import static java.lang.String.format;

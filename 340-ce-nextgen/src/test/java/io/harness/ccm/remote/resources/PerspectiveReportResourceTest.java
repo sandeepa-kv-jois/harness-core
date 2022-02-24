@@ -15,6 +15,7 @@ import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.ccm.remote.resources.perspectives.PerspectiveReportResource;
 import io.harness.ccm.views.entities.CEReportSchedule;
 import io.harness.ccm.views.service.CEReportScheduleService;
 import io.harness.rule.Owner;

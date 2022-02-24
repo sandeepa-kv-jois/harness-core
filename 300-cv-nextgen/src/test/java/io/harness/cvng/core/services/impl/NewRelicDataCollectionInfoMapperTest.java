@@ -26,10 +26,12 @@ import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.NewRelicCVConfig;
 import io.harness.cvng.core.entities.NewRelicCVConfig.NewRelicMetricInfo;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
+import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
 import java.util.Arrays;
+import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -79,6 +81,24 @@ public class NewRelicDataCollectionInfoMapperTest extends CvNextGenTestBase {
   @Test
   @Owner(developers = ABHIJITH)
   @Category(UnitTests.class)
+  public void testToDataConnectionInfoForSLI() {
+    List<NewRelicCVConfig> cvConfigs =
+        Arrays.asList(createCVConfigWithCustomMetric("metric1"), createCVConfigWithCustomMetric("metric2"));
+    ServiceLevelIndicator serviceLevelIndicator =
+        builderFactory.ratioServiceLevelIndicatorBuilder().metric1("metric1").metric2("metric2").build();
+    NewRelicDataCollectionInfo dataCollectionInfo = mapper.toDataCollectionInfo(cvConfigs, serviceLevelIndicator);
+    assertThat(dataCollectionInfo.getMetricPack()).isEqualTo(cvConfigs.get(0).getMetricPack().toDTO());
+    assertThat(dataCollectionInfo.getApplicationName()).isNull();
+    assertThat(dataCollectionInfo.getApplicationId()).isEqualTo(0);
+    assertThat(dataCollectionInfo.getDataCollectionDsl()).isEqualTo("metric-pack-dsl");
+    assertThat(dataCollectionInfo.getGroupName()).isEqualTo("groupName");
+    assertThat(dataCollectionInfo.isCustomQuery()).isEqualTo(true);
+    assertThat(dataCollectionInfo.getMetricInfoList().size()).isEqualTo(2);
+  }
+
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
   public void testToDataConnectionInfo_withCustomMetricsTaskTypeFilter() {
     NewRelicCVConfig cvConfig = createCVConfigWithCustomMetric();
     NewRelicDataCollectionInfo dataCollectionInfo = mapper.toDataCollectionInfo(cvConfig, TaskType.DEPLOYMENT);
@@ -98,6 +118,10 @@ public class NewRelicDataCollectionInfoMapperTest extends CvNextGenTestBase {
   }
 
   private NewRelicCVConfig createCVConfigWithCustomMetric() {
+    return createCVConfigWithCustomMetric("metricIdentifier1`");
+  }
+
+  private NewRelicCVConfig createCVConfigWithCustomMetric(String metricIdentifier) {
     NewRelicCVConfig cvConfig = (NewRelicCVConfig) builderFactory.newRelicCVConfigBuilder()
                                     .groupName("groupName")
 
@@ -111,7 +135,7 @@ public class NewRelicDataCollectionInfoMapperTest extends CvNextGenTestBase {
     cvConfig.setMetricInfos(Arrays.asList(
         NewRelicCVConfig.NewRelicMetricInfo.builder()
             .metricName("metric1")
-            .identifier("metricIdentifier1")
+            .identifier(metricIdentifier)
             .nrql("Select * from transactions")
             .metricType(TimeSeriesMetricType.RESP_TIME)
             .responseMapping(MetricResponseMapping.builder()

@@ -52,6 +52,9 @@ public class WingsReflectionUtils {
         return true;
       }
     }
+    if (secretId.toLowerCase().startsWith("secretid") || secretId.toLowerCase().startsWith("secretname")) {
+      return true;
+    }
     return false;
   }
 

@@ -11,7 +11,12 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.migration.list.AddDefaultFieldsToMonitoredService;
 import io.harness.cvng.migration.list.AddDeploymentMonitoringSourcePerpetualTask;
+import io.harness.cvng.migration.list.AddEnvRefsToMonitoredServiceMigration;
+import io.harness.cvng.migration.list.AddMetricIdentifierInCVConfigsAndMetricPacks;
+import io.harness.cvng.migration.list.AddMetricIdentifierToTimeSeriesThreshold;
+import io.harness.cvng.migration.list.AddMonitoredServiceToActivityMigration;
 import io.harness.cvng.migration.list.AddMonitoredServiceToCVConfigMigration;
+import io.harness.cvng.migration.list.AddMonitoredServiceToChangeSourceMigration;
 import io.harness.cvng.migration.list.AddMonitoredServiceToHeatMapMigration;
 import io.harness.cvng.migration.list.AddMonitoringSourcesToVerificationJobMigration;
 import io.harness.cvng.migration.list.AppDCustomMetricForExistingProjects;
@@ -85,6 +90,17 @@ public class CVNGBackgroundMigrationList {
         .add(Pair.of(30, CustomHealthCustomPackForExistingProjects.class))
         .add(Pair.of(31, AddMonitoredServiceToCVConfigMigration.class))
         .add(Pair.of(32, AddMonitoredServiceToHeatMapMigration.class))
+        .add(Pair.of(33, AddMonitoredServiceToChangeSourceMigration.class))
+        .add(Pair.of(34, AddMonitoredServiceToCVConfigMigration.class))
+        .add(Pair.of(35, AddMonitoredServiceToHeatMapMigration.class))
+        .add(Pair.of(36, AddEnvRefsToMonitoredServiceMigration.class))
+        // Migration logic was missed in default monitored service create. Adding the migration again.
+        .add(Pair.of(37, AddEnvRefsToMonitoredServiceMigration.class))
+        .add(Pair.of(38, AddMonitoredServiceToHeatMapMigration.class))
+        .add(Pair.of(39, AddMonitoredServiceToActivityMigration.class))
+        .add(Pair.of(40, AddMetricIdentifierInCVConfigsAndMetricPacks.class))
+        .add(Pair.of(41, AddMetricIdentifierToTimeSeriesThreshold.class))
+
         .build();
   }
 }

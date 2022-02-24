@@ -23,7 +23,8 @@
       "isTwoFactorAuthenticationEnabled":null,
       "isUserLocked":null,
       "isPasswordExpired":null,
-      "isImportedFromIdentityProvider":null
+      "isImportedFromIdentityProvider":null,
+      "externalUserId":null
     },
     "using":"WEB_UI"
   },

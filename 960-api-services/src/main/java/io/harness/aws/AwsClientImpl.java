@@ -10,6 +10,8 @@ package io.harness.aws;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.exception.HintException.HINT_AWS_CONNECTOR_NG_DOCUMENTATION;
+import static io.harness.exception.HintException.IAM_DETAILS_COMMAND;
 
 import static java.util.Collections.singletonList;
 import static org.apache.commons.lang3.StringUtils.defaultString;
@@ -121,9 +123,9 @@ public class AwsClientImpl implements AwsClient {
         explanationMessageBuilder.append(
             ExplanationException.EXPLANATION_INVALID_CROSS_ACCOUNT_ROLE_ARN_EXTERNAL_ID_PERMISSIONS_KEY);
       }
-
-      throw NestedExceptionUtils.hintWithExplanationException(
-          hintMessageBuilder.toString(), explanationMessageBuilder.toString(), exception);
+      hintMessageBuilder.append(IAM_DETAILS_COMMAND).append(HINT_AWS_CONNECTOR_NG_DOCUMENTATION);
+      throw NestedExceptionUtils.hintWithExplanationException(hintMessageBuilder.toString(),
+          explanationMessageBuilder.toString(), new InvalidRequestException(exception.getMessage()));
     }
   }
 

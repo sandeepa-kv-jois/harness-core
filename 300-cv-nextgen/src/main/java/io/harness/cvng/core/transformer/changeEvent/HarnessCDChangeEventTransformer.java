@@ -32,6 +32,7 @@ public class HarnessCDChangeEventTransformer
         .environmentIdentifier(changeEventDTO.getEnvIdentifier())
         .eventTime(Instant.ofEpochMilli(changeEventDTO.getEventTime()))
         .changeSourceIdentifier(changeEventDTO.getChangeSourceIdentifier())
+        .monitoredServiceIdentifier(changeEventDTO.getMonitoredServiceIdentifier())
         .type(changeEventDTO.getType().getActivityType())
         .deploymentStatus(metaData.getStatus())
         .planExecutionId(metaData.getPlanExecutionId())

@@ -54,10 +54,14 @@ import static org.mockito.Mockito.when;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EnvironmentType;
+import io.harness.beans.FeatureName;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageRequest.PageRequestBuilder;
 import io.harness.beans.PageResponse;
 import io.harness.category.element.UnitTests;
+import io.harness.cdlicense.bean.CgActiveServicesUsageInfo;
+import io.harness.cdlicense.bean.CgServiceUsage;
+import io.harness.cdlicense.impl.CgCdLicenseUsageService;
 import io.harness.cvng.beans.ServiceGuardLimitDTO;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.datahandler.models.AccountDetails;
@@ -66,6 +70,7 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnauthorizedException;
 import io.harness.exception.WingsException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.ng.core.account.DefaultExperience;
 import io.harness.rest.RestResponse;
@@ -164,6 +169,9 @@ public class AccountServiceTest extends WingsBaseTest {
   @Mock private EmailNotificationService emailNotificationService;
   @Mock private HarnessUserGroupService harnessUserGroupService;
   @Mock private AccountPermissionUtils accountPermissionUtils;
+  @Mock private CgCdLicenseUsageService cgCdLicenseUsageService;
+  @Mock private FeatureFlagService featureFlagService;
+
   @Mock(answer = Answers.RETURNS_DEEP_STUBS) private MainConfiguration configuration;
 
   @InjectMocks @Inject private LicenseService licenseService;
@@ -242,13 +250,24 @@ public class AccountServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testGetAccountDetails() {
     when(configuration.getDeploymentClusterName()).thenReturn(CLUSTER_NAME);
+    CgActiveServicesUsageInfo cgActiveServicesUsageInfo =
+        CgActiveServicesUsageInfo.builder()
+            .serviceLicenseConsumed(1)
+            .servicesConsumed(1)
+            .activeServiceUsage(asList(
+                CgServiceUsage.builder().name("svc1").serviceId("svcId").instanceCount(1).licensesUsed(1).build()))
+            .build();
+    when(cgCdLicenseUsageService.getActiveServiceLicenseUsage(anyString())).thenReturn(cgActiveServicesUsageInfo);
     Account account = setUpDataForTestingSetAccountStatusInternal(AccountType.PAID);
+    when(featureFlagService.isEnabled(FeatureName.CG_LICENSE_USAGE, account.getUuid())).thenReturn(true);
+
     AccountDetails details = accountService.getAccountDetails(account.getUuid());
     assertThat(details.getCluster()).isEqualTo(CLUSTER_NAME);
     assertThat(details.getAccountName()).isEqualTo(HARNESS_NAME);
     assertThat(details.getDefaultExperience()).isEqualTo(DefaultExperience.NG);
     assertThat(details.isCreatedFromNG()).isEqualTo(false);
     assertThat(details.getLicenseInfo().getAccountType()).isEqualTo(AccountType.PAID);
+    assertThat(details.getActiveServicesUsageInfo()).isSameAs(cgActiveServicesUsageInfo);
   }
 
   @Test

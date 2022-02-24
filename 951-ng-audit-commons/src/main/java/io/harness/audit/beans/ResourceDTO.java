@@ -32,6 +32,7 @@ import org.hibernate.validator.constraints.NotBlank;
 @FieldNameConstants(innerTypeName = "ResourceKeys")
 @Schema(name = "Resource", description = "This contains info about Resource saved as a part of Audit Event")
 public class ResourceDTO {
+  @Schema(description = "Path to ResourceType")
   public static final String RESOURCE_TYPE_DATA_TYPE = "io.harness.audit.ResourceType";
   @NotNull
   @NotBlank

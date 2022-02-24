@@ -7,6 +7,9 @@
 
 package io.harness.ccm.commons.entities;
 
+import io.swagger.v3.oas.annotations.media.Schema;
+
+@Schema(name = "Operator", description = "List of all possible Operators")
 public enum CCMOperator {
   NOT_IN,
   IN,

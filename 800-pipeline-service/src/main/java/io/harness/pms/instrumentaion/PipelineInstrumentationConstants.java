@@ -12,6 +12,9 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class PipelineInstrumentationConstants {
+  public static String PROJECT_IDENTIFIER = "projectId";
+  public static String ORG_IDENTIFIER = "orgIdentifier";
+  public static String PLAN_EXECUTION_ID = "planExecutionId";
   public static String PIPELINE_EXECUTION = "ng_pipeline_execution";
   public static String PIPELINE_NOTIFICATION = "ng_pipeline_notification";
   public static String EXECUTION_TIME = "execution_time";
@@ -31,5 +34,6 @@ public class PipelineInstrumentationConstants {
   public static String EVENT_TYPES = "events_types";
   public static String FAILURE_TYPES = "failure_types";
   public static String ERROR_MESSAGES = "error_messages";
+  public static String EXCEPTION_MESSAGE = "exception_message";
   public static String ACCOUNT_NAME = "account_name";
 }

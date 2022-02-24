@@ -8,6 +8,7 @@
 package software.wings.graphql.datafetcher.user;
 
 import static io.harness.rule.OwnerRule.VARDAN_BANSAL;
+import static io.harness.rule.OwnerRule.VIKAS_M;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -59,7 +60,7 @@ public class CreateUserDataFetcherTest extends CategoryTest {
   @Test
   @Owner(developers = VARDAN_BANSAL)
   @Category(UnitTests.class)
-  public void test_createUser() throws Exception {
+  public void test_createUserWithoutExternalUserId() throws Exception {
     final DataFetchingEnvironment dataFetchingEnvironment = Mockito.mock(DataFetchingEnvironment.class);
     doReturn(ImmutableMap.of("clientMutationId", "req1", "name", "userName", "email", "userEmail", "userGroupIds",
                  Arrays.asList("userGroupId1")))
@@ -82,6 +83,37 @@ public class CreateUserDataFetcherTest extends CategoryTest {
     if (user != null) {
       assertThat(user.getName()).isEqualTo(savedUser.getName());
       assertThat(user.getEmail()).isEqualTo(savedUser.getEmail());
+    }
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_createUserWithExternalUserId() throws Exception {
+    final DataFetchingEnvironment dataFetchingEnvironment = Mockito.mock(DataFetchingEnvironment.class);
+    doReturn(ImmutableMap.of("clientMutationId", "req1", "name", "userName", "email", "userEmail", "userGroupIds",
+                 Arrays.asList("userGroupId1"), "externalUserId", "userExternalUserId"))
+        .when(dataFetchingEnvironment)
+        .getArguments();
+    doReturn("accountId1").when(utils).getAccountId(dataFetchingEnvironment);
+    final User savedUser =
+        User.Builder.anUser().name("userName").email("userEmail").externalUserId("userExternalUserId").build();
+    doReturn(savedUser).when(userService).createUser(any(User.class), any());
+
+    final QLCreateUserPayload qlCreateUserPayload = createUserDataFetcher.get(dataFetchingEnvironment);
+    final QLUser user = qlCreateUserPayload.getUser();
+    assertThat(qlCreateUserPayload.getClientMutationId()).isEqualTo("req1");
+    verify(userService, times(1)).getUserByEmail(eq("userEmail"), eq("accountId1"));
+    verify(authRuleInstrumentation, times(1))
+        .instrumentDataFetcher(any(BaseDataFetcher.class), eq(dataFetchingEnvironment), eq(QLCreateUserPayload.class));
+
+    verify(authRuleInstrumentation, times(1))
+        .handlePostMutation(any(MutationContext.class), any(QLCreateUserInput.class), any(QLCreateUserPayload.class));
+
+    if (user != null) {
+      assertThat(user.getName()).isEqualTo(savedUser.getName());
+      assertThat(user.getEmail()).isEqualTo(savedUser.getEmail());
+      assertThat(user.getExternalUserId()).isEqualTo(savedUser.getExternalUserId());
     }
   }
 }

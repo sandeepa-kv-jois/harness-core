@@ -8,13 +8,13 @@
 package software.wings.delegatetasks;
 
 import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
+import static io.harness.delegate.task.winrm.AuthenticationScheme.NTLM;
 import static io.harness.rule.OwnerRule.AADITI;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.shell.AccessType.KEY;
 import static io.harness.shell.ScriptType.BASH;
 import static io.harness.shell.ScriptType.POWERSHELL;
 
-import static software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme.NTLM;
 import static software.wings.sm.states.ShellScriptState.ConnectionType.SSH;
 import static software.wings.sm.states.ShellScriptState.ConnectionType.WINRM;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
@@ -42,6 +42,8 @@ import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.command.CommandExecutionResult;
 import io.harness.delegate.service.ExecutionConfigOverrideFromFileOnDelegate;
+import io.harness.delegate.task.winrm.DefaultWinRmExecutor;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -60,13 +62,10 @@ import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.delegation.ShellScriptParameters;
 import software.wings.core.local.executors.ShellExecutorFactory;
 import software.wings.core.ssh.executors.SshExecutorFactory;
-import software.wings.core.winrm.executors.DefaultWinRmExecutor;
 import software.wings.core.winrm.executors.WinRmExecutorFactory;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.service.intfc.security.EncryptionService;
 
-import com.google.inject.Inject;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
@@ -90,7 +89,7 @@ public class ShellScriptTaskTest extends WingsBaseTest {
   @Mock DelegateLogService logService;
   @Mock ShellExecutorConfig shellExecutorConfig;
   @Mock ExecutionConfigOverrideFromFileOnDelegate delegateLocalConfigService;
-  @Inject @InjectMocks ShellScriptTaskHandler shellScriptTaskHandler;
+  @InjectMocks ShellScriptTaskHandler shellScriptTaskHandler;
 
   EncryptedDataDetail encryptedDataDetail1 = EncryptedDataDetail.builder()
                                                  .encryptedData(EncryptedRecordData.builder().build())
@@ -136,7 +135,7 @@ public class ShellScriptTaskTest extends WingsBaseTest {
     Map<String, String> map = new HashMap<>();
     map.put("A", "aaa");
     map.put("B", "bbb");
-    when(scriptProcessExecutor.executeCommandString(anyString(), anyList(), anyList()))
+    when(scriptProcessExecutor.executeCommandString(anyString(), anyList(), anyList(), any()))
         .thenReturn(ExecuteCommandResponse.builder()
                         .status(CommandExecutionStatus.SUCCESS)
                         .commandExecutionData(ShellExecutionData.builder().sweepingOutputEnvVariables(map).build())
@@ -191,7 +190,7 @@ public class ShellScriptTaskTest extends WingsBaseTest {
                                        .saveExecutionLogs(true)
                                        .build();
     when(shellExecutorFactory.getExecutor(any(), eq(true))).thenReturn(scriptProcessExecutor);
-    when(scriptProcessExecutor.executeCommandString(anyString(), anyList(), anyList()))
+    when(scriptProcessExecutor.executeCommandString(anyString(), anyList(), anyList(), any()))
         .thenReturn(ExecuteCommandResponse.builder().status(CommandExecutionStatus.FAILURE).build());
     CommandExecutionResult commandExecutionResult = shellScriptTask.run(params);
     assertThat(commandExecutionResult).isNotNull();
@@ -216,7 +215,7 @@ public class ShellScriptTaskTest extends WingsBaseTest {
 
     ArgumentCaptor<String> scriptStringCaptor = ArgumentCaptor.forClass(String.class);
     when(shellExecutorFactory.getExecutor(any(ShellExecutorConfig.class), eq(true))).thenReturn(scriptProcessExecutor);
-    when(scriptProcessExecutor.executeCommandString(scriptStringCaptor.capture(), anyList(), anyList()))
+    when(scriptProcessExecutor.executeCommandString(scriptStringCaptor.capture(), anyList(), anyList(), any()))
         .thenReturn(ExecuteCommandResponse.builder()
                         .status(CommandExecutionStatus.SUCCESS)
                         .commandExecutionData(ShellExecutionData.builder().build())
@@ -267,7 +266,7 @@ public class ShellScriptTaskTest extends WingsBaseTest {
 
     ArgumentCaptor<SshSessionConfig> sshSessionConfigArgumentCaptor = ArgumentCaptor.forClass(SshSessionConfig.class);
     when(sshExecutorFactory.getExecutor(any(SshSessionConfig.class), eq(true))).thenReturn(scriptSshExecutor);
-    when(scriptSshExecutor.executeCommandString(anyString(), anyList(), anyList()))
+    when(scriptSshExecutor.executeCommandString(anyString(), anyList(), anyList(), any()))
         .thenReturn(ExecuteCommandResponse.builder().status(CommandExecutionStatus.SUCCESS).build());
     CommandExecutionResult commandExecutionResult = shellScriptTask.run(params);
     assertThat(commandExecutionResult).isNotNull();
@@ -322,7 +321,7 @@ public class ShellScriptTaskTest extends WingsBaseTest {
         ArgumentCaptor.forClass(WinRmSessionConfig.class);
     when(winrmExecutorFactory.getExecutor(any(WinRmSessionConfig.class), anyBoolean(), eq(true)))
         .thenReturn(defaultWinRmExecutor);
-    when(defaultWinRmExecutor.executeCommandString(anyString(), anyList(), anyList()))
+    when(defaultWinRmExecutor.executeCommandString(anyString(), anyList(), anyList(), any()))
         .thenReturn(ExecuteCommandResponse.builder().status(CommandExecutionStatus.SUCCESS).build());
     CommandExecutionResult commandExecutionResult = shellScriptTask.run(params);
     assertThat(commandExecutionResult).isNotNull();

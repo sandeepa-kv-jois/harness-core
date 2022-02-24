@@ -10,15 +10,20 @@ package io.harness.cvng.core.dsl;
 import static io.harness.CvNextGenTestBase.getResourceFilePath;
 import static io.harness.CvNextGenTestBase.getSourceResourceFile;
 import static io.harness.rule.OwnerRule.ABHIJITH;
+import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.category.element.UnitTests;
+import io.harness.connector.ConnectorInfoDTO;
 import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.HoverflyCVNextGenTestBase;
+import io.harness.cvng.beans.DataCollectionRequest;
+import io.harness.cvng.beans.DataCollectionRequestType;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.StackdriverDataCollectionInfo;
 import io.harness.cvng.beans.TimeSeriesMetricType;
+import io.harness.cvng.beans.stackdriver.StackdriverDashboardDetailsRequest;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.MetricPack;
@@ -33,14 +38,17 @@ import io.harness.datacollection.entity.TimeSeriesRecord;
 import io.harness.datacollection.impl.DataCollectionServiceImpl;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.rule.Owner;
+import io.harness.serializer.JsonUtils;
 
 import com.google.common.collect.Sets;
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.time.Clock;
 import java.time.Instant;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -58,6 +66,7 @@ public class StackdriverMetricDataCollectionDSLTest extends HoverflyCVNextGenTes
   BuilderFactory builderFactory;
   @Inject private MetricPackService metricPackService;
   @Inject private StackdriverDataCollectionInfoMapper dataCollectionInfoMapper;
+  @Inject Clock clock;
   private ExecutorService executorService;
 
   public static String DEFAULT_JSON_METRIC_DEFINITION = "{\n"
@@ -96,7 +105,7 @@ public class StackdriverMetricDataCollectionDSLTest extends HoverflyCVNextGenTes
       + "}";
 
   @Before
-  public void setup() {
+  public void setup() throws IOException {
     super.before();
     builderFactory = BuilderFactory.getDefault();
     executorService = Executors.newFixedThreadPool(10);
@@ -136,10 +145,7 @@ public class StackdriverMetricDataCollectionDSLTest extends HoverflyCVNextGenTes
         dataCollectionInfoMapper.toDataCollectionInfo((StackdriverCVConfig) stackdriverCVConfig, TaskType.DEPLOYMENT);
 
     Map<String, Object> params = stackdriverDataCollectionInfo.getDslEnvVariables(GcpConnectorDTO.builder().build());
-    params.put("accessToken",
-        "run command - gcloud beta auth application-default print-access-token"); // use GOOGLE_APPLICATION_CREDENTIALS
-                                                                                  // =
-                                                                                  // https://vault-internal.harness.io:8200/ui/vault/secrets/secret/show/srm/chi-play-gcp
+    params.put("accessToken", accessToken);
     params.put("project", "chi-play");
     Map<String, String> headers = new HashMap<>();
     RuntimeParameters runtimeParameters = RuntimeParameters.builder()
@@ -189,9 +195,7 @@ public class StackdriverMetricDataCollectionDSLTest extends HoverflyCVNextGenTes
     stackdriverDataCollectionInfo.setCollectHostData(true);
 
     Map<String, Object> params = stackdriverDataCollectionInfo.getDslEnvVariables(GcpConnectorDTO.builder().build());
-    params.put("accessToken",
-        "ya29.c.b0AXv0zTP-t4B2e_u3C3wFpZKl2Evseif0tf03DfMO-WTLavJylIXBzBP4FZH18ShPrtio3LK_hTTILZqAbc7xYgyjxrEH2N4ko63ZurHTvl7ViKiMKII7mhZsN8wgdUJb-GJbkfwHGpJerGSz3KraI2uYHBDLRdwZZmsCMjDYLncOF-lJzfL2NWsxqwQfhLLML1PfLzD7i-hlPW1bsFSLTwZTMK_7AA");
-    // https://vault-internal.harness.io:8200/ui/vault/secrets/secret/show/srm/chi-play-gcp
+    params.put("accessToken", accessToken);
     params.put("project", "chi-play");
     Map<String, String> headers = new HashMap<>();
     RuntimeParameters runtimeParameters = RuntimeParameters.builder()
@@ -207,6 +211,37 @@ public class StackdriverMetricDataCollectionDSLTest extends HoverflyCVNextGenTes
     assertThat(Sets.newHashSet(timeSeriesRecords))
         .isEqualTo(new Gson().fromJson(readJson("expected-stackdriver-dsl-output-with-hosts.json"),
             new TypeToken<Set<TimeSeriesRecord>>() {}.getType()));
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testExecute_OnboardStackdriverDSL() throws IOException {
+    DataCollectionDSLService dataCollectionDSLService = new DataCollectionServiceImpl();
+    dataCollectionDSLService.registerDatacollectionExecutorService(executorService);
+    DataCollectionRequest dataCollectionRequest =
+        StackdriverDashboardDetailsRequest.builder()
+            .type(DataCollectionRequestType.STACKDRIVER_DASHBOARD_GET)
+            .path("projects/7065288960/dashboards/883f5f4e-02e3-44f6-a64e-7f6915d093cf")
+            .connectorInfoDTO(ConnectorInfoDTO.builder().build())
+            .build();
+    String code = dataCollectionRequest.getDSL();
+
+    Map<String, Object> params = dataCollectionRequest.fetchDslEnvVariables();
+    params.put("accessToken", accessToken);
+    params.put("project", "chi-play");
+    Instant now = clock.instant();
+    final RuntimeParameters runtimeParameters = RuntimeParameters.builder()
+                                                    .baseUrl(dataCollectionRequest.getBaseUrl())
+                                                    .commonHeaders(dataCollectionRequest.collectionHeaders())
+                                                    .commonOptions(dataCollectionRequest.collectionParams())
+                                                    .otherEnvVariables(params)
+                                                    .endTime(dataCollectionRequest.getEndTime(now))
+                                                    .startTime(dataCollectionRequest.getStartTime(now))
+                                                    .build();
+    String response = JsonUtils.asJson(dataCollectionDSLService.execute(code, runtimeParameters, callDetails -> {}));
+    assertThat(new Gson().fromJson(response, JsonArray.class))
+        .isEqualTo(new Gson().fromJson(readJson("expected-onboard-stackdriver-dsl-output.json"), JsonArray.class));
   }
 
   private String readDSL(String name) throws IOException {

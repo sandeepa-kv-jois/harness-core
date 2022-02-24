@@ -25,4 +25,5 @@ public class QLUpdateUserInput implements QLMutationInput {
   private String clientMutationId;
   private RequestField<String> name;
   private RequestField<List<String>> userGroupIds;
+  private RequestField<String> externalUserId;
 }

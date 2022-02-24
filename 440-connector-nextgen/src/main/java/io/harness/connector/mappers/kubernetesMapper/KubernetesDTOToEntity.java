@@ -153,6 +153,7 @@ public class KubernetesDTOToEntity
     return K8sServiceAccount.builder()
         .serviceAcccountTokenRef(
             SecretRefHelper.getSecretConfigString(kubernetesServiceAccountDTO.getServiceAccountTokenRef()))
+        .caCertRef(SecretRefHelper.getSecretConfigString(kubernetesServiceAccountDTO.getCaCertRef()))
         .build();
   }
 

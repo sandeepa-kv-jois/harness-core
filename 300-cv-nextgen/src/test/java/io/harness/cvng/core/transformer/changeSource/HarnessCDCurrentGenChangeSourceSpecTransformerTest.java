@@ -40,7 +40,7 @@ public class HarnessCDCurrentGenChangeSourceSpecTransformerTest extends CvNextGe
   public void test_getEntity() {
     ChangeSourceDTO changeSourceDTO = builderFactory.getHarnessCDCurrentGenChangeSourceDTOBuilder().build();
     ChangeSource harnessCDCurrentGenChangeSource = harnessCDCurrentGenChangeSourceSpecTransformer.getEntity(
-        builderFactory.getContext().getServiceEnvironmentParams(), changeSourceDTO);
+        builderFactory.getContext().getMonitoredServiceParams(), changeSourceDTO);
     assertThat(harnessCDCurrentGenChangeSource.getClass()).isEqualTo(HarnessCDCurrentGenChangeSource.class);
     assertThat(harnessCDCurrentGenChangeSource.getIdentifier()).isEqualTo(changeSourceDTO.getIdentifier());
     assertThat(harnessCDCurrentGenChangeSource.getAccountId()).isEqualTo(builderFactory.getContext().getAccountId());
@@ -50,6 +50,8 @@ public class HarnessCDCurrentGenChangeSourceSpecTransformerTest extends CvNextGe
         .isEqualTo(builderFactory.getContext().getServiceIdentifier());
     assertThat(harnessCDCurrentGenChangeSource.getEnvIdentifier())
         .isEqualTo(builderFactory.getContext().getEnvIdentifier());
+    assertThat(harnessCDCurrentGenChangeSource.getMonitoredServiceIdentifier())
+        .isEqualTo(builderFactory.getContext().getMonitoredServiceParams().getMonitoredServiceIdentifier());
     assertThat(harnessCDCurrentGenChangeSource.isEnabled()).isTrue();
   }
 

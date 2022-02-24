@@ -25,4 +25,5 @@ public class QLCreateApplicationInput implements QLMutationInput {
   String name;
   String description;
   Boolean isManualTriggerAuthorized;
+  Boolean areWebHookSecretsMandated;
 }

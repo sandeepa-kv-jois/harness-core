@@ -79,7 +79,7 @@ public class K8sPVInfoEventTaskletTest extends BaseTaskletTest {
   @Before
   public void setup() {
     when(config.getBatchQueryConfig()).thenReturn(BatchQueryConfig.builder().queryBatchSize(50).build());
-    when(instanceDataBulkWriteService.updateList(any())).thenReturn(true);
+    when(instanceDataBulkWriteService.upsertInstanceInfo(any())).thenReturn(true);
   }
 
   @Test

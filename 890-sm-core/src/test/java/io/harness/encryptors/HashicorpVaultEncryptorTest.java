@@ -8,6 +8,7 @@
 package io.harness.encryptors;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.rule.OwnerRule.SHASHANK;
 import static io.harness.rule.OwnerRule.UTKARSH;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -25,8 +26,11 @@ import io.harness.concurrent.HTimeLimiter;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.encryptors.clients.HashicorpVaultEncryptor;
 import io.harness.exception.SecretManagementDelegateException;
+import io.harness.helpers.NGVaultTaskHelper;
+import io.harness.helpers.ext.vault.VaultAppRoleLoginResult;
 import io.harness.helpers.ext.vault.VaultRestClient;
 import io.harness.helpers.ext.vault.VaultRestClientFactory;
+import io.harness.helpers.ext.vault.VaultSysAuthRestClient;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptedRecord;
 import io.harness.security.encryption.EncryptedRecordData;
@@ -36,6 +40,7 @@ import software.wings.beans.VaultConfig;
 
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -48,12 +53,14 @@ import org.powermock.modules.junit4.PowerMockRunner;
 @Slf4j
 @OwnedBy(PL)
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({VaultRestClientFactory.class})
+@PrepareForTest({VaultRestClientFactory.class, NGVaultTaskHelper.class})
 @PowerMockIgnore({"javax.security.*", "org.apache.http.conn.ssl.", "javax.net.ssl.", "javax.crypto.*"})
 public class HashicorpVaultEncryptorTest extends CategoryTest {
   private HashicorpVaultEncryptor hashicorpVaultEncryptor;
   private VaultConfig vaultConfig;
   private VaultRestClient vaultRestClient;
+  private VaultSysAuthRestClient vaultSysAuthRestClient;
+  public static final String AWS_IAM_TOKEN = "awsIamToken";
 
   @Before
   public void setup() {
@@ -78,6 +85,16 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
           String path = (String) invocationOnMock.getArguments()[1];
           return vaultConfig.getBasePath() + "/" + path;
         });
+    mockStatic(NGVaultTaskHelper.class);
+    VaultAppRoleLoginResult loginResult = VaultAppRoleLoginResult.builder()
+                                              .clientToken(AWS_IAM_TOKEN)
+                                              .leaseDuration(10L)
+                                              .accessor("accessor")
+                                              .renewable(true)
+                                              .build();
+    PowerMockito.when(NGVaultTaskHelper.getVaultAwmIamAuthLoginResult(eq(vaultConfig))).thenAnswer(invocationOnMock -> {
+      return loginResult;
+    });
   }
 
   @Test
@@ -89,6 +106,24 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
     String fullPath = vaultConfig.getBasePath() + "/" + name;
     when(vaultRestClient.writeSecret(vaultConfig.getAuthToken(), vaultConfig.getNamespace(),
              vaultConfig.getSecretEngineName(), fullPath, plainText))
+        .thenReturn(true);
+    EncryptedRecord encryptedRecord =
+        hashicorpVaultEncryptor.createSecret(vaultConfig.getAccountId(), name, plainText, vaultConfig);
+    assertThat(encryptedRecord).isNotNull();
+    assertThat(encryptedRecord.getEncryptionKey()).isEqualTo(name);
+    assertThat(encryptedRecord.getEncryptedValue()).isEqualTo(name.toCharArray());
+  }
+
+  @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testCreateSecretAwsIam() throws IOException {
+    String name = UUIDGenerator.generateUuid();
+    String plainText = UUIDGenerator.generateUuid();
+    String fullPath = vaultConfig.getBasePath() + "/" + name;
+    performAwsIamLoginResult();
+    when(vaultRestClient.writeSecret(
+             AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(), fullPath, plainText))
         .thenReturn(true);
     EncryptedRecord encryptedRecord =
         hashicorpVaultEncryptor.createSecret(vaultConfig.getAccountId(), name, plainText, vaultConfig);
@@ -134,6 +169,25 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testCreateSecretAwsIam_throwSecretManagementDelegateException() throws IOException {
+    String name = UUIDGenerator.generateUuid();
+    String plainText = UUIDGenerator.generateUuid();
+    String fullPath = vaultConfig.getBasePath() + "/" + name;
+    performAwsIamLoginResult();
+    when(vaultRestClient.writeSecret(
+             AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(), fullPath, plainText))
+        .thenReturn(false);
+    try {
+      hashicorpVaultEncryptor.createSecret(vaultConfig.getAccountId(), name, plainText, vaultConfig);
+      fail("Create Secret should fail");
+    } catch (SecretManagementDelegateException e) {
+      assertThat(e.getMessage()).isEqualTo("After 3 tries, encryption for vault secret " + name + " failed.");
+    }
+  }
+
+  @Test
   @Owner(developers = UTKARSH)
   @Category(UnitTests.class)
   public void testUpdateSecret() throws IOException {
@@ -142,6 +196,28 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
     String fullPath = vaultConfig.getBasePath() + "/" + name;
     when(vaultRestClient.writeSecret(vaultConfig.getAuthToken(), vaultConfig.getNamespace(),
              vaultConfig.getSecretEngineName(), fullPath, plainText))
+        .thenReturn(true);
+    EncryptedRecord oldRecord = EncryptedRecordData.builder()
+                                    .encryptedValue(UUIDGenerator.generateUuid().toCharArray())
+                                    .encryptionKey(UUIDGenerator.generateUuid())
+                                    .build();
+    EncryptedRecord encryptedRecord =
+        hashicorpVaultEncryptor.updateSecret(vaultConfig.getAccountId(), name, plainText, oldRecord, vaultConfig);
+    assertThat(encryptedRecord).isNotNull();
+    assertThat(encryptedRecord.getEncryptionKey()).isEqualTo(name);
+    assertThat(encryptedRecord.getEncryptedValue()).isEqualTo(name.toCharArray());
+  }
+
+  @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testUpdateSecretAwsIam() throws IOException {
+    String name = UUIDGenerator.generateUuid();
+    String plainText = UUIDGenerator.generateUuid();
+    String fullPath = vaultConfig.getBasePath() + "/" + name;
+    performAwsIamLoginResult();
+    when(vaultRestClient.writeSecret(
+             AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(), fullPath, plainText))
         .thenReturn(true);
     EncryptedRecord oldRecord = EncryptedRecordData.builder()
                                     .encryptedValue(UUIDGenerator.generateUuid().toCharArray())
@@ -199,6 +275,29 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testUpdateSecretAwsIam_throwSecretManagementDelegateException() throws IOException {
+    String name = UUIDGenerator.generateUuid();
+    String plainText = UUIDGenerator.generateUuid();
+    String fullPath = vaultConfig.getBasePath() + "/" + name;
+    performAwsIamLoginResult();
+    EncryptedRecord oldRecord = EncryptedRecordData.builder()
+                                    .encryptedValue(UUIDGenerator.generateUuid().toCharArray())
+                                    .encryptionKey(UUIDGenerator.generateUuid())
+                                    .build();
+    when(vaultRestClient.writeSecret(
+             AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(), fullPath, plainText))
+        .thenReturn(false);
+    try {
+      hashicorpVaultEncryptor.updateSecret(vaultConfig.getAccountId(), name, plainText, oldRecord, vaultConfig);
+      fail("Update Secret should fail");
+    } catch (SecretManagementDelegateException e) {
+      assertThat(e.getMessage()).isEqualTo("After 3 tries, encryption for vault secret " + name + " failed.");
+    }
+  }
+
+  @Test
   @Owner(developers = UTKARSH)
   @Category(UnitTests.class)
   public void testRenameSecret() throws IOException {
@@ -223,6 +322,31 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testRenameSecretAwsIam() throws IOException {
+    String name = UUIDGenerator.generateUuid();
+    String plainText = UUIDGenerator.generateUuid();
+    String fullPath = vaultConfig.getBasePath() + "/" + name;
+    performAwsIamLoginResult();
+    when(vaultRestClient.writeSecret(
+             AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(), fullPath, plainText))
+        .thenReturn(true);
+    EncryptedRecord oldRecord = EncryptedRecordData.builder()
+                                    .encryptedValue(UUIDGenerator.generateUuid().toCharArray())
+                                    .encryptionKey(UUIDGenerator.generateUuid())
+                                    .build();
+    when(vaultRestClient.readSecret(AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(),
+             vaultConfig.getBasePath() + "/" + oldRecord.getEncryptionKey()))
+        .thenReturn(plainText);
+    EncryptedRecord encryptedRecord =
+        hashicorpVaultEncryptor.renameSecret(vaultConfig.getAccountId(), name, oldRecord, vaultConfig);
+    assertThat(encryptedRecord).isNotNull();
+    assertThat(encryptedRecord.getEncryptionKey()).isEqualTo(name);
+    assertThat(encryptedRecord.getEncryptedValue()).isEqualTo(name.toCharArray());
+  }
+
+  @Test
   @Owner(developers = UTKARSH)
   @Category(UnitTests.class)
   public void testRenameSecret_throwSecretManagementDelegateException() throws IOException {
@@ -233,6 +357,26 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
                                     .build();
     when(vaultRestClient.readSecret(vaultConfig.getAuthToken(), vaultConfig.getNamespace(),
              vaultConfig.getSecretEngineName(), vaultConfig.getBasePath() + "/" + oldRecord.getEncryptionKey()))
+        .thenReturn("");
+    try {
+      hashicorpVaultEncryptor.renameSecret(vaultConfig.getAccountId(), name, oldRecord, vaultConfig);
+    } catch (SecretManagementDelegateException e) {
+      assertThat(e.getMessage()).isEqualTo("After 3 tries, encryption for vault secret " + name + " failed.");
+    }
+  }
+
+  @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testRenameSecretAwsIam_throwSecretManagementDelegateException() throws IOException {
+    String name = UUIDGenerator.generateUuid();
+    EncryptedRecord oldRecord = EncryptedRecordData.builder()
+                                    .encryptedValue(UUIDGenerator.generateUuid().toCharArray())
+                                    .encryptionKey(UUIDGenerator.generateUuid())
+                                    .build();
+    performAwsIamLoginResult();
+    when(vaultRestClient.readSecret(AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(),
+             vaultConfig.getBasePath() + "/" + oldRecord.getEncryptionKey()))
         .thenReturn("");
     try {
       hashicorpVaultEncryptor.renameSecret(vaultConfig.getAccountId(), name, oldRecord, vaultConfig);
@@ -275,6 +419,21 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testFetchSecretAwsIam() throws IOException {
+    performAwsIamLoginResult();
+    String plainText = "plainText";
+    EncryptedRecord record =
+        EncryptedRecordData.builder().path(UUIDGenerator.generateUuid() + "#" + UUIDGenerator.generateUuid()).build();
+    when(vaultRestClient.readSecret(
+             AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(), record.getPath()))
+        .thenReturn(plainText);
+    char[] value = hashicorpVaultEncryptor.fetchSecretValue(vaultConfig.getAccountId(), record, vaultConfig);
+    assertThat(value).isEqualTo(plainText.toCharArray());
+  }
+
+  @Test
   @Owner(developers = UTKARSH)
   @Category(UnitTests.class)
   public void testFetchSecret_throwIOException() throws IOException {
@@ -311,5 +470,33 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
       assertThat(e.getMessage())
           .isEqualTo("Decryption failed after 3 retries for secret " + record.getEncryptionKey() + " or path null");
     }
+  }
+
+  @Test
+  @Owner(developers = SHASHANK)
+  @Category(UnitTests.class)
+  public void testFetchSecretAwsIam_throwSecretMangementDelegateException() throws IOException {
+    EncryptedRecord record = EncryptedRecordData.builder()
+                                 .encryptedValue(UUIDGenerator.generateUuid().toCharArray())
+                                 .encryptionKey(UUIDGenerator.generateUuid())
+                                 .build();
+    performAwsIamLoginResult();
+    when(vaultRestClient.readSecret(AWS_IAM_TOKEN, vaultConfig.getNamespace(), vaultConfig.getSecretEngineName(),
+             vaultConfig.getBasePath() + "/" + record.getEncryptionKey()))
+        .thenReturn("");
+    try {
+      hashicorpVaultEncryptor.fetchSecretValue(vaultConfig.getAccountId(), record, vaultConfig);
+      fail("Fetch secret should throw exception");
+    } catch (SecretManagementDelegateException e) {
+      assertThat(e.getMessage())
+          .isEqualTo("Decryption failed after 3 retries for secret " + record.getEncryptionKey() + " or path null");
+    }
+  }
+
+  @NotNull
+  private void performAwsIamLoginResult() {
+    vaultConfig.setUseAwsIam(true);
+    vaultConfig.setVaultAwsIamRole("dev");
+    vaultConfig.setXVaultAwsIamServerId("header");
   }
 }

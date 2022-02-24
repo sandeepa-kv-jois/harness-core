@@ -86,7 +86,8 @@ public class OrchestrationAdjacencyListGenerator {
     } else if (isIdPresent(nodeExecution.getParentId())) {
       parentId = nodeExecution.getParentId();
       EdgeListInternal parentEdgeList = adjacencyList.get(parentId);
-      if (isChainNonInitialVertex(graphVertexMap.get(parentId).getMode(), parentEdgeList)) {
+      if (graphVertexMap.get(parentId) != null
+          && isChainNonInitialVertex(graphVertexMap.get(parentId).getMode(), parentEdgeList)) {
         appendToChainEnd(adjacencyList, parentEdgeList.getEdges().get(0), currentUuid, prevIds);
       } else {
         parentEdgeList.getEdges().add(currentUuid);

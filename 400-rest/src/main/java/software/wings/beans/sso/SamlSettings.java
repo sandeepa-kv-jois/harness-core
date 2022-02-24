@@ -45,6 +45,7 @@ public class SamlSettings extends SSOSettings implements EncryptableSetting {
   @NotNull private String origin;
   private String logoutUrl;
   private String groupMembershipAttr;
+  private String userIdAttr;
   private String entityIdentifier;
   private SAMLProviderType samlProviderType;
   private String clientId;

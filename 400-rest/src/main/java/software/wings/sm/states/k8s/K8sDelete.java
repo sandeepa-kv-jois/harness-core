@@ -32,27 +32,18 @@ import io.harness.k8s.K8sCommandUnitConstants;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
 import software.wings.beans.ContainerInfrastructureMapping;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.K8sDummyCommandUnit;
-import software.wings.delegatetasks.aws.AwsCommandHelper;
-import software.wings.helpers.ext.container.ContainerDeploymentManagerHelper;
 import software.wings.helpers.ext.k8s.request.K8sDeleteTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sValuesLocation;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 import software.wings.service.intfc.ActivityService;
-import software.wings.service.intfc.AppService;
-import software.wings.service.intfc.ApplicationManifestService;
-import software.wings.service.intfc.ConfigService;
-import software.wings.service.intfc.DelegateService;
-import software.wings.service.intfc.InfrastructureMappingService;
-import software.wings.service.intfc.ServiceTemplateService;
-import software.wings.service.intfc.SettingsService;
-import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
@@ -67,6 +58,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -77,17 +69,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(CDP)
 @BreakDependencyOn("software.wings.service.intfc.DelegateService")
 public class K8sDelete extends AbstractK8sState {
-  @Inject private transient ConfigService configService;
-  @Inject private transient ServiceTemplateService serviceTemplateService;
   @Inject private transient ActivityService activityService;
-  @Inject private transient SecretManager secretManager;
-  @Inject private transient SettingsService settingsService;
-  @Inject private transient AppService appService;
-  @Inject private transient InfrastructureMappingService infrastructureMappingService;
-  @Inject private transient DelegateService delegateService;
-  @Inject private ContainerDeploymentManagerHelper containerDeploymentManagerHelper;
-  @Inject private transient ApplicationManifestService applicationManifestService;
-  @Inject private transient AwsCommandHelper awsCommandHelper;
   @Inject private transient FeatureFlagService featureFlagService;
 
   public static final String K8S_DELETE_COMMAND_NAME = "Delete";
@@ -109,6 +91,12 @@ public class K8sDelete extends AbstractK8sState {
 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
+    if (k8sStateHelper.isRancherInfraMapping(context)
+        && !(Objects.nonNull(context.getContextElement())
+            && context.getContextElement() instanceof RancherClusterElement)) {
+      return k8sStateHelper.getInvalidInfraDefFailedResponse();
+    }
+
     if (needsManifest()) {
       return executeWithManifest(context);
     } else {

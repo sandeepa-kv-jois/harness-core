@@ -10,6 +10,7 @@ package io.harness.cvng.core.services.impl;
 import static io.harness.cvng.beans.DataCollectionExecutionStatus.QUEUED;
 import static io.harness.cvng.beans.DataCollectionExecutionStatus.RUNNING;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.rule.OwnerRule.ANJAN;
 import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -22,6 +23,7 @@ import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataCollectionExecutionStatus;
 import io.harness.cvng.beans.DataCollectionInfo;
+import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.PrometheusDataCollectionInfo;
 import io.harness.cvng.beans.TimeSeriesMetricType;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
@@ -33,6 +35,7 @@ import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.PrometheusCVConfig;
 import io.harness.cvng.core.entities.SLIDataCollectionTask;
 import io.harness.cvng.core.services.api.CVConfigService;
+import io.harness.cvng.core.services.api.DataCollectionSLIInfoMapper;
 import io.harness.cvng.core.services.api.DataCollectionTaskManagementService;
 import io.harness.cvng.core.services.api.DataCollectionTaskService;
 import io.harness.cvng.core.services.api.MetricPackService;
@@ -71,6 +74,7 @@ public class SLIDataCollectionTaskServiceTest extends CvNextGenTestBase {
   @Inject private Clock clock;
   @Inject private VerificationJobInstanceService verificationJobInstanceService;
   @Inject private MonitoringSourcePerpetualTaskService monitoringSourcePerpetualTaskService;
+  @Inject private Map<DataSourceType, DataCollectionSLIInfoMapper> dataSourceTypeDataCollectionInfoMapperMap;
   private String cvConfigId;
   private String accountId;
   private String orgIdentifier;
@@ -158,6 +162,19 @@ public class SLIDataCollectionTaskServiceTest extends CvNextGenTestBase {
         .isEqualTo(serviceLevelIndicator.getFirstTimeDataCollectionTimeRange().getEndTime());
     assertThat(savedTask.getStartTime())
         .isEqualTo(serviceLevelIndicator.getFirstTimeDataCollectionTimeRange().getStartTime());
+  }
+
+  @Test
+  @Owner(developers = ANJAN)
+  @Category(UnitTests.class)
+  public void testDataSourceTypeDataCollectionInfoMapperMap() {
+    for (DataSourceType dataSourceType : DataSourceType.values()) {
+      VerificationType verificationType = dataSourceType.getVerificationType();
+      if (verificationType == VerificationType.TIME_SERIES && !dataSourceType.equals(DataSourceType.STACKDRIVER)
+          && !dataSourceType.equals(DataSourceType.DYNATRACE) && !dataSourceType.equals(DataSourceType.KUBERNETES)) {
+        assertThat(dataSourceTypeDataCollectionInfoMapperMap.containsKey(dataSourceType)).isTrue();
+      }
+    }
   }
 
   private ServiceLevelIndicator createSLI() {

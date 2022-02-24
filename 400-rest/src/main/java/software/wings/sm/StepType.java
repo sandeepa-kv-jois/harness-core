@@ -262,6 +262,13 @@ import software.wings.sm.states.provision.TerraformRollbackState;
 import software.wings.sm.states.provision.TerragruntApplyState;
 import software.wings.sm.states.provision.TerragruntDestroyState;
 import software.wings.sm.states.provision.TerragruntRollbackState;
+import software.wings.sm.states.rancher.RancherK8sBlueGreenDeploy;
+import software.wings.sm.states.rancher.RancherK8sCanaryDeploy;
+import software.wings.sm.states.rancher.RancherK8sDelete;
+import software.wings.sm.states.rancher.RancherK8sRollingDeploy;
+import software.wings.sm.states.rancher.RancherK8sRollingDeployRollback;
+import software.wings.sm.states.rancher.RancherKubernetesSwapServiceSelectors;
+import software.wings.sm.states.rancher.RancherResolveState;
 import software.wings.sm.states.spotinst.SpotInstDeployState;
 import software.wings.sm.states.spotinst.SpotInstListenerUpdateRollbackState;
 import software.wings.sm.states.spotinst.SpotInstListenerUpdateState;
@@ -278,9 +285,11 @@ import com.fasterxml.jackson.annotation.JsonValue;
 import com.google.common.collect.Lists;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @OwnedBy(CDC)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
@@ -517,6 +526,31 @@ public enum StepType {
   K8S_APPLY(K8sApplyState.class, K8S_APPLY_STATE, asList(KUBERNETES), asList(K8S_PHASE_STEP, WRAP_UP),
       Lists.newArrayList(DeploymentType.KUBERNETES, DeploymentType.HELM),
       asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK), asList(ROLLING, CANARY, BLUE_GREEN, MULTI_SERVICE)),
+
+  RANCHER_RESOLVE(RancherResolveState.class, WorkflowConstants.RANCHER_RESOLVE_CLUSTERS,
+      asList(WorkflowStepType.KUBERNETES), asList(K8S_PHASE_STEP), Lists.newArrayList(DeploymentType.KUBERNETES),
+      asList(PhaseType.NON_ROLLBACK), asList(ROLLING, CANARY, BLUE_GREEN)),
+  RANCHER_K8S_DEPLOYMENT_ROLLING(RancherK8sRollingDeploy.class, WorkflowConstants.RANCHER_K8S_DEPLOYMENT_ROLLING,
+      asList(KUBERNETES), asList(K8S_PHASE_STEP), Lists.newArrayList(DeploymentType.KUBERNETES),
+      asList(PhaseType.NON_ROLLBACK), asList(ROLLING, CANARY)),
+  RANCHER_K8S_CANARY_DEPLOY(RancherK8sCanaryDeploy.class, WorkflowConstants.RANCHER_K8S_CANARY_DEPLOY,
+      asList(KUBERNETES), asList(K8S_PHASE_STEP), Lists.newArrayList(DeploymentType.KUBERNETES),
+      asList(PhaseType.NON_ROLLBACK), asList(CANARY)),
+  RANCHER_K8S_BLUE_GREEN_DEPLOY(RancherK8sBlueGreenDeploy.class, WorkflowConstants.RANCHER_K8S_BLUE_GREEN_DEPLOY,
+      asList(KUBERNETES), asList(K8S_PHASE_STEP), Lists.newArrayList(DeploymentType.KUBERNETES),
+      asList(PhaseType.NON_ROLLBACK), asList(BLUE_GREEN)),
+  RANCHER_KUBERNETES_SWAP_SERVICE_SELECTORS(RancherKubernetesSwapServiceSelectors.class,
+      WorkflowConstants.RANCHER_KUBERNETES_SWAP_SERVICE_SELECTORS, asList(KUBERNETES),
+      asList(CONTAINER_SETUP, CONTAINER_DEPLOY, ROUTE_UPDATE, WRAP_UP, K8S_PHASE_STEP),
+      Lists.newArrayList(DeploymentType.KUBERNETES), asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK),
+      asList(ROLLING, CANARY, BLUE_GREEN)),
+  RANCHER_K8S_DELETE(RancherK8sDelete.class, WorkflowConstants.RANCHER_K8S_DELETE, asList(KUBERNETES),
+      asList(K8S_PHASE_STEP, WRAP_UP), Lists.newArrayList(DeploymentType.KUBERNETES),
+      asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK), asList(ROLLING, CANARY, BLUE_GREEN)),
+  RANCHER_K8S_DEPLOYMENT_ROLLING_ROLLBACK(RancherK8sRollingDeployRollback.class,
+      WorkflowConstants.RANCHER_K8S_DEPLOYMENT_ROLLING_ROLLBACK, asList(KUBERNETES), asList(K8S_PHASE_STEP, WRAP_UP),
+      Lists.newArrayList(DeploymentType.KUBERNETES), asList(PhaseType.ROLLBACK)),
+
   ROLLING_NODE_SELECT(RollingNodeSelectState.class, ROLLING_SELECT_NODES, asList(WorkflowStepType.KUBERNETES),
       asList(SELECT_NODE), asList(DeploymentType.values()), asList(PhaseType.NON_ROLLBACK)),
 
@@ -714,7 +748,7 @@ public enum StepType {
   // Utility
   SHELL_SCRIPT(ShellScriptState.class, WorkflowServiceHelper.SHELL_SCRIPT, asList(UTILITY),
       asList(PhaseStepType.values()), asList(DeploymentType.values()),
-      asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK), ShellScriptStepYamlBuilder.class),
+      asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK), true, ShellScriptStepYamlBuilder.class),
   HTTP(HttpState.class, WorkflowServiceHelper.HTTP, asList(UTILITY), asList(PhaseStepType.values()),
       asList(DeploymentType.values()), asList(PhaseType.NON_ROLLBACK, PhaseType.ROLLBACK), true),
   NEW_RELIC_DEPLOYMENT_MARKER(NewRelicDeploymentMarkerState.class, WorkflowServiceHelper.NEW_RELIC_DEPLOYMENT_MARKER,
@@ -774,6 +808,19 @@ public enum StepType {
     this.phaseStepTypes = phaseStepTypes.stream().map(Enum::name).collect(toList());
     this.workflowStepTypes = workflowStepTypes;
     this.phaseTypes = phaseTypes;
+    this.yamlValidatorClass = yamlValidatorClass;
+  }
+
+  StepType(Class<? extends State> stateClass, String displayName, List<WorkflowStepType> workflowStepTypes,
+      List<PhaseStepType> phaseStepTypes, List<DeploymentType> deploymentTypes, List<PhaseType> phaseTypes,
+      boolean supportsTimeoutFailure, Class<? extends StepYamlBuilder> yamlValidatorClass) {
+    this.stateClass = stateClass;
+    this.displayName = displayName;
+    this.deploymentTypes = deploymentTypes;
+    this.phaseStepTypes = phaseStepTypes.stream().map(Enum::name).collect(toList());
+    this.workflowStepTypes = workflowStepTypes;
+    this.phaseTypes = phaseTypes;
+    this.supportsTimeoutFailure = supportsTimeoutFailure;
     this.yamlValidatorClass = yamlValidatorClass;
   }
 
@@ -876,6 +923,7 @@ public enum StepType {
   public static final Map<WorkflowStepType, List<StepType>> workflowStepTypeListMap = new LinkedHashMap<>();
   public static final Map<InfrastructureMappingType, StepType> infrastructureMappingTypeToStepTypeMap =
       new LinkedHashMap<>();
+  public static final Set<StepType> k8sSteps = new HashSet<>();
 
   static {
     for (StepType st : StepType.values()) {
@@ -889,5 +937,15 @@ public enum StepType {
     infrastructureMappingTypeToStepTypeMap.put(InfrastructureMappingType.AWS_SSH, AWS_NODE_SELECT);
     infrastructureMappingTypeToStepTypeMap.put(AZURE_INFRA, AZURE_NODE_SELECT);
     infrastructureMappingTypeToStepTypeMap.put(PHYSICAL_DATA_CENTER_WINRM, AZURE_NODE_SELECT);
+
+    k8sSteps.add(KUBERNETES_SWAP_SERVICE_SELECTORS);
+    k8sSteps.add(K8S_SCALE);
+    k8sSteps.add(K8S_DELETE);
+    k8sSteps.add(K8S_APPLY);
+    k8sSteps.add(K8S_BLUE_GREEN_DEPLOY);
+    k8sSteps.add(K8S_DEPLOYMENT_ROLLING);
+    k8sSteps.add(K8S_CANARY_DEPLOY);
+    k8sSteps.add(K8S_DEPLOYMENT_ROLLING_ROLLBACK);
+    k8sSteps.add(K8S_TRAFFIC_SPLIT);
   }
 }

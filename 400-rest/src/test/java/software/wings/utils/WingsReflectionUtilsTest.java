@@ -269,7 +269,7 @@ public class WingsReflectionUtilsTest extends CategoryTest {
   @Owner(developers = UTKARSH)
   @Category(UnitTests.class)
   public void testIsSetByYaml_shouldReturnFalse1() {
-    String testString = "secretId";
+    String testString = "secret";
     boolean isSetByYaml = isSetByYaml(testString);
     assertThat(isSetByYaml).isFalse();
   }
@@ -278,8 +278,8 @@ public class WingsReflectionUtilsTest extends CategoryTest {
   @Owner(developers = UTKARSH)
   @Category(UnitTests.class)
   public void testIsSetByYaml() throws IllegalAccessException {
-    String secretId1 = EncryptionType.KMS.getYamlName().concat("secretId");
-    String secretId2 = "secretId2";
+    String secretId1 = EncryptionType.KMS.getYamlName().concat("secret1");
+    String secretId2 = "secret2";
 
     EncryptableSetting encryptableSetting =
         SampleEncryptableSetting.builder().encryptedKey(secretId1).encryptedValue(secretId2).build();
@@ -295,5 +295,23 @@ public class WingsReflectionUtilsTest extends CategoryTest {
     isSetByYaml =
         isSetByYaml(encryptableSetting, FieldUtils.getField(encryptableSetting.getClass(), "accountId", true));
     assertThat(isSetByYaml).isFalse();
+  }
+
+  @Test
+  @Owner(developers = UTKARSH)
+  @Category(UnitTests.class)
+  public void testIsSetByYaml_shouldReturnTrue_secretName_prefix() {
+    String testString = "secretname".concat("secretname");
+    boolean isSetByYaml = isSetByYaml(testString);
+    assertThat(isSetByYaml).isTrue();
+  }
+
+  @Test
+  @Owner(developers = UTKARSH)
+  @Category(UnitTests.class)
+  public void testIsSetByYaml_shouldReturnTrue3_secretId_prefix() {
+    String testString = "secretid".concat("secretname");
+    boolean isSetByYaml = isSetByYaml(testString);
+    assertThat(isSetByYaml).isTrue();
   }
 }

@@ -73,7 +73,7 @@ public class UploadToArtifactoryStepInfo implements PluginCompatibleStep, WithCo
 
   @Builder
   @ConstructorProperties(
-      {"identifier", "name", "retry", "connectorRef", "resources", "target", "sourcePath", "privileged", "runAsUser"})
+      {"identifier", "name", "retry", "connectorRef", "resources", "target", "sourcePath", "runAsUser"})
   UploadToArtifactoryStepInfo(String identifier, String name, Integer retry, ParameterField<String> connectorRef,
       ContainerResource resources, ParameterField<String> target, ParameterField<String> sourcePath,
       ParameterField<Integer> runAsUser) {

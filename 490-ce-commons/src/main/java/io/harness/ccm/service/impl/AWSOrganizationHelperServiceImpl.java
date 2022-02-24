@@ -19,6 +19,9 @@ import com.amazonaws.services.organizations.AWSOrganizationsClient;
 import com.amazonaws.services.organizations.model.Account;
 import com.amazonaws.services.organizations.model.ListAccountsRequest;
 import com.amazonaws.services.organizations.model.ListAccountsResult;
+import com.amazonaws.services.organizations.model.ListTagsForResourceRequest;
+import com.amazonaws.services.organizations.model.ListTagsForResourceResult;
+import com.amazonaws.services.organizations.model.Tag;
 import com.google.inject.Inject;
 import java.util.ArrayList;
 import java.util.List;
@@ -71,7 +74,7 @@ public class AWSOrganizationHelperServiceImpl implements AWSOrganizationHelperSe
     return StringUtils.substringBefore(StringUtils.substringAfterLast(arn, "iam::"), ":");
   }
 
-  private List<Account> listAwsAccounts(AWSOrganizationsClient awsOrganizationsClient) {
+  public List<Account> listAwsAccounts(AWSOrganizationsClient awsOrganizationsClient) {
     List<Account> accountList = new ArrayList<>();
     String nextToken = null;
     ListAccountsRequest listAccountsRequest = new ListAccountsRequest();
@@ -82,5 +85,19 @@ public class AWSOrganizationHelperServiceImpl implements AWSOrganizationHelperSe
       nextToken = listAccountsResult.getNextToken();
     } while (nextToken != null);
     return accountList;
+  }
+
+  public List<Tag> listAwsAccountTags(AWSOrganizationsClient awsOrganizationsClient, String awsAccountId) {
+    List<Tag> tagList = new ArrayList<>();
+    String nextToken = null;
+    ListTagsForResourceRequest listTagsForResourceRequest = new ListTagsForResourceRequest();
+    do {
+      listTagsForResourceRequest.withNextToken(nextToken);
+      ListTagsForResourceResult listTagsForResourceResult =
+          awsOrganizationsClient.listTagsForResource(listTagsForResourceRequest.withResourceId(awsAccountId));
+      tagList.addAll(listTagsForResourceResult.getTags());
+      nextToken = listTagsForResourceResult.getNextToken();
+    } while (nextToken != null);
+    return tagList;
   }
 }

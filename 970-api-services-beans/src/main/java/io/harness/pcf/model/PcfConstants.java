@@ -83,6 +83,9 @@ public interface PcfConstants {
   String CONTEXT_OLD_APP_GUID_EXPR = "pcf.oldAppGuid";
   String CONTEXT_OLD_APP_ROUTES_EXPR = "pcf.oldAppRoutes";
 
+  String CONTEXT_ACTIVE_APP_NAME_EXPR = "pcf.activeAppName";
+  String CONTEXT_INACTIVE_APP_NAME_EXPR = "pcf.inActiveAppName";
+
   String CONTEXT_APP_FINAL_ROUTES_EXPR = "pcf.finalRoutes";
   String CONTEXT_APP_TEMP_ROUTES_EXPR = "pcf.tempRoutes";
   String PCF_CONFIG_FILE_EXTENSION = ".yml";

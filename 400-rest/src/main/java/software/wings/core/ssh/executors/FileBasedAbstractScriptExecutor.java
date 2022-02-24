@@ -9,10 +9,6 @@ package software.wings.core.ssh.executors;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
-import static io.harness.logging.CommandExecutionStatus.RUNNING;
-import static io.harness.logging.LogLevel.ERROR;
-import static io.harness.logging.LogLevel.INFO;
-import static io.harness.logging.LogLevel.WARN;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
@@ -22,6 +18,7 @@ import io.harness.exception.WingsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.shell.AbstractScriptExecutor;
+import io.harness.shell.SshHelperUtils;
 
 import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
@@ -185,16 +182,6 @@ public abstract class FileBasedAbstractScriptExecutor implements FileBasedScript
     });
   }
 
-  protected void saveExecutionLog(String line) {
-    saveExecutionLog(line, RUNNING);
-  }
-
-  protected void saveExecutionLog(String line, CommandExecutionStatus commandExecutionStatus) {
-    if (shouldSaveExecutionLogs) {
-      logCallback.saveExecutionLog(line, INFO, commandExecutionStatus);
-    }
-  }
-
   public abstract String getAccountId();
 
   public abstract String getCommandUnitName();
@@ -208,15 +195,15 @@ public abstract class FileBasedAbstractScriptExecutor implements FileBasedScript
   public abstract CommandExecutionStatus scpOneFile(
       String remoteFilePath, AbstractScriptExecutor.FileProvider fileProvider);
 
+  protected void saveExecutionLog(String line) {
+    SshHelperUtils.checkAndSaveExecutionLog(line, logCallback, shouldSaveExecutionLogs);
+  }
+
   protected void saveExecutionLogWarn(String line) {
-    if (shouldSaveExecutionLogs) {
-      logCallback.saveExecutionLog(line, WARN, RUNNING);
-    }
+    SshHelperUtils.checkAndSaveExecutionLogWarn(line, logCallback, shouldSaveExecutionLogs);
   }
 
   protected void saveExecutionLogError(String line) {
-    if (shouldSaveExecutionLogs) {
-      logCallback.saveExecutionLog(line, ERROR, RUNNING);
-    }
+    SshHelperUtils.checkAndSaveExecutionLogError(line, logCallback, shouldSaveExecutionLogs);
   }
 }

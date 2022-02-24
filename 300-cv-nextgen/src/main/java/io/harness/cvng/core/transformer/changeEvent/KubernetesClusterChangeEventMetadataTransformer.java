@@ -27,6 +27,7 @@ public class KubernetesClusterChangeEventMetadataTransformer
         .environmentIdentifier(changeEventDTO.getEnvIdentifier())
         .eventTime(Instant.ofEpochMilli(changeEventDTO.getEventTime()))
         .changeSourceIdentifier(changeEventDTO.getChangeSourceIdentifier())
+        .monitoredServiceIdentifier(changeEventDTO.getMonitoredServiceIdentifier())
         .type(changeEventDTO.getType().getActivityType())
         .oldYaml(metadata.getOldYaml())
         .newYaml(metadata.getNewYaml())

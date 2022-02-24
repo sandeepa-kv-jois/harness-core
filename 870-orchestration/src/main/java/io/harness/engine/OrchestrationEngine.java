@@ -41,16 +41,22 @@ import lombok.extern.slf4j.Slf4j;
 public class OrchestrationEngine {
   @Inject private NodeExecutionStrategyFactory strategyFactory;
 
-  public <T extends PmsNodeExecution> T triggerNode(
+  public <T extends PmsNodeExecution> T runNode(
       @NonNull Ambiance ambiance, @NonNull Node node, PmsNodeExecutionMetadata metadata) {
     NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(node.getNodeType());
-    return (T) strategy.triggerNode(ambiance, node, metadata);
+    return (T) strategy.runNode(ambiance, node, metadata);
   }
 
-  public <T extends PmsNodeExecution> T triggerNextNode(
+  public <T extends PmsNodeExecution> T initiateNode(@NonNull Ambiance ambiance, @NonNull String nodeId,
+      @NonNull String runtimeId, PmsNodeExecutionMetadata metadata) {
+    NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(OrchestrationUtils.currentNodeType(ambiance));
+    return (T) strategy.initiateNode(ambiance, nodeId, runtimeId, metadata);
+  }
+
+  public <T extends PmsNodeExecution> T runNextNode(
       @NonNull Ambiance ambiance, @NonNull Node node, T previousExecution, PmsNodeExecutionMetadata metadata) {
     NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(node.getNodeType());
-    return (T) strategy.triggerNextNode(ambiance, node, previousExecution, metadata);
+    return (T) strategy.runNextNode(ambiance, node, previousExecution, metadata);
   }
 
   public void startNodeExecution(Ambiance ambiance) {

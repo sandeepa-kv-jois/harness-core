@@ -67,6 +67,7 @@ import static software.wings.beans.deployment.DeploymentMetadata.Include;
 import static software.wings.beans.deployment.DeploymentMetadata.Include.ARTIFACT_SERVICE;
 import static software.wings.beans.deployment.DeploymentMetadata.Include.DEPLOYMENT_TYPE;
 import static software.wings.beans.deployment.DeploymentMetadata.Include.ENVIRONMENT;
+import static software.wings.service.impl.ApplicationManifestServiceImpl.CHART_NAME;
 import static software.wings.sm.InstanceStatusSummary.InstanceStatusSummaryBuilder.anInstanceStatusSummary;
 import static software.wings.sm.StateType.APPROVAL;
 import static software.wings.sm.StateType.APPROVAL_RESUME;
@@ -104,7 +105,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.ApiKeyInfo;
 import io.harness.beans.CreatedByType;
 import io.harness.beans.EmbeddedUser;
-import io.harness.beans.EnvironmentType;
 import io.harness.beans.EventPayload;
 import io.harness.beans.EventType;
 import io.harness.beans.ExecutionInterruptType;
@@ -120,6 +120,7 @@ import io.harness.beans.SortOrder.OrderType;
 import io.harness.beans.SweepingOutputInstance.Scope;
 import io.harness.beans.WorkflowType;
 import io.harness.beans.event.cg.CgPipelineStartPayload;
+import io.harness.beans.event.cg.CgWorkflowStartPayload;
 import io.harness.beans.event.cg.application.ApplicationEventData;
 import io.harness.beans.event.cg.entities.EnvironmentEntity;
 import io.harness.beans.event.cg.entities.InfraDefinitionEntity;
@@ -127,6 +128,8 @@ import io.harness.beans.event.cg.entities.ServiceEntity;
 import io.harness.beans.event.cg.pipeline.ExecutionArgsEventData;
 import io.harness.beans.event.cg.pipeline.PipelineEventData;
 import io.harness.beans.event.cg.pipeline.PipelineExecData;
+import io.harness.beans.event.cg.workflow.WorkflowEventData;
+import io.harness.beans.event.cg.workflow.WorkflowExecData;
 import io.harness.cache.MongoStore;
 import io.harness.context.ContextElementType;
 import io.harness.data.structure.CollectionUtils;
@@ -203,8 +206,10 @@ import software.wings.beans.EnvSummary;
 import software.wings.beans.ExecutionArgs;
 import software.wings.beans.GraphGroup;
 import software.wings.beans.GraphNode;
+import software.wings.beans.HelmChartInputType;
 import software.wings.beans.HelmExecutionSummary;
 import software.wings.beans.InfrastructureMapping;
+import software.wings.beans.ManifestVariable;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.ParallelInfo;
 import software.wings.beans.Pipeline;
@@ -1794,6 +1799,47 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     return workflowExecution;
   }
 
+  private PipelineEventData getPipelineEventData(PipelineSummary summary) {
+    if (summary == null) {
+      return null;
+    }
+    return PipelineEventData.builder().id(summary.getPipelineId()).name(summary.getPipelineName()).build();
+  }
+
+  private CgWorkflowStartPayload getEventPayloadData(
+      Application app, ExecutionArgs executionArgs, WorkflowExecution execution, PipelineSummary summary) {
+    return CgWorkflowStartPayload.builder()
+        .application(ApplicationEventData.builder().id(app.getAppId()).name(app.getName()).build())
+        .services(isEmpty(execution.getServiceIds()) ? Collections.emptyList()
+                                                     : execution.getServiceIds()
+                                                           .stream()
+                                                           .map(id -> ServiceEntity.builder().id(id).build())
+                                                           .collect(toList()))
+        .infraDefinitions(isEmpty(execution.getInfraDefinitionIds())
+                ? Collections.emptyList()
+                : execution.getInfraDefinitionIds()
+                      .stream()
+                      .map(id -> InfraDefinitionEntity.builder().id(id).build())
+                      .collect(toList()))
+        .environments(isEmpty(execution.getEnvIds()) ? Collections.emptyList()
+                                                     : execution.getEnvIds()
+                                                           .stream()
+                                                           .map(id -> EnvironmentEntity.builder().id(id).build())
+                                                           .collect(toList()))
+        .pipeline(getPipelineEventData(summary))
+        .workflow(WorkflowEventData.builder()
+                      .id(execution.getWorkflowId())
+                      .name(workflowService.fetchWorkflowName(app.getUuid(), execution.getWorkflowId()))
+                      .build())
+        .startedAt(execution.getCreatedAt())
+        .triggeredByType(execution.getCreatedByType())
+        .triggeredBy(execution.getCreatedBy())
+        .executionArgs(ExecutionArgsEventData.builder().notes(executionArgs.getNotes()).build())
+        .pipelineExecution(PipelineExecData.builder().id(execution.getPipelineExecutionId()).build())
+        .workflowExecution(WorkflowExecData.builder().id(execution.getUuid()).build())
+        .build();
+  }
+
   private void sendEvent(Application app, ExecutionArgs executionArgs, WorkflowExecution execution) {
     if (!featureFlagService.isEnabled(FeatureName.APP_TELEMETRY, app.getAccountId())) {
       return;
@@ -1837,6 +1883,13 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                           .build())
                 .build());
       }
+    } else {
+      PipelineSummary summary = execution.getPipelineSummary();
+      eventService.deliverEvent(app.getAccountId(), app.getUuid(),
+          EventPayload.builder()
+              .eventType(EventType.WORKFLOW_START.getEventValue())
+              .data(getEventPayloadData(app, executionArgs, execution, summary))
+              .build());
     }
   }
 
@@ -1951,7 +2004,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     stateExecutionInstance.setWorkflowId(workflowExecution.getWorkflowId());
     stateExecutionInstance.setPipelineStageElementId(executionArgs.getPipelinePhaseElementId());
     stateExecutionInstance.setPipelineStageParallelIndex(executionArgs.getPipelinePhaseParallelIndex());
-
+    stateExecutionInstance.setIsOnDemandRollback(workflowExecution.isOnDemandRollback());
     if (workflowExecutionUpdate == null) {
       workflowExecutionUpdate = new WorkflowExecutionUpdate();
     }
@@ -2459,7 +2512,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     if (helmCharts == null || helmChartIds.size() != helmCharts.size()) {
       log.error("helmChartIds from executionArgs contains invalid helmCharts");
-      throw new InvalidRequestException("Invalid helm chart");
+      throw new InvalidRequestException("Helm charts provided doesn't exist");
     }
 
     List<String> serviceIds =
@@ -3018,14 +3071,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
 
     setArtifactsFromArtifactVariables(executionArgs);
 
-    if (isEmpty(executionArgs.getHelmCharts()) && isNotEmpty(executionArgs.getManifestVariables())) {
-      List<HelmChart> manifests =
-          executionArgs.getManifestVariables()
-              .stream()
-              .map(manifestVariable -> HelmChart.builder().uuid(manifestVariable.getValue()).build())
-              .collect(toList());
-      executionArgs.setHelmCharts(manifests);
-    }
+    setManifestsFromManifestVariables(appId, executionArgs, accountId);
 
     switch (executionArgs.getWorkflowType()) {
       case PIPELINE: {
@@ -3049,6 +3095,53 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       default:
         throw new WingsException(ErrorCode.INVALID_ARGUMENT).addParam("args", "workflowType");
     }
+  }
+
+  private void setManifestsFromManifestVariables(String appId, ExecutionArgs executionArgs, String accountId) {
+    if (isEmpty(executionArgs.getHelmCharts()) && isNotEmpty(executionArgs.getManifestVariables())) {
+      List<HelmChart> manifests =
+          executionArgs.getManifestVariables()
+              .stream()
+              .filter(manifestVariable -> HelmChartInputType.ID.equals(manifestVariable.getInputType()))
+              .map(manifestVariable -> HelmChart.builder().uuid(manifestVariable.getValue()).build())
+              .collect(toList());
+      manifests.addAll(
+          getHelmChartsForVersionManifestVariables(appId, executionArgs.getManifestVariables(), accountId));
+      executionArgs.setHelmCharts(manifests);
+    }
+  }
+
+  private List<HelmChart> getHelmChartsForVersionManifestVariables(
+      String appId, List<ManifestVariable> manifestVariables, String accountId) {
+    List<HelmChart> helmCharts = new ArrayList<>();
+    manifestVariables.stream()
+        .filter(mv -> HelmChartInputType.VERSION.equals(mv.getInputType()))
+        .forEach(manifestVariable -> {
+          if (isEmpty(manifestVariable.getAppManifestId())) {
+            throw new InvalidRequestException("AppManifest Id not provided in manifest variables");
+          }
+          HelmChart helmChart = helmChartService.getManifestByVersionNumber(
+              accountId, manifestVariable.getAppManifestId(), manifestVariable.getValue());
+          if (helmChart != null) {
+            helmCharts.add(helmChart);
+          } else {
+            Map<String, String> properties =
+                applicationManifestService.fetchAppManifestProperties(appId, manifestVariable.getAppManifestId());
+            HelmChart helmChartToSave = HelmChart.builder()
+                                            .name(properties.get(CHART_NAME))
+                                            .appId(appId)
+                                            .accountId(accountId)
+                                            .serviceId(manifestVariable.getServiceId())
+                                            .applicationManifestId(manifestVariable.getAppManifestId())
+                                            .version(manifestVariable.getValue())
+                                            .build();
+            helmChartToSave.setDisplayName(helmChartToSave.getName() != null
+                    ? helmChartToSave.getName() + "-" + helmChartToSave.getVersion()
+                    : helmChartToSave.getVersion());
+            helmCharts.add(helmChartService.create(helmChartToSave));
+          }
+        });
+    return helmCharts;
   }
 
   private void setArtifactsFromArtifactVariables(ExecutionArgs executionArgs) {
@@ -5675,10 +5768,6 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
       log.info("On demand rollback not available for pipeline executions {}", lastWE);
       return false;
     }
-    if (lastWE.getEnvType() != EnvironmentType.PROD) {
-      log.info("On demand rollback not available for Non prod environments {}", lastWE);
-      return false;
-    }
     List<String> infraDefId = lastWE.getInfraDefinitionIds();
     if (isEmpty(infraDefId) || infraDefId.size() != 1) {
       // Only allowing on demand rollback for workflow deploying single infra definition.
@@ -5887,5 +5976,19 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
                 -> execution.setFailureDetails(fetchFailureDetails(execution.getAppId(), execution.getUuid())));
       }
     }
+  }
+
+  @Override
+  public List<WorkflowExecution> getLatestSuccessWorkflowExecutions(String appId, String workflowId,
+      List<String> serviceIds, int executionsToSkip, int executionsToIncludeInResponse) {
+    return wingsPersistence.createQuery(WorkflowExecution.class)
+        .filter("appId", appId)
+        .filter(WorkflowExecutionKeys.workflowId, workflowId)
+        .filter(WorkflowExecutionKeys.status, SUCCESS)
+        .filter(WorkflowExecutionKeys.workflowType, ORCHESTRATION)
+        .field(WorkflowExecutionKeys.serviceIds)
+        .in(serviceIds)
+        .order(Sort.descending(WorkflowExecutionKeys.createdAt))
+        .asList(new FindOptions().skip(executionsToSkip).limit(executionsToIncludeInResponse));
   }
 }

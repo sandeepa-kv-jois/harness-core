@@ -15,8 +15,12 @@ import io.specto.hoverfly.junit.core.HoverflyConfig;
 import io.specto.hoverfly.junit.core.HoverflyMode;
 import io.specto.hoverfly.junit.core.SimulationSource;
 import io.specto.hoverfly.junit.rule.HoverflyRule;
+import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Paths;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.junit.Before;
 import org.junit.ClassRule;
@@ -34,7 +38,7 @@ public abstract class HoverflyTestBase extends CategoryTest {
    */
   private static HoverflyMode hoverflyMode = HoverflyMode.SIMULATE;
   private static String projectBaseFolder = "/Users/abhijith/Code/portal/";
-
+  protected String accessToken;
   static {
     try {
       if (hoverflyMode.equals(HoverflyMode.SIMULATE)) {
@@ -51,7 +55,11 @@ public abstract class HoverflyTestBase extends CategoryTest {
   }
 
   @Before
-  public void before() {
+  public void before() throws IOException {
+    if (hoverflyMode == HoverflyMode.CAPTURE) {
+      accessToken =
+          FileUtils.readFileToString(new File(getResourceFilePath("hoverfly/gcpAccessToken")), StandardCharsets.UTF_8);
+    }
     String filePath = "src/test/resources/hoverfly/";
     String fileName = StringUtils.replaceAll(this.getClass().getCanonicalName(), "\\.", "_") + "_"
         + testName.getMethodName() + ".json";

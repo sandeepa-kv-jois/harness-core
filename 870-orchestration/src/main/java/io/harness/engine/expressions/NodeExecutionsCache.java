@@ -14,10 +14,12 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.execution.NodeExecution;
+import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.plan.Node;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
 
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -96,9 +98,11 @@ public class NodeExecutionsCache {
     return childExecutions;
   }
 
+  // Should not change the fields to be included as its only used by NodeExecutionMap, if you change it may not use
+  // index of NodeExecution collection
   public List<NodeExecution> findAllChildren(String parentId) {
-    return nodeExecutionService.findAllChildren(
-        ambiance.getPlanExecutionId(), parentId, false, NodeProjectionUtils.fieldsForExpressionEngine);
+    return nodeExecutionService.findAllChildren(ambiance.getPlanExecutionId(), parentId, false,
+        Sets.newHashSet(NodeExecutionKeys.parentId), Sets.newHashSet(NodeExecutionKeys.id));
   }
 
   public synchronized Node fetchNode(String nodeId) {

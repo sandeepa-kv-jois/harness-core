@@ -58,7 +58,7 @@ public class K8BlueGreenWorkflowPhaseHelper extends K8AbstractWorkflowHelper {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.WRAP_UP).build();
   }
 
-  private PhaseStep getRoutUpdatePhaseStep() {
+  protected PhaseStep getRoutUpdatePhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.ROUTE_UPDATE)
         .addStep(GraphNode.builder()
                      .id(generateUuid())
@@ -72,7 +72,7 @@ public class K8BlueGreenWorkflowPhaseHelper extends K8AbstractWorkflowHelper {
         .build();
   }
 
-  private PhaseStep getDeployPhaseStep() {
+  protected PhaseStep getDeployPhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.DEPLOY)
         .addStep(GraphNode.builder()
                      .id(generateUuid())
@@ -95,7 +95,7 @@ public class K8BlueGreenWorkflowPhaseHelper extends K8AbstractWorkflowHelper {
         .build();
   }
 
-  private PhaseStep getRollbackRouteUpdatePhaseStep() {
+  protected PhaseStep getRollbackRouteUpdatePhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.ROUTE_UPDATE)
         .withPhaseStepNameForRollback(WorkflowServiceHelper.ROUTE_UPDATE)
         .addStep(GraphNode.builder()

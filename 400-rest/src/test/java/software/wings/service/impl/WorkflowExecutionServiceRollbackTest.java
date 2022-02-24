@@ -364,7 +364,7 @@ public class WorkflowExecutionServiceRollbackTest extends WingsBaseTest {
     lastSuccessfulWE.setWorkflowType(WorkflowType.ORCHESTRATION);
     lastSuccessfulWE.setEnvType(NON_PROD);
     result = workflowExecutionService.getOnDemandRollbackAvailable(APP_ID, lastSuccessfulWE);
-    assertThat(result).isFalse();
+    assertThat(result).isTrue();
 
     lastSuccessfulWE.setEnvType(PROD);
     lastSuccessfulWE.setInfraDefinitionIds(asList("id1", "id2"));

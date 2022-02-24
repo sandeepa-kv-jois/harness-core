@@ -519,27 +519,36 @@ public class WebHookServiceImpl implements WebHookService {
       String accountId = getAccountId(trigger);
       if (featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, accountId)) {
         String gitHubHashedPayload = httpHeaders == null ? null : httpHeaders.getHeaderString(X_HUB_SIGNATURE_256);
-        validateWebHookSecret(webhookSource, triggerCondition, gitHubHashedPayload, payload, accountId);
+        validateWebHookSecret(webhookSource, trigger, triggerCondition, gitHubHashedPayload, payload, accountId);
       }
     } else if (WebhookSource.BITBUCKET == webhookSource) {
       validateBitBucketWebhook(trigger, triggerCondition, httpHeaders);
     }
   }
 
-  private void validateWebHookSecret(WebhookSource webhookSource, WebHookTriggerCondition triggerCondition,
-      String hashedPayload, String payLoad, String accountId) {
+  private void validateWebHookSecret(WebhookSource webhookSource, Trigger trigger,
+      WebHookTriggerCondition triggerCondition, String hashedPayload, String payLoad, String accountId) {
     String webHookSecret = triggerCondition.getWebHookSecret();
-    if (isEmpty(webHookSecret) && isEmpty(hashedPayload)) {
-      return;
-    }
-    if (isNotEmpty(webHookSecret) && isEmpty(hashedPayload)) {
-      throw new InvalidRequestException("Harness trigger has webhook secret but its not present in " + webhookSource);
-    }
-    if (isEmpty(webHookSecret) && isNotEmpty(hashedPayload)) {
-      throw new InvalidRequestException(
-          "Webhook secret is present in " + webhookSource + " but harness trigger doesn't have it");
-    }
 
+    Application app = appService.get(trigger.getAppId());
+
+    if (Boolean.TRUE.equals(app.getAreWebHookSecretsMandated())) {
+      if (isEmpty(webHookSecret) || isEmpty(hashedPayload)) {
+        throw new InvalidRequestException("WebHookSecrets are mandated for Harness trigger! " + webhookSource);
+      }
+    } else {
+      if (isEmpty(webHookSecret) && isEmpty(hashedPayload)) {
+        return;
+      }
+
+      if (isNotEmpty(webHookSecret) && isEmpty(hashedPayload)) {
+        throw new InvalidRequestException("Harness trigger has webhook secret but its not present in " + webhookSource);
+      }
+      if (isEmpty(webHookSecret) && isNotEmpty(hashedPayload)) {
+        throw new InvalidRequestException(
+            "Webhook secret is present in " + webhookSource + " but harness trigger doesn't have it");
+      }
+    }
     Optional<EncryptedDataDetail> encryptedDataDetail =
         secretManager.encryptedDataDetails(accountId, null, webHookSecret, null);
     if (!encryptedDataDetail.isPresent()) {

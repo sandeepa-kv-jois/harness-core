@@ -24,6 +24,7 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.concurrent.HTimeLimiter;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.ResponseMessage;
 import io.harness.exception.ExceptionUtils;
@@ -41,7 +42,6 @@ import software.wings.beans.command.ShellCommandExecutionContext;
 import software.wings.core.ssh.executors.FileBasedWinRmExecutor;
 import software.wings.core.winrm.executors.WinRmExecutor;
 import software.wings.core.winrm.executors.WinRmExecutorFactory;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.delegatetasks.DelegateLogService;
 import software.wings.service.intfc.CommandUnitExecutorService;
 

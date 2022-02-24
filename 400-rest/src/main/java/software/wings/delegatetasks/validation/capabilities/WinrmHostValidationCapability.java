@@ -14,10 +14,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.executioncapability.CapabilityType;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
+import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.WinRmConnectionAttributes;
-import software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme;
 
 import java.time.Duration;
 import java.util.HashMap;

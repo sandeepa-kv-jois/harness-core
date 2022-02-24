@@ -1,0 +1,4 @@
+// Fetch gcp credentials from : https://vault-internal.harness.io:8200/ui/vault/secrets/secret/show/srm/chi-play-gcp
+// export GOOGLE_APPLICATION_CREDENTIALS=/path/to/the/gcp/credentials/file/
+// run following command and paste the token here in this file
+// gcloud beta auth application-default print-access-token

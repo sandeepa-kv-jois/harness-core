@@ -1,0 +1,55 @@
+{
+  "data" : {
+    "pairs" : [ {
+      "request" : {
+        "path" : [ {
+          "matcher" : "exact",
+          "value" : "/v1/projects/7065288960/dashboards/883f5f4e-02e3-44f6-a64e-7f6915d093cf"
+        } ],
+        "method" : [ {
+          "matcher" : "exact",
+          "value" : "GET"
+        } ],
+        "destination" : [ {
+          "matcher" : "exact",
+          "value" : "monitoring.googleapis.com"
+        } ],
+        "scheme" : [ {
+          "matcher" : "exact",
+          "value" : "https"
+        } ],
+        "body" : [ {
+          "matcher" : "exact",
+          "value" : ""
+        } ]
+      },
+      "response" : {
+        "status" : 200,
+        "body" : "H4sIAAAAAAAC/6VT0W7aMBR95ysiP0MTIIQwaQ9R102VGHTr9jAVhIx9k3hz4sh2tKao/z47AQohSJWWl9jH55x77o2z6zkOynEG6IODCil+A9HKnXrBZBSGs8BzKVbpVmBJlRuG43gS+zDwRjAe+H4cDHBgttM4mA0n1JuNSYz61pAyVXBcLfa+tw8/Hc4ypp1SM85esGYid56+3kWLdSMAjRPLnIHv43jqeX7sB4ROgq03pNPZ2BuTkMZk0rAzoTAjc1yJUhvVzmAGJYKXWa4MMBz1G8hUAws81Vtnz6yP/jKqU3MU9N+wFFiSWke/f0ZM4K3MHtVM8/f1dpQ8V7cplm0nOy2s8SPo06CHZ9fa15UzeATJQH0rQVYXdhe0z4xrkFd4hhkfzlEGWjJyo6sCPq7Qn3ILMgcN6oYJl4hcY5aDdElRunXHm5OOV8iRoEQpCRz1odocVSt0NoyT8jhJJCS1ydWMlsZZkmeQ6wfTlKA2buCpK6aGX4Bs2o+ssOkvmt9/WWzsp0GdstcrERWYPiiWVfRfWbtrdqCXWEcyVHChf5hRW/v5/eKuYxYoY3n03sEhjaW56dEzszcR/Rq2A5/HWp871BdOpSzWn0p5mBC6KISqvX97eIjjLXCrqYY1pR0QKYL5sdno+3m61oAQsb/asrA5Oqtlgja/73K+bFv1utaHVfNe9+zqtfcPTizDbD8FAAA=",
+        "encodedBody" : true,
+        "templated" : false,
+        "headers" : {
+          "Alt-Svc" : [ "h3=\":443\"; ma=2592000,h3-29=\":443\"; ma=2592000,h3-Q050=\":443\"; ma=2592000,h3-Q046=\":443\"; ma=2592000,h3-Q043=\":443\"; ma=2592000,quic=\":443\"; ma=2592000; v=\"46,43\"" ],
+          "Cache-Control" : [ "private" ],
+          "Content-Encoding" : [ "gzip" ],
+          "Content-Type" : [ "application/json; charset=UTF-8" ],
+          "Date" : [ "Wed, 09 Feb 2022 12:44:35 GMT" ],
+          "Hoverfly" : [ "Was-Here" ],
+          "Server" : [ "ESF" ],
+          "Vary" : [ "Origin", "X-Origin", "Referer" ],
+          "X-Content-Type-Options" : [ "nosniff" ],
+          "X-Frame-Options" : [ "SAMEORIGIN" ],
+          "X-Xss-Protection" : [ "0" ]
+        }
+      }
+    } ],
+    "globalActions" : {
+      "delays" : [ ]
+    }
+  },
+  "meta" : {
+    "schemaVersion" : "v5",
+    "hoverflyVersion" : "v1.1.5",
+    "timeExported" : "2022-02-09T13:49:18Z"
+  }
+}

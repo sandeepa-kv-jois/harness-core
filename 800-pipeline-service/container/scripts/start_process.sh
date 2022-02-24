@@ -29,6 +29,10 @@ else
     export GC_PARAMS=" -XX:+UseG1GC -XX:InitiatingHeapOccupancyPercent=40 -XX:MaxGCPauseMillis=1000 -Dfile.encoding=UTF-8"
 fi
 
+if [[ -z "$EXPERIMENTAL_GC" ]]; then
+    GC_PARAMS=$EXPERIMENTAL_GC
+fi
+
 export JAVA_OPTS="-Xmx${MEMORY} -XX:+HeapDumpOnOutOfMemoryError -XX:+PrintGCDetails -XX:+PrintGCDateStamps -Xloggc:mygclogfilename.gc $GC_PARAMS $JAVA_ADVANCED_FLAGS"
 
 if [[ "${ENABLE_APPDYNAMICS}" == "true" ]]; then
@@ -40,6 +44,10 @@ if [[ "${ENABLE_APPDYNAMICS}" == "true" ]]; then
 fi
 
 JAVA_OPTS=$JAVA_OPTS" -Xbootclasspath/p:/opt/harness/alpn-boot-8.1.13.v20181017.jar"
+
+if [[ "${ENABLE_TOOLS}" == "true" ]]; then
+   JAVA_OPTS=$JAVA_OPTS" -Xbootclasspath/a:/usr/lib/jvm/java-1.8-openjdk/lib/tools.jar"
+fi
 
 if [[ "${DEPLOY_MODE}" == "KUBERNETES" || "${DEPLOY_MODE}" == "KUBERNETES_ONPREM" || "${DEPLOY_VERSION}" == "COMMUNITY" ]]; then
     java $JAVA_OPTS -jar $CAPSULE_JAR $COMMAND /opt/harness/config.yml

@@ -8,15 +8,15 @@ replace github.com/harness/harness-core/product/log-service => ../../../product/
 
 require (
 	github.com/alexflint/go-arg v1.3.0
-	github.com/drone/go-scm v1.18.0
+	github.com/drone/go-scm v1.19.1
 	github.com/drone/go-scm-codecommit v0.0.0-20210315104920-2d8b9dc5ed8a
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.2
 	github.com/grpc-ecosystem/go-grpc-middleware v1.2.1
-	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
-	github.com/stretchr/testify v1.7.0
 	github.com/harness/harness-core/commons/go/lib v0.0.0-00010101000000-000000000000
 	github.com/harness/harness-core/product/log-service v0.0.0-20210305084455-298bbd5bd1fd // indirect
+	github.com/nbio/st v0.0.0-20140626010706-e9e8d9816f32 // indirect
+	github.com/stretchr/testify v1.7.0
 	go.uber.org/zap v1.15.0
 	golang.org/x/net v0.0.0-20220114011407-0dd24b26b47d
 	google.golang.org/grpc v1.43.0

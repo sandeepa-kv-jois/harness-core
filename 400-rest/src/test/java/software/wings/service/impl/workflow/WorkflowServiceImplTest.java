@@ -208,7 +208,7 @@ public class WorkflowServiceImplTest extends WingsBaseTest {
     assertThat(artifactInformation.getExecutionEntityType()).isEqualTo(WorkflowType.PIPELINE);
     assertThat(artifactInformation.getExecutionEntityName()).isEqualTo(PIPELINE_NAME);
 
-    when(helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>()))
+    when(helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>(), true))
         .thenReturn(ImmutableMap.of(APP_MANIFEST_NAME, helmCharts));
 
     LastDeployedHelmChartInformation helmChartInformation =
@@ -425,7 +425,7 @@ public class WorkflowServiceImplTest extends WingsBaseTest {
                    .withMetadata(Collections.singletonMap(ArtifactMetadataKeys.buildNo, BUILD_NO + 2))
                    .build()));
     when(artifactService.listArtifactsForService(APP_ID, SERVICE_ID, new PageRequest<>())).thenReturn(pageResponse);
-    when(helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>()))
+    when(helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>(), true))
         .thenReturn(ImmutableMap.of(APP_MANIFEST_NAME,
             asList(HelmChart.builder()
                        .uuid(HELM_CHART_ID + 2)
@@ -637,6 +637,7 @@ public class WorkflowServiceImplTest extends WingsBaseTest {
   @Owner(developers = PRABU)
   @Category(UnitTests.class)
   public void shouldPopulateDefaultVersionForRerun() {
+    String appManifestName = "appManifest123";
     GraphNode k8sDeploy = GraphNode.builder().type(StateType.K8S_APPLY.name()).name("K8sDeploy").build();
 
     Workflow workflow = createWorkflowWithPhaseStep(k8sDeploy);
@@ -644,6 +645,7 @@ public class WorkflowServiceImplTest extends WingsBaseTest {
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     ApplicationManifest applicationManifest =
         ApplicationManifest.builder()
+            .name(appManifestName)
             .storeType(StoreType.HelmChartRepo)
             .pollForChanges(true)
             .helmChartConfig(HelmChartConfig.builder().connectorId(SETTING_ID).build())
@@ -679,6 +681,7 @@ public class WorkflowServiceImplTest extends WingsBaseTest {
 
     assertThat(deploymentMetadata.getManifestVariables()).hasSize(1);
     ManifestVariable manifestVariable = deploymentMetadata.getManifestVariables().get(0);
+    assertThat(manifestVariable.getApplicationManifestSummary().get(0).getAppManifestName()).isEqualTo(appManifestName);
     ManifestSummary manifestSummary =
         manifestVariable.getApplicationManifestSummary().get(0).getLastCollectedManifest();
     assertThat(manifestSummary.getUuid()).isEqualTo(HELM_CHART_ID);
@@ -742,7 +745,7 @@ public class WorkflowServiceImplTest extends WingsBaseTest {
     assertThat(artifactInformation.getExecutionEntityType()).isEqualTo(WorkflowType.PIPELINE);
     assertThat(artifactInformation.getExecutionEntityName()).isEqualTo(PIPELINE_NAME);
 
-    when(helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>()))
+    when(helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>(), true))
         .thenReturn(ImmutableMap.of(APP_MANIFEST_NAME, helmCharts));
 
     LastDeployedHelmChartInformation helmChartInformation =

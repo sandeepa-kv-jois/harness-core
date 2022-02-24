@@ -8,8 +8,18 @@
 package io.harness.delegate.configuration;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
+import static io.harness.delegate.configuration.InstallUtils.getDefaultKubectlPath;
+import static io.harness.delegate.configuration.InstallUtils.getHelm2Path;
+import static io.harness.delegate.configuration.InstallUtils.getHelm3Path;
+import static io.harness.delegate.configuration.InstallUtils.getKustomizePath;
+import static io.harness.delegate.configuration.InstallUtils.getNewKubectlPath;
+import static io.harness.delegate.configuration.InstallUtils.getOcPath;
 import static io.harness.delegate.configuration.InstallUtils.helm2Version;
 import static io.harness.delegate.configuration.InstallUtils.helm3Version;
+import static io.harness.delegate.configuration.InstallUtils.installKustomize;
+import static io.harness.delegate.configuration.InstallUtils.isCustomKustomizePath;
+import static io.harness.delegate.configuration.InstallUtils.kustomizePath;
+import static io.harness.delegate.configuration.InstallUtils.setupDefaultPaths;
 import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.AVMOHAN;
@@ -111,13 +121,13 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", false);
       assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
           .isEqualTo(
-              "https://app.harness.io/storage/harness-download/harness-scm/release/3ac4cefa/bin/linux/amd64/scm");
+              "https://app.harness.io/storage/harness-download/harness-scm/release/04ad961e/bin/linux/amd64/scm");
 
       setStaticFieldValue(SystemUtils.class, "IS_OS_WINDOWS", false);
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", true);
       assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
           .isEqualTo(
-              "https://app.harness.io/storage/harness-download/harness-scm/release/3ac4cefa/bin/darwin/amd64/scm");
+              "https://app.harness.io/storage/harness-download/harness-scm/release/04ad961e/bin/darwin/amd64/scm");
     } finally {
       setStaticFieldValue(SystemUtils.class, "IS_OS_WINDOWS", win);
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", mac);
@@ -228,14 +238,10 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(UnitTests.class)
   public void testGetKustomizePath() {
-    InstallUtils.kustomizePath = "usr/local/bin/kustomize";
-    InstallUtils.isCustomKustomizePath = true;
-    assertThat(InstallUtils.getKustomizePath(true)).isEqualTo(InstallUtils.kustomizePath);
-    assertThat(InstallUtils.getKustomizePath(false)).isEqualTo(InstallUtils.kustomizePath);
-
-    InstallUtils.isCustomKustomizePath = false;
-    assertThat(InstallUtils.getKustomizePath(true)).isNotEqualTo(InstallUtils.kustomizePath);
-    assertThat(InstallUtils.getKustomizePath(false)).isNotEqualTo(InstallUtils.kustomizePath);
+    kustomizePath = "usr/local/bin/kustomize";
+    isCustomKustomizePath = true;
+    assertThat(getKustomizePath(true)).isEqualTo(kustomizePath);
+    assertThat(getKustomizePath(false)).isEqualTo(kustomizePath);
   }
 
   @Test
@@ -246,23 +252,46 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
     assumeThat(SystemUtils.IS_OS_MAC).isFalse();
 
     deleteDirectoryAndItsContentIfExists("./client-tools/kustomize/");
-    assertThat(InstallUtils.installKustomize(delegateConfiguration)).isTrue();
+    assertThat(installKustomize(delegateConfiguration)).isTrue();
 
     // Won't download this time
-    assertThat(InstallUtils.installKustomize(delegateConfiguration)).isTrue();
+    assertThat(installKustomize(delegateConfiguration)).isTrue();
   }
 
   @Test
   @Owner(developers = NAMAN_TALAYCHA)
   @Category(FunctionalTests.class)
-  public void shouldInstallKustomizeCustom() throws IOException, IllegalAccessException {
+  public void shouldInstallKustomizeCustom() {
     assumeThat(SystemUtils.IS_OS_WINDOWS).isFalse();
     assumeThat(SystemUtils.IS_OS_MAC).isFalse();
-    deleteDirectoryAndItsContentIfExists("./client-tools/kustomize/");
     delegateConfiguration.setKustomizePath("usr/local/bin/kustomize");
-    assertThat(InstallUtils.installKustomize(delegateConfiguration)).isTrue();
-    assertThat(InstallUtils.kustomizePath).isEqualTo("usr/local/bin/kustomize");
-    assertThat(InstallUtils.isCustomKustomizePath).isTrue();
+    assertThat(installKustomize(delegateConfiguration)).isTrue();
+    assertThat(kustomizePath).isEqualTo("usr/local/bin/kustomize");
+    assertThat(isCustomKustomizePath).isTrue();
+  }
+
+  @Test
+  @Owner(developers = NAMAN_TALAYCHA)
+  @Category(FunctionalTests.class)
+  public void shouldsetupDefaultPaths() {
+    assumeThat(SystemUtils.IS_OS_WINDOWS).isFalse();
+    assumeThat(SystemUtils.IS_OS_MAC).isFalse();
+    delegateConfiguration.setKustomizePath("local/bin/kustomize");
+    delegateConfiguration.setKubectlPath("usr/local/bin/kubectl");
+    delegateConfiguration.setHelm3Path("usr/local/bin/helm3");
+    delegateConfiguration.setHelmPath("usr/local/bin/helm2");
+    delegateConfiguration.setOcPath("usr/local/bin/oc");
+    setupDefaultPaths(delegateConfiguration);
+    assertThat(installKustomize(delegateConfiguration)).isTrue();
+    assertThat(kustomizePath).isEqualTo("local/bin/kustomize");
+    assertThat(getDefaultKubectlPath()).isEqualTo("usr/local/bin/kubectl");
+    assertThat(getNewKubectlPath()).isEqualTo("usr/local/bin/kubectl");
+    assertThat(getOcPath()).isEqualTo("usr/local/bin/oc");
+    assertThat(getHelm2Path()).isEqualTo("usr/local/bin/helm2");
+    assertThat(getHelm3Path()).isEqualTo("usr/local/bin/helm3");
+    assertThat(getKustomizePath(true)).isEqualTo("local/bin/kustomize");
+    assertThat(getKustomizePath(false)).isEqualTo("local/bin/kustomize");
+    assertThat(isCustomKustomizePath).isTrue();
   }
 
   @Test
@@ -270,7 +299,7 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
   @Category(UnitTests.class)
   public void shouldNotInstallWhenPathSetInDelegateConfig() {
     DelegateConfiguration delegateConfiguration = DelegateConfiguration.builder().kustomizePath("RANDOM").build();
-    assertThat(InstallUtils.installKustomize(delegateConfiguration)).isTrue();
+    assertThat(installKustomize(delegateConfiguration)).isTrue();
   }
 
   @Before

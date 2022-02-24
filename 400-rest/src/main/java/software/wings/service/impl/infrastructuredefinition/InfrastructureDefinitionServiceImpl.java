@@ -164,6 +164,7 @@ import software.wings.infra.PhysicalDataCenterInfra;
 import software.wings.infra.PhysicalInfra;
 import software.wings.infra.PhysicalInfraWinrm;
 import software.wings.infra.ProvisionerAware;
+import software.wings.infra.RancherKubernetesInfrastructure;
 import software.wings.infra.SshBasedInfrastructure;
 import software.wings.infra.WinRmBasedInfrastructure;
 import software.wings.prune.PruneEntityListener;
@@ -305,6 +306,7 @@ public class InfrastructureDefinitionServiceImpl implements InfrastructureDefini
     supportedCloudProviderDeploymentTypes.put(CloudProviderType.PCF, EnumSet.of(PCF));
     supportedCloudProviderDeploymentTypes.put(CloudProviderType.PHYSICAL_DATA_CENTER, EnumSet.of(SSH, WINRM));
     supportedCloudProviderDeploymentTypes.put(CloudProviderType.CUSTOM, EnumSet.of(CUSTOM));
+    supportedCloudProviderDeploymentTypes.put(CloudProviderType.RANCHER, EnumSet.of(KUBERNETES));
   }
 
   @Inject private WorkflowExecutionService workflowExecutionService;
@@ -560,6 +562,13 @@ public class InfrastructureDefinitionServiceImpl implements InfrastructureDefini
           (DirectKubernetesInfrastructure) infraDefinition.getInfrastructure();
       if (isBlank(directKubernetesInfrastructure.getNamespace())) {
         directKubernetesInfrastructure.setNamespace(DEFAULT);
+      }
+    }
+    if (infraDefinition.getInfrastructure() instanceof RancherKubernetesInfrastructure) {
+      RancherKubernetesInfrastructure rancherKubernetesInfrastructure =
+          (RancherKubernetesInfrastructure) infraDefinition.getInfrastructure();
+      if (isBlank(rancherKubernetesInfrastructure.getNamespace())) {
+        rancherKubernetesInfrastructure.setNamespace(DEFAULT);
       }
     }
   }
@@ -851,7 +860,8 @@ public class InfrastructureDefinitionServiceImpl implements InfrastructureDefini
     deploymentCloudProviderOptions.put(DeploymentType.SSH,
         asList(SettingVariableTypes.PHYSICAL_DATA_CENTER, SettingVariableTypes.AWS, SettingVariableTypes.AZURE));
     deploymentCloudProviderOptions.put(KUBERNETES,
-        asList(SettingVariableTypes.GCP, SettingVariableTypes.AZURE, SettingVariableTypes.KUBERNETES_CLUSTER));
+        asList(SettingVariableTypes.GCP, SettingVariableTypes.AZURE, SettingVariableTypes.KUBERNETES_CLUSTER,
+            SettingVariableTypes.RANCHER));
     deploymentCloudProviderOptions.put(
         HELM, asList(SettingVariableTypes.GCP, SettingVariableTypes.AZURE, SettingVariableTypes.KUBERNETES_CLUSTER));
     deploymentCloudProviderOptions.put(ECS, asList(SettingVariableTypes.AWS));

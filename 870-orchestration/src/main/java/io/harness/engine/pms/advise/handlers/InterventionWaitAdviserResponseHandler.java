@@ -22,7 +22,6 @@ import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.events.OrchestrationEvent;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
-import io.harness.registries.timeout.TimeoutRegistry;
 import io.harness.timeout.TimeoutCallback;
 import io.harness.timeout.TimeoutEngine;
 import io.harness.timeout.TimeoutInstance;
@@ -32,7 +31,7 @@ import io.harness.timeout.trackers.absolute.AbsoluteTimeoutTrackerFactory;
 
 import com.google.inject.Inject;
 import com.google.protobuf.Duration;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.concurrent.TimeUnit;
 
@@ -40,7 +39,6 @@ import java.util.concurrent.TimeUnit;
 public class InterventionWaitAdviserResponseHandler implements AdviserResponseHandler {
   @Inject private OrchestrationEventEmitter eventEmitter;
   @Inject private NodeExecutionService nodeExecutionService;
-  @Inject private TimeoutRegistry timeoutRegistry;
   @Inject private TimeoutEngine timeoutEngine;
 
   @Override
@@ -58,7 +56,7 @@ public class InterventionWaitAdviserResponseHandler implements AdviserResponseHa
 
     nodeExecutionService.updateStatusWithOps(nodeExecution.getUuid(), INTERVENTION_WAITING,
         ops
-        -> ops.set(NodeExecutionKeys.adviserTimeoutInstanceIds, Arrays.asList(instance.getUuid())),
+        -> ops.set(NodeExecutionKeys.adviserTimeoutInstanceIds, Collections.singletonList(instance.getUuid())),
         EnumSet.noneOf(Status.class));
     eventEmitter.emitEvent(OrchestrationEvent.newBuilder()
                                .setEventType(OrchestrationEventType.INTERVENTION_WAIT_START)

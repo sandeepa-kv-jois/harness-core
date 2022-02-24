@@ -13,6 +13,7 @@ import static io.harness.yaml.schema.beans.SchemaConstants.PROPERTIES_NODE;
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.FeatureName;
 import io.harness.jackson.JsonNodeUtils;
 import io.harness.plancreator.stages.parallel.ParallelStageElementConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
@@ -50,9 +51,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @Singleton
+@Slf4j
 public class PmsYamlSchemaHelper {
   public static final String STEP_ELEMENT_CONFIG =
       io.harness.yaml.utils.YamlSchemaUtils.getSwaggerName(StepElementConfig.class);
@@ -230,12 +233,21 @@ public class PmsYamlSchemaHelper {
     return enabledFeatureFlags;
   }
 
+  public boolean isFeatureFlagEnabled(FeatureName featureName, String accountId) {
+    return pmsFeatureFlagHelper.isEnabled(accountId, featureName);
+  }
+
   public void processStageSchema(List<YamlSchemaWithDetails> allSchemaDetails, ObjectNode pipelineDefinitions) {
-    List<YamlSchemaWithDetails> stageSchemaWithDetails =
-        allSchemaDetails.stream()
-            .filter(o -> o.getYamlSchemaMetadata().getYamlGroup().getGroup().equals(StepCategory.STAGE.name()))
-            .collect(Collectors.toList());
-    YamlSchemaUtils.addOneOfInStageElementWrapperConfig(pipelineDefinitions, stageSchemaWithDetails);
-    YamlSchemaTransientHelper.removeV2StagesFromStageElementConfig(pipelineDefinitions.get(STAGE_ELEMENT_CONFIG));
+    try {
+      List<YamlSchemaWithDetails> stageSchemaWithDetails =
+          allSchemaDetails.stream()
+              .filter(o -> o.getYamlSchemaMetadata().getYamlGroup().getGroup().equals(StepCategory.STAGE.name()))
+              .collect(Collectors.toList());
+
+      YamlSchemaUtils.addOneOfInStageElementWrapperConfig(pipelineDefinitions, stageSchemaWithDetails);
+      YamlSchemaTransientHelper.removeV2StagesFromStageElementConfig(pipelineDefinitions.get(STAGE_ELEMENT_CONFIG));
+    } catch (Exception e) {
+      log.error("[PMS] Failed to merge Stage schema", e);
+    }
   }
 }

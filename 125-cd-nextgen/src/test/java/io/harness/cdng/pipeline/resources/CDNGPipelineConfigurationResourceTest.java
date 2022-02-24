@@ -48,20 +48,23 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
         cdngPipelineConfigurationResource.getExecutionStrategyList().getData();
 
     assertThat(executionStrategyResponse).isNotNull();
-    assertThat(executionStrategyResponse.keySet().size()).isEqualTo(2);
+    assertThat(executionStrategyResponse.keySet().size()).isEqualTo(3);
+
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.KUBERNETES))
         .isEqualTo(Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.BLUE_GREEN,
             ExecutionStrategyType.CANARY, ExecutionStrategyType.DEFAULT));
 
+    assertThat(executionStrategyResponse.get(ServiceDefinitionType.NATIVE_HELM))
+        .isEqualTo(Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.DEFAULT));
+
+    assertThat(executionStrategyResponse.get(ServiceDefinitionType.SSH))
+        .isEqualTo(Lists.newArrayList(ExecutionStrategyType.DEFAULT));
+
     /*
     Assertions commented as these service definitions are currently not supported
-    assertThat(executionStrategyResponse.get(ServiceDefinitionType.NATIVE_HELM))
-        .isEqualTo(Lists.newArrayList(ExecutionStrategyType.BASIC));
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.PCF))
         .isEqualTo(Lists.newArrayList(
             ExecutionStrategyType.BASIC, ExecutionStrategyType.BLUE_GREEN, ExecutionStrategyType.CANARY));
-    assertThat(executionStrategyResponse.get(ServiceDefinitionType.SSH))
-        .isEqualTo(Lists.newArrayList(ExecutionStrategyType.BASIC));
     assertThat(executionStrategyResponse.get(ServiceDefinitionType.ECS))
         .isEqualTo(Lists.newArrayList(
             ExecutionStrategyType.BASIC, ExecutionStrategyType.BLUE_GREEN, ExecutionStrategyType.CANARY));
@@ -77,6 +80,6 @@ public class CDNGPipelineConfigurationResourceTest extends CategoryTest {
         cdngPipelineConfigurationResource.getServiceDefinitionTypes().getData();
 
     assertThat(serviceDefinitionTypes).isNotNull();
-    assertThat(serviceDefinitionTypes.size()).isEqualTo(2);
+    assertThat(serviceDefinitionTypes.size()).isEqualTo(3);
   }
 }

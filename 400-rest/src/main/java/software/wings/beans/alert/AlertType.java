@@ -26,7 +26,13 @@ import lombok.Getter;
 public enum AlertType {
   ApprovalNeeded(Approval, Warning),
   ManualInterventionNeeded(ManualIntervention, Warning),
+  NoActiveDelegates(Setup, Error), // deprecated
+  NoInstalledDelegates(Setup, Error), // deprecated
   DelegatesDown(Setup, Error, 2),
+  DelegatesScalingGroupDownAlert(Setup, Error), // deprecated
+  DelegateProfileError(Setup, Error), // deprecated
+  NoEligibleDelegates(Setup, Error), // deprecated
+  PerpetualTaskAlert(Setup, Error), // deprecated
   InvalidKMS(Setup, Error),
   GitSyncError(Setup, Error),
   GitConnectionError(Setup, Error),

@@ -12,11 +12,13 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.beans.FeatureName.ENABLE_CERT_VALIDATION;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.INVALID_AZURE_VAULT_CONFIGURATION;
+import static io.harness.eraro.ErrorCode.INVALID_CREDENTIAL;
 import static io.harness.eraro.ErrorCode.SECRET_MANAGEMENT_ERROR;
 import static io.harness.eraro.ErrorCode.VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.remote.client.RestClientUtils.getResponse;
 import static io.harness.security.encryption.AccessType.APP_ROLE;
+import static io.harness.security.encryption.AccessType.AWS_IAM;
 import static io.harness.security.encryption.AccessType.TOKEN;
 import static io.harness.security.encryption.EncryptionType.AZURE_VAULT;
 import static io.harness.security.encryption.EncryptionType.VAULT;
@@ -57,6 +59,8 @@ import io.harness.encryption.SecretRefHelper;
 import io.harness.encryptors.DelegateTaskUtils;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.AzureServiceException;
+import io.harness.exception.DelegateServiceDriverException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SecretManagementDelegateException;
 import io.harness.exception.SecretManagementException;
 import io.harness.exception.WingsException;
@@ -80,6 +84,7 @@ import io.harness.secretmanagerclient.dto.SecretManagerMetadataRequestDTO;
 import io.harness.secretmanagerclient.dto.VaultAgentCredentialDTO;
 import io.harness.secretmanagerclient.dto.VaultAppRoleCredentialDTO;
 import io.harness.secretmanagerclient.dto.VaultAuthTokenCredentialDTO;
+import io.harness.secretmanagerclient.dto.VaultAwsIamRoleCredentialDTO;
 import io.harness.secretmanagerclient.dto.VaultMetadataRequestSpecDTO;
 import io.harness.secretmanagerclient.dto.VaultMetadataSpecDTO;
 import io.harness.secretmanagerclient.dto.VaultSecretEngineDTO;
@@ -168,11 +173,26 @@ public class NGVaultServiceImpl implements NGVaultService {
   public List<SecretEngineSummary> listSecretEngines(BaseVaultConfig baseVaultConfig) {
     List<SecretEngineSummary> secretEngineSummaries = new ArrayList<>();
     setCertValidation(baseVaultConfig.getAccountId(), baseVaultConfig);
-    for (SecretEngineSummary secretEngineSummary : listSecretEnginesInternal(baseVaultConfig)) {
-      if (secretEngineSummary.getType() != null && secretEngineSummary.getType().equals("kv")) {
-        secretEngineSummaries.add(secretEngineSummary);
+    try {
+      for (SecretEngineSummary secretEngineSummary : listSecretEnginesInternal(baseVaultConfig)) {
+        if (secretEngineSummary.getType() != null && secretEngineSummary.getType().equals("kv")) {
+          secretEngineSummaries.add(secretEngineSummary);
+        }
       }
+    } catch (WingsException wingsException) {
+      log.error("Listing secret engines failed for account Id {}", baseVaultConfig.getAccountId(), wingsException);
+      throw wingsException;
+    } catch (DelegateServiceDriverException ex) {
+      if (ex.getCause() != null) {
+        throw new WingsException(ex.getCause().getMessage(), ex);
+      } else {
+        throw new WingsException(ex);
+      }
+    } catch (Exception e) {
+      log.error("Listing vault engines failed for account Id {}", baseVaultConfig.getAccountId(), e);
+      throw new InvalidRequestException("Failed to list Vault engines", INVALID_CREDENTIAL, USER);
     }
+
     return secretEngineSummaries;
   }
 
@@ -255,12 +275,14 @@ public class NGVaultServiceImpl implements NGVaultService {
   @Override
   public SecretManagerMetadataDTO getListOfEngines(
       String accountIdentifier, SecretManagerMetadataRequestDTO requestDTO) {
-    SecretRefData secretRefData = getSecretRefData(requestDTO);
+    List<SecretRefData> secretRefDataList = getSecretRefData(requestDTO);
 
-    if (secretRefData != null) {
+    if (isNotEmpty(secretRefDataList)) {
       // get Decrypted SecretRefData
-      decryptSecretRefData(
-          accountIdentifier, requestDTO.getOrgIdentifier(), requestDTO.getProjectIdentifier(), secretRefData);
+      for (SecretRefData secretRefData : secretRefDataList) {
+        decryptSecretRefData(
+            accountIdentifier, requestDTO.getOrgIdentifier(), requestDTO.getProjectIdentifier(), secretRefData);
+      }
     }
     EncryptionConfig existingVaultEncryptionConfig = getDecryptedEncryptionConfig(accountIdentifier,
         requestDTO.getOrgIdentifier(), requestDTO.getProjectIdentifier(), requestDTO.getIdentifier());
@@ -271,6 +293,49 @@ public class NGVaultServiceImpl implements NGVaultService {
     } else {
       throw new UnsupportedOperationException(
           "This API is not supported for secret manager of type: " + requestDTO.getEncryptionType());
+    }
+  }
+  @Override
+  public void processAppRole(ConnectorDTO connectorDTO, ConnectorConfigDTO existingConnectorConfigDTO,
+      String accountIdentifier, boolean create) {
+    if (null != connectorDTO.getConnectorInfo()
+        && ConnectorType.VAULT == connectorDTO.getConnectorInfo().getConnectorType()) {
+      ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
+      VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfo.getConnectorConfig();
+      if (AccessType.APP_ROLE == vaultConnectorDTO.getAccessType()) {
+        SecretRefData secretRefData = vaultConnectorDTO.getSecretId();
+        String orgIdentifier = connectorInfo.getOrgIdentifier();
+        String projectIdentifier = connectorInfo.getProjectIdentifier();
+        decryptSecretRefData(accountIdentifier, orgIdentifier, projectIdentifier, secretRefData);
+        VaultConfig vaultConfig = VaultConfig.builder()
+                                      .accountId(accountIdentifier)
+                                      .name(connectorInfo.getName())
+                                      .vaultUrl(vaultConnectorDTO.getVaultUrl())
+                                      .appRoleId(vaultConnectorDTO.getAppRoleId())
+                                      .secretId(String.valueOf(secretRefData.getDecryptedValue()))
+                                      .build();
+
+        VaultAppRoleLoginResult loginResult = appRoleLogin(vaultConfig);
+        if (loginResult != null && isNotEmpty(loginResult.getClientToken())) {
+          Scope scope = secretRefData.getScope();
+          orgIdentifier = getOrgIdentifier(orgIdentifier, scope);
+          projectIdentifier = getProjectIdentifier(projectIdentifier, scope);
+
+          if (null != existingConnectorConfigDTO
+              && APP_ROLE != ((VaultConnectorDTO) existingConnectorConfigDTO).getAccessType()) {
+            create = true;
+          }
+          SecretRefData authTokenRefData =
+              populateSecretRefData(connectorInfo.getIdentifier() + "_" + VaultConnectorKeys.authTokenRef,
+                  loginResult.getClientToken().toCharArray(), scope, accountIdentifier, orgIdentifier,
+                  projectIdentifier, create);
+          vaultConnectorDTO.setAuthToken(authTokenRefData);
+        } else {
+          String message =
+              "Was not able to login Vault using the AppRole auth method. Please check your credentials and try again";
+          throw new SecretManagementException(VAULT_OPERATION_ERROR, message, USER);
+        }
+      }
     }
   }
 
@@ -289,35 +354,25 @@ public class NGVaultServiceImpl implements NGVaultService {
     }
 
     VaultMetadataRequestSpecDTO specDTO = (VaultMetadataRequestSpecDTO) requestDTO.getSpec();
+
     Optional<String> urlFromRequest = Optional.ofNullable(specDTO).map(VaultMetadataRequestSpecDTO::getUrl);
     urlFromRequest.ifPresent(vaultConfig::setVaultUrl);
-
     Optional<String> nameSpaceFromRequest = Optional.ofNullable(specDTO).map(VaultMetadataRequestSpecDTO::getNamespace);
     nameSpaceFromRequest.ifPresent(vaultConfig::setNamespace);
 
-    Optional<String> sinkPathFromRequest = Optional.ofNullable(specDTO)
-                                               .filter(x -> x.getAccessType() == AccessType.VAULT_AGENT)
-                                               .map(x -> ((VaultAgentCredentialDTO) (x.getSpec())).getSinkPath())
-                                               .filter(x -> !x.isEmpty());
-    sinkPathFromRequest.ifPresent(x -> {
-      vaultConfig.setAuthToken(null);
-      vaultConfig.setAppRoleId(null);
-      vaultConfig.setSecretId(null);
-      vaultConfig.setSinkPath(x);
-      vaultConfig.setUseVaultAgent(true);
-    });
+    setAwsIamParams(vaultConfig, specDTO);
+    setVaultAgentParams(vaultConfig, specDTO);
+    setTokenParam(vaultConfig, specDTO);
+    setApproleParams(vaultConfig, specDTO);
 
-    Optional<String> tokenFromRequest =
-        Optional.ofNullable(specDTO)
-            .filter(x -> x.getAccessType() == TOKEN)
-            .map(x -> String.valueOf(((VaultAuthTokenCredentialDTO) (x.getSpec())).getAuthToken().getDecryptedValue()))
-            .filter(x -> !x.isEmpty());
-    tokenFromRequest.ifPresent(x -> {
-      vaultConfig.setAuthToken(x);
-      vaultConfig.setAppRoleId(null);
-      vaultConfig.setSecretId(null);
-    });
+    Optional<Set<String>> delegateSelectors =
+        Optional.ofNullable(specDTO).map(VaultMetadataRequestSpecDTO::getDelegateSelectors);
+    delegateSelectors.ifPresent(vaultConfig::setDelegateSelectors);
 
+    return getSecretManagerMetadataDTO(listSecretEngines(vaultConfig));
+  }
+
+  private void setApproleParams(BaseVaultConfig vaultConfig, VaultMetadataRequestSpecDTO specDTO) {
     Optional<String> appRoleIdFromRequest = Optional.ofNullable(specDTO)
                                                 .filter(x -> x.getAccessType() == AccessType.APP_ROLE)
                                                 .map(x -> ((VaultAppRoleCredentialDTO) (x.getSpec())).getAppRoleId())
@@ -326,6 +381,8 @@ public class NGVaultServiceImpl implements NGVaultService {
       vaultConfig.setAppRoleId(approleId);
       vaultConfig.setSecretId(null);
       vaultConfig.setAuthToken(null);
+      vaultConfig.setUseVaultAgent(false);
+      vaultConfig.setUseAwsIam(false);
     });
 
     Optional<String> secretIdFromRequest =
@@ -337,12 +394,68 @@ public class NGVaultServiceImpl implements NGVaultService {
       vaultConfig.setSecretId(secretId);
       vaultConfig.setAuthToken(null);
     });
+  }
 
-    Optional<Set<String>> delegateSelectors =
-        Optional.ofNullable(specDTO).map(VaultMetadataRequestSpecDTO::getDelegateSelectors);
-    delegateSelectors.ifPresent(vaultConfig::setDelegateSelectors);
+  private void setTokenParam(BaseVaultConfig vaultConfig, VaultMetadataRequestSpecDTO specDTO) {
+    Optional<String> tokenFromRequest =
+        Optional.ofNullable(specDTO)
+            .filter(x -> x.getAccessType() == TOKEN)
+            .map(x -> String.valueOf(((VaultAuthTokenCredentialDTO) (x.getSpec())).getAuthToken().getDecryptedValue()))
+            .filter(x -> !x.isEmpty());
+    tokenFromRequest.ifPresent(x -> {
+      vaultConfig.setAuthToken(x);
+      vaultConfig.setAppRoleId(null);
+      vaultConfig.setSecretId(null);
+      vaultConfig.setUseVaultAgent(false);
+      vaultConfig.setUseAwsIam(false);
+    });
+  }
 
-    return getSecretManagerMetadataDTO(listSecretEngines(vaultConfig));
+  private void setVaultAgentParams(BaseVaultConfig vaultConfig, VaultMetadataRequestSpecDTO specDTO) {
+    Optional<String> sinkPathFromRequest = Optional.ofNullable(specDTO)
+                                               .filter(x -> x.getAccessType() == AccessType.VAULT_AGENT)
+                                               .map(x -> ((VaultAgentCredentialDTO) (x.getSpec())).getSinkPath())
+                                               .filter(x -> !x.isEmpty());
+    sinkPathFromRequest.ifPresent(x -> {
+      vaultConfig.setAuthToken(null);
+      vaultConfig.setAppRoleId(null);
+      vaultConfig.setSecretId(null);
+      vaultConfig.setSinkPath(x);
+      vaultConfig.setUseVaultAgent(true);
+      vaultConfig.setUseAwsIam(false);
+    });
+  }
+
+  private void setAwsIamParams(BaseVaultConfig vaultConfig, VaultMetadataRequestSpecDTO specDTO) {
+    Optional<String> vaultAwsIamRole =
+        Optional.ofNullable(specDTO)
+            .filter(x -> x.getAccessType() == AccessType.AWS_IAM)
+            .map(x -> ((VaultAwsIamRoleCredentialDTO) (x.getSpec())).getVaultAwsIamRole())
+            .filter(x -> !x.isEmpty());
+    vaultAwsIamRole.ifPresent(x -> {
+      vaultConfig.setAuthToken(null);
+      vaultConfig.setAppRoleId(null);
+      vaultConfig.setSecretId(null);
+      vaultConfig.setSinkPath(null);
+      vaultConfig.setUseVaultAgent(false);
+      vaultConfig.setUseAwsIam(true);
+      vaultConfig.setVaultAwsIamRole(x);
+    });
+
+    Optional<String> awsRegion = Optional.ofNullable(specDTO)
+                                     .filter(x -> x.getAccessType() == AccessType.AWS_IAM)
+                                     .map(x -> ((VaultAwsIamRoleCredentialDTO) (x.getSpec())).getAwsRegion())
+                                     .filter(x -> !x.isEmpty());
+    awsRegion.ifPresent(x -> { vaultConfig.setAwsRegion(x); });
+
+    Optional<String> xVaultAwsIamServerId =
+        Optional.ofNullable(specDTO)
+            .filter(x -> x.getAccessType() == AccessType.AWS_IAM)
+            .map(x
+                -> String.valueOf(
+                    ((VaultAwsIamRoleCredentialDTO) (x.getSpec())).getXVaultAwsIamServerId().getDecryptedValue()))
+            .filter(x -> !x.isEmpty());
+    xVaultAwsIamServerId.ifPresent(x -> { vaultConfig.setXVaultAwsIamServerId(x); });
   }
 
   private SecretManagerMetadataDTO getAzureKeyVaultMetadata(String accountIdentifier,
@@ -372,6 +485,12 @@ public class NGVaultServiceImpl implements NGVaultService {
     } catch (WingsException wingsException) {
       log.error("Listing vaults failed for account Id {}", accountIdentifier, wingsException);
       throw wingsException; // for error handling framework
+    } catch (DelegateServiceDriverException ex) {
+      if (ex.getCause() != null) {
+        throw new WingsException(ex.getCause().getMessage(), ex);
+      } else {
+        throw new WingsException(ex);
+      }
     } catch (Exception e) {
       log.error("Listing vaults failed for account Id {}", accountIdentifier, e);
       throw new AzureServiceException("Failed to list vaults.", INVALID_AZURE_VAULT_CONFIGURATION, USER);
@@ -424,49 +543,6 @@ public class NGVaultServiceImpl implements NGVaultService {
     }
   }
 
-  @Override
-  public void processAppRole(ConnectorDTO connectorDTO, ConnectorConfigDTO existingConnectorConfigDTO,
-      String accountIdentifier, boolean create) {
-    if (ConnectorType.VAULT == connectorDTO.getConnectorInfo().getConnectorType()) {
-      ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
-      VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfo.getConnectorConfig();
-      if (AccessType.APP_ROLE == vaultConnectorDTO.getAccessType()) {
-        SecretRefData secretRefData = vaultConnectorDTO.getSecretId();
-        String orgIdentifier = connectorInfo.getOrgIdentifier();
-        String projectIdentifier = connectorInfo.getProjectIdentifier();
-        decryptSecretRefData(accountIdentifier, orgIdentifier, projectIdentifier, secretRefData);
-        VaultConfig vaultConfig = VaultConfig.builder()
-                                      .accountId(accountIdentifier)
-                                      .name(connectorInfo.getName())
-                                      .vaultUrl(vaultConnectorDTO.getVaultUrl())
-                                      .appRoleId(vaultConnectorDTO.getAppRoleId())
-                                      .secretId(String.valueOf(secretRefData.getDecryptedValue()))
-                                      .build();
-
-        VaultAppRoleLoginResult loginResult = appRoleLogin(vaultConfig);
-        if (loginResult != null && isNotEmpty(loginResult.getClientToken())) {
-          Scope scope = secretRefData.getScope();
-          orgIdentifier = getOrgIdentifier(orgIdentifier, scope);
-          projectIdentifier = getProjectIdentifier(projectIdentifier, scope);
-
-          if (null != existingConnectorConfigDTO
-              && APP_ROLE != ((VaultConnectorDTO) existingConnectorConfigDTO).getAccessType()) {
-            create = true;
-          }
-          SecretRefData authTokenRefData =
-              populateSecretRefData(connectorInfo.getIdentifier() + "_" + VaultConnectorKeys.authTokenRef,
-                  loginResult.getClientToken().toCharArray(), scope, accountIdentifier, orgIdentifier,
-                  projectIdentifier, create);
-          vaultConnectorDTO.setAuthToken(authTokenRefData);
-        } else {
-          String message =
-              "Was not able to login Vault using the AppRole auth method. Please check your credentials and try again";
-          throw new SecretManagementException(VAULT_OPERATION_ERROR, message, USER);
-        }
-      }
-    }
-  }
-
   private SecretRefData populateSecretRefData(String identifier, char[] decryptedValue, Scope secretScope,
       String accountIdentifier, String orgIdentifier, String projectIdentifier, boolean create) {
     SecretTextSpecDTO secretTextSpecDTO = SecretTextSpecDTO.builder()
@@ -512,22 +588,29 @@ public class NGVaultServiceImpl implements NGVaultService {
     }
   }
 
-  private SecretRefData getSecretRefData(SecretManagerMetadataRequestDTO requestDTO) {
+  private List<SecretRefData> getSecretRefData(SecretManagerMetadataRequestDTO requestDTO) {
+    List<SecretRefData> secretRefDataList = new ArrayList<>();
     SecretRefData secretRefData;
     if (VAULT == requestDTO.getEncryptionType()) {
       VaultMetadataRequestSpecDTO spec = (VaultMetadataRequestSpecDTO) requestDTO.getSpec();
       if (TOKEN == spec.getAccessType()) {
         secretRefData = ((VaultAuthTokenCredentialDTO) spec.getSpec()).getAuthToken();
+        secretRefDataList.add(secretRefData);
       } else if (APP_ROLE == spec.getAccessType()) {
         secretRefData = ((VaultAppRoleCredentialDTO) spec.getSpec()).getSecretId();
+        secretRefDataList.add(secretRefData);
+      } else if (AWS_IAM == spec.getAccessType()) {
+        secretRefData = ((VaultAwsIamRoleCredentialDTO) spec.getSpec()).getXVaultAwsIamServerId();
+        secretRefDataList.add(secretRefData);
       } else {
         // n case of VAULT_AGENT we don't have any secretref
         return null;
       }
     } else { // Azure Key Vault
       secretRefData = ((AzureKeyVaultMetadataRequestSpecDTO) requestDTO.getSpec()).getSecretKey();
+      secretRefDataList.add(secretRefData);
     }
-    return secretRefData;
+    return secretRefDataList;
   }
 
   @Nullable
@@ -595,7 +678,7 @@ public class NGVaultServiceImpl implements NGVaultService {
         return ((NGVaultFetchEngineTaskResponse) delegateResponseData).getSecretEngineSummaryList();
       } catch (WingsException e) {
         failedAttempts++;
-        log.warn("Vault Decryption failed for list secret engines for Vault serverer {}. trial num: {}",
+        log.warn("Vault Decryption failed for list secret engines for Vault server {}. trial num: {}",
             vaultConfig.getName(), failedAttempts, e);
         if (failedAttempts == NUM_OF_RETRIES) {
           throw e;

@@ -38,6 +38,7 @@ import io.harness.rule.Owner;
 import io.harness.utils.steps.TestStepParameters;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Map;
 import org.apache.commons.jexl3.JexlBuilder;
@@ -287,8 +288,8 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
             .groupAliases(ImmutableMap.of("stage", "STAGE"))
             .build();
 
-    when(nodeExecutionService.findAllChildren(
-             planExecutionId, nodeExecution4.getUuid(), false, NodeProjectionUtils.fieldsForExpressionEngine))
+    when(nodeExecutionService.findAllChildren(planExecutionId, nodeExecution4.getUuid(), false,
+             Sets.newHashSet(NodeExecutionKeys.parentId), Sets.newHashSet(NodeExecutionKeys.id)))
         .thenReturn(asList(nodeExecution8, nodeExecution7, nodeExecution6));
 
     Reflect.on(nodeExecution4).set(NodeExecutionKeys.status, Status.RUNNING);

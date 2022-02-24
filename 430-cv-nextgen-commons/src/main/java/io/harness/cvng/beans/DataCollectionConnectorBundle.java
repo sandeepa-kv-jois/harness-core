@@ -33,8 +33,9 @@ public class DataCollectionConnectorBundle implements ExecutionCapabilityDemande
   DataCollectionType dataCollectionType;
   String projectIdentifier;
   String orgIdentifier;
-  String serviceIdentifier;
-  String envIdentifier;
+  @Deprecated String serviceIdentifier;
+  @Deprecated String envIdentifier;
+  String monitoredServiceIdentifier;
 
   @JsonIgnore
   public ConnectorConfigDTO getConnectorConfigDTO() {

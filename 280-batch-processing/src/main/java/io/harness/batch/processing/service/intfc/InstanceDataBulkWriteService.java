@@ -7,8 +7,17 @@
 
 package io.harness.batch.processing.service.intfc;
 
+import io.harness.batch.processing.ccm.InstanceEvent;
+import io.harness.batch.processing.ccm.InstanceInfo;
+import io.harness.event.payloads.Lifecycle;
+
 import java.util.List;
 
 public interface InstanceDataBulkWriteService {
-  @SuppressWarnings("unchecked") boolean updateList(List<?> objectList);
+  boolean updateLifecycle(List<Lifecycle> lifecycleList);
+
+  boolean upsertInstanceInfo(List<InstanceInfo> instanceInfos);
+
+  // The update events is Unordered to utilize mongo parallel threads
+  boolean updateInstanceEvent(List<InstanceEvent> instanceEvents);
 }

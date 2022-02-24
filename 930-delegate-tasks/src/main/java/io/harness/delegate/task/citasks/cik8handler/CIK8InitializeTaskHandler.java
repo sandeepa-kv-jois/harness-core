@@ -16,6 +16,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.ci.k8s.PodStatus.Status.RUNNING;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.LITE_ENGINE;
+import static io.harness.delegate.task.citasks.cik8handler.SecretSpecBuilder.OPAQUE_SECRET_TYPE;
 import static io.harness.delegate.task.citasks.cik8handler.SecretSpecBuilder.getSecretName;
 import static io.harness.govern.Switch.unhandled;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
@@ -43,6 +44,7 @@ import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
 import io.harness.delegate.task.citasks.CIInitializeTaskHandler;
 import io.harness.delegate.task.citasks.cik8handler.helper.DelegateServiceTokenHelper;
 import io.harness.delegate.task.citasks.cik8handler.helper.ProxyVariableHelper;
+import io.harness.delegate.task.citasks.cik8handler.helper.SecretVolumesHelper;
 import io.harness.delegate.task.citasks.cik8handler.k8java.CIK8JavaClientHandler;
 import io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilder;
 import io.harness.k8s.KubernetesHelperService;
@@ -52,14 +54,30 @@ import io.harness.logging.AutoLogContext;
 import io.harness.logging.CommandExecutionStatus;
 
 import com.google.common.base.Stopwatch;
+import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.models.CoreV1Event;
+import io.kubernetes.client.openapi.models.V1Container;
+import io.kubernetes.client.openapi.models.V1KeyToPath;
+import io.kubernetes.client.openapi.models.V1KeyToPathBuilder;
+import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1Secret;
+import io.kubernetes.client.openapi.models.V1SecretBuilder;
+import io.kubernetes.client.openapi.models.V1SecretVolumeSource;
+import io.kubernetes.client.openapi.models.V1SecretVolumeSourceBuilder;
+import io.kubernetes.client.openapi.models.V1Volume;
+import io.kubernetes.client.openapi.models.V1VolumeBuilder;
+import io.kubernetes.client.openapi.models.V1VolumeMount;
+import io.kubernetes.client.openapi.models.V1VolumeMountBuilder;
 import io.kubernetes.client.util.Watch;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -82,6 +100,7 @@ public class CIK8InitializeTaskHandler implements CIInitializeTaskHandler {
   @Inject private KubernetesHelperService kubernetesHelperService;
   @Inject private K8EventHandler k8EventHandler;
   @Inject private ProxyVariableHelper proxyVariableHelper;
+  @Inject private SecretVolumesHelper secretVolumesHelper;
   @Inject private DelegateServiceTokenHelper delegateServiceTokenHelper;
   @Inject private ApiClientFactory apiClientFactory;
 
@@ -129,6 +148,8 @@ public class CIK8InitializeTaskHandler implements CIInitializeTaskHandler {
 
         log.info("Setting up pod spec");
         V1Pod pod = podSpecBuilder.createSpec(podParams).build();
+        updatePodWithDelegateVolumes(coreV1Api, namespace, pod);
+
         log.info("Creating pod with spec: {}", pod);
         cik8JavaClientHandler.createOrReplacePodWithRetries(coreV1Api, pod, namespace);
         Watch<CoreV1Event> watch =
@@ -205,6 +226,74 @@ public class CIK8InitializeTaskHandler implements CIInitializeTaskHandler {
       }
     }
     log.info("Image secret creation took: {} for pod: {} ", timer.stop(), podParams.getName());
+  }
+
+  private void updatePodWithDelegateVolumes(CoreV1Api coreV1Api, String namespace, V1Pod pod) {
+    List<V1Volume> podVolumes = new ArrayList<>();
+    List<V1VolumeMount> containerVolumeMounts = new ArrayList<>();
+
+    Map<String, List<String>> srcDestMappings = secretVolumesHelper.getSecretVolumeMappings();
+    if (isEmpty(srcDestMappings)) {
+      return;
+    }
+
+    for (Map.Entry<String, List<String>> entry : srcDestMappings.entrySet()) {
+      String srcPath = entry.getKey();
+      List<String> destPaths = entry.getValue();
+      String content;
+
+      // Get contents of the file to be mounted
+      try {
+        byte[] encoded = Files.readAllBytes(Paths.get(srcPath));
+        content = new String(encoded, StandardCharsets.US_ASCII);
+      } catch (IOException e) {
+        log.error("Could not read file: {}, Error: {}", srcPath, e);
+        continue;
+      }
+
+      String secretKey = secretVolumesHelper.getSecretKey(pod.getMetadata().getName(), srcPath);
+
+      // Create secrets, pod volumes, and container volume mounts for all containers in the spec
+      V1Secret secret =
+          new V1SecretBuilder()
+              .withMetadata(new V1ObjectMetaBuilder().withNamespace(namespace).withName(secretKey).build())
+              .withData(ImmutableMap.of(secretKey, content.getBytes()))
+              .withType(OPAQUE_SECRET_TYPE)
+              .build();
+
+      cik8JavaClientHandler.createOrReplaceSecret(coreV1Api, secret, namespace);
+
+      // Create a V1SecretVolumeSource to be used by the pod volume. This needs a list of key & path pairs.
+      List<V1KeyToPath> l = new ArrayList<>();
+      destPaths.forEach(path
+          -> l.add(new V1KeyToPathBuilder().withKey(secretKey).withPath(secretVolumesHelper.getName(path)).build()));
+
+      V1SecretVolumeSource secretVolumeSource =
+          new V1SecretVolumeSourceBuilder().withSecretName(secretKey).withItems(l).build();
+
+      podVolumes.add(new V1VolumeBuilder().withSecret(secretVolumeSource).withName(secretKey).build());
+
+      // Update container volume mounts with secret volume keys and destination paths.
+      destPaths.forEach(path
+          -> containerVolumeMounts.add(new V1VolumeMountBuilder()
+                                           .withName(secretKey)
+                                           .withMountPath(path)
+                                           .withSubPath(secretVolumesHelper.getName(path))
+                                           .withReadOnly(true)
+                                           .build()));
+    }
+
+    // Update volumes of the pod
+    pod.getSpec().getVolumes().addAll(podVolumes);
+
+    // Update volume mounts for all containers in the pod (except the lite engine container)
+    for (V1Container c : pod.getSpec().getContainers()) {
+      if (c.getName().equals("lite-engine")) { // TODO: Process this in ContainerParams to remove hardcoding here
+        continue;
+      }
+
+      containerVolumeMounts.forEach(c::addVolumeMountsItem);
+    }
   }
 
   private void createEnvVariablesSecrets(CoreV1Api coreV1Api, String namespace,

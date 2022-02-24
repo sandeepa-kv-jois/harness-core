@@ -79,7 +79,6 @@ import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import org.cloudfoundry.operations.applications.ApplicationDetail;
@@ -714,7 +713,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
 
     mockSetupBehaviour(releaseName, previousReleases);
     doReturn(previousReleases).when(pcfDeploymentManager).getPreviousReleases(any(), anyString());
-    doReturn(Optional.of(""))
+    doReturn(CfAppSetupTimeDetails.builder().build())
         .when(pcfCommandTaskBaseHelper)
         .renameInActiveAppDuringBGDeployment(
             eq(previousReleases), any(), eq(releaseName), eq(executionLogCallback), any(), any());
@@ -759,7 +758,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     assertThat(mostRecentInactiveAppVersion.getApplicationName()).isEqualTo(inActiveApplication.getName());
     assertThat(mostRecentInactiveAppVersion.getApplicationGuid()).isEqualTo(inActiveApplication.getId());
     assertThat(pcfCommandResponse.getActiveAppRevision()).isEqualTo(-1);
-    assertThat(mostRecentInactiveAppVersion.getOldName()).isEqualTo("");
+    assertThat(mostRecentInactiveAppVersion.getOldName()).isEqualTo(inActiveAppCurrentName);
 
     List<CfAppSetupTimeDetails> activeAppDetails = pcfCommandResponse.getDownsizeDetails();
     assertThat(activeAppDetails.size()).isEqualTo(1);
@@ -788,7 +787,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
 
     mockSetupBehaviour(releaseName, previousReleases);
     doReturn(previousReleases).when(pcfDeploymentManager).getPreviousReleases(any(), anyString());
-    doReturn(Optional.of(""))
+    doReturn(CfAppSetupTimeDetails.builder().build())
         .when(pcfCommandTaskBaseHelper)
         .renameInActiveAppDuringBGDeployment(
             eq(previousReleases), any(), eq(releaseName), eq(executionLogCallback), any(), any());
@@ -831,7 +830,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
     assertThat(pcfCommandResponse.isNonVersioning()).isTrue();
     assertThat(pcfCommandResponse.isVersioningChanged()).isTrue();
     assertThat(mostRecentInactiveAppVersion.getApplicationName()).isEqualTo(inActiveApplication.getName());
-    assertThat(mostRecentInactiveAppVersion.getOldName()).isEqualTo("");
+    assertThat(mostRecentInactiveAppVersion.getOldName()).isEqualTo(inActiveAppCurrentName);
     assertThat(mostRecentInactiveAppVersion.getApplicationGuid()).isEqualTo(inActiveApplication.getId());
     assertThat(pcfCommandResponse.getActiveAppRevision()).isEqualTo(-1);
 
@@ -863,7 +862,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
 
     mockSetupBehaviour(releaseName, previousReleases);
     doReturn(previousReleases).when(pcfDeploymentManager).getPreviousReleases(any(), anyString());
-    doReturn(Optional.of(inActiveAppCurrentName))
+    doReturn(CfAppSetupTimeDetails.builder().oldName(inActiveAppCurrentName).build())
         .when(pcfCommandTaskBaseHelper)
         .renameInActiveAppDuringBGDeployment(
             eq(previousReleases), any(), eq(releaseName), eq(executionLogCallback), any(), any());
@@ -938,7 +937,7 @@ public class PcfSetupCommandTaskHandlerTest extends WingsBaseTest {
 
     mockSetupBehaviour(releaseName, previousReleases);
     doReturn(previousReleases).when(pcfDeploymentManager).getPreviousReleases(any(), anyString());
-    doReturn(Optional.of(inActiveAppCurrentName))
+    doReturn(CfAppSetupTimeDetails.builder().oldName(inActiveAppCurrentName).build())
         .when(pcfCommandTaskBaseHelper)
         .renameInActiveAppDuringBGDeployment(
             eq(previousReleases), any(), eq(releaseName), eq(executionLogCallback), any(), any());

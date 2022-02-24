@@ -25,6 +25,7 @@ input CreateUserInput {
   name: String!
   email: String!
   userGroupIds: [String!]
+  externalUserId: String
 }
 
 type CreateUserPayload {
@@ -37,6 +38,7 @@ input UpdateUserInput {
   id: String!
   name: String
   userGroupIds: [String!]
+  externalUserId: String
 }
 
 type UpdateUserPayload {
@@ -62,6 +64,7 @@ extend type User {
   isUserLocked: Boolean
   isPasswordExpired: Boolean
   isImportedFromIdentityProvider: Boolean
+  externalUserId: String
   userGroups(limit: Int!, offset: Int): UserGroupConnection
     @dataFetcher(name: userGroupConnection, contextFieldArgsMap: "{ \"User\": \"id\"}")
 }

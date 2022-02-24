@@ -7,6 +7,7 @@
 
 package io.harness.ccm.commons.entities;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -16,8 +17,10 @@ import lombok.experimental.FieldDefaults;
 @Value
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Schema(name = "FieldFilter",
+    description = "Filters return values as per the field, operator & List of string values provided")
 public class CCMStringFilter {
   CCMField field;
   CCMOperator operator;
-  List<String> values;
+  @Schema(name = "Values", description = "List of all values of the filter.") List<String> values;
 }

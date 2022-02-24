@@ -7,9 +7,15 @@
 
 package io.harness.delegate.beans.connector.vaultconnector;
 
+import static io.harness.SecretManagerDescriptionConstants.AWS_REGION;
+import static io.harness.SecretManagerDescriptionConstants.SINK_PATH;
+import static io.harness.SecretManagerDescriptionConstants.USE_AWS_IAM;
+import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_HEADER;
+import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_ROLE;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.encryption.SecretRefHelper.getSecretConfigString;
 import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
 import static io.harness.exception.WingsException.USER;
 
@@ -28,6 +34,7 @@ import io.harness.security.encryption.AccessType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.annotations.ApiModelProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.net.MalformedURLException;
@@ -45,7 +52,7 @@ import lombok.ToString;
 @Getter
 @Setter
 @Builder
-@ToString(exclude = {"authToken", "secretId", "sinkPath"})
+@ToString(exclude = {"authToken", "secretId", "sinkPath", "xVaultAwsIamServerId"})
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(Include.NON_NULL)
@@ -71,12 +78,22 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @Schema(description = SecretManagerDescriptionConstants.SECRET_ENGINE_VERSION) private int secretEngineVersion;
   @Schema(description = SecretManagerDescriptionConstants.DELEGATE_SELECTORS) private Set<String> delegateSelectors;
   @Schema(description = SecretManagerDescriptionConstants.NAMESPACE) private String namespace;
-  private String sinkPath;
+  @Schema(description = SINK_PATH) private String sinkPath;
   @Schema(description = SecretManagerDescriptionConstants.USE_VAULT_AGENT) private boolean useVaultAgent;
+  @Schema(description = USE_AWS_IAM) private boolean useAwsIam;
+  @Schema(description = AWS_REGION) private String awsRegion;
+  @Schema(description = VAULT_AWS_IAM_ROLE) private String vaultAwsIamRole;
+  @SecretReference
+  @ApiModelProperty(dataType = "string")
+  @Schema(description = VAULT_AWS_IAM_HEADER)
+  @JsonProperty(value = "xvaultAwsIamServerId")
+  private SecretRefData headerAwsIam;
 
   public AccessType getAccessType() {
     if (useVaultAgent) {
       return AccessType.VAULT_AGENT;
+    } else if (useAwsIam) {
+      return AccessType.AWS_IAM;
     } else {
       return isNotEmpty(appRoleId) ? AccessType.APP_ROLE : AccessType.TOKEN;
     }
@@ -105,6 +122,11 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
     if (isReadOnly && isDefault) {
       throw new InvalidRequestException("Read only secret manager cannot be set as default", INVALID_REQUEST, USER);
     }
+    if (isUseVaultAgent() && isUseAwsIam()) {
+      throw new InvalidRequestException(
+          "You must use either Vault Agent or Aws Iam Auth method to authenticate. Both can not be used together",
+          INVALID_REQUEST, USER);
+    }
     if (isUseVaultAgent()) {
       if (isBlank(getSinkPath())) {
         throw new InvalidRequestException(
@@ -113,6 +135,26 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
       if (isEmpty(getDelegateSelectors())) {
         throw new InvalidRequestException(
             "You must provide a delegate selector to read token if you are using VaultAgent", INVALID_REQUEST, USER);
+      }
+    }
+    if (isUseAwsIam()) {
+      if (isBlank(getVaultAwsIamRole())) {
+        throw new InvalidRequestException(
+            "You must provide a vault role if you are using Vault with Aws Iam Auth method", INVALID_REQUEST, USER);
+      }
+      if (isBlank(getAwsRegion())) {
+        throw new InvalidRequestException(
+            "You must provide a aws region if you are using Vault with Aws Iam Auth method", INVALID_REQUEST, USER);
+      }
+      if (isBlank(getSecretConfigString(getHeaderAwsIam()))) {
+        throw new InvalidRequestException(
+            "You must provide Iam Header Server ID if you are using Vault with Aws Iam Auth method", INVALID_REQUEST,
+            USER);
+      }
+      if (isEmpty(getDelegateSelectors())) {
+        throw new InvalidRequestException(
+            "You must provide a delegate selector which can connect to vault using Aws IAM auth method",
+            INVALID_REQUEST, USER);
       }
     }
   }

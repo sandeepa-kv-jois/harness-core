@@ -22,9 +22,10 @@ public class KubernetesExceptionHints {
   public final String K8S_API_SOCKET_TIMEOUT_EXCEPTION =
       "Verify if Harness delegate is whitelisted to access Kubernetes API";
   public final String K8S_API_FORBIDDEN_EXCEPTION =
-      "Check configured Kubernetes user permissions and authorization policies";
+      "Check configured Kubernetes user permissions and authorization policies. \nTo know more about Roles, ClusterRoles and ClusterRoleBindings, refer: https://kubernetes.io/docs/reference/access-authn-authz/rbac/";
   public final String K8S_API_UNAUTHORIZED_EXCEPTION = "Check Kubernetes connector credentials";
   public final String K8S_API_VALIDATION_ERROR = "Validate Kubernetes infrastructure configuration";
+  public final String K8S_API_SSL_VALIDATOR = "Check if provided CA certificate is valid for this kubernetes cluster";
 
   public final String DRY_RUN_MANIFEST_FAILED =
       "Check manifest output for invalid fields name, types or empty manifest";
@@ -36,7 +37,7 @@ public class KubernetesExceptionHints {
   public final String APPLY_NO_FILEPATH_SPECIFIED = "Please specify a valid file path to manifests from repository";
 
   public final String WAIT_FOR_STEADY_STATE_FAILED =
-      "Check deployment pods probe checks, nodes availability or image pull secrets";
+      "Please check for possible issues in:\n1. Execution logs(under \"Wait for Steady State\" section). \n2. Deployment pods probe checks. \n3. Availability of nodes/resources in the target cluster. \n4. Valid image pull secrets.";
   public final String WAIT_FOR_STEADY_STATE_CLI_FAILED =
       "Resource may be deleted in process or may be related to an intermittent connection issue";
   public final String WAIT_FOR_STEADY_STATE_JOB_FAILED = "Verify job logs or output for the failure reason";
@@ -61,11 +62,26 @@ public class KubernetesExceptionHints {
   public final String BG_SWAP_SERVICES_SERVICE_NOT_FOUND =
       "Swap services requires primary and stage services to be present.";
 
-  public final String SCALE_CLI_FAILED = "Check if resource %s exists";
+  public final String SCALE_CLI_FAILED_GENERIC =
+      "Failed to scale resource. \nPlease check the inputs to the scale step: namespace(if provided), resource type or resource name.";
   public final String ROLLBACK_CLI_FAILED = "Check if resource %s exists";
 
   public final String FAILED_TO_READ_FILE = "Failed to read file at path [%s].";
   public final String CHECK_IF_FILE_EXIST = "Check if file [%s] exists.";
   public final String INVALID_RESOURCE_KIND_NAME_FORMAT =
       "Provide resource name in kind/name or namespace/kind/name format, e.x. 'Deployment/%s' instead of '%s'";
+  public final String GENERIC_CLI_FAILURE = "kubectl command has failed to execute successfully.";
+  public final String K8S_CHARACTER_ERROR =
+      " For more information on kubernetes naming constraints, refer: https://kubernetes.io/docs/concepts/overview/working-with-objects/names/.";
+  public final String VALIDATION_FAILED_INVALID_TYPE = "Please check the provided manifest.";
+  public final String VALIDATION_FAILED_UNKNOWN_FIELD = "Please check the provided manifest.";
+  public final String SCALE_CLI_FAILED =
+      "Please check the inputs provided to the scale step: namespace(if provided), resource type or resource name.";
+  public final String UNRESOLVED_MANIFEST_FIELD =
+      "Please check values.yaml file(s) for any missing/null fields inside manifests or any unresolved expressions referencing harness variables.";
+
+  public final String API_CLIENT_CREATE_FAILED = "Check kubernetes connector for invalid values";
+  public final String API_CLIENT_CA_CERT_INVALID_FORMAT = "Check if given CA certificate is a valid X.509 certificate";
+  public final String API_CLIENT_CA_CERT_INCOMPLETE =
+      "Check if given CA certificate is in encoded in base64 and all data, header and footer are in place";
 }

@@ -39,7 +39,7 @@ public class ResourceGroupFilterDTO {
   @Schema(description = "Filter by project identifier") String projectIdentifier;
   @Schema(description = "Filter resource group matching by identifier/name") String searchTerm;
   @Schema(description = "Filter by resource group identifiers") Set<String> identifierFilter;
-  @JsonIgnore Set<String> scopeLevelFilter;
+  @JsonIgnore @Schema(description = "Filter by scopeLevel") Set<String> scopeLevelFilter;
   @Schema(description = "Filter based on whether it has a particular resource")
   Set<ResourceSelectorFilter> resourceSelectorFilterList;
   @Schema(description = "Filter based on whether the resource group is Harness managed") ManagedFilter managedFilter;

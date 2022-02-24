@@ -42,8 +42,7 @@ public class ActualIdleBillingDataReader implements ItemReader<ActualIdleCostBat
     ActualIdleCostBatchJobData actualIdleCostBatchJobData = null;
     if (!runOnlyOnce.getAndSet(true)) {
       String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
-      BatchJobType batchJobType =
-          CCMJobConstants.getBatchJobTypeFromJobParams(parameters, CCMJobConstants.BATCH_JOB_TYPE);
+      BatchJobType batchJobType = CCMJobConstants.getBatchJobTypeFromJobParams(parameters);
       long startDate = Long.parseLong(parameters.getString(CCMJobConstants.JOB_START_DATE));
       long endDate = Long.parseLong(parameters.getString(CCMJobConstants.JOB_END_DATE));
       List<ActualIdleCostData> nodeData =

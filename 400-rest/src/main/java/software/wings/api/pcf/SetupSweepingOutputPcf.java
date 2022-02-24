@@ -73,6 +73,12 @@ public class SetupSweepingOutputPcf implements SweepingOutput {
       infoVariablesBuilder.newAppName(newPcfApplicationDetails.getApplicationName());
       infoVariablesBuilder.newAppGuid(newPcfApplicationDetails.getApplicationGuid());
       infoVariablesBuilder.newAppRoutes(newPcfApplicationDetails.getUrls());
+
+      if (isStandardBlueGreenWorkflow) {
+        infoVariablesBuilder.inActiveAppName(newPcfApplicationDetails.getApplicationName());
+      } else {
+        infoVariablesBuilder.activeAppName(newPcfApplicationDetails.getApplicationName());
+      }
     }
 
     CfAppSetupTimeDetails oldAppDetails = getOldAppDetail(appDetailsToBeDownsized);
@@ -80,9 +86,16 @@ public class SetupSweepingOutputPcf implements SweepingOutput {
       infoVariablesBuilder.oldAppName(oldAppDetails.getApplicationName());
       infoVariablesBuilder.oldAppGuid(oldAppDetails.getApplicationGuid());
       infoVariablesBuilder.oldAppRoutes(oldAppDetails.getUrls());
+
+      if (isStandardBlueGreenWorkflow) {
+        infoVariablesBuilder.activeAppName(oldAppDetails.getApplicationName());
+      } else {
+        infoVariablesBuilder.inActiveAppName(oldAppDetails.getApplicationName());
+      }
     }
 
     if (mostRecentInactiveAppVersionDetails != null) {
+      infoVariablesBuilder.mostRecentInactiveAppVersionOldName(mostRecentInactiveAppVersionDetails.getOldName());
       infoVariablesBuilder.mostRecentInactiveAppVersionGuid(mostRecentInactiveAppVersionDetails.getApplicationGuid());
       infoVariablesBuilder.mostRecentInactiveAppVersionName(mostRecentInactiveAppVersionDetails.getApplicationName());
       infoVariablesBuilder.mostRecentInactiveAppVersionRunningInstances(

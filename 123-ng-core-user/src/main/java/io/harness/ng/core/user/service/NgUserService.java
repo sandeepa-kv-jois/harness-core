@@ -84,6 +84,8 @@ public interface NgUserService {
 
   boolean isUserLastAdminAtScope(String userId, Scope scope);
 
+  boolean isAccountAdmin(String userId, String accountIdentifier);
+
   boolean updateUserMetadata(UserMetadataDTO user);
 
   boolean removeUserFromScope(

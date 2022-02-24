@@ -154,6 +154,11 @@ func (h *handler) ListCommits(ctx context.Context, in *pb.ListCommitsRequest) (*
 	return git.ListCommits(ctx, in, h.log)
 }
 
+// GetLatestCommitOnFile is used to return latest commit id of a file given a branch.
+func (h *handler) GetLatestCommitOnFile(ctx context.Context, in *pb.GetLatestCommitOnFileRequest) (*pb.GetLatestCommitOnFileResponse, error) {
+	return git.GetLatestCommitOnFile(ctx, in, h.log)
+}
+
 // ListCommitsInPR is used to return a list of commit details given pr number.
 func (h *handler) ListCommitsInPR(ctx context.Context, in *pb.ListCommitsInPRRequest) (*pb.ListCommitsInPRResponse, error) {
 	return git.ListCommitsInPR(ctx, in, h.log)

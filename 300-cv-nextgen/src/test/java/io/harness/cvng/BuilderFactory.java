@@ -22,7 +22,6 @@ import io.harness.cvng.activity.entities.PagerDutyActivity.PagerDutyActivityBuil
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.MonitoredServiceDataSourceType;
 import io.harness.cvng.beans.MonitoredServiceType;
-import io.harness.cvng.beans.TimeSeriesMetricType;
 import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.beans.change.ChangeEventDTO.ChangeEventDTOBuilder;
 import io.harness.cvng.beans.change.ChangeSourceType;
@@ -51,6 +50,7 @@ import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.KubernetesCh
 import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.PagerDutyChangeSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.AppDynamicsHealthSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceSpec;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
@@ -213,13 +213,13 @@ public class BuilderFactory {
         .projectIdentifier(context.getProjectIdentifier())
         .errorBudgetRisk(ErrorBudgetRisk.EXHAUSTED)
         .errorBudgetRemainingPercentage(10)
-        .monitoredServiceIdentifier("monitoredServiceIdentifier")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .serviceLevelObjectiveIdentifier("sloIdentifier");
   }
 
   public MonitoredServiceDTOBuilder monitoredServiceDTOBuilder() {
     return MonitoredServiceDTO.builder()
-        .identifier(context.serviceIdentifier + "_" + context.getEnvIdentifier())
+        .identifier(context.getMonitoredServiceIdentifier())
         .name("monitored service name")
         .orgIdentifier(context.getOrgIdentifier())
         .projectIdentifier(context.getProjectIdentifier())
@@ -384,19 +384,6 @@ public class BuilderFactory {
         .connectorIdentifier("connectorRef")
         .category(CVMonitoringCategory.PERFORMANCE);
   }
-  public PrometheusCVConfig prometheusCVConfigWithMetricInfo() {
-    MetricPack metricPack = MetricPack.builder().dataCollectionDsl("metric-pack-dsl").build();
-    PrometheusCVConfig cvConfig = prometheusCVConfigBuilder().groupName("mygroupName").build();
-    cvConfig.setMetricPack(metricPack);
-    PrometheusCVConfig.MetricInfo metricInfo = PrometheusCVConfig.MetricInfo.builder()
-                                                   .metricName("myMetric")
-                                                   .metricType(TimeSeriesMetricType.RESP_TIME)
-                                                   .prometheusMetricName("cpu_usage_total")
-                                                   .build();
-
-    cvConfig.setMetricInfoList(Arrays.asList(metricInfo));
-    return cvConfig;
-  }
 
   public ErrorTrackingCVConfigBuilder errorTrackingCVConfigBuilder() {
     return ErrorTrackingCVConfig.builder()
@@ -542,6 +529,7 @@ public class BuilderFactory {
         .environmentIdentifier(context.getEnvIdentifier())
         .eventTime(clock.instant())
         .changeSourceIdentifier("changeSourceID")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
         .type(ChangeSourceType.HARNESS_CD.getActivityType())
         .stageStepId("stageStepId")
         .verificationStartTime(clock.millis())
@@ -609,6 +597,7 @@ public class BuilderFactory {
         .relatedAppServices(Arrays.asList(ServiceEnvironment.builder()
                                               .environmentIdentifier(context.getEnvIdentifier())
                                               .serviceIdentifier(context.getServiceIdentifier())
+                                              .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
                                               .build()));
   }
 
@@ -663,7 +652,8 @@ public class BuilderFactory {
         .serviceIdentifier(context.getServiceIdentifier())
         .envIdentifier(context.getEnvIdentifier())
         .eventTime(Instant.EPOCH.getEpochSecond())
-        .changeSourceIdentifier("changeSourceID");
+        .changeSourceIdentifier("changeSourceID")
+        .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier());
   }
 
   public DeploymentEventDTO.Builder getDeploymentEventDTOBuilder() {
@@ -858,6 +848,10 @@ public class BuilderFactory {
     String serviceIdentifier;
     String envIdentifier;
 
+    private String getMonitoredServiceIdentifier() {
+      return serviceIdentifier + "_" + envIdentifier;
+    }
+
     public static Context defaultContext() {
       return Context.builder()
           .projectParams(ProjectParams.builder()
@@ -889,6 +883,17 @@ public class BuilderFactory {
           .projectIdentifier(projectParams.getProjectIdentifier())
           .serviceIdentifier(serviceIdentifier)
           .environmentIdentifier(envIdentifier)
+          .build();
+    }
+
+    public MonitoredServiceParams getMonitoredServiceParams() {
+      return MonitoredServiceParams.builder()
+          .accountIdentifier(projectParams.getAccountIdentifier())
+          .orgIdentifier(projectParams.getOrgIdentifier())
+          .projectIdentifier(projectParams.getProjectIdentifier())
+          .serviceIdentifier(serviceIdentifier)
+          .environmentIdentifier(envIdentifier)
+          .monitoredServiceIdentifier(getMonitoredServiceIdentifier())
           .build();
     }
   }

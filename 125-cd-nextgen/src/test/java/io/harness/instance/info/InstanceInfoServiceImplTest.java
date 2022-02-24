@@ -25,7 +25,7 @@ import io.harness.cdng.instance.outcome.DeploymentInfoOutcome;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
 import io.harness.delegate.beans.instancesync.info.K8sServerInstanceInfo;
-import io.harness.engine.outputs.SweepingOutputException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.executions.steps.ExecutionNodeType;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
@@ -82,11 +82,11 @@ public class InstanceInfoServiceImplTest extends CategoryTest {
   @Test
   @Owner(developers = IVAN)
   @Category(UnitTests.class)
-  public void testListServerInstancesWithSweepingOutputException() {
+  public void testListServerInstancesWithInvalidRequestException() {
     when(executionSweepingOutputService.resolveOptional(any(), any())).thenReturn(getDeploymentInfoOutcome(false));
 
     assertThatThrownBy(() -> instanceInfoService.listServerInstances(getAmbiance(), getStepType()))
-        .isInstanceOf(SweepingOutputException.class)
+        .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Not found sweeping output for step type: K8sRollingDeploy");
   }
 

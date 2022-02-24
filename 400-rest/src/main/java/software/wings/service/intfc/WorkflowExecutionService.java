@@ -328,4 +328,7 @@ public interface WorkflowExecutionService extends StateStatusUpdate {
   String fetchFailureDetails(String appId, String workflowExecutionId);
 
   void populateFailureDetails(WorkflowExecution workflowExecution);
+
+  List<WorkflowExecution> getLatestSuccessWorkflowExecutions(String appId, String workflowId, List<String> serviceIds,
+      int executionsToSkip, int executionsToIncludeInResponse);
 }

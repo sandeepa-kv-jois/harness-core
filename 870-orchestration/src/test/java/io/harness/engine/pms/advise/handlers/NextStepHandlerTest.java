@@ -96,7 +96,7 @@ public class NextStepHandlerTest extends OrchestrationTestBase {
 
     ArgumentCaptor<Ambiance> ambianceArgumentCaptor = ArgumentCaptor.forClass(Ambiance.class);
     nextStepHandler.handleAdvise(nodeExecution, adviserResponse);
-    verify(engine).triggerNextNode(ambianceArgumentCaptor.capture(), eq(planNode), eq(nodeExecution), eq(null));
+    verify(engine).runNextNode(ambianceArgumentCaptor.capture(), eq(planNode), eq(nodeExecution), eq(null));
 
     assertThat(ambianceArgumentCaptor.getValue().getLevelsCount()).isEqualTo(1);
     assertThat(ambianceArgumentCaptor.getValue().getLevels(0).getSetupId()).isEqualTo(nextNodeId);

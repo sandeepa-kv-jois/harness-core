@@ -36,7 +36,6 @@ public class EnvironmentMapper {
         .description(environmentRequestDTO.getDescription())
         .type(environmentRequestDTO.getType())
         .tags(convertToList(environmentRequestDTO.getTags()))
-        .version(environmentRequestDTO.getVersion())
         .build();
   }
 

@@ -1,0 +1,6 @@
+dto-exclusion: io.harness.gitsync.interceptor.GitEntityUpdateInfoDTO
+dto-exclusion: io.harness.template.beans.TemplateDeleteListRequestDTO
+dto-exclusion: io.harness.template.TemplateFilterPropertiesDTO
+dto-exclusion: io.harness.gitsync.interceptor.GitEntityFindInfoDTO
+dto-exclusion: io.harness.gitsync.interceptor.GitEntityCreateInfoDTO
+dto-exclusion: io.harness.gitsync.interceptor.GitEntityDeleteInfoDTO

@@ -34,7 +34,6 @@ import software.wings.delegatetasks.k8s.exception.K8sClusterException;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
 
-import com.google.inject.Inject;
 import io.fabric8.kubernetes.client.Adapters;
 import io.fabric8.kubernetes.client.DefaultKubernetesClient;
 import io.fabric8.kubernetes.client.ExtensionsAPIGroupClient;
@@ -48,7 +47,7 @@ import org.mockito.Mock;
 
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public class HarnessKubernetesClientFactoryTest extends WingsBaseTest {
-  @InjectMocks @Inject private HarnessKubernetesClientFactory harnessKubernetesClientFactory;
+  @InjectMocks private HarnessKubernetesClientFactory harnessKubernetesClientFactory;
   @Mock private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
   @Mock private KubernetesHelperService kubernetesHelperService;
 

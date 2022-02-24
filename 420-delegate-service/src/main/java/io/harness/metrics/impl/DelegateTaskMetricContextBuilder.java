@@ -28,8 +28,7 @@ public class DelegateTaskMetricContextBuilder {
   static {
     addToObjContextMap(DelegateTask.class,
         delegateTask
-        -> new DelegateTaskMetricContext(delegateTask.getAccountId(), isNg(delegateTask),
-            delegateTask.getData().getTaskType(), delegateTask.getData().isAsync()));
+        -> new DelegateTaskMetricContext(delegateTask.getAccountId(), delegateTask.getData().getTaskType()));
 
     addToObjContextMap(
         Delegate.class, delegate -> new DelegateMetricContext(delegate.getAccountId(), delegate.getVersion()));

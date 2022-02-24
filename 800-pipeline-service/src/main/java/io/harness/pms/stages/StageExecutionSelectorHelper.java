@@ -10,6 +10,7 @@ package io.harness.pms.stages;
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidYamlException;
 import io.harness.pms.stages.StageExecutionResponse.StageExecutionResponseBuilder;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
@@ -43,7 +44,7 @@ public class StageExecutionSelectorHelper {
                                                   .stageName(stageInfo.getName())
                                                   .stagesRequired(stageInfo.getStagesRequired())
                                                   .isToBeBlocked(stageInfo.isToBeBlocked());
-      if (stageInfo.getType().equals("Approval")) {
+      if (EmptyPredicate.isNotEmpty(stageInfo.getType()) && stageInfo.getType().equals("Approval")) {
         builder.message("Running an approval stage individually can be redundant");
       }
       if (stageInfo.isToBeBlocked()) {

@@ -20,6 +20,7 @@ import io.harness.annotations.dev.TargetModule;
 @OwnedBy(HarnessTeam.DEL)
 public enum CapabilityType {
   SOCKET,
+  SOCKET_BULK_OR,
   ALWAYS_TRUE,
   PROCESS_EXECUTOR,
   AWS_REGION,
@@ -46,5 +47,6 @@ public enum CapabilityType {
   GIT_CONNECTION_NG,
   GIT_INSTALLATION,
   LITE_ENGINE,
-  CI_VM;
+  CI_VM,
+  ARTIFACTORY;
 }

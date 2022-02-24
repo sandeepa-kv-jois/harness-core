@@ -225,13 +225,13 @@ public class InstanceInfoTimescaleDAOImpl implements InstanceInfoTimescaleDAO {
   }
 
   @Override
-  public void stopInactivePodsAtTime(@NotNull JobConstants jobConstants, @NotNull String clusterId,
+  public void stopInactivePodsAtTime(@NotNull String accountId, @NotNull String clusterId,
       @NotNull Instant syncEventTimestamp, @NotNull List<String> activePodUidsList) {
     TimescaleUtils.execute(dslContext.update(POD_INFO)
                                .set(POD_INFO.STOPTIME, toOffsetDateTime(syncEventTimestamp))
                                .set(POD_INFO.UPDATEDAT, offsetDateTimeNow())
-                               .where(POD_INFO.ACCOUNTID.eq(jobConstants.getAccountId()),
-                                   POD_INFO.CLUSTERID.eq(clusterId), POD_INFO.INSTANCEID.notIn(activePodUidsList),
+                               .where(POD_INFO.ACCOUNTID.eq(accountId), POD_INFO.CLUSTERID.eq(clusterId),
+                                   POD_INFO.INSTANCEID.notIn(activePodUidsList),
                                    isAliveAtInstant(POD_INFO.STARTTIME, POD_INFO.STOPTIME, syncEventTimestamp)));
   }
 

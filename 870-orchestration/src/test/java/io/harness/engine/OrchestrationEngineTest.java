@@ -22,15 +22,27 @@ import io.harness.category.element.UnitTests;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategyFactory;
 import io.harness.engine.pms.execution.strategy.plan.PlanExecutionStrategy;
 import io.harness.engine.pms.execution.strategy.plannode.PlanNodeExecutionStrategy;
+import io.harness.exception.InvalidRequestException;
+import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
 import io.harness.plan.NodeType;
 import io.harness.plan.Plan;
+import io.harness.plan.PlanNode;
+import io.harness.pms.contracts.advisers.AdviserResponse;
+import io.harness.pms.contracts.advisers.EndPlanAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
+import io.harness.pms.contracts.execution.ExecutionMode;
+import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
+import io.harness.pms.contracts.execution.events.SdkResponseEventType;
+import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
+import io.harness.pms.contracts.steps.io.StepResponseProto;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
 import com.google.protobuf.ByteString;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.Map;
 import org.junit.Before;
@@ -54,12 +66,25 @@ public class OrchestrationEngineTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNode() {
+  public void shouldTestRunNode() {
     Ambiance ambiance = Ambiance.newBuilder().build();
     Plan plan = Plan.builder().build();
-    when(planExecutionStrategy.triggerNode(ambiance, plan, null)).thenReturn(PlanExecution.builder().build());
-    orchestrationEngine.triggerNode(ambiance, plan, null);
-    verify(planExecutionStrategy).triggerNode(ambiance, plan, null);
+    when(planExecutionStrategy.runNode(ambiance, plan, null)).thenReturn(PlanExecution.builder().build());
+    orchestrationEngine.runNode(ambiance, plan, null);
+    verify(planExecutionStrategy).runNode(ambiance, plan, null);
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestRunNextNode() {
+    Ambiance ambiance = Ambiance.newBuilder().build();
+    PlanNode node = PlanNode.builder().build();
+    NodeExecution nodeExecution = NodeExecution.builder().build();
+    when(planNodeExecutionStrategy.runNextNode(ambiance, node, nodeExecution, null))
+        .thenReturn(NodeExecution.builder().build());
+    orchestrationEngine.runNextNode(ambiance, node, nodeExecution, null);
+    verify(planNodeExecutionStrategy).runNextNode(ambiance, node, nodeExecution, null);
   }
 
   @Test
@@ -74,6 +99,116 @@ public class OrchestrationEngineTest extends OrchestrationTestBase {
     doNothing().when(planNodeExecutionStrategy).startExecution(ambiance);
     orchestrationEngine.startNodeExecution(ambiance);
     verify(planNodeExecutionStrategy).startExecution(eq(ambiance));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestProcessFacilitationResponse() {
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(generateUuid())
+            .addLevels(Level.newBuilder().setRuntimeId(generateUuid()).setNodeType(PLAN_NODE.toString()).build())
+            .build();
+    FacilitatorResponseProto fr = FacilitatorResponseProto.newBuilder().setExecutionMode(ExecutionMode.SYNC).build();
+    doNothing().when(planNodeExecutionStrategy).processFacilitationResponse(ambiance, fr);
+    orchestrationEngine.processFacilitatorResponse(ambiance, fr);
+    verify(planNodeExecutionStrategy).processFacilitationResponse(eq(ambiance), eq(fr));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestProcessStepResponse() {
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(generateUuid())
+            .addLevels(Level.newBuilder().setRuntimeId(generateUuid()).setNodeType(PLAN_NODE.toString()).build())
+            .build();
+    StepResponseProto sr = StepResponseProto.newBuilder().setStatus(Status.FAILED).build();
+    doNothing().when(planNodeExecutionStrategy).processStepResponse(ambiance, sr);
+    orchestrationEngine.processStepResponse(ambiance, sr);
+    verify(planNodeExecutionStrategy).processStepResponse(eq(ambiance), eq(sr));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestProcessAdviserResponse() {
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(generateUuid())
+            .addLevels(Level.newBuilder().setRuntimeId(generateUuid()).setNodeType(PLAN_NODE.toString()).build())
+            .build();
+    AdviserResponse ar =
+        AdviserResponse.newBuilder().setEndPlanAdvise(EndPlanAdvise.newBuilder().setIsAbort(false).build()).build();
+    doNothing().when(planNodeExecutionStrategy).processAdviserResponse(ambiance, ar);
+    orchestrationEngine.processAdviserResponse(ambiance, ar);
+    verify(planNodeExecutionStrategy).processAdviserResponse(eq(ambiance), eq(ar));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestHandleError() {
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(generateUuid())
+            .addLevels(Level.newBuilder().setRuntimeId(generateUuid()).setNodeType(PLAN_NODE.toString()).build())
+            .build();
+    Exception ex = new InvalidRequestException("INVALID_REQUEST");
+    doNothing().when(planNodeExecutionStrategy).handleError(ambiance, ex);
+    orchestrationEngine.handleError(ambiance, ex);
+    verify(planNodeExecutionStrategy).handleError(eq(ambiance), eq(ex));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestConcludeExecution() {
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(generateUuid())
+            .addLevels(Level.newBuilder().setRuntimeId(generateUuid()).setNodeType(PLAN_NODE.toString()).build())
+            .build();
+    doNothing()
+        .when(planNodeExecutionStrategy)
+        .concludeExecution(ambiance, Status.RUNNING, Status.SUCCEEDED, EnumSet.noneOf(Status.class));
+    orchestrationEngine.concludeNodeExecution(ambiance, Status.RUNNING, Status.SUCCEEDED, EnumSet.noneOf(Status.class));
+    verify(planNodeExecutionStrategy)
+        .concludeExecution(eq(ambiance), eq(Status.RUNNING), eq(Status.SUCCEEDED), eq(EnumSet.noneOf(Status.class)));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestEndNodeExecution() {
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(generateUuid())
+            .addLevels(Level.newBuilder().setRuntimeId(generateUuid()).setNodeType(PLAN_NODE.toString()).build())
+            .build();
+    doNothing().when(planNodeExecutionStrategy).endNodeExecution(ambiance);
+    orchestrationEngine.endNodeExecution(ambiance);
+    verify(planNodeExecutionStrategy).endNodeExecution(eq(ambiance));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestHandleSdkResponseEvent() {
+    Ambiance ambiance =
+        Ambiance.newBuilder()
+            .setPlanExecutionId(generateUuid())
+            .addLevels(Level.newBuilder().setRuntimeId(generateUuid()).setNodeType(PLAN_NODE.toString()).build())
+            .build();
+    SdkResponseEventProto eventProto = SdkResponseEventProto.newBuilder()
+                                           .setAmbiance(ambiance)
+                                           .setSdkResponseEventType(SdkResponseEventType.HANDLE_FACILITATE_RESPONSE)
+                                           .build();
+    doNothing().when(planNodeExecutionStrategy).handleSdkResponseEvent(eventProto);
+    orchestrationEngine.handleSdkResponseEvent(eventProto);
+    verify(planNodeExecutionStrategy).handleSdkResponseEvent(eq(eventProto));
   }
 
   @Test

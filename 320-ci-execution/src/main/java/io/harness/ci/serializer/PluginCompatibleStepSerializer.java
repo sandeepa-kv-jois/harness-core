@@ -26,6 +26,7 @@ import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
 
 import com.google.inject.Inject;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Supplier;
 
@@ -46,6 +47,7 @@ public class PluginCompatibleStepSerializer implements ProtobufStepSerializer<Pl
     }
 
     long timeout = TimeoutUtils.getTimeoutInSeconds(parameterFieldTimeout, pluginCompatibleStep.getDefaultTimeout());
+    List<String> outputVarNames = CIStepInfoUtils.getOutputVariables(pluginCompatibleStep);
 
     StepContext stepContext = StepContext.newBuilder().setExecutionTimeoutSecs(timeout).build();
     Map<String, String> envVarMap =
@@ -57,6 +59,7 @@ public class PluginCompatibleStepSerializer implements ProtobufStepSerializer<Pl
             .addAllEntrypoint(
                 CIStepInfoUtils.getK8PluginCustomStepEntrypoint(pluginCompatibleStep, ciExecutionServiceConfig))
             .setContext(stepContext)
+            .addAllEnvVarOutputs(outputVarNames)
             .putAllEnvironment(envVarMap)
             .setArtifactFilePath(PLUGIN_ARTIFACT_FILE_VALUE)
             .build();

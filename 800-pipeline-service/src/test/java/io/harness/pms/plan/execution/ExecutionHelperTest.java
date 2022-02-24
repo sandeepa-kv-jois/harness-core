@@ -193,7 +193,7 @@ public class ExecutionHelperTest extends CategoryTest {
   public void testBuildTriggerInfo() {
     doReturn(triggeredBy).when(triggeredByHelper).getFromSecurityContext();
 
-    ExecutionTriggerInfo firstExecutionTriggerInfo = executionHelper.buildTriggerInfo(null);
+    ExecutionTriggerInfo firstExecutionTriggerInfo = executionHelper.buildTriggerInfoForManualFlow(null);
     assertThat(firstExecutionTriggerInfo.getIsRerun()).isEqualTo(false);
     assertThat(firstExecutionTriggerInfo.getTriggerType()).isEqualTo(MANUAL);
     assertThat(firstExecutionTriggerInfo.getTriggeredBy()).isEqualTo(triggeredBy);
@@ -205,7 +205,7 @@ public class ExecutionHelperTest extends CategoryTest {
     PlanExecution firstPlanExecution = PlanExecution.builder().metadata(firstExecutionMetadata).build();
     doReturn(firstPlanExecution).when(planExecutionService).get(originalExecutionId);
 
-    ExecutionTriggerInfo rerunExecutionTriggerInfo = executionHelper.buildTriggerInfo(originalExecutionId);
+    ExecutionTriggerInfo rerunExecutionTriggerInfo = executionHelper.buildTriggerInfoForManualFlow(originalExecutionId);
     rerunExecutionAssertions(triggeredBy, rerunExecutionTriggerInfo);
     verify(triggeredByHelper, times(2)).getFromSecurityContext();
     verify(planExecutionService, times(1)).get(originalExecutionId);
@@ -215,7 +215,8 @@ public class ExecutionHelperTest extends CategoryTest {
     PlanExecution secondPlanExecution = PlanExecution.builder().metadata(secondExecutionMetadata).build();
     doReturn(secondPlanExecution).when(planExecutionService).get("originalExecutionId2");
 
-    ExecutionTriggerInfo reRerunExecutionTriggerInfo = executionHelper.buildTriggerInfo("originalExecutionId2");
+    ExecutionTriggerInfo reRerunExecutionTriggerInfo =
+        executionHelper.buildTriggerInfoForManualFlow("originalExecutionId2");
     rerunExecutionAssertions(triggeredBy, reRerunExecutionTriggerInfo);
     verify(triggeredByHelper, times(3)).getFromSecurityContext();
     verify(planExecutionService, times(1)).get(originalExecutionId);
@@ -246,7 +247,7 @@ public class ExecutionHelperTest extends CategoryTest {
             pipelineEntity.getProjectIdentifier(), mergedYaml, true);
     ExecArgs execArgs =
         executionHelper.buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml, Collections.emptyList(), null,
-            executionTriggerInfo, null, RetryExecutionParameters.builder().isRetry(false).build());
+            executionTriggerInfo, null, RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();
@@ -277,7 +278,7 @@ public class ExecutionHelperTest extends CategoryTest {
             mergedYaml, true);
     ExecArgs execArgs = executionHelper.buildExecutionArgs(entityWithTemplateReference, moduleType, runtimeInputYaml,
         Collections.emptyList(), null, executionTriggerInfo, null,
-        RetryExecutionParameters.builder().isRetry(false).build());
+        RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();
@@ -315,7 +316,7 @@ public class ExecutionHelperTest extends CategoryTest {
             pipelineEntity.getProjectIdentifier(), mergedYaml, true);
     ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml,
         Collections.singletonList("s2"), null, executionTriggerInfo, null,
-        RetryExecutionParameters.builder().isRetry(false).build());
+        RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();
@@ -349,7 +350,7 @@ public class ExecutionHelperTest extends CategoryTest {
             pipelineYamlWithExpressions, true);
     ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntityWithExpressions, moduleType, null,
         Collections.singletonList("s2"), expressionValues, executionTriggerInfo, null,
-        RetryExecutionParameters.builder().isRetry(false).build());
+        RetryExecutionParameters.builder().isRetry(false).build(), null);
     executionMetadataAssertions(execArgs.getMetadata());
 
     PlanExecutionMetadata planExecutionMetadata = execArgs.getPlanExecutionMetadata();

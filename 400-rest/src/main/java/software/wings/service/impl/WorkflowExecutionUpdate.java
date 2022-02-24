@@ -31,6 +31,9 @@ import io.harness.beans.WorkflowType;
 import io.harness.beans.event.cg.CgPipelineCompletePayload;
 import io.harness.beans.event.cg.CgPipelinePausePayload;
 import io.harness.beans.event.cg.CgPipelineResumePayload;
+import io.harness.beans.event.cg.CgWorkflowCompletePayload;
+import io.harness.beans.event.cg.CgWorkflowPausePayload;
+import io.harness.beans.event.cg.CgWorkflowResumePayload;
 import io.harness.beans.event.cg.application.ApplicationEventData;
 import io.harness.beans.event.cg.entities.EnvironmentEntity;
 import io.harness.beans.event.cg.entities.InfraDefinitionEntity;
@@ -39,6 +42,8 @@ import io.harness.beans.event.cg.pipeline.ExecutionArgsEventData;
 import io.harness.beans.event.cg.pipeline.PipelineEventData;
 import io.harness.beans.event.cg.pipeline.PipelineExecData;
 import io.harness.beans.event.cg.pipeline.PipelineStageInfo;
+import io.harness.beans.event.cg.workflow.WorkflowEventData;
+import io.harness.beans.event.cg.workflow.WorkflowExecData;
 import io.harness.event.handler.impl.EventPublishHelper;
 import io.harness.event.handler.impl.segment.SegmentHandler;
 import io.harness.event.usagemetrics.UsageMetricsEventPublisher;
@@ -252,6 +257,7 @@ public class WorkflowExecutionUpdate implements StateMachineExecutionCallback {
 
     if (WorkflowType.PIPELINE != context.getWorkflowType()) {
       try {
+        deliverWorkflowEvent(execution, status, endTs);
         workflowNotificationHelper.sendWorkflowStatusChangeNotification(context, status);
       } catch (Exception exception) {
         // Failing to send notification is not considered critical to interrupt the status update.
@@ -323,6 +329,66 @@ public class WorkflowExecutionUpdate implements StateMachineExecutionCallback {
         log.error("Failed to generate events for workflowExecution:[{}], appId:[{}],", workflowExecutionId, appId, e);
       }
     }
+  }
+
+  private void deliverWorkflowEvent(WorkflowExecution execution, ExecutionStatus status, Long endTs) {
+    Application application = appService.get(appId);
+    if (application == null) {
+      return;
+    }
+    String accountId = application.getAccountId();
+    if (execution == null || !featureFlagService.isEnabled(FeatureName.APP_TELEMETRY, accountId)) {
+      return;
+    }
+    PipelineSummary summary = execution.getPipelineSummary();
+    eventService.deliverEvent(accountId, appId, getWorkflowEndPayload(application, execution, status, endTs, summary));
+  }
+
+  private EventPayload getWorkflowEndPayload(Application application, WorkflowExecution execution,
+      ExecutionStatus status, Long endTs, PipelineSummary summary) {
+    return EventPayload.builder()
+        .eventType(EventType.WORKFLOW_END.getEventValue())
+        .data(CgWorkflowCompletePayload.builder()
+                  .application(ApplicationEventData.builder().id(appId).name(application.getName()).build())
+                  .services(isEmpty(execution.getServiceIds()) ? Collections.emptyList()
+                                                               : execution.getServiceIds()
+                                                                     .stream()
+                                                                     .map(id -> ServiceEntity.builder().id(id).build())
+                                                                     .collect(Collectors.toList()))
+                  .infraDefinitions(isEmpty(execution.getInfraDefinitionIds())
+                          ? Collections.emptyList()
+                          : execution.getInfraDefinitionIds()
+                                .stream()
+                                .map(id -> InfraDefinitionEntity.builder().id(id).build())
+                                .collect(Collectors.toList()))
+                  .environments(isEmpty(execution.getEnvIds())
+                          ? Collections.emptyList()
+                          : execution.getEnvIds()
+                                .stream()
+                                .map(id -> EnvironmentEntity.builder().id(id).build())
+                                .collect(Collectors.toList()))
+                  .workflow(WorkflowEventData.builder().id(execution.getWorkflowId()).name(execution.getName()).build())
+                  .pipeline(getPipelineEventData(summary))
+                  .startedAt(execution.getCreatedAt())
+                  .completedAt(endTs)
+                  .status(status.name())
+                  .triggeredByType(execution.getCreatedByType())
+                  .triggeredBy(execution.getCreatedBy())
+                  .executionArgs(
+                      ExecutionArgsEventData.builder()
+                          .notes(execution.getExecutionArgs() == null ? null : execution.getExecutionArgs().getNotes())
+                          .build())
+                  .pipelineExecution(PipelineExecData.builder().id(execution.getPipelineExecutionId()).build())
+                  .workflowExecution(WorkflowExecData.builder().id(execution.getUuid()).build())
+                  .build())
+        .build();
+  }
+
+  private PipelineEventData getPipelineEventData(PipelineSummary summary) {
+    if (summary == null) {
+      return null;
+    }
+    return PipelineEventData.builder().id(summary.getPipelineId()).name(summary.getPipelineName()).build();
   }
 
   private void deliverEvent(WorkflowExecution execution, ExecutionStatus status, Long endTs) {
@@ -401,29 +467,116 @@ public class WorkflowExecutionUpdate implements StateMachineExecutionCallback {
     if (application == null) {
       return;
     }
-    PipelineSummary summary = execution.getPipelineSummary();
-    if (summary == null) {
-      return;
-    }
     switch (eventType) {
-      case PIPELINE_START:
-        break;
-      case PIPELINE_END:
-        break;
       case PIPELINE_CONTINUE:
         deliverPipelineResume(application, execution, statusUpdateInfo);
         break;
       case PIPELINE_PAUSE:
         deliverPipelinePause(application, execution, statusUpdateInfo);
         break;
+      case WORKFLOW_PAUSE:
+        deliverWorkflowPause(application, execution, statusUpdateInfo);
+        break;
+      case WORKFLOW_CONTINUE:
+        deliverWorkflowResume(application, execution, statusUpdateInfo);
+        break;
       default:
         break;
     }
   }
 
+  private void deliverWorkflowPause(
+      Application application, WorkflowExecution execution, StateStatusUpdateInfo statusUpdateInfo) {
+    PipelineSummary summary = execution.getPipelineSummary();
+    eventService.deliverEvent(application.getAccountId(), application.getUuid(),
+        EventPayload.builder()
+            .eventType(EventType.WORKFLOW_PAUSE.getEventValue())
+            .data(CgWorkflowPausePayload.builder()
+                      .application(ApplicationEventData.builder().id(appId).name(application.getName()).build())
+                      .services(isEmpty(execution.getServiceIds())
+                              ? Collections.emptyList()
+                              : execution.getServiceIds()
+                                    .stream()
+                                    .map(id -> ServiceEntity.builder().id(id).build())
+                                    .collect(Collectors.toList()))
+                      .infraDefinitions(isEmpty(execution.getInfraDefinitionIds())
+                              ? Collections.emptyList()
+                              : execution.getInfraDefinitionIds()
+                                    .stream()
+                                    .map(id -> InfraDefinitionEntity.builder().id(id).build())
+                                    .collect(Collectors.toList()))
+                      .environments(isEmpty(execution.getEnvIds())
+                              ? Collections.emptyList()
+                              : execution.getEnvIds()
+                                    .stream()
+                                    .map(id -> EnvironmentEntity.builder().id(id).build())
+                                    .collect(Collectors.toList()))
+                      .workflow(
+                          WorkflowEventData.builder().id(execution.getWorkflowId()).name(execution.getName()).build())
+                      .pipeline(getPipelineEventData(summary))
+                      .startedAt(execution.getCreatedAt())
+                      .triggeredByType(execution.getCreatedByType())
+                      .triggeredBy(execution.getCreatedBy())
+                      .executionArgs(
+                          ExecutionArgsEventData.builder()
+                              .notes(
+                                  execution.getExecutionArgs() == null ? null : execution.getExecutionArgs().getNotes())
+                              .build())
+                      .pipelineExecution(PipelineExecData.builder().id(execution.getPipelineExecutionId()).build())
+                      .workflowExecution(WorkflowExecData.builder().id(execution.getUuid()).build())
+                      .build())
+            .build());
+  }
+
+  private void deliverWorkflowResume(
+      Application application, WorkflowExecution execution, StateStatusUpdateInfo statusUpdateInfo) {
+    PipelineSummary summary = execution.getPipelineSummary();
+    eventService.deliverEvent(application.getAccountId(), application.getUuid(),
+        EventPayload.builder()
+            .eventType(EventType.WORKFLOW_CONTINUE.getEventValue())
+            .data(CgWorkflowResumePayload.builder()
+                      .application(ApplicationEventData.builder().id(appId).name(application.getName()).build())
+                      .services(isEmpty(execution.getServiceIds())
+                              ? Collections.emptyList()
+                              : execution.getServiceIds()
+                                    .stream()
+                                    .map(id -> ServiceEntity.builder().id(id).build())
+                                    .collect(Collectors.toList()))
+                      .infraDefinitions(isEmpty(execution.getInfraDefinitionIds())
+                              ? Collections.emptyList()
+                              : execution.getInfraDefinitionIds()
+                                    .stream()
+                                    .map(id -> InfraDefinitionEntity.builder().id(id).build())
+                                    .collect(Collectors.toList()))
+                      .environments(isEmpty(execution.getEnvIds())
+                              ? Collections.emptyList()
+                              : execution.getEnvIds()
+                                    .stream()
+                                    .map(id -> EnvironmentEntity.builder().id(id).build())
+                                    .collect(Collectors.toList()))
+                      .workflow(
+                          WorkflowEventData.builder().id(execution.getWorkflowId()).name(execution.getName()).build())
+                      .pipeline(getPipelineEventData(summary))
+                      .startedAt(execution.getCreatedAt())
+                      .triggeredByType(execution.getCreatedByType())
+                      .triggeredBy(execution.getCreatedBy())
+                      .executionArgs(
+                          ExecutionArgsEventData.builder()
+                              .notes(
+                                  execution.getExecutionArgs() == null ? null : execution.getExecutionArgs().getNotes())
+                              .build())
+                      .pipelineExecution(PipelineExecData.builder().id(execution.getPipelineExecutionId()).build())
+                      .workflowExecution(WorkflowExecData.builder().id(execution.getUuid()).build())
+                      .build())
+            .build());
+  }
+
   private void deliverPipelinePause(
       Application application, WorkflowExecution execution, StateStatusUpdateInfo statusUpdateInfo) {
     PipelineSummary summary = execution.getPipelineSummary();
+    if (summary == null) {
+      return;
+    }
     eventService.deliverEvent(application.getAccountId(), application.getUuid(),
         EventPayload.builder()
             .eventType(EventType.PIPELINE_PAUSE.getEventValue())
@@ -487,6 +640,9 @@ public class WorkflowExecutionUpdate implements StateMachineExecutionCallback {
   private void deliverPipelineResume(
       Application application, WorkflowExecution execution, StateStatusUpdateInfo statusUpdateInfo) {
     PipelineSummary summary = execution.getPipelineSummary();
+    if (summary == null) {
+      return;
+    }
     eventService.deliverEvent(application.getAccountId(), application.getUuid(),
         EventPayload.builder()
             .eventType(EventType.PIPELINE_CONTINUE.getEventValue())

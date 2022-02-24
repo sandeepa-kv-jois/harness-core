@@ -43,11 +43,11 @@ import io.harness.batch.processing.writer.constants.K8sCCMConstants;
 import io.harness.ccm.HarnessServiceInfoNG;
 import io.harness.ccm.commons.beans.HarnessServiceInfo;
 import io.harness.ccm.commons.beans.InstanceType;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.beans.Resource;
 import io.harness.ccm.commons.constants.CloudProvider;
 import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
 import io.harness.ccm.commons.entities.batch.InstanceData;
-import io.harness.persistence.HPersistence;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
@@ -66,7 +66,6 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.mutable.MutableInt;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -86,24 +85,23 @@ public class InstanceBillingDataTasklet implements Tasklet {
   @Autowired private AzureCustomBillingService azureCustomBillingService;
   @Autowired private CustomBillingMetaDataService customBillingMetaDataService;
   @Autowired private InstanceDataDao instanceDataDao;
-  @Autowired private HPersistence persistence;
   @Autowired private BatchMainConfig config;
 
-  private JobParameters parameters;
   private static final String CLAIM_REF_SEPARATOR = "/";
   private int batchSize;
-  private BatchJobType batchJobType;
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
-    parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
+    final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
+    String accountId = jobConstants.getAccountId();
+    Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
+    Instant endTime = Instant.ofEpochMilli(jobConstants.getJobEndTime());
     batchSize = config.getBatchQueryConfig().getInstanceDataBatchSize();
-    String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
-    Instant startTime = getFieldValueFromJobParams(CCMJobConstants.JOB_START_DATE);
-    Instant endTime = getFieldValueFromJobParams(CCMJobConstants.JOB_END_DATE);
-    batchJobType = CCMJobConstants.getBatchJobTypeFromJobParams(parameters, CCMJobConstants.BATCH_JOB_TYPE);
+
+    BatchJobType batchJobType = CCMJobConstants.getBatchJobTypeFromJobParams(
+        chunkContext.getStepContext().getStepExecution().getJobParameters());
     // bill PV first
-    List<InstanceBillingData> pvInstanceBillingDataList = billPVInstances(accountId, startTime, endTime);
+    List<InstanceBillingData> pvInstanceBillingDataList = billPVInstances(batchJobType, accountId, startTime, endTime);
     Map<String, InstanceBillingData> claimRefToPVInstanceBillingData =
         pvInstanceBillingDataList.stream().collect(Collectors.toMap(e
             -> e.getNamespace() + CLAIM_REF_SEPARATOR + e.getWorkloadName(),
@@ -151,7 +149,8 @@ public class InstanceBillingDataTasklet implements Tasklet {
     return result;
   }
 
-  private List<InstanceBillingData> billPVInstances(String accountId, Instant startTime, Instant endTime) {
+  private List<InstanceBillingData> billPVInstances(
+      BatchJobType batchJobType, String accountId, Instant startTime, Instant endTime) {
     List<InstanceBillingData> instanceBillingDataList = new ArrayList<>();
     List<InstanceData> instanceDataLists;
     InstanceDataReader instanceDataReader =
@@ -172,8 +171,6 @@ public class InstanceBillingDataTasklet implements Tasklet {
   List<InstanceBillingData> createBillingData(String accountId, Instant startTime, Instant endTime,
       BatchJobType batchJobType, List<InstanceData> instanceDataLists,
       Map<String, InstanceBillingData> claimRefToPVInstanceBillingData, Map<String, MutableInt> pvcClaimCount) {
-    log.info("Instance data list new {} {} {} {}", instanceDataLists.size(), startTime, endTime, parameters.toString());
-
     Set<String> parentInstanceIds = new HashSet<>();
     instanceDataLists.forEach(instanceData -> {
       if (null == instanceData.getActiveInstanceIterator() && null == instanceData.getUsageStopTime()) {
@@ -523,9 +520,5 @@ public class InstanceBillingDataTasklet implements Tasklet {
       return instanceData.getHarnessServiceInfoNG();
     }
     return new HarnessServiceInfoNG(null, null, null, null, null);
-  }
-
-  private Instant getFieldValueFromJobParams(String fieldName) {
-    return Instant.ofEpochMilli(Long.parseLong(parameters.getString(fieldName)));
   }
 }

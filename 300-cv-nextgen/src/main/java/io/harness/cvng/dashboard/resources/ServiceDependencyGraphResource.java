@@ -21,6 +21,7 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
@@ -38,23 +39,21 @@ public class ServiceDependencyGraphResource {
   @Timed
   @ExceptionMetered
   @ApiOperation(value = "get service dependency graph", nickname = "getServiceDependencyGraph")
-  public RestResponse<ServiceDependencyGraphDTO> getServiceDependencyGraph(
-      @QueryParam("accountId") @ApiParam(required = true) @NotNull final String accountId,
-      @QueryParam("orgIdentifier") @ApiParam(required = true) @NotNull final String orgIdentifier,
-      @QueryParam("projectIdentifier") @ApiParam(required = true) @NotNull final String projectIdentifier,
+  public RestResponse<ServiceDependencyGraphDTO> getServiceDependencyGraph(@BeanParam ProjectParams projectParams,
       @QueryParam("environmentIdentifier") String environmentIdentifier,
       @QueryParam("envIdentifier") String envIdentifier, @QueryParam("serviceIdentifier") String serviceIdentifier,
+      @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
       @QueryParam("servicesAtRiskFilter") @ApiParam(
           defaultValue = "false") @NotNull final boolean servicesAtRiskFilter) {
-    ProjectParams projectParams = ProjectParams.builder()
-                                      .accountIdentifier(accountId)
-                                      .orgIdentifier(orgIdentifier)
-                                      .projectIdentifier(projectIdentifier)
-                                      .build();
     if (environmentIdentifier == null) {
       environmentIdentifier = envIdentifier;
     }
-    return new RestResponse<>(serviceDependencyGraphService.getDependencyGraph(
-        projectParams, serviceIdentifier, environmentIdentifier, servicesAtRiskFilter));
+    if (monitoredServiceIdentifier != null) {
+      return new RestResponse<>(serviceDependencyGraphService.getDependencyGraph(
+          projectParams, monitoredServiceIdentifier, servicesAtRiskFilter));
+    } else {
+      return new RestResponse<>(serviceDependencyGraphService.getDependencyGraph(
+          projectParams, serviceIdentifier, environmentIdentifier, servicesAtRiskFilter));
+    }
   }
 }

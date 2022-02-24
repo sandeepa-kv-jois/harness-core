@@ -51,4 +51,6 @@ public interface CVConstants {
   String TAG_ACCOUNT_ID = "accountId";
   String TAG_ONBOARDING = "onboarding";
   String TAG_UNRECORDED = "unrecorded";
+  String STATEMACHINE_PUBLISHER = "srm_statemachine_publisher";
+  String STATEMACHINE_CONSUMER = "srm_statemachine_consumer";
 }

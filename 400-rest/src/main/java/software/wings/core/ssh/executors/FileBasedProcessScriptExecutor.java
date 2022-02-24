@@ -7,25 +7,17 @@
 
 package software.wings.core.ssh.executors;
 
-import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
-import static io.harness.logging.CommandExecutionStatus.FAILURE;
-import static io.harness.logging.CommandExecutionStatus.SUCCESS;
-
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.shell.AbstractScriptExecutor;
+import io.harness.shell.FileBasedProcessScriptExecutorHelper;
 import io.harness.shell.ScriptExecutionContext;
 import io.harness.shell.ShellExecutorConfig;
 
 import software.wings.delegatetasks.DelegateFileManager;
 
 import com.google.inject.Inject;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.util.concurrent.ExecutionException;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
 
 @Slf4j
 public class FileBasedProcessScriptExecutor extends FileBasedAbstractScriptExecutor {
@@ -70,19 +62,7 @@ public class FileBasedProcessScriptExecutor extends FileBasedAbstractScriptExecu
 
   @Override
   public CommandExecutionStatus scpOneFile(String remoteFilePath, AbstractScriptExecutor.FileProvider fileProvider) {
-    CommandExecutionStatus commandExecutionStatus = FAILURE;
-    try {
-      Pair<String, Long> fileInfo = fileProvider.getInfo();
-      createDirectoryIfDoesNotExist(remoteFilePath);
-      OutputStream out = new FileOutputStream(remoteFilePath + "/" + fileInfo.getKey());
-      fileProvider.downloadToStream(out);
-      out.flush();
-      out.close();
-      commandExecutionStatus = SUCCESS;
-      saveExecutionLog("File successfully downloaded to " + remoteFilePath);
-    } catch (ExecutionException | IOException e) {
-      log.error("Command execution failed with error", e);
-    }
-    return commandExecutionStatus;
+    return FileBasedProcessScriptExecutorHelper.scpOneFile(
+        remoteFilePath, fileProvider, logCallback, shouldSaveExecutionLogs);
   }
 }

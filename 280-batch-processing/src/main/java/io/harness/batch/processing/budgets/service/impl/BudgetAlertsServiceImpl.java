@@ -11,6 +11,7 @@ import static io.harness.ccm.budget.AlertThresholdBase.ACTUAL_COST;
 import static io.harness.ccm.budget.AlertThresholdBase.FORECASTED_COST;
 import static io.harness.ccm.commons.constants.Constants.HARNESS_NAME;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.lang.String.format;
@@ -31,6 +32,8 @@ import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.entities.billing.Budget;
 import io.harness.ccm.communication.CESlackWebhookService;
 import io.harness.ccm.communication.entities.CESlackWebhook;
+import io.harness.logging.AccountLogContext;
+import io.harness.logging.AutoLogContext;
 import io.harness.timescaledb.TimeScaleDBService;
 
 import software.wings.beans.Account;
@@ -86,6 +89,7 @@ public class BudgetAlertsServiceImpl {
     List<Account> ceEnabledAccounts = accountShardService.getCeEnabledAccounts();
     List<String> accountIds = ceEnabledAccounts.stream().map(Account::getUuid).collect(Collectors.toList());
     accountIds.forEach(accountId -> {
+      AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR);
       List<Budget> budgets = budgetDao.list(accountId);
       budgets.forEach(budget -> {
         updateCGBudget(budget);
@@ -95,6 +99,7 @@ public class BudgetAlertsServiceImpl {
           log.error("Can't send alert for budget : {}, Exception: ", budget.getUuid(), e);
         }
       });
+      ignore.close();
     });
   }
 

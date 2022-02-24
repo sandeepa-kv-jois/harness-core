@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.gitsync.common.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
@@ -14,7 +21,6 @@ import io.harness.category.element.UnitTests;
 import io.harness.eventsframework.api.Producer;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.GitSyncTestBase;
-import io.harness.gitsync.UserPrincipal;
 import io.harness.gitsync.common.dtos.TriggerFullSyncResponseDTO;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.GitBranchService;
@@ -23,6 +29,7 @@ import io.harness.gitsync.core.fullsync.entity.GitFullSyncJob;
 import io.harness.gitsync.core.fullsync.service.FullSyncJobService;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigDTO;
 import io.harness.rule.Owner;
+import io.harness.security.UserPrincipal;
 
 import com.google.inject.Inject;
 import com.google.protobuf.StringValue;

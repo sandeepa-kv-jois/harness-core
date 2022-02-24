@@ -15,6 +15,7 @@ import (
 
 	"github.com/drone/go-scm/scm"
 	"github.com/harness/harness-core/commons/go/lib/utils"
+	"github.com/harness/harness-core/product/ci/scm/git"
 	"github.com/harness/harness-core/product/ci/scm/gitclient"
 	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"go.uber.org/zap"
@@ -130,7 +131,8 @@ func DeleteFile(ctx context.Context, fileRequest *pb.DeleteFileRequest, log *zap
 		return out, nil
 	}
 	// go-scm doesnt provide CRUD content parsing lets do it our self
-	commitID, blobID := parseCrudResponse(response.Body, *fileRequest.GetProvider(), log)
+
+	commitID, blobID := parseCrudResponse(ctx, client, response.Body, *fileRequest.GetProvider(), requestContext{Slug: fileRequest.Slug, Branch: fileRequest.Branch, FilePath: fileRequest.Path}, log)
 	log.Infow("DeleteFile success", "slug", fileRequest.GetSlug(), "path", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start))
 	out = &pb.DeleteFileResponse{
 		Status:   int32(response.Status),
@@ -167,6 +169,7 @@ func UpdateFile(ctx context.Context, fileRequest *pb.FileModifyRequest, log *zap
 		Name:  fileRequest.GetSignature().GetName(),
 		Email: fileRequest.GetSignature().GetEmail(),
 	}
+
 	response, err := client.Contents.Update(ctx, fileRequest.GetSlug(), fileRequest.GetPath(), inputParams)
 
 	if err != nil {
@@ -184,7 +187,7 @@ func UpdateFile(ctx context.Context, fileRequest *pb.FileModifyRequest, log *zap
 		return out, nil
 	}
 	// go-scm doesnt provide CRUD content parsing lets do it our self
-	commitID, blobID := parseCrudResponse(response.Body, *fileRequest.GetProvider(), log)
+	commitID, blobID := parseCrudResponse(ctx, client, response.Body, *fileRequest.GetProvider(), requestContext{Slug: fileRequest.Slug, Branch: fileRequest.Branch, FilePath: fileRequest.Path}, log)
 	log.Infow("UpdateFile success", "slug", fileRequest.GetSlug(), "path", fileRequest.GetPath(), "branch", fileRequest.GetBranch(), "sha", inputParams.Sha, "branch", inputParams.Branch,
 		"elapsed_time_ms", utils.TimeSince(start))
 	out = &pb.UpdateFileResponse{
@@ -288,7 +291,7 @@ func CreateFile(ctx context.Context, fileRequest *pb.FileModifyRequest, log *zap
 		return out, nil
 	}
 	// go-scm doesnt provide CRUD content parsing lets do it our self
-	commitID, blobID := parseCrudResponse(response.Body, *fileRequest.GetProvider(), log)
+	commitID, blobID := parseCrudResponse(ctx, client, response.Body, *fileRequest.GetProvider(), requestContext{Slug: fileRequest.Slug, Branch: fileRequest.Branch, FilePath: fileRequest.Path}, log)
 	log.Infow("CreateFile success", "slug", fileRequest.GetSlug(), "path", fileRequest.GetPath(), "branch", inputParams.Branch, "elapsed_time_ms", utils.TimeSince(start))
 	out = &pb.CreateFileResponse{
 		Status:   int32(response.Status),
@@ -313,17 +316,19 @@ func FindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchReq
 		log.Errorw("FindFilesInBranch failure, bad ref/branch", "provider", gitclient.GetProvider(*fileRequest.GetProvider()), "slug", fileRequest.GetSlug(), "ref", ref, "filepath", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
-
-	files, response, err := client.Contents.List(ctx, fileRequest.GetSlug(), fileRequest.GetPath(), ref, scm.ListOptions{Page: int(fileRequest.GetPagination().GetPage())})
+	
+	files, response, err := client.Contents.List(ctx, fileRequest.GetSlug(), fileRequest.GetPath(), ref, getCustomListOptsFindFilesInBranch(ctx, fileRequest))
 	if err != nil {
 		log.Errorw("FindFilesInBranch failure", "provider", gitclient.GetProvider(*fileRequest.GetProvider()), "slug", fileRequest.GetSlug(), "ref", ref, "filepath", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
+
 	log.Infow("FindFilesInBranch success", "slug", fileRequest.GetSlug(), "ref", ref, "filepath", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start))
 	out = &pb.FindFilesInBranchResponse{
 		File: convertContentList(files),
 		Pagination: &pb.PageResponse{
 			Next: int32(response.Page.Next),
+			NextUrl: response.Page.NextURL,
 		},
 	}
 	return out, nil
@@ -384,7 +389,7 @@ func convertContent(from *scm.ContentInfo) *pb.FileChange {
 }
 
 // this function is best effort ie if we cannot find the commit id or blob id do not error.
-func parseCrudResponse(body io.Reader, p pb.Provider, log *zap.SugaredLogger) (commitID, blobID string) {
+func parseCrudResponse(ctx context.Context, client *scm.Client, body io.Reader, p pb.Provider, request requestContext, log *zap.SugaredLogger) (commitID, blobID string) {
 	bodyBytes, readErr := ioutil.ReadAll(body)
 	if readErr != nil {
 		log.Errorw("parseCrudResponse unable to read response from provider %p", gitclient.GetProvider(p), zap.Error(readErr))
@@ -409,7 +414,40 @@ func parseCrudResponse(body io.Reader, p pb.Provider, log *zap.SugaredLogger) (c
 			return "", ""
 		}
 		return out.Commit.Sha, out.Content.Sha
+	case *pb.Provider_BitbucketCloud:
+		// Bitbucket doesn't work on blobId concept for a file, thus it will  always be empty
+		// We try to find out the latest commit on the file, which is most-likely the commit done by SCM itself
+		// It works on best-effort basis
+		request := &pb.GetLatestCommitOnFileRequest {
+			Slug: request.Slug,
+			Branch: request.Branch,
+			Provider: &p,
+			FilePath: request.FilePath,
+		}
+		response, err := git.GetLatestCommitOnFile(ctx, request, log)
+		if err != nil {
+			return "", ""
+		}
+		return response.CommitId, ""
 	default:
 		return "", ""
 	}
+}
+
+func getCustomListOptsFindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchRequest) (scm.ListOptions) {
+	opts := &scm.ListOptions{Page: int(fileRequest.GetPagination().GetPage())}
+	switch fileRequest.GetProvider().GetHook().(type) {
+	case *pb.Provider_BitbucketCloud:
+		if fileRequest.GetPagination().GetUrl() != "" {
+			opts = &scm.ListOptions{URL: fileRequest.GetPagination().GetUrl()}
+		}
+	}
+
+	return *opts
+}
+
+type requestContext struct {
+	Slug string
+	Branch string
+	FilePath string
 }

@@ -351,6 +351,47 @@
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "ArtifactoryStoreConfig": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/StoreConfig"
+        },
+        {
+          "type": "object",
+          "required": [
+            "connectorRef",
+            "repositoryName"
+          ],
+          "properties": {
+            "artifactPaths": {
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
+            },
+            "connectorRef": {
+              "type": "string"
+            },
+            "metadata": {
+              "type": "string"
+            },
+            "repositoryName": {
+              "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "BarrierStepInfo": {
       "allOf": [
         {
@@ -3956,7 +3997,8 @@
           "type": "string",
           "enum": [
             "Kubernetes",
-            "NativeHelm"
+            "NativeHelm",
+            "Ssh"
           ]
         }
       },
@@ -3990,6 +4032,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/NativeHelmServiceSpec"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Ssh"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/SshServiceSpec"
               }
             }
           }
@@ -4539,6 +4597,22 @@
           "$ref": "#/definitions/SidecarArtifact"
         }
       },
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "SshServiceSpec": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ServiceSpec"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "metadata": {
+              "type": "string"
+            }
+          }
+        }
+      ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "StageOverridesConfig": {
@@ -5175,15 +5249,32 @@
             "Git",
             "Github",
             "Bitbucket",
-            "GitLab",
+            "Gitlab",
             "Http",
             "S3",
-            "Gcs"
+            "Gcs",
+            "Artifactory"
           ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#",
       "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Artifactory"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/ArtifactoryStoreConfig"
+              }
+            }
+          }
+        },
         {
           "if": {
             "properties": {
@@ -5236,22 +5327,6 @@
           "if": {
             "properties": {
               "type": {
-                "const": "GitLab"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "spec": {
-                "$ref": "#/definitions/GitLabStore"
-              }
-            }
-          }
-        },
-        {
-          "if": {
-            "properties": {
-              "type": {
                 "const": "Github"
               }
             }
@@ -5260,6 +5335,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/GithubStore"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Gitlab"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/GitLabStore"
               }
             }
           }

@@ -22,6 +22,8 @@ import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.organization.OrganizationEntityChangeDTO;
 import io.harness.eventsframework.entity_crud.project.ProjectEntityChangeDTO;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -35,12 +37,14 @@ import lombok.extern.slf4j.Slf4j;
 public class ConnectorEntityCRUDStreamListener implements MessageListener {
   private final HarnessSMManager harnessSMManager;
   private final ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler;
+  private final AccountSettingsHelper accountSettingsHelper;
 
   @Inject
-  public ConnectorEntityCRUDStreamListener(
-      HarnessSMManager harnessSMManager, ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler) {
+  public ConnectorEntityCRUDStreamListener(HarnessSMManager harnessSMManager,
+      ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler, AccountSettingsHelper accountSettingsHelper) {
     this.harnessSMManager = harnessSMManager;
     this.connectorEntityCRUDEventHandler = connectorEntityCRUDEventHandler;
+    this.accountSettingsHelper = accountSettingsHelper;
   }
 
   @Override
@@ -85,8 +89,12 @@ public class ConnectorEntityCRUDStreamListener implements MessageListener {
   }
 
   private boolean processOrganizationCreateEvent(OrganizationEntityChangeDTO organizationEntityChangeDTO) {
-    harnessSMManager.createHarnessSecretManager(
-        organizationEntityChangeDTO.getAccountIdentifier(), organizationEntityChangeDTO.getIdentifier(), null);
+    final boolean isBuiltInSMDisabled = accountSettingsHelper.getIsBuiltInSMDisabled(
+        organizationEntityChangeDTO.getAccountIdentifier(), null, null, AccountSettingType.CONNECTOR);
+    if (!isBuiltInSMDisabled) {
+      harnessSMManager.createHarnessSecretManager(
+          organizationEntityChangeDTO.getAccountIdentifier(), organizationEntityChangeDTO.getIdentifier(), null);
+    }
     return true;
   }
 
@@ -122,8 +130,12 @@ public class ConnectorEntityCRUDStreamListener implements MessageListener {
   }
 
   private boolean processProjectCreateEvent(ProjectEntityChangeDTO projectEntityChangeDTO) {
-    harnessSMManager.createHarnessSecretManager(projectEntityChangeDTO.getAccountIdentifier(),
-        projectEntityChangeDTO.getOrgIdentifier(), projectEntityChangeDTO.getIdentifier());
+    final boolean isBuiltInSMDisabled = accountSettingsHelper.getIsBuiltInSMDisabled(
+        projectEntityChangeDTO.getAccountIdentifier(), null, null, AccountSettingType.CONNECTOR);
+    if (!isBuiltInSMDisabled) {
+      harnessSMManager.createHarnessSecretManager(projectEntityChangeDTO.getAccountIdentifier(),
+          projectEntityChangeDTO.getOrgIdentifier(), projectEntityChangeDTO.getIdentifier());
+    }
     return true;
   }
 

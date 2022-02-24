@@ -22,6 +22,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import software.wings.beans.AzureKubernetesCluster;
 import software.wings.beans.GcpKubernetesCluster;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherConfig;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.settings.SettingValue;
 
@@ -46,7 +47,7 @@ public class K8sClusterConfig implements ExecutionCapabilityDemander {
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    if (cloudProvider instanceof KubernetesClusterConfig) {
+    if (cloudProvider instanceof KubernetesClusterConfig || cloudProvider instanceof RancherConfig) {
       return CapabilityHelper.generateDelegateCapabilities(
           cloudProvider, cloudProviderEncryptionDetails, maskingEvaluator);
     }

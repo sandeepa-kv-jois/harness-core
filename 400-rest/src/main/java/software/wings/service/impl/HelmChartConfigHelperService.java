@@ -183,6 +183,7 @@ public class HelmChartConfigHelperService {
         .encryptedDataDetails(encryptionDataDetails)
         .repoDisplayName(settingAttribute.getName())
         .repoName(repoName)
+        .bypassHelmFetch(featureFlagService.isEnabled(FeatureName.BYPASS_HELM_FETCH, context.getAccountId()))
         .basePath(context.renderExpression(helmChartConfig.getBasePath()));
 
     if (isNotBlank(helmRepoConfig.getConnectorId())) {

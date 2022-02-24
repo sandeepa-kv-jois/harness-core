@@ -35,6 +35,7 @@ public class HelmExceptionConstants {
     public static final String HINT_CHART_VERSION_IMPROPER_CONSTRAINT = "Provide existing and valid helm chart version";
     public static final String HINT_VALIDATE_ERROR = "Could not validate the .yaml file";
     public static final String HINT_INVALID_YAML = "K8s yaml is invalid/incorrect.";
+    public static final String HINT_RESOURCE_CONFLICT = "There is conflict due to existing resource(s)";
     public static final String DEFAULT_HINT_HELM_INSTALL =
         "Make sure that the helm chart can be installed successfully using the helm cli.";
     public static final String DEFAULT_HINT_HELM_HIST = "Helm history command has failed";
@@ -70,6 +71,8 @@ public class HelmExceptionConstants {
     public static final String EXPLAIN_INVALID_YAML =
         "Error processing yaml manifest. Please check the indentation, any invalid/missing fields etc. For more details, please check logs.";
     public static final String DEFAULT_EXPLAIN_HELM_INSTALL = "Unable to install helm chart.";
+    public static final String EXPLAIN_RESOURCE_CONFLICT =
+        "Rendered manifests contain a resource which already exists. Try deleting these resources and re-run";
     public static final String DEFAULT_EXPLAIN_HELM_HIST = "Unable to execute release history command";
     public static final String DEFAULT_EXPLAIN_LIST_RELEASE = "Unable to execute list release command";
     public static final String DEFAULT_EXPLAIN_RENDER_CHART =
@@ -90,6 +93,7 @@ public class HelmExceptionConstants {
     public static final String NO_CHART_VERSION_FOUND = "no chart version found";
     public static final String CHART_VERSION_IMPROPER_CONSTRAINT = "improper constraint";
     public static final String INVALID_VALUE_TYPE = "error validating data";
+    public static final String EXISTING_RESOURCE_CONFLICT = "existing resource conflict";
     public static final String UNKNOWN_COMMAND_FLAG = "unknown flag";
 
     public HelmCliErrorMessages() {

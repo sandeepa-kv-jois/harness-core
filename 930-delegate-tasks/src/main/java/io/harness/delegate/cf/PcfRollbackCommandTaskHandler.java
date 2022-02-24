@@ -294,13 +294,15 @@ public class PcfRollbackCommandTaskHandler extends PcfCommandTaskHandler {
             logCallback);
         updateValues.setOldAppGuid(prevActiveApp.getApplicationGuid());
         updateValues.setOldAppName(newName);
+        updateValues.setActiveAppName(newName);
       }
 
       if (null != prevInactive && isNotEmpty(prevInactive.getApplicationName())) {
-        pcfDeploymentManager.renameApplication(
-            new CfRenameRequest(cfRequestConfig, prevInactive.getApplicationGuid(), prevInactive.getApplicationName(),
-                constructInActiveAppName(commandRollbackRequest.getCfAppNamePrefix(), -1, true)),
+        String newName = constructInActiveAppName(commandRollbackRequest.getCfAppNamePrefix(), -1, true);
+        pcfDeploymentManager.renameApplication(new CfRenameRequest(cfRequestConfig, prevInactive.getApplicationGuid(),
+                                                   prevInactive.getApplicationName(), newName),
             logCallback);
+        updateValues.setInActiveAppName(newName);
       }
 
       logCallback.saveExecutionLog("# App names reverted successfully");

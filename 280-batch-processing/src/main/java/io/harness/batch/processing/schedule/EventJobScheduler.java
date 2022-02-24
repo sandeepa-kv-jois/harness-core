@@ -26,9 +26,11 @@ import io.harness.batch.processing.connectors.ConnectorsHealthUpdateService;
 import io.harness.batch.processing.metrics.ProductMetricsService;
 import io.harness.batch.processing.reports.ScheduledReportServiceImpl;
 import io.harness.batch.processing.service.AccountExpiryCleanupService;
+import io.harness.batch.processing.service.AwsAccountTagsCollectionService;
 import io.harness.batch.processing.service.impl.BatchJobBucketLogContext;
 import io.harness.batch.processing.service.impl.BatchJobRunningModeContext;
 import io.harness.batch.processing.service.impl.BatchJobTypeLogContext;
+import io.harness.batch.processing.service.impl.CronJobTypeLogContext;
 import io.harness.batch.processing.service.impl.InstanceDataServiceImpl;
 import io.harness.batch.processing.service.intfc.BillingDataPipelineHealthStatusService;
 import io.harness.batch.processing.shard.AccountShardService;
@@ -89,6 +91,7 @@ public class EventJobScheduler {
   @Autowired private FeatureFlagService featureFlagService;
   @Autowired private ConnectorsHealthUpdateService connectorsHealthUpdateService;
   @Autowired private K8SWorkloadService k8SWorkloadService;
+  @Autowired private AwsAccountTagsCollectionService awsAccountTagsCollectionService;
 
   @PostConstruct
   public void orderJobs() {
@@ -186,7 +189,7 @@ public class EventJobScheduler {
   public void runConnectorsHealthStatusJob() {
     boolean masterPod = accountShardService.isMasterPod();
     if (masterPod) {
-      try {
+      try (AutoLogContext ignore = new CronJobTypeLogContext("runConnectorsHealthStatusJob", OVERRIDE_ERROR)) {
         log.info("running billing data pipeline health status service job");
         billingDataPipelineHealthStatusService.processAndUpdateHealthStatus();
       } catch (Exception ex) {
@@ -199,7 +202,7 @@ public class EventJobScheduler {
   public void runAccountExpiryCleanup() {
     boolean masterPod = accountShardService.isMasterPod();
     if (masterPod) {
-      try {
+      try (AutoLogContext ignore = new CronJobTypeLogContext("runAccountExpiryCleanup", OVERRIDE_ERROR)) {
         accountExpiryCleanupService.execute();
       } catch (Exception ex) {
         log.error("Exception while running runAccountExpiryCleanup {}", ex);
@@ -209,7 +212,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.weeklyReportsJobCron}")
   public void runWeeklyReportJob() {
-    try {
+    try (AutoLogContext ignore = new CronJobTypeLogContext("runWeeklyReportJob", OVERRIDE_ERROR)) {
       weeklyReportService.generateAndSendWeeklyReport();
       log.info("Weekly billing report generated and send");
     } catch (Exception ex) {
@@ -220,7 +223,7 @@ public class EventJobScheduler {
   @Scheduled(cron = "0 */30 * * * ?") // Run every 30 mins. Change to 0 */10 * * * ? for every 10 mins for testing
   public void runScheduledReportJob() {
     // In case jobs take longer time, the jobs will be queued and executed in turn
-    try {
+    try (AutoLogContext ignore = new CronJobTypeLogContext("runScheduledReportJob", OVERRIDE_ERROR)) {
       scheduledReportService.generateAndSendScheduledReport();
       log.info("Scheduled reports generated and sent");
     } catch (Exception ex) {
@@ -230,7 +233,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "0 0 */1 ? * *")
   public void updateCostMetadatRecord() {
-    try {
+    try (AutoLogContext ignore = new CronJobTypeLogContext("updateCostMetadatRecord", OVERRIDE_ERROR)) {
       ceMetaDataRecordUpdateService.updateCloudProviderMetadata();
       log.info("updated cost data");
     } catch (Exception ex) {
@@ -254,7 +257,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "0 30 8 * * ?")
   public void runViewUpdateCostJob() {
-    try {
+    try (AutoLogContext ignore = new CronJobTypeLogContext("runViewUpdateCostJob", OVERRIDE_ERROR)) {
       viewCostUpdateService.updateTotalCost();
       log.info("Updated view total cost");
     } catch (Exception ex) {
@@ -264,7 +267,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.budgetAlertsJobCron}")
   public void runBudgetAlertsJob() {
-    try {
+    try (AutoLogContext ignore = new CronJobTypeLogContext("runBudgetAlertsJob", OVERRIDE_ERROR)) {
       budgetAlertsService.sendBudgetAlerts();
       log.info("Budget alerts send");
     } catch (Exception ex) {
@@ -274,7 +277,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.budgetCostUpdateJobCron}")
   public void runBudgetCostUpdateJob() {
-    try {
+    try (AutoLogContext ignore = new CronJobTypeLogContext("runBudgetCostUpdateJob", OVERRIDE_ERROR)) {
       budgetCostUpdateService.updateCosts();
       log.info("Costs updated for budgets");
     } catch (Exception ex) {
@@ -284,7 +287,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.connectorHealthUpdateJobCron}")
   public void runNGConnectorsHealthUpdateJob() {
-    try {
+    try (AutoLogContext ignore = new CronJobTypeLogContext("runNGConnectorsHealthUpdateJob", OVERRIDE_ERROR)) {
       if (!batchMainConfig.getConnectorHealthUpdateJobConfig().isEnabled()) {
         log.info("connectorHealthUpdateJob is disabled in config");
         return;
@@ -293,6 +296,23 @@ public class EventJobScheduler {
       log.info("Updated health of the connectors in NG");
     } catch (Exception ex) {
       log.error("Exception while running runNGConnectorsHealthUpdateJob", ex);
+    }
+  }
+
+  @Scheduled(cron = "${scheduler-jobs-config.awsAccountTagsCollectionJobCron}") //  0 */10 * * * ? for testing
+  public void runAwsAccountTagsCollectionJob() {
+    boolean masterPod = accountShardService.isMasterPod();
+    if (masterPod) {
+      try (AutoLogContext ignore = new CronJobTypeLogContext("runAwsAccountTagsCollectionJob", OVERRIDE_ERROR)) {
+        if (!batchMainConfig.getAwsAccountTagsCollectionJobConfig().isEnabled()) {
+          log.info("awsAccountTagsCollectionJobConfig is disabled in config");
+          return;
+        }
+        log.info("running aws account tags collection job");
+        awsAccountTagsCollectionService.update();
+      } catch (Exception ex) {
+        log.error("Exception while running runAwsAccountTagsCollectionJob", ex);
+      }
     }
   }
 

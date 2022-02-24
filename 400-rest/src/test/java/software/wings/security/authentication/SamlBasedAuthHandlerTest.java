@@ -125,7 +125,7 @@ public class SamlBasedAuthHandlerTest extends WingsBaseTest {
       authHandler.authenticate(oktaIdpUrl, samlResponse);
       failBecauseExceptionWasNotThrown(WingsException.class);
     } catch (WingsException e) {
-      assertThat(e.getMessage()).isEqualTo("Saml Authentication Failed");
+      assertThat(e.getMessage()).isEqualTo("User does not exist");
     }
   }
 

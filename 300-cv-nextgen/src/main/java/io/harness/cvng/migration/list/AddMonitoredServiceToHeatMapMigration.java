@@ -28,7 +28,7 @@ public class AddMonitoredServiceToHeatMapMigration implements CVNGMigration {
     log.info("Begin migration for updating HeatMap with monitoredServiceIdentifier");
     Query<MonitoredService> monitoredServiceQuery = hPersistence.createQuery(MonitoredService.class);
     try (HIterator<MonitoredService> iterator = new HIterator<>(monitoredServiceQuery.fetch())) {
-      if (iterator.hasNext()) {
+      while (iterator.hasNext()) {
         MonitoredService monitoredService = iterator.next();
         Query<HeatMap> heatMapQuery =
             hPersistence.createQuery(HeatMap.class)
@@ -36,7 +36,7 @@ public class AddMonitoredServiceToHeatMapMigration implements CVNGMigration {
                 .filter(HeatMapKeys.projectIdentifier, monitoredService.getProjectIdentifier())
                 .filter(HeatMapKeys.orgIdentifier, monitoredService.getOrgIdentifier())
                 .filter(HeatMapKeys.serviceIdentifier, monitoredService.getServiceIdentifier())
-                .filter(HeatMapKeys.envIdentifier, monitoredService.getEnvironmentIdentifierList());
+                .filter(HeatMapKeys.envIdentifier, monitoredService.getEnvironmentIdentifier());
 
         hPersistence.update(heatMapQuery,
             hPersistence.createUpdateOperations(HeatMap.class)

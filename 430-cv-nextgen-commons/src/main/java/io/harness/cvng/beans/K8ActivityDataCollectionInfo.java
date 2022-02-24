@@ -25,7 +25,8 @@ public class K8ActivityDataCollectionInfo extends CVDataCollectionInfo {
   @Deprecated ActivitySourceDTO activitySourceDTO;
   String projectIdentifier;
   String orgIdentifier;
-  String serviceIdentifier;
-  String envIdentifier;
+  @Deprecated String serviceIdentifier;
+  @Deprecated String envIdentifier;
+  String monitoredServiceIdentifier;
   String changeSourceIdentifier;
 }

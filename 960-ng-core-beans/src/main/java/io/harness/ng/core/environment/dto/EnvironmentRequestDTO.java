@@ -16,7 +16,6 @@ import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 import io.harness.ng.core.environment.beans.EnvironmentType;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.annotations.ApiModelProperty;
@@ -43,5 +42,4 @@ public class EnvironmentRequestDTO {
   String description;
   String color;
   @ApiModelProperty(required = true) EnvironmentType type;
-  @JsonIgnore Long version;
 }

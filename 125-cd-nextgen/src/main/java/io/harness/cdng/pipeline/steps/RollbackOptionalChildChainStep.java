@@ -20,7 +20,6 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
-import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.executables.ChildChainExecutable;
@@ -101,7 +100,7 @@ public class RollbackOptionalChildChainStep implements ChildChainExecutable<Roll
         ambiance, RefObjectUtils.getSweepingOutputRefObject(YAMLFieldNameConstants.DEPLOYMENT_ROLLED_BACK));
     if (!optionalSweepingOutput.isFound()) {
       executionSweepingOutputService.consume(ambiance, YAMLFieldNameConstants.DEPLOYMENT_ROLLED_BACK,
-          RollbackTriggeredOutput.builder().rollbackTriggered(true).build(), StepOutcomeGroup.PIPELINE.name());
+          RollbackTriggeredOutput.builder().rollbackTriggered(true).build(), StepCategory.STAGE.name());
     }
     // If status is suspended, then we should mark the execution as success
     if (notifyData.getStatus() == Status.SUSPENDED) {

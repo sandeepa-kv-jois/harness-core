@@ -29,7 +29,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.ExecutionCheck;
-import io.harness.engine.ExecutionEngineDispatcher;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.facilitation.facilitator.publisher.FacilitateEventPublisher;
@@ -39,16 +38,23 @@ import io.harness.engine.pms.execution.strategy.EndNodeExecutionHelper;
 import io.harness.engine.pms.resume.NodeResumeHelper;
 import io.harness.engine.pms.start.NodeStartHelper;
 import io.harness.engine.utils.PmsLevelUtils;
+import io.harness.event.handlers.AdviserResponseRequestProcessor;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionBuilder;
 import io.harness.plan.PlanNode;
+import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
+import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
+import io.harness.pms.contracts.advisers.EndPlanAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
+import io.harness.pms.contracts.execution.events.AdviserResponseRequest;
+import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
+import io.harness.pms.contracts.execution.events.SdkResponseEventType;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
@@ -60,6 +66,7 @@ import io.harness.pms.contracts.steps.io.StepResponseProto;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
+import io.harness.registries.SdkResponseProcessorFactory;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableMap;
@@ -89,6 +96,8 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Mock private NodeAdviseHelper adviseHelper;
   @Mock private InterruptService interruptService;
   @Mock private PlanService planService;
+  @Mock private SdkResponseProcessorFactory processorFactory;
+  @Mock private AdviserResponseRequestProcessor adviserResponseProcessor;
 
   @Inject @InjectMocks @Spy PlanNodeExecutionStrategy executionStrategy;
 
@@ -108,7 +117,7 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNode() {
+  public void shouldTestRunNode() {
     String planExecutionId = generateUuid();
     Ambiance ambiance = Ambiance.newBuilder()
                             .setPlanExecutionId(planExecutionId)
@@ -129,9 +138,49 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
 
     doReturn(NodeExecution.builder().build())
         .when(executionStrategy)
-        .createNodeExecution(ambiance, planNode, null, null, null);
-    executionStrategy.triggerNode(ambiance, planNode, null);
-    verify(executorService).submit(any(ExecutionEngineDispatcher.class));
+        .createNodeExecution(ambiance, planNode, null, null, null, null);
+    executionStrategy.runNode(ambiance, planNode, null);
+    verify(executorService).submit(any(Runnable.class));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestInitiateNode() {
+    String planExecutionId = generateUuid();
+    String planId = generateUuid();
+    String planNodeId = generateUuid();
+    String runtimeId = generateUuid();
+
+    Ambiance ambiance = Ambiance.newBuilder()
+                            .setPlanExecutionId(planExecutionId)
+                            .setPlanId(planId)
+                            .putAllSetupAbstractions(prepareInputArgs())
+                            .build();
+    PlanNode planNode =
+        PlanNode.builder()
+            .name("Test Node")
+            .uuid(planNodeId)
+            .identifier("test")
+            .stepType(TEST_STEP_TYPE)
+            .serviceName("CD")
+            .facilitatorObtainment(
+                FacilitatorObtainment.newBuilder()
+                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
+                    .build())
+            .build();
+
+    when(planService.fetchNode(eq(planId), eq(planNodeId))).thenReturn(planNode);
+
+    executionStrategy.initiateNode(ambiance, planNode.getUuid(), runtimeId, null);
+
+    ArgumentCaptor<Ambiance> ambianceCaptor = ArgumentCaptor.forClass(Ambiance.class);
+    verify(executionStrategy).runNode(ambianceCaptor.capture(), eq(planNode), eq(null));
+    Ambiance captured = ambianceCaptor.getValue();
+
+    assertThat(captured.getLevelsCount()).isEqualTo(1);
+    assertThat(captured.getLevels(0).getSetupId()).isEqualTo(planNode.getUuid());
+    assertThat(captured.getLevels(0).getRuntimeId()).isEqualTo(runtimeId);
   }
 
   @Test
@@ -436,6 +485,53 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
     doNothing().when(executionStrategy).handleError(any(), any());
     executionStrategy.processStepResponse(ambiance, stepResponseProto);
     verify(executionStrategy).handleError(any(), any());
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestHandleSdkResponseWithoutError() {
+    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(generateUuid()).setPlanId(generateUuid()).build();
+    AdviserResponseRequest request = AdviserResponseRequest.newBuilder()
+                                         .setAdviserResponse(AdviserResponse.newBuilder()
+                                                                 .setType(AdviseType.END_PLAN)
+                                                                 .setEndPlanAdvise(EndPlanAdvise.newBuilder().build())
+                                                                 .build())
+                                         .build();
+    SdkResponseEventProto event = SdkResponseEventProto.newBuilder()
+                                      .setAmbiance(ambiance)
+                                      .setSdkResponseEventType(SdkResponseEventType.HANDLE_ADVISER_RESPONSE)
+                                      .setAdviserResponseRequest(request)
+                                      .build();
+    doReturn(adviserResponseProcessor).when(processorFactory).getHandler(SdkResponseEventType.HANDLE_ADVISER_RESPONSE);
+    doNothing().when(adviserResponseProcessor).handleEvent(eq(event));
+    executionStrategy.handleSdkResponseEvent(event);
+    verify(adviserResponseProcessor, times(1)).handleEvent(eq(event));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestHandleSdkResponseWithError() {
+    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(generateUuid()).setPlanId(generateUuid()).build();
+    AdviserResponseRequest request = AdviserResponseRequest.newBuilder()
+                                         .setAdviserResponse(AdviserResponse.newBuilder()
+                                                                 .setType(AdviseType.END_PLAN)
+                                                                 .setEndPlanAdvise(EndPlanAdvise.newBuilder().build())
+                                                                 .build())
+                                         .build();
+    SdkResponseEventProto event = SdkResponseEventProto.newBuilder()
+                                      .setAmbiance(ambiance)
+                                      .setSdkResponseEventType(SdkResponseEventType.HANDLE_ADVISER_RESPONSE)
+                                      .setAdviserResponseRequest(request)
+                                      .build();
+
+    InvalidRequestException ex = new InvalidRequestException("Invalid Request");
+    doReturn(adviserResponseProcessor).when(processorFactory).getHandler(SdkResponseEventType.HANDLE_ADVISER_RESPONSE);
+    doThrow(ex).when(adviserResponseProcessor).handleEvent(eq(event));
+    executionStrategy.handleSdkResponseEvent(event);
+    verify(adviserResponseProcessor, times(1)).handleEvent(eq(event));
+    verify(executionStrategy, times(1)).handleError(eq(ambiance), eq(ex));
   }
 
   private static Map<String, String> prepareInputArgs() {

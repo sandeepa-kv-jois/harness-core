@@ -30,6 +30,7 @@ import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
 import io.kubernetes.client.openapi.apis.VersionApi;
 import io.kubernetes.client.openapi.models.VersionInfo;
+import java.util.Objects;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
@@ -52,13 +53,16 @@ public class K8sVersionTaskHandler extends K8sTaskHandler {
     VersionInfo versionInfo = getK8sVersionInfo(k8sTaskParameters.getK8sClusterConfig());
     K8sVersionResponse k8sVersionResponse = k8sVersionResponseBuilder(versionInfo);
 
-    boolean isCloudCostEnabled =
-        kubernetesClusterConfig.getCcmConfig() != null && kubernetesClusterConfig.getCcmConfig().isCloudCostEnabled();
+    boolean isCloudCostEnabled = Objects.nonNull(kubernetesClusterConfig)
+        && kubernetesClusterConfig.getCcmConfig() != null
+        && kubernetesClusterConfig.getCcmConfig().isCloudCostEnabled();
 
-    try (AutoLogContext ignore = new K8sVersionLogContext(kubernetesClusterConfig.getType(),
-             k8sVersionResponse.getServerMajorVersion() + ":" + k8sVersionResponse.getServerMinorVersion(),
-             isCloudCostEnabled, OVERRIDE_ERROR);) {
-      log.info("[cloudProvider={}, version={}, ccEnabled={}]", kubernetesClusterConfig.getType(),
+    try (AutoLogContext ignore =
+             new K8sVersionLogContext(k8sTaskParameters.getK8sClusterConfig().getCloudProvider().getType(),
+                 k8sVersionResponse.getServerMajorVersion() + ":" + k8sVersionResponse.getServerMinorVersion(),
+                 isCloudCostEnabled, OVERRIDE_ERROR);) {
+      log.info("[cloudProvider={}, version={}, ccEnabled={}]",
+          k8sTaskParameters.getK8sClusterConfig().getCloudProvider().getType(),
           k8sVersionResponse.getServerMajorVersion() + ":" + k8sVersionResponse.getServerMinorVersion(),
           isCloudCostEnabled);
     }
@@ -87,6 +91,8 @@ public class K8sVersionTaskHandler extends K8sTaskHandler {
   }
 
   public static KubernetesClusterConfig getKubernetesConfig(K8sTaskParameters k8sTaskParameters) {
-    return (KubernetesClusterConfig) k8sTaskParameters.getK8sClusterConfig().getCloudProvider();
+    return k8sTaskParameters.getK8sClusterConfig().getCloudProvider() instanceof KubernetesClusterConfig
+        ? (KubernetesClusterConfig) k8sTaskParameters.getK8sClusterConfig().getCloudProvider()
+        : null;
   }
 }

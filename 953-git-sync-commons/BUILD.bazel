@@ -16,6 +16,7 @@ java_library(
         "//970-api-services-beans:module",
         "//970-ng-commons:module",
         "//980-commons:module",
+        "//980-commons/src/main/proto:980_commons_java_proto",
         "//999-annotations:module",
         "@maven//:com_google_code_findbugs_annotations",
         "@maven//:com_google_guava_guava",

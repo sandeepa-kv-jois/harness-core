@@ -13,6 +13,7 @@ import io.harness.batch.processing.billing.timeseries.service.impl.BillingDataSe
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.entities.ClusterDataDetails;
 import io.harness.batch.processing.pricing.gcp.bigquery.BigQueryHelperServiceImpl;
+import io.harness.ccm.commons.beans.JobConstants;
 
 import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
@@ -30,7 +31,7 @@ public class DataCheckBigqueryAndTimescaleTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    final CCMJobConstants jobConstants = new CCMJobConstants(chunkContext);
+    final JobConstants jobConstants = new CCMJobConstants(chunkContext);
 
     ClusterDataDetails timeScaleClusterData = billingDataService.getTimeScaleClusterData(
         jobConstants.getAccountId(), Instant.ofEpochMilli(jobConstants.getJobStartTime()));

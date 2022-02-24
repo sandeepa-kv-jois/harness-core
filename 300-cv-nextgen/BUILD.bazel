@@ -12,7 +12,7 @@ shared_dependencies = [
     "//430-cv-nextgen-commons:module",
     "//440-connector-nextgen:module",
     "//860-orchestration-steps:module",  # This needs to be removed from here
-    "//878-pipeline-service-utilities:module",
+    "//878-ng-common-utilities:module",
     "//879-pms-sdk:module",
     "//950-wait-engine:module",
     "//940-notification-client:module",

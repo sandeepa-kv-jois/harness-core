@@ -28,6 +28,7 @@ import io.harness.delegate.beans.DelegateAsyncTaskResponse;
 import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskProgressResponse;
 import io.harness.delegate.beans.StartupMode;
+import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.event.EventsModule;
 import io.harness.event.handler.segment.SegmentConfig;
 import io.harness.exception.WingsException;
@@ -46,6 +47,7 @@ import io.harness.security.DelegateTokenAuthenticator;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.ManagerRegistrars;
 import io.harness.service.DelegateServiceModule;
+import io.harness.service.impl.DelegateNgTokenServiceImpl;
 import io.harness.service.impl.DelegateTokenServiceImpl;
 import io.harness.service.intfc.DelegateTokenService;
 import io.harness.springdata.SpringPersistenceModule;
@@ -324,5 +326,7 @@ public class DataGenApplication extends Application<MainConfiguration> {
         (DelegateProfileServiceImpl) injector.getInstance(Key.get(DelegateProfileService.class)));
     accountService.getAccountCrudSubject().register(
         (DelegateTokenServiceImpl) injector.getInstance(Key.get(DelegateTokenService.class)));
+    accountService.getAccountCrudSubject().register(
+        (DelegateNgTokenServiceImpl) injector.getInstance(Key.get(DelegateNgTokenService.class)));
   }
 }

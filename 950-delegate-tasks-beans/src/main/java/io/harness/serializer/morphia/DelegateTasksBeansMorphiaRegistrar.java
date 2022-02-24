@@ -30,6 +30,7 @@ import io.harness.delegate.beans.executioncapability.ProcessExecutorCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.beans.executioncapability.SmbConnectionCapability;
 import io.harness.delegate.beans.executioncapability.SmtpCapability;
+import io.harness.delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SocketConnectivityExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SystemEnvCheckerCapability;
 import io.harness.delegate.command.CommandExecutionResult;
@@ -103,6 +104,8 @@ public class DelegateTasksBeansMorphiaRegistrar implements MorphiaRegistrar {
     h.put("delegate.beans.executioncapability.SmtpCapability", SmtpCapability.class);
     h.put("delegate.beans.executioncapability.SocketConnectivityExecutionCapability",
         SocketConnectivityExecutionCapability.class);
+    h.put("delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability",
+        SocketConnectivityBulkOrExecutionCapability.class);
     h.put("delegate.beans.executioncapability.SystemEnvCheckerCapability", SystemEnvCheckerCapability.class);
     h.put("delegate.beans.executioncapability.SelectorCapability", SelectorCapability.class);
     h.put("delegate.command.CommandExecutionResult", CommandExecutionResult.class);

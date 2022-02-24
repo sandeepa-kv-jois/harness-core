@@ -70,6 +70,11 @@ public class User extends Base implements Principal {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder().name("accountsIdx").field(UserKeys.accounts).build(),
             CompoundMongoIndex.builder().name("pendingAccountsIdx").field(UserKeys.pendingAccounts).build())
+        .add(CompoundMongoIndex.builder()
+                 .name("userIdAccountIdx")
+                 .field(UserKeys.accounts)
+                 .field(UserKeys.externalUserId)
+                 .build())
         .build();
   }
 
@@ -283,7 +288,7 @@ public class User extends Base implements Principal {
   }
 
   public String getExternalUserId() {
-    return externalUserId;
+    return isNotEmpty(externalUserId) ? externalUserId : null;
   }
 
   public void setExternalUserId(String externalUserId) {

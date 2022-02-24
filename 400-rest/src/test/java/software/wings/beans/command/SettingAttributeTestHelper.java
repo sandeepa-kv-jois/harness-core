@@ -7,10 +7,11 @@
 
 package software.wings.beans.command;
 
+import static io.harness.delegate.task.winrm.AuthenticationScheme.NTLM;
+
 import static software.wings.beans.HostConnectionAttributes.Builder.aHostConnectionAttributes;
 import static software.wings.beans.InstanceUnitType.COUNT;
 import static software.wings.beans.SettingAttribute.Builder.aSettingAttribute;
-import static software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme.NTLM;
 import static software.wings.beans.command.EcsResizeParams.EcsResizeParamsBuilder.anEcsResizeParams;
 import static software.wings.beans.command.EcsSetupParams.EcsSetupParamsBuilder.anEcsSetupParams;
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;

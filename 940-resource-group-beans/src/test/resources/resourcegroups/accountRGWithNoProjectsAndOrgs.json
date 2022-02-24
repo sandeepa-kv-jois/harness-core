@@ -1,0 +1,18 @@
+{
+  "identifier": "id",
+  "name": "name",
+  "color": "#0063f7",
+  "accountIdentifier": "testAcc",
+  "description": "Account scope but no orgs/projects under the account",
+  "includedScopes": [
+    {
+      "accountIdentifier": "testAcc",
+      "filter": "EXCLDING_CHILD_SCOPES"
+    }
+  ],
+  "resourceFilter": [
+    {
+      "resourceType": "SECRET"
+    }
+  ]
+}

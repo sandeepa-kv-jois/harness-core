@@ -108,6 +108,7 @@ scheduler-jobs-config:
   weeklyReportsJobCron: "0 0 14 * * MON"
   budgetCostUpdateJobCron: "0 0 14 * * ?"
   connectorHealthUpdateJobCron: "0 0 14 * * ?"
+  awsAccountTagsCollectionJobCron : "0 0 9 * * ?"
 
 cePythonService:
   pythonServiceUrl: "http://0.0.0.0:8081"
@@ -118,7 +119,7 @@ banzaiConfig:
   port: 80
 
 ngManagerServiceHttpClientConfig:
-  baseUrl: http://localhost:7457/
+  baseUrl: https://nginx-ingress-controller.ingress-nginx.svc.cluster.local/ng/api/
   connectTimeOutSeconds: 15
   readTimeOutSeconds: 15
 
@@ -128,10 +129,13 @@ banzaiRecommenderConfig:
   connectTimeOutSeconds: 15
   readTimeOutSeconds: 15
 
-ngManagerServiceSecret: IC04LYMBf1lDP5oeY4hupxd4HJhLmN6azUku3xEbeE3SUx5G3ZYzhbiwVtK4i7AmqyU9OZkwB4v8E9qM
+ngManagerServiceSecret: UeWgUReGXlbrB0zkDCBFz1EDfU1zrXbhAbGfQ8jsSCaA881SYFMlHqnn3OQnAKAU6hTQ5NniwuMeKSFW
 awsCurBilling: true
 
 connectorHealthUpdateJobConfig:
+  enabled: true
+
+awsAccountTagsCollectionJobConfig:
   enabled: true
 
 gcpConfig:

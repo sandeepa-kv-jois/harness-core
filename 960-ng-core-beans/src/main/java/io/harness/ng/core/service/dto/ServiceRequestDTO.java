@@ -15,7 +15,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 
-import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Map;
@@ -38,6 +37,4 @@ public class ServiceRequestDTO {
   @EntityName String name;
   String description;
   Map<String, String> tags;
-
-  @JsonIgnore Long version;
 }

@@ -355,7 +355,8 @@ public class VerificationTaskServiceImpl implements VerificationTaskService {
     return createQueryForOldLiveMonitoring(accountId, cvConfigId).get();
   }
 
-  private VerificationTask getSLITask(String accountId, String sliId) {
+  @Override
+  public VerificationTask getSLITask(String accountId, String sliId) {
     return hPersistence.createQuery(VerificationTask.class, excludeValidate)
         .filter(VerificationTaskKeys.accountId, accountId)
         .filter(VerificationTaskKeys.taskInfo + "." + TaskInfo.TASK_TYPE_FIELD_NAME, TaskType.SLI)

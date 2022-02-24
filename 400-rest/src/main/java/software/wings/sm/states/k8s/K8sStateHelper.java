@@ -17,6 +17,7 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.k8s.manifest.ManifestHelper.values_filename;
 import static io.harness.state.StateConstants.DEFAULT_STEADY_STATE_TIMEOUT;
 
+import static software.wings.sm.StateExecutionData.StateExecutionDataBuilder.aStateExecutionData;
 import static software.wings.sm.states.k8s.K8sResourcesSweepingOutput.K8S_RESOURCES_SWEEPING_OUTPUT;
 
 import static java.lang.String.format;
@@ -31,6 +32,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
+import io.harness.beans.ExecutionStatus;
 import io.harness.beans.SweepingOutputInstance;
 import io.harness.context.ContextElementType;
 import io.harness.delegate.beans.DelegateResponseData;
@@ -54,6 +56,7 @@ import software.wings.beans.ContainerInfrastructureMapping;
 import software.wings.beans.Environment;
 import software.wings.beans.InfrastructureMapping;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
 import software.wings.beans.appmanifest.AppManifestKind;
@@ -79,6 +82,7 @@ import software.wings.service.intfc.sweepingoutput.SweepingOutputInquiry;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
 import software.wings.settings.SettingValue;
 import software.wings.sm.ExecutionContext;
+import software.wings.sm.ExecutionResponse;
 import software.wings.sm.WorkflowStandardParams;
 
 import com.google.inject.Inject;
@@ -345,6 +349,20 @@ public class K8sStateHelper {
   public ContainerInfrastructureMapping fetchContainerInfrastructureMapping(ExecutionContext context) {
     return (ContainerInfrastructureMapping) infrastructureMappingService.get(
         context.getAppId(), context.fetchInfraMappingId());
+  }
+
+  public boolean isRancherInfraMapping(ExecutionContext context) {
+    return fetchContainerInfrastructureMapping(context) instanceof RancherKubernetesInfrastructureMapping;
+  }
+
+  public ExecutionResponse getInvalidInfraDefFailedResponse() {
+    return ExecutionResponse.builder()
+        .executionStatus(ExecutionStatus.FAILED)
+        .stateExecutionData(
+            aStateExecutionData()
+                .withErrorMsg("Step type unsupported with Rancher cloud provider based Infrastructure Definition")
+                .build())
+        .build();
   }
 
   public String fetchContainerInfrastructureMappingId(ExecutionContext context) {

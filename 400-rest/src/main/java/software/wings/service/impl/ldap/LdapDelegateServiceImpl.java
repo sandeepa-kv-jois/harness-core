@@ -8,6 +8,7 @@
 package software.wings.service.impl.ldap;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -131,7 +132,7 @@ public class LdapDelegateServiceImpl implements LdapDelegateService {
     if (ldapEmailAttribute != null) {
       email = ldapEmailAttribute.getStringValue();
     } else {
-      log.warn(
+      log.error(
           "UserConfig email attribute = {} is missing for LdapEntry user object = {}", userConfig.getEmailAttr(), user);
     }
 
@@ -147,17 +148,25 @@ public class LdapDelegateServiceImpl implements LdapDelegateService {
     }
 
     String externalUserId = "";
-    if (user.getAttributes() != null && Arrays.asList(user.getAttributeNames()).contains(userConfig.getUidAttr())
+    log.info("LDAPIterator: user with email {} ldap entry is {}", email, user);
+    if (isNotEmpty(user.getAttributeNames())
+        && Arrays.asList(user.getAttributeNames()).contains(userConfig.getUidAttr())
         && user.getAttribute(userConfig.getUidAttr()) != null) {
-      externalUserId = user.getAttribute(userConfig.getUidAttr()).getStringValue();
+      log.info("LDAP user with email {} user uid set as {}", email,
+          user.getAttribute(userConfig.getUidAttr()).getStringValue());
+      if (StringUtils.isNotEmpty(user.getAttribute(userConfig.getUidAttr()).getStringValue())) {
+        externalUserId = user.getAttribute(userConfig.getUidAttr()).getStringValue().toLowerCase();
+      }
     }
 
-    if (user.getAttributes() != null
+    if (isNotEmpty(user.getAttributeNames())
         && Arrays.asList(user.getAttributeNames()).contains(userConfig.getSamAccountNameAttr())
         && user.getAttribute(userConfig.getSamAccountNameAttr()) != null) {
       log.info("LDAP user with email {} samAccountName set as {}", email,
           user.getAttribute(userConfig.getSamAccountNameAttr()).getStringValue());
-      externalUserId = user.getAttribute(userConfig.getSamAccountNameAttr()).getStringValue();
+      if (StringUtils.isNotEmpty(user.getAttribute(userConfig.getSamAccountNameAttr()).getStringValue())) {
+        externalUserId = user.getAttribute(userConfig.getSamAccountNameAttr()).getStringValue().toLowerCase();
+      }
     }
 
     log.info("LDAP user response with name {} and email {} and userId {}", name, email, externalUserId);

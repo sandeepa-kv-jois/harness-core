@@ -23,6 +23,7 @@ import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
+import io.harness.cvng.core.entities.AnalysisInfo;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthCVConfig;
 import io.harness.cvng.core.entities.MetricPack;
@@ -68,8 +69,15 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
             .queryType(HealthSourceQueryType.HOST_BASED)
             .method(CustomHealthMethod.GET)
             .identifier(identifier)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
+            .analysis(
+                HealthSourceMetricDefinition.AnalysisDTO.builder()
+                    .deploymentVerification(HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
+                                                .enabled(true)
+                                                .build())
+                    .liveMonitoring(
+                        HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder().enabled(false).build())
+                    .build())
+            .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(false).build())
             .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
             .build();
     customHealthSourceSpecs = new ArrayList<>();
@@ -84,25 +92,23 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
     CustomHealthCVConfig.MetricDefinition metricDefinition3 =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName("metric_3")
-            .riskProfile(RiskProfile.builder().build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.POST)
             .queryType(HealthSourceQueryType.HOST_BASED)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.ERRORS).build())
             .build();
 
     CustomHealthCVConfig.MetricDefinition metricDefinition =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName(metricName)
-            .riskProfile(RiskProfile.builder().build())
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.GET)
             .queryType(HealthSourceQueryType.HOST_BASED)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
             .build();
 
     CustomHealthCVConfig existingCVConfig =
@@ -152,13 +158,12 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
     CustomHealthCVConfig.MetricDefinition metricDefinition2 =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName("metric_2")
-            .riskProfile(RiskProfile.builder().build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.POST)
             .queryType(HealthSourceQueryType.SERVICE_BASED)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.ERRORS).build())
             .build();
 
     CustomHealthCVConfig existingCVConfig =
@@ -196,27 +201,25 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
     CustomHealthCVConfig.MetricDefinition metricDefinition =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName(metricName)
-            .riskProfile(RiskProfile.builder().build())
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.GET)
             .queryType(HealthSourceQueryType.HOST_BASED)
             .identifier("9876_identifier")
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .build();
 
     CustomHealthCVConfig.MetricDefinition updatedMetricDefinition =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName(metricName)
-            .riskProfile(RiskProfile.builder().build())
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.POST)
             .queryType(HealthSourceQueryType.SERVICE_BASED)
             .requestBody("post body")
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .build();
 
     CustomHealthMetricDefinition customHealthMetricDefinition = customHealthSourceSpec.getMetricDefinitions().get(0);
@@ -265,8 +268,15 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
             .queryType(HealthSourceQueryType.HOST_BASED)
             .method(CustomHealthMethod.GET)
             .identifier("2132_identifier")
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
+            .analysis(
+                HealthSourceMetricDefinition.AnalysisDTO.builder()
+                    .liveMonitoring(
+                        HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder().enabled(false).build())
+                    .deploymentVerification(HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
+                                                .enabled(true)
+                                                .build())
+                    .build())
+            .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(false).build())
             .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.INFRASTRUCTURE).build())
             .build();
 
@@ -278,45 +288,51 @@ public class CustomHealthSourceSpecTest extends CvNextGenTestBase {
             .queryType(HealthSourceQueryType.HOST_BASED)
             .method(CustomHealthMethod.POST)
             .identifier("43534_identifier")
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
+            .analysis(
+                HealthSourceMetricDefinition.AnalysisDTO.builder()
+                    .liveMonitoring(
+                        HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder().enabled(false).build())
+                    .deploymentVerification(HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
+                                                .enabled(true)
+                                                .build())
+                    .build())
+            .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(false).build())
             .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.INFRASTRUCTURE).build())
             .build();
 
     CustomHealthCVConfig.MetricDefinition metricDefinition =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName(metricName)
-            .riskProfile(RiskProfile.builder().build())
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.GET)
             .queryType(HealthSourceQueryType.HOST_BASED)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .build();
 
     CustomHealthCVConfig.MetricDefinition metricDefinition2 =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName("metric_2")
-            .riskProfile(RiskProfile.builder().build())
+
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.GET)
             .queryType(HealthSourceQueryType.HOST_BASED)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.INFRASTRUCTURE).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .build();
 
     CustomHealthCVConfig.MetricDefinition metricDefinition3 =
         CustomHealthCVConfig.MetricDefinition.builder()
             .metricName("metric_3")
-            .riskProfile(RiskProfile.builder().build())
+
             .metricResponseMapping(responseMapping)
             .method(CustomHealthMethod.POST)
             .queryType(HealthSourceQueryType.HOST_BASED)
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.INFRASTRUCTURE).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .build();
 
     customHealthSourceSpec.getMetricDefinitions().add(customHealthMetricDefinition);

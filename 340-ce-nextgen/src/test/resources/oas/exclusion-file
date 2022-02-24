@@ -1,0 +1,8 @@
+dto-exclusion: io.harness.ccm.views.entities.CEView
+dto-exclusion: io.harness.ccm.views.entities.ViewTimeRange
+dto-exclusion: io.harness.ccm.views.entities.ViewCondition
+dto-exclusion: io.harness.ccm.views.entities.ViewRule
+dto-exclusion: io.harness.ccm.views.entities.CEReportSchedule
+dto-exclusion: io.harness.ccm.remote.beans.recommendation.FilterValuesDTO
+dto-exclusion: io.harness.ccm.graphql.dto.recommendation.K8sRecommendationFilterDTO
+dto-exclusion: io.harness.ccm.commons.entities.billing.Budget

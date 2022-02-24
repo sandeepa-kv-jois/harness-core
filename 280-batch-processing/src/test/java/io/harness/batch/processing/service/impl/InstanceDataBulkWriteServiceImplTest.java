@@ -10,7 +10,6 @@ package io.harness.batch.processing.service.impl;
 import static io.harness.rule.OwnerRule.UTSAV;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.when;
@@ -32,14 +31,12 @@ import software.wings.security.authentication.BatchQueryConfig;
 import com.google.common.collect.ImmutableList;
 import com.google.protobuf.Timestamp;
 import java.time.Instant;
-import org.apache.commons.lang3.NotImplementedException;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @RunWith(MockitoJUnitRunner.class)
@@ -59,9 +56,7 @@ public class InstanceDataBulkWriteServiceImplTest extends BatchProcessingTestBas
 
   @Before
   public void setUp() throws Exception {
-    MockitoAnnotations.initMocks(this);
-
-    when(config.getBatchQueryConfig()).thenReturn(BatchQueryConfig.builder().queryBatchSize(2).build());
+    when(config.getBatchQueryConfig()).thenReturn(BatchQueryConfig.builder().queryBatchSize(10).build());
     when(wingsPersistence.getCollection(any()).initializeUnorderedBulkOperation().execute().isAcknowledged())
         .thenReturn(true);
   }
@@ -70,7 +65,7 @@ public class InstanceDataBulkWriteServiceImplTest extends BatchProcessingTestBas
   @Owner(developers = UTSAV)
   @Category(UnitTests.class)
   public void shouldUpdateLifecycle() {
-    boolean result = instanceDataBulkWriteService.updateList(ImmutableList.of(getLifecycle()));
+    boolean result = instanceDataBulkWriteService.updateLifecycle(ImmutableList.of(getLifecycle()));
     assertThat(result).isTrue();
   }
 
@@ -78,7 +73,7 @@ public class InstanceDataBulkWriteServiceImplTest extends BatchProcessingTestBas
   @Owner(developers = UTSAV)
   @Category(UnitTests.class)
   public void shouldUpdateInstanceInfo() {
-    boolean result = instanceDataBulkWriteService.updateList(ImmutableList.of(getInstanceInfo()));
+    boolean result = instanceDataBulkWriteService.upsertInstanceInfo(ImmutableList.of(getInstanceInfo()));
     assertThat(result).isTrue();
   }
 
@@ -86,16 +81,8 @@ public class InstanceDataBulkWriteServiceImplTest extends BatchProcessingTestBas
   @Owner(developers = UTSAV)
   @Category(UnitTests.class)
   public void shouldUpdateInstanceEvent() {
-    boolean result = instanceDataBulkWriteService.updateList(ImmutableList.of(getInstanceEvent()));
+    boolean result = instanceDataBulkWriteService.updateInstanceEvent(ImmutableList.of(getInstanceEvent()));
     assertThat(result).isTrue();
-  }
-
-  @Test
-  @Owner(developers = UTSAV)
-  @Category(UnitTests.class)
-  public void shouldNotUpdateUnknownClass() {
-    assertThatThrownBy(() -> instanceDataBulkWriteService.updateList(ImmutableList.of(new Object())))
-        .isExactlyInstanceOf(NotImplementedException.class);
   }
 
   private static Lifecycle getLifecycle() {

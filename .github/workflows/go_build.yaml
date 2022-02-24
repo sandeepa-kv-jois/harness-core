@@ -5,6 +5,9 @@ on:
       - master
       - develop
 
+env:
+  BUILD_PURPOSE: RELEASE
+
 jobs:
   gobuild:
     if: contains(github.event.pull_request.labels.*.name, 'go') || contains(github.event.pull_request.labels.*.name, 'gojava')

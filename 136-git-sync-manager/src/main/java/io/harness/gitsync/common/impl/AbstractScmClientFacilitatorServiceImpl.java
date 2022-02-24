@@ -24,7 +24,6 @@ import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
-import io.harness.gitsync.UserPrincipal;
 import io.harness.gitsync.common.dtos.GitFileContent;
 import io.harness.gitsync.common.helper.GitSyncConnectorHelper;
 import io.harness.gitsync.common.helper.UserProfileHelper;
@@ -34,6 +33,7 @@ import io.harness.gitsync.helpers.ScmUserHelper;
 import io.harness.gitsync.interceptor.GitSyncConstants;
 import io.harness.gitsync.scm.ScmGitUtils;
 import io.harness.impl.ScmResponseStatusUtils;
+import io.harness.ng.userprofile.commons.SCMType;
 import io.harness.product.ci.scm.proto.FileContent;
 import io.harness.utils.IdentifierRefHelper;
 
@@ -139,16 +139,15 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
   void checkAndSetUserFromUserProfile(
       boolean useUserFromToken, YamlGitConfigDTO yamlGitConfigDTO, ConnectorResponseDTO connectorResponseDTO) {
     if (useUserFromToken) {
-      UserPrincipal userPrincipal = userProfileHelper.getUserPrincipal();
-      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfigDTO, userPrincipal, connectorResponseDTO);
+      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfigDTO, connectorResponseDTO);
     }
   }
 
-  GitFileDetailsBuilder getGitFileDetails(
-      String accountId, String yaml, String filePath, String folderPath, String commitMsg, String branch) {
+  GitFileDetailsBuilder getGitFileDetails(String accountId, String yaml, String filePath, String folderPath,
+      String commitMsg, String branch, SCMType scmType) {
     final EmbeddedUser currentUser = ScmUserHelper.getCurrentUser();
     String filePathForPush = ScmGitUtils.createFilePath(folderPath, filePath);
-    String scmUserName = getSmcUserName(accountId);
+    String scmUserName = getScmUserName(accountId, scmType);
     return GitFileDetails.builder()
         .branch(branch)
         .commitMessage(isEmpty(commitMsg) ? GitSyncConstants.COMMIT_MSG : commitMsg)
@@ -158,12 +157,12 @@ public abstract class AbstractScmClientFacilitatorServiceImpl implements ScmClie
         .userName(isEmpty(scmUserName) ? currentUser.getName() : scmUserName);
   }
 
-  private String getSmcUserName(String accountId) {
+  private String getScmUserName(String accountId, SCMType scmType) {
     String scmUserName = "";
     try {
-      scmUserName = userProfileHelper.getScmUserName(accountId);
+      scmUserName = userProfileHelper.getScmUserName(accountId, scmType);
     } catch (Exception ex) {
-      log.error("Error occured while getting Scm User", ex);
+      log.error("Error occurred while getting scm user", ex);
     }
     return scmUserName;
   }

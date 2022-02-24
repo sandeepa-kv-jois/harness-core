@@ -116,7 +116,7 @@ public class InterruptMonitor implements Handler<Interrupt> {
       }
       if (planExecution == null || StatusUtils.isFinalStatus(planExecution.getStatus())) {
         log.info("Interrupt active but plan finished, Closing the interrupt");
-        interruptService.markProcessed(interrupt.getUuid(), PROCESSED_SUCCESSFULLY);
+        interruptService.markProcessedForceful(interrupt.getUuid(), PROCESSED_SUCCESSFULLY, true);
         return;
       }
 
@@ -125,13 +125,13 @@ public class InterruptMonitor implements Handler<Interrupt> {
       Set<NodeExecution> leaves = findAllLeaves(nodeExecutions);
 
       // There are no leaves in the execution then something weird happened
-      // Happen in dev environments when you abruptly sstop the services
+      // Happen in dev environments when you abruptly stop the services
       // Will rarely happen in prod env, but can happen
       // TODO: Revisit this by introducing the level count in node execution
       if (isEmpty(leaves)) {
         log.error("No Leaves found something really wrong happened here. Lets check this execution {}",
             interrupt.getPlanExecutionId());
-        interruptService.markProcessed(interrupt.getUuid(), PROCESSED_UNSUCCESSFULLY);
+        interruptService.markProcessedForceful(interrupt.getUuid(), PROCESSED_UNSUCCESSFULLY, true);
         return;
       }
 
@@ -149,7 +149,7 @@ public class InterruptMonitor implements Handler<Interrupt> {
               abortHelper.abortDiscontinuingNode(ne, interrupt.getUuid(), interrupt.getInterruptConfig());
             } catch (MappingInstantiationException ex) {
               log.info("Node Execution Instantiation Exception Occurred. Cannot Recover from it ignore");
-              interruptService.markProcessed(interrupt.getUuid(), PROCESSED_UNSUCCESSFULLY);
+              interruptService.markProcessedForceful(interrupt.getUuid(), PROCESSED_UNSUCCESSFULLY, true);
               break;
             }
           }

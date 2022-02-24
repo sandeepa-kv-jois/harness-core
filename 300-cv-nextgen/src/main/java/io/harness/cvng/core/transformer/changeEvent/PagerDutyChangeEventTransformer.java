@@ -28,6 +28,7 @@ public class PagerDutyChangeEventTransformer
         .eventTime(Instant.ofEpochMilli(changeEventDTO.getEventTime()))
         .activityStartTime(Instant.ofEpochMilli(changeEventDTO.getEventTime()))
         .changeSourceIdentifier(changeEventDTO.getChangeSourceIdentifier())
+        .monitoredServiceIdentifier(changeEventDTO.getMonitoredServiceIdentifier())
         .type(changeEventDTO.getType().getActivityType())
         .pagerDutyUrl(pagerDutyEventMetaData.getPagerDutyUrl())
         .eventId(pagerDutyEventMetaData.getEventId())

@@ -9,6 +9,7 @@ package io.harness.delegate.task.executioncapability;
 
 import static io.harness.rule.OwnerRule.IVAN;
 
+import static java.lang.String.format;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.doReturn;
 
@@ -42,9 +43,12 @@ public class PcfInstallationCapabilityCheckTest extends CategoryTest {
   @Test
   @Owner(developers = IVAN)
   @Category(UnitTests.class)
-  public void testPerformCapabilityCheck() {
+  public void testPerformCapabilityCheckCfCliV6() {
     PcfInstallationCapability capability =
-        PcfInstallationCapability.builder().criteria("CF CLI version 6 is installed").version(CfCliVersion.V6).build();
+        PcfInstallationCapability.builder()
+            .criteria(format("Checking that CF CLI version: %s is installed", CfCliVersion.V6))
+            .version(CfCliVersion.V6)
+            .build();
     doReturn(true).when(cfCliDelegateResolver).isDelegateEligibleToExecuteCfCliCommand(CfCliVersion.V6);
 
     CapabilityResponse capabilityResponse = pcfInstallationCapabilityCheck.performCapabilityCheck(capability);
@@ -52,6 +56,27 @@ public class PcfInstallationCapabilityCheckTest extends CategoryTest {
     assertThat(capabilityResponse).isNotNull();
     assertThat(capabilityResponse.isValidated()).isTrue();
     assertThat(capability.getVersion()).isEqualTo(CfCliVersion.V6);
-    assertThat(capability.getCriteria()).isEqualTo("CF CLI version 6 is installed");
+    assertThat(capability.getCriteria())
+        .isEqualTo(format("Checking that CF CLI version: %s is installed", CfCliVersion.V6));
+  }
+
+  @Test
+  @Owner(developers = IVAN)
+  @Category(UnitTests.class)
+  public void testPerformCapabilityCheckCfCliV7() {
+    PcfInstallationCapability capability =
+        PcfInstallationCapability.builder()
+            .criteria(format("Checking that CF CLI version: %s is installed", CfCliVersion.V7))
+            .version(CfCliVersion.V7)
+            .build();
+    doReturn(true).when(cfCliDelegateResolver).isDelegateEligibleToExecuteCfCliCommand(CfCliVersion.V7);
+
+    CapabilityResponse capabilityResponse = pcfInstallationCapabilityCheck.performCapabilityCheck(capability);
+
+    assertThat(capabilityResponse).isNotNull();
+    assertThat(capabilityResponse.isValidated()).isTrue();
+    assertThat(capability.getVersion()).isEqualTo(CfCliVersion.V7);
+    assertThat(capability.getCriteria())
+        .isEqualTo(format("Checking that CF CLI version: %s is installed", CfCliVersion.V7));
   }
 }

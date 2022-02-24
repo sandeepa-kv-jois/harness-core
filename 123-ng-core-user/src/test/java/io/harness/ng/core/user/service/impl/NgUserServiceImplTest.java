@@ -37,6 +37,7 @@ import io.harness.accesscontrol.AccessControlAdminClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.category.element.UnitTests;
+import io.harness.licensing.services.LicenseService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.AccountOrgProjectHelper;
 import io.harness.ng.core.api.UserGroupService;
@@ -54,6 +55,7 @@ import io.harness.ng.core.user.entities.UserMetadata;
 import io.harness.ng.core.user.entities.UserMetadata.UserMetadataKeys;
 import io.harness.ng.core.user.exception.InvalidUserRemoveRequestException;
 import io.harness.ng.core.user.remote.dto.UserFilter;
+import io.harness.ng.core.user.service.LastAdminCheckService;
 import io.harness.notification.channeldetails.EmailChannel;
 import io.harness.notification.channeldetails.NotificationChannel;
 import io.harness.notification.notificationclient.NotificationClient;
@@ -75,7 +77,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.concurrent.ExecutorService;
 import org.bson.Document;
 import org.junit.Before;
 import org.junit.Test;
@@ -97,9 +98,10 @@ public class NgUserServiceImplTest extends CategoryTest {
   @Mock private OutboxService outboxService;
   @Mock private UserGroupService userGroupService;
   @Mock private UserMetadataRepository userMetadataRepository;
-  @Mock private ExecutorService executorService;
   @Mock private NotificationClient notificationClient;
   @Mock private AccountOrgProjectHelper accountOrgProjectHelper;
+  @Mock private LicenseService licenseService;
+  @Mock private LastAdminCheckService lastAdminCheckService;
   @Spy @Inject @InjectMocks private NgUserServiceImpl ngUserService;
   private String accountIdentifier;
   private String orgIdentifier;
@@ -240,15 +242,13 @@ public class NgUserServiceImplTest extends CategoryTest {
   private void preLastAdminFailure(String userId, Scope scope, UserMembership userMembership) {
     when(userMembershipRepository.findOne(any())).thenReturn(userMembership);
     when(userMembershipRepository.findAll(any(Criteria.class))).thenReturn(Collections.singletonList(userMembership));
-    doReturn(Collections.singletonList(scope))
-        .when(ngUserService)
-        .getLastAdminScopes(userId, Collections.singletonList(scope));
+    when(lastAdminCheckService.doesAdminExistAfterRemoval(any(), any())).thenReturn(false);
   }
 
   private void assertSuccessfulRemoveUserFromScope(String userId, Scope scope, UserMembership userMembership) {
     when(userMembershipRepository.findOne(any())).thenReturn(userMembership);
     when(userMembershipRepository.findAll(any(Criteria.class))).thenReturn(Collections.singletonList(userMembership));
-    doReturn(Collections.emptyList()).when(ngUserService).getLastAdminScopes(userId, Collections.singletonList(scope));
+    when(lastAdminCheckService.doesAdminExistAfterRemoval(any(), any())).thenReturn(true);
     when(userMetadataRepository.findDistinctByUserId(userId))
         .thenReturn(Optional.of(UserMetadata.builder().userId(userId).build()));
     when(transactionTemplate.execute(any())).thenReturn(null);

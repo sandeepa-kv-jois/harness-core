@@ -80,6 +80,7 @@ io.harness.steps.servicenow.approval.ServiceNowApprovalStepNode
 io.harness.steps.approval.step.servicenow.ServiceNowApprovalOutcome
 io.harness.steps.approval.stage.ApprovalStageNode
 io.harness.cf.pipeline.FeatureFlagStageNode
+io.harness.plancreator.steps.internal.FlagConfigurationStepNode
 io.harness.steps.policy.PolicyStepInfo
 io.harness.steps.policy.PolicyStepNode
 io.harness.steps.policy.custom.CustomPolicyStepSpec

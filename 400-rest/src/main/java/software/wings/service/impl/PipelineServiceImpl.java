@@ -71,6 +71,7 @@ import io.harness.limits.LimitCheckerFactory;
 import io.harness.limits.LimitEnforcementUtils;
 import io.harness.limits.checker.StaticLimitCheckerWithDecrement;
 import io.harness.limits.counter.service.CounterSyncer;
+import io.harness.mongo.MongoPersistence;
 import io.harness.persistence.HIterator;
 import io.harness.queue.QueuePublisher;
 import io.harness.validation.Create;
@@ -120,6 +121,7 @@ import software.wings.service.intfc.WorkflowService;
 import software.wings.service.intfc.ownership.OwnedByPipeline;
 import software.wings.service.intfc.yaml.YamlPushService;
 import software.wings.sm.StateMachine;
+import software.wings.sm.StateType;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
@@ -156,6 +158,7 @@ import ru.vyarus.guice.validator.group.annotation.ValidationGroups;
 @Slf4j
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
 public class PipelineServiceImpl implements PipelineService {
+  private static final String USER_GROUPS = "userGroups";
   private static final Set<Character> ALLOWED_CHARS_SET_PIPELINE_STAGE =
       Sets.newHashSet(Lists.charactersOf("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-_ ()"));
 
@@ -182,6 +185,7 @@ public class PipelineServiceImpl implements PipelineService {
   @Inject private QueuePublisher<PruneEvent> pruneQueue;
   @Inject private HarnessTagService harnessTagService;
   @Inject private ResourceLookupService resourceLookupService;
+  @Inject private MongoPersistence mongoPersistence;
   @Inject FeatureFlagService featureFlagService;
 
   /**
@@ -250,6 +254,8 @@ public class PipelineServiceImpl implements PipelineService {
 
     validatePipeline(pipeline, keywords);
 
+    Set<String> previousUserGroups = getUserGroups(savedPipeline);
+
     // TODO: remove this when all the needed verification is done from validatePipeline
     new StateMachine(pipeline, workflowService.stencilMap(pipeline.getAppId()));
 
@@ -271,6 +277,14 @@ public class PipelineServiceImpl implements PipelineService {
 
     String accountId = appService.getAccountIdByAppId(pipeline.getAppId());
     boolean isRename = !savedPipeline.getName().equals(pipeline.getName());
+
+    Set<String> currentUserGroups = getUserGroups(updatedPipeline);
+    try {
+      updatePipelineReferenceInUserGroup(
+          previousUserGroups, currentUserGroups, accountId, updatedPipeline.getAppId(), updatedPipeline.getUuid());
+    } catch (Exception e) {
+      log.error("An error occurred when trying to reference this pipeline {} in userGroups ", pipeline.getUuid(), e);
+    }
 
     if (isRename) {
       executorService.submit(() -> triggerService.updateByApp(pipeline.getAppId()));
@@ -435,11 +449,12 @@ public class PipelineServiceImpl implements PipelineService {
     if (pipeline == null) {
       return true;
     }
+    Set<String> previousUserGroups = getUserGroups(pipeline);
     String accountId = appService.getAccountIdByAppId(pipeline.getAppId());
     StaticLimitCheckerWithDecrement checker = (StaticLimitCheckerWithDecrement) limitCheckerFactory.getInstance(
         new Action(accountId, ActionType.CREATE_PIPELINE));
 
-    return LimitEnforcementUtils.withCounterDecrement(checker, () -> {
+    boolean successful = LimitEnforcementUtils.withCounterDecrement(checker, () -> {
       if (!forceDelete) {
         ensurePipelineSafeToDelete(pipeline);
       }
@@ -453,6 +468,14 @@ public class PipelineServiceImpl implements PipelineService {
 
       return true;
     });
+    if (successful) {
+      try {
+        updatePipelineReferenceInUserGroup(previousUserGroups, new HashSet<>(), accountId, appId, pipelineId);
+      } catch (Exception e) {
+        log.error("An error occurred when trying to reference this pipeline {} in userGroups ", pipeline.getUuid(), e);
+      }
+    }
+    return successful;
   }
 
   @Override
@@ -1716,10 +1739,18 @@ public class PipelineServiceImpl implements PipelineService {
 
       wingsPersistence.save(pipeline);
 
+      Set<String> currentUserGroups = getUserGroups(pipeline);
+
       // TODO: remove this when all the needed verification is done from validatePipeline
       new StateMachine(pipeline, workflowService.stencilMap(pipeline.getAppId()));
 
       yamlPushService.pushYamlChangeSet(accountId, null, pipeline, Type.CREATE, pipeline.isSyncFromGit(), false);
+      try {
+        updatePipelineReferenceInUserGroup(
+            new HashSet<>(), currentUserGroups, accountId, pipeline.getAppId(), pipeline.getUuid());
+      } catch (Exception e) {
+        log.error("An error occurred when trying to reference this pipeline {} in userGroups ", pipeline.getUuid(), e);
+      }
 
       if (!pipeline.isSample()) {
         eventPublishHelper.publishAccountEvent(
@@ -2043,5 +2074,37 @@ public class PipelineServiceImpl implements PipelineService {
   private void requireOrchestrationWorkflow(Workflow workflow) {
     notNullCheck("Workflow does not exist", workflow, USER);
     notNullCheck("Orchestration workflow does not exist", workflow.getOrchestrationWorkflow(), USER);
+  }
+
+  public Set<String> getUserGroups(Pipeline pipeline) {
+    if (pipeline.getPipelineStages() == null) {
+      return new HashSet<>();
+    }
+    Set<String> userGroups = new HashSet<>();
+    for (PipelineStage bean : pipeline.getPipelineStages()) {
+      PipelineStageElement stageElement = bean.getPipelineStageElements().get(0);
+      if (StateType.APPROVAL.name().equals(stageElement.getType())) {
+        Map<String, Object> properties = stageElement.getProperties();
+        properties.forEach((name, value) -> {
+          if (USER_GROUPS.equals(name)) {
+            userGroups.addAll((List<String>) value);
+          }
+        });
+      }
+    }
+    return userGroups;
+  }
+
+  private void updatePipelineReferenceInUserGroup(Set<String> previousUserGroups, Set<String> currentUserGroups,
+      String accountId, String appId, String pipelineId) {
+    Set<String> parentsToRemove = Sets.difference(previousUserGroups, currentUserGroups);
+    Set<String> parentsToAdd = Sets.difference(currentUserGroups, previousUserGroups);
+
+    for (String id : parentsToRemove) {
+      userGroupService.removeParentsReference(id, accountId, appId, pipelineId);
+    }
+    for (String id : parentsToAdd) {
+      userGroupService.addParentsReference(id, accountId, appId, pipelineId);
+    }
   }
 }

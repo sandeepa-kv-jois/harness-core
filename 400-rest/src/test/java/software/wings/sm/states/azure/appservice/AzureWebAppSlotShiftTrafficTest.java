@@ -208,7 +208,9 @@ public class AzureWebAppSlotShiftTrafficTest extends WingsBaseTest {
           .getInfoFromSweepingOutput(eq(mockContext), eq(SWEEPING_OUTPUT_APP_SERVICE));
     }
 
-    doReturn(appServiceStateData).when(azureVMSSStateHelper).populateAzureAppServiceData(eq(mockContext));
+    doReturn(appServiceStateData)
+        .when(azureVMSSStateHelper)
+        .populateAzureAppServiceData(eq(mockContext), any(Artifact.class));
     doReturn(delegateResult).when(delegateService).queueTask(any());
     doReturn(Integer.valueOf(trafficWeight))
         .when(azureVMSSStateHelper)

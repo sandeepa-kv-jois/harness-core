@@ -13,9 +13,9 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	pb "github.com/harness/harness-core/product/ci/scm/proto"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -123,6 +123,7 @@ func TestCreateFile(t *testing.T) {
 
 	assert.Nil(t, err, "no errors")
 	assert.Equal(t, got.Status, int32(201), "status matches")
+	assert.NotNil(t, got.CommitId)
 }
 
 func TestCreateFileConflict(t *testing.T) {
@@ -202,9 +203,10 @@ func TestUpdateFile(t *testing.T) {
 
 	assert.Nil(t, err, "no errors")
 	assert.Equal(t, got.Status, int32(200), "status matches")
+	assert.NotNil(t, got.CommitId)
 }
 
-func TestUpdateFileNoMatch(t *testing.T) {
+func TestUpdateFileNoMatchGithub(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(409)
@@ -242,6 +244,35 @@ func TestUpdateFileNoMatch(t *testing.T) {
 	assert.Nil(t, err, "no errors")
 	assert.Equal(t, got.Status, int32(409), "status matches")
 	assert.Equal(t, got.Error, "newfile does not match ff9b1a04-7828-4288-8135-b331a38e9fac", "error matches")
+}
+
+func TestUpdateFilCommtConflictBitbucket(t *testing.T) {
+	in := &pb.FileModifyRequest{
+		Slug:     "mohitgargharness/test-repository",
+		Path:     "test-file.txt",
+		Message:  "message",
+		Branch:   "main",
+		Content:  "data",
+		CommitId: "DUMMY",
+		Signature: &pb.Signature{
+			Name:  "mohitgargharness",
+			Email: "mohit.garg@harness.io",
+		},
+		Provider: &pb.Provider{
+			Hook: &pb.Provider_BitbucketCloud{
+				BitbucketCloud: &pb.BitbucketCloudProvider{
+					Username:    "mohitgargharness",
+					AppPassword: "d58ztzmwJksybeatmP4e",
+				},
+			},
+		},
+	}
+
+	log, _ := logs.GetObservedLogger(zap.InfoLevel)
+	got, err := UpdateFile(context.Background(), in, log.Sugar())
+
+	assert.Nil(t, err, "no errors")
+	assert.Equal(t, got.Status, int32(400), "status matches")
 }
 
 func TestDeleteFile(t *testing.T) {
@@ -366,6 +397,50 @@ func TestFindFilesInBranch(t *testing.T) {
 	assert.Equal(t, 26, len(got.File), "26 files")
 	assert.Equal(t, int32(0), got.Pagination.Next, "No next page")
 }
+
+func TestFindFilesInBranchBitbucket(t *testing.T) {
+	in := &pb.FindFilesInBranchRequest{
+		Slug: "mohitgargharness/test-repository",
+		Type: &pb.FindFilesInBranchRequest_Branch{
+			Branch: "master",
+		},
+		Provider: &pb.Provider{
+			Hook: &pb.Provider_BitbucketCloud{
+				BitbucketCloud: &pb.BitbucketCloudProvider{
+					Username:    "mohitgargharness",
+					AppPassword: "d58ztzmwJksybeatmP4e",
+				},
+			},
+		},
+	}
+
+	log, _ := logs.GetObservedLogger(zap.InfoLevel)
+	got, err := FindFilesInBranch(context.Background(), in, log.Sugar())
+
+	assert.Nil(t, err, "no errors")
+	assert.NotNil(t, len(got.File), "Non-Null file count")
+	assert.NotNil(t, got.Pagination.NextUrl, "Next page found")
+
+	in = &pb.FindFilesInBranchRequest{
+		Slug: "mohitgargharness/test-repository",
+		Type: &pb.FindFilesInBranchRequest_Branch{
+			Branch: "master",
+		},
+		Pagination: &pb.PageRequest{Url: got.GetPagination().GetNextUrl()},
+		Provider: &pb.Provider{
+			Hook: &pb.Provider_BitbucketCloud{
+				BitbucketCloud: &pb.BitbucketCloudProvider{
+					Username:    "mohitgargharness",
+					AppPassword: "d58ztzmwJksybeatmP4e",
+				},
+			},
+		},
+	}
+
+	assert.Nil(t, err, "no errors")
+	assert.NotNil(t, len(got.File), "Non-Null file count")
+}
+
 
 func TestFindFilesInCommit(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

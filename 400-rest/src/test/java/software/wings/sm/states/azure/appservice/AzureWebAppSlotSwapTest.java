@@ -254,7 +254,9 @@ public class AzureWebAppSlotSwapTest extends WingsBaseTest {
     }
 
     doReturn(managerExecutionLogCallback).when(azureVMSSStateHelper).getExecutionLogCallback(activity);
-    doReturn(appServiceStateData).when(azureVMSSStateHelper).populateAzureAppServiceData(eq(mockContext));
+    doReturn(appServiceStateData)
+        .when(azureVMSSStateHelper)
+        .populateAzureAppServiceData(eq(mockContext), any(Artifact.class));
     doReturn("service-template-id").when(serviceTemplateHelper).fetchServiceTemplateId(any());
     doReturn(delegateResult).when(delegateService).queueTask(any());
     doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());

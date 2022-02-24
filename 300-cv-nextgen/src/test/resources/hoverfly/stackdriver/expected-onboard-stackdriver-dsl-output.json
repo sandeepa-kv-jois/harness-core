@@ -1,0 +1,24 @@
+[
+  {
+    "widgetName": "CPU limit utilization [MEAN]",
+    "dataSets": [
+      {
+        "plotType": "LINE",
+        "timeSeriesQuery": {
+          "timeSeriesFilter": {
+            "filter": "metric.type=\"kubernetes.io/container/cpu/limit_utilization\" resource.type=\"k8s_container\"",
+            "secondaryAggregation": {
+              "alignmentPeriod": "60s"
+            },
+            "aggregation": {
+              "perSeriesAligner": "ALIGN_MEAN",
+              "alignmentPeriod": "60s"
+            }
+          }
+        },
+        "minAlignmentPeriod": "60s",
+        "targetAxis": "Y1"
+      }
+    ]
+  }
+]

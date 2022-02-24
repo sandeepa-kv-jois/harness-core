@@ -42,4 +42,8 @@ public class LdapUserResponse {
   public String getEmail() {
     return StringUtils.lowerCase(email);
   }
+
+  public String getUserId() {
+    return StringUtils.lowerCase(userId);
+  }
 }

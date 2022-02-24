@@ -11,6 +11,7 @@ import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.DeploymentVeri
 import io.harness.cvng.activity.beans.DeploymentActivitySummaryDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
+import io.harness.cvng.analysis.beans.LogAnalysisClusterWithCountDTO;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
 import io.harness.cvng.analysis.services.api.DeploymentLogAnalysisService;
 import io.harness.cvng.analysis.services.api.DeploymentTimeSeriesAnalysisService;
@@ -160,6 +161,13 @@ public class CVNGStepTaskServiceImpl implements CVNGStepTaskService {
   public PageResponse<LogAnalysisClusterDTO> getDeploymentActivityLogAnalysisResult(String accountId, String callbackId,
       Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, PageParams pageParams) {
     return deploymentLogAnalysisService.getLogAnalysisResult(accountId,
+        getByCallBackId(callbackId).getVerificationJobInstanceId(), label, deploymentLogAnalysisFilter, pageParams);
+  }
+
+  @Override
+  public LogAnalysisClusterWithCountDTO getDeploymentActivityLogAnalysisResultV2(String accountId, String callbackId,
+      Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, PageParams pageParams) {
+    return deploymentLogAnalysisService.getLogAnalysisResultV2(accountId,
         getByCallBackId(callbackId).getVerificationJobInstanceId(), label, deploymentLogAnalysisFilter, pageParams);
   }
 

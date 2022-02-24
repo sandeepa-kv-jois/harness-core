@@ -43,6 +43,6 @@ public class EngineResumeCallback implements OldNotifyCallback {
 
   private void notifyWithError(Map<String, ResponseData> response, boolean asyncError) {
     Map<String, ByteString> byteStringMap = responseDataMapper.toResponseDataProto(response);
-    orchestrationEngine.resumeNodeExecution(ambiance, byteStringMap, false);
+    orchestrationEngine.resumeNodeExecution(ambiance, byteStringMap, asyncError);
   }
 }

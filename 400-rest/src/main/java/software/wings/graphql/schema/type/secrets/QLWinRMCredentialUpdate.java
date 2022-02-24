@@ -11,9 +11,9 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.utils.RequestField;
 
-import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.security.PermissionAttribute;
 import software.wings.security.annotations.Scope;
 
@@ -29,7 +29,7 @@ import lombok.experimental.FieldNameConstants;
 @OwnedBy(HarnessTeam.CDP)
 public class QLWinRMCredentialUpdate {
   RequestField<String> name;
-  RequestField<WinRmConnectionAttributes.AuthenticationScheme> authenticationScheme;
+  RequestField<AuthenticationScheme> authenticationScheme;
   RequestField<String> domain;
   RequestField<String> userName;
   RequestField<String> passwordSecretId;

@@ -23,14 +23,15 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.executioncapability.CapabilityResponse;
+import io.harness.delegate.task.winrm.AuthenticationScheme;
+import io.harness.delegate.task.winrm.WinRmSession;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.infrastructure.Host;
-import software.wings.core.winrm.executors.WinRmSession;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.delegatetasks.validation.capabilities.BasicValidationInfo;
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
 import software.wings.service.intfc.security.EncryptionService;
@@ -52,17 +53,16 @@ public class WinrmHostValidationCapabilityCheckTest extends WingsBaseTest {
   @Spy @InjectMocks private WinrmHostValidationCapabilityCheck spyCapabilityCheck;
 
   private Host host = Host.Builder.aHost().withPublicDns(WingsTestConstants.PUBLIC_DNS).build();
-  private WinRmConnectionAttributes winrmConnectionAttributes =
-      WinRmConnectionAttributes.builder()
-          .username("userName")
-          .password("password".toCharArray())
-          .authenticationScheme(WinRmConnectionAttributes.AuthenticationScheme.NTLM)
-          .port(22)
-          .skipCertChecks(true)
-          .accountId(ACCOUNT_ID)
-          .useSSL(true)
-          .domain("")
-          .build();
+  private WinRmConnectionAttributes winrmConnectionAttributes = WinRmConnectionAttributes.builder()
+                                                                    .username("userName")
+                                                                    .password("password".toCharArray())
+                                                                    .authenticationScheme(AuthenticationScheme.NTLM)
+                                                                    .port(22)
+                                                                    .skipCertChecks(true)
+                                                                    .accountId(ACCOUNT_ID)
+                                                                    .useSSL(true)
+                                                                    .domain("")
+                                                                    .build();
 
   private WinrmHostValidationCapability capability = WinrmHostValidationCapability.builder()
                                                          .validationInfo(BasicValidationInfo.builder()

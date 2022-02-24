@@ -7,8 +7,6 @@
 
 package io.harness.engine.progress;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.logstreaming.UnitProgressData;
@@ -37,7 +35,6 @@ public class EngineProgressCallback implements ProgressCallback {
   @Inject @Transient KryoSerializer kryoSerializer;
   @Inject @Transient ProgressEventPublisher progressEventPublisher;
 
-  @Deprecated String nodeExecutionId;
   Ambiance ambiance;
 
   @Override
@@ -63,9 +60,6 @@ public class EngineProgressCallback implements ProgressCallback {
   }
 
   private String getNodeExecutionId() {
-    if (isEmpty(nodeExecutionId)) {
-      return AmbianceUtils.obtainCurrentRuntimeId(ambiance);
-    }
-    return nodeExecutionId;
+    return AmbianceUtils.obtainCurrentRuntimeId(ambiance);
   }
 }

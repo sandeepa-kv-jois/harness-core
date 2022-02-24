@@ -9,10 +9,9 @@ package software.wings.core.ssh.executors;
 
 import static io.harness.annotations.dev.HarnessModule._930_DELEGATE_TASKS;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.winrm.AuthenticationScheme.KERBEROS;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.rule.OwnerRule.YOGESH;
-
-import static software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme.KERBEROS;
 
 import static org.apache.commons.io.IOUtils.contentEquals;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -30,6 +29,8 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.task.winrm.WinRmSession;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
@@ -38,8 +39,6 @@ import io.harness.ssh.SshHelperUtils;
 
 import software.wings.beans.ConfigFile;
 import software.wings.beans.command.CopyConfigCommandUnit.ConfigFileMetaData;
-import software.wings.core.winrm.executors.WinRmSession;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.delegatetasks.DelegateFileManager;
 import software.wings.utils.ExecutionLogWriter;
 

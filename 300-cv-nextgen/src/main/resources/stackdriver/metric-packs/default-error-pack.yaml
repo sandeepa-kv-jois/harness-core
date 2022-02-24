@@ -2,5 +2,6 @@ identifier: Errors
 category: Errors
 metrics:
   - name: Errors
+    identifier: Errors
     type: ERROR
     included: false

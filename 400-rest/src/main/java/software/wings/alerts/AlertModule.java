@@ -8,6 +8,7 @@
 package software.wings.alerts;
 
 import io.harness.alert.AlertData;
+import io.harness.delegate.beans.alert.DeprecatedDelegateAlert;
 
 import software.wings.beans.alert.AlertType;
 import software.wings.beans.alert.ApprovalNeededAlert;
@@ -75,5 +76,13 @@ public class AlertModule extends AbstractModule {
         .toInstance(ContinuousVerificationDataCollectionAlert.class);
     mapBinder.addBinding(AlertType.MANIFEST_COLLECTION_FAILED).toInstance(ManifestCollectionFailedAlert.class);
     mapBinder.addBinding(AlertType.DEPLOYMENT_FREEZE_EVENT).toInstance(DeploymentFreezeEventAlert.class);
+
+    // these alerts are deprecated but are binded here just to ensure unit tests are working fine.
+    mapBinder.addBinding(AlertType.NoActiveDelegates).toInstance(DeprecatedDelegateAlert.class);
+    mapBinder.addBinding(AlertType.NoInstalledDelegates).toInstance(DeprecatedDelegateAlert.class);
+    mapBinder.addBinding(AlertType.DelegatesScalingGroupDownAlert).toInstance(DeprecatedDelegateAlert.class);
+    mapBinder.addBinding(AlertType.DelegateProfileError).toInstance(DeprecatedDelegateAlert.class);
+    mapBinder.addBinding(AlertType.NoEligibleDelegates).toInstance(DeprecatedDelegateAlert.class);
+    mapBinder.addBinding(AlertType.PerpetualTaskAlert).toInstance(DeprecatedDelegateAlert.class);
   }
 }

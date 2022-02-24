@@ -69,7 +69,7 @@ public class SupportRoleAssignmentsReconciliationJob implements Runnable {
             users.stream()
                 .map(user -> Principal.builder().principalType(PrincipalType.USER).principalIdentifier(user).build())
                 .collect(Collectors.toSet());
-        privilegedRoleAssignmentService.syncManagedGlobalRoleAssignments(principals, SUPER_VIEWER_ROLE_IDENTIFIER);
+        privilegedRoleAssignmentService.syncRoleAssignments(principals, SUPER_VIEWER_ROLE_IDENTIFIER);
         TimeUnit.SECONDS.sleep(300);
       }
     } catch (InterruptedException e) {

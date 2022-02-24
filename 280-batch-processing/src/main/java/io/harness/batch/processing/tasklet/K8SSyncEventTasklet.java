@@ -53,7 +53,7 @@ public class K8SSyncEventTasklet extends EventWriter implements Tasklet {
     if (config.getBatchQueryConfig().isSyncJobDisabled()) {
       return null;
     }
-    final CCMJobConstants jobConstants = new CCMJobConstants(chunkContext);
+    final JobConstants jobConstants = new CCMJobConstants(chunkContext);
     int batchSize = config.getBatchQueryConfig().getQueryBatchSize();
 
     String messageType = EventTypeConstants.K8S_SYNC_EVENT;
@@ -65,7 +65,7 @@ public class K8SSyncEventTasklet extends EventWriter implements Tasklet {
       publishedMessageList = publishedMessageReader.getNext();
       List<Lifecycle> lifecycleList = processK8SSyncEventMessage(publishedMessageList);
 
-      instanceDataBulkWriteService.updateList(lifecycleList);
+      instanceDataBulkWriteService.updateLifecycle(lifecycleList);
 
       if (featureFlagService.isEnabled(FeatureName.NODE_RECOMMENDATION_1, jobConstants.getAccountId())) {
         updateInactiveInstancesInTimescale(jobConstants, publishedMessageList);
@@ -84,13 +84,13 @@ public class K8SSyncEventTasklet extends EventWriter implements Tasklet {
       if (k8SClusterSyncEvent.getVersion() == 2) {
         instanceInfoTimescaleDAO.stopInactiveNodesAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(),
             syncEventTime, new ArrayList<>(k8SClusterSyncEvent.getActiveNodeUidsMapMap().keySet()));
-        instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(), syncEventTime,
-            new ArrayList<>(k8SClusterSyncEvent.getActivePodUidsMapMap().keySet()));
+        instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants.getAccountId(), k8SClusterSyncEvent.getClusterId(),
+            syncEventTime, new ArrayList<>(k8SClusterSyncEvent.getActivePodUidsMapMap().keySet()));
       } else {
         instanceInfoTimescaleDAO.stopInactiveNodesAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(),
             syncEventTime, k8SClusterSyncEvent.getActiveNodeUidsList());
-        instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants, k8SClusterSyncEvent.getClusterId(), syncEventTime,
-            k8SClusterSyncEvent.getActivePodUidsList());
+        instanceInfoTimescaleDAO.stopInactivePodsAtTime(jobConstants.getAccountId(), k8SClusterSyncEvent.getClusterId(),
+            syncEventTime, k8SClusterSyncEvent.getActivePodUidsList());
       }
     }
   }

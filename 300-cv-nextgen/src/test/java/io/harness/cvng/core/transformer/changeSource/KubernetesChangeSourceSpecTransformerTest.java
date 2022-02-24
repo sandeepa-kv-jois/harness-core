@@ -39,7 +39,7 @@ public class KubernetesChangeSourceSpecTransformerTest extends CvNextGenTestBase
   public void test_getEntity() {
     ChangeSourceDTO changeSourceDTO = builderFactory.getKubernetesChangeSourceDTOBuilder().build();
     KubernetesChangeSource changeSource = kubernetesChangeSourceSpecTransformer.getEntity(
-        builderFactory.getContext().getServiceEnvironmentParams(), changeSourceDTO);
+        builderFactory.getContext().getMonitoredServiceParams(), changeSourceDTO);
     assertThat(changeSource.getClass()).isEqualTo(KubernetesChangeSource.class);
     assertThat(changeSource.getIdentifier()).isEqualTo(changeSourceDTO.getIdentifier());
     assertThat(changeSource.getConnectorIdentifier())
@@ -48,6 +48,8 @@ public class KubernetesChangeSourceSpecTransformerTest extends CvNextGenTestBase
     assertThat(changeSource.getProjectIdentifier()).isEqualTo(builderFactory.getContext().getProjectIdentifier());
     assertThat(changeSource.getServiceIdentifier()).isEqualTo(builderFactory.getContext().getServiceIdentifier());
     assertThat(changeSource.getEnvIdentifier()).isEqualTo(builderFactory.getContext().getEnvIdentifier());
+    assertThat(changeSource.getMonitoredServiceIdentifier())
+        .isEqualTo(builderFactory.getContext().getMonitoredServiceParams().getMonitoredServiceIdentifier());
     assertThat(changeSource.isEnabled()).isTrue();
   }
 

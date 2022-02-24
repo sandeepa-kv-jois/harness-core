@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
+import lombok.extern.slf4j.Slf4j;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
 
 /**
@@ -42,6 +43,7 @@ import org.cloudfoundry.operations.applications.ApplicationSummary;
  * OrderService_INACTIVE    -->   OrderService_3
  */
 
+@Slf4j
 public class NonVersionToVersionOperator implements AppRenamingOperator {
   @Override
   public CfInBuiltVariablesUpdateValues renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
@@ -60,7 +62,7 @@ public class NonVersionToVersionOperator implements AppRenamingOperator {
     for (Map.Entry<AppType, AppRenamingData> entry : entries) {
       ApplicationSummary applicationSummary = entry.getValue().getAppSummary();
       String appNewName = cfAppNamePrefix + DELIMITER + ++versionNumber;
-      pcfCommandTaskBaseHelper.renameApp(applicationSummary, cfRequestConfig, executionLogCallback, appNewName);
+      renameApp(applicationSummary, pcfCommandTaskBaseHelper, cfRequestConfig, executionLogCallback, appNewName, log);
 
       if (AppType.NEW == entry.getKey()) {
         updateValuesBuilder.newAppGuid(applicationSummary.getId());

@@ -810,6 +810,55 @@ public class TimeSeriesDashboardServiceImplTest extends CvNextGenTestBase {
     assertThat(response.getContent()).isEmpty();
   }
 
+  @Test
+  @Owner(developers = KANHAIYA)
+  @Category(UnitTests.class)
+  public void testGetTimeSeriesMetricDataTOCheckSortednessBetweenHealthyAndNoAnalysisState() throws Exception {
+    Instant start = Instant.parse("2020-07-07T02:40:00.000Z");
+    Instant end = start.plus(5, ChronoUnit.MINUTES);
+    String cvConfigId = generateUuid();
+    AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
+    cvConfig.setUuid(cvConfigId);
+
+    List<TimeSeriesRecord> timeSeriesRecords = new ArrayList<>();
+    timeSeriesRecords.add(TimeSeriesRecord.builder()
+                              .verificationTaskId(cvConfigId)
+                              .bucketStartTime(start)
+                              .metricName("m1")
+                              .metricType(TimeSeriesMetricType.THROUGHPUT)
+                              .timeSeriesGroupValues(Sets.newHashSet(TimeSeriesRecord.TimeSeriesGroupValue.builder()
+                                                                         .groupName("g1")
+                                                                         .metricValue(1.0)
+                                                                         .timeStamp(start)
+                                                                         .build()))
+                              .build());
+
+    timeSeriesRecords.add(TimeSeriesRecord.builder()
+                              .verificationTaskId(cvConfigId)
+                              .bucketStartTime(start)
+                              .metricName("m2")
+                              .metricType(TimeSeriesMetricType.ERROR)
+                              .timeSeriesGroupValues(Sets.newHashSet(TimeSeriesRecord.TimeSeriesGroupValue.builder()
+                                                                         .groupName("g1")
+                                                                         .metricValue(1.0)
+                                                                         .percentValue(2.0)
+                                                                         .riskScore(0)
+                                                                         .timeStamp(start)
+                                                                         .build()))
+                              .build());
+
+    when(timeSeriesRecordService.getTimeSeriesRecordsForConfigs(any(), any(), any(), anyBoolean()))
+        .thenReturn(timeSeriesRecords);
+
+    when(cvConfigService.list(serviceEnvironmentParams)).thenReturn(Arrays.asList(cvConfig));
+
+    PageResponse<TimeSeriesMetricDataDTO> response = timeSeriesDashboardService.getTimeSeriesMetricData(
+        serviceEnvironmentParams, TimeRangeParams.builder().startTime(start).endTime(end).build(),
+        TimeSeriesAnalysisFilter.builder().build(), PageParams.builder().page(0).size(10).build());
+    assertThat(response).isNotNull();
+    assertThat(response.getContent().get(0).getMetricDataList().first().getRisk().equals(Risk.HEALTHY));
+  }
+
   private List<TimeSeriesRecord> getTimeSeriesRecords(String cvConfigId, boolean anomalousOnly) throws Exception {
     File file = new File(getResourceFilePath("timeseries/timeseriesRecords.json"));
     final Gson gson = new Gson();

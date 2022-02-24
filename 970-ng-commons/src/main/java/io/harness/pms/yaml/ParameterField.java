@@ -23,6 +23,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 @NoArgsConstructor
@@ -139,6 +140,14 @@ public class ParameterField<T> {
     }
     // Every flag should be false.
     return !actualField.isExpression() && !actualField.isJsonResponseField() && !actualField.isTypeString();
+  }
+
+  public static <T> boolean isBlank(ParameterField<T> actualField) {
+    if (isNull(actualField)) {
+      return true;
+    }
+    return actualField.isTypeString() && StringUtils.isBlank((String) actualField.getValue())
+        && StringUtils.isBlank(actualField.getExpressionValue());
   }
 
   public static boolean containsInputSetValidator(String value) {

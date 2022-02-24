@@ -521,17 +521,15 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     // verify correct routes are mapped to Active & New app
     ArgumentCaptor<String> appNameMapRouteCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<List<String>> mapRoutesCaptor = ArgumentCaptor.forClass((Class) List.class);
-    verify(pcfCommandTaskHelper, times(2))
+    verify(pcfCommandTaskHelper, times(1))
         .mapRouteMaps(appNameMapRouteCaptor.capture(), mapRoutesCaptor.capture(), any(), any());
     List<String> appWhoseRoutesWasModified = appNameMapRouteCaptor.getAllValues();
     List<List<String>> routesLists = mapRoutesCaptor.getAllValues();
     assertThat(appWhoseRoutesWasModified).isNotNull();
-    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(2);
+    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(1);
     assertThat(routesLists).isNotNull();
     assertThat(appWhoseRoutesWasModified.get(0).equalsIgnoreCase(activeAppName)).isTrue();
     assertThat(routesLists.get(0).containsAll(finalRoutes)).isTrue();
-    assertThat(appWhoseRoutesWasModified.get(1).equalsIgnoreCase(newAppName)).isTrue();
-    assertThat(routesLists.get(1).containsAll(tempRoutes)).isTrue();
 
     // verify correct routes are unmapped from Active & New application
     ArgumentCaptor<String> appNameUnMapRouteCaptor = ArgumentCaptor.forClass(String.class);
@@ -550,11 +548,10 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
 
     // verify setting of ENV variables for Active & New app
     ArgumentCaptor<Boolean> isActiveAppCaptor = ArgumentCaptor.forClass(Boolean.class);
-    verify(cfDeploymentManager, times(2)).setEnvironmentVariableForAppStatus(any(), isActiveAppCaptor.capture(), any());
+    verify(cfDeploymentManager, times(1)).setEnvironmentVariableForAppStatus(any(), isActiveAppCaptor.capture(), any());
     List<Boolean> isActiveAppValues = isActiveAppCaptor.getAllValues();
     assertThat(isActiveAppValues).isNotNull();
     assertThat(isActiveAppValues.get(0)).isTrue(); // for active app
-    assertThat(isActiveAppValues.get(1)).isFalse(); // for inactive app
   }
 
   @Test
@@ -1051,17 +1048,15 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     // verify routes are mapped correctly to current Active & New application
     ArgumentCaptor<String> appNameMapRouteCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<List<String>> mapRoutesCaptor = ArgumentCaptor.forClass((Class) List.class);
-    verify(pcfCommandTaskHelper, times(2))
+    verify(pcfCommandTaskHelper, times(1))
         .mapRouteMaps(appNameMapRouteCaptor.capture(), mapRoutesCaptor.capture(), any(), any());
     List<String> appWhoseRoutesWasModified = appNameMapRouteCaptor.getAllValues();
     List<List<String>> routesLists = mapRoutesCaptor.getAllValues();
     assertThat(appWhoseRoutesWasModified).isNotNull();
-    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(2);
+    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(1);
     assertThat(routesLists).isNotNull();
     assertThat(appWhoseRoutesWasModified.get(0).equalsIgnoreCase(activeAppName)).isTrue();
     assertThat(routesLists.get(0).containsAll(finalRoutes)).isTrue();
-    assertThat(appWhoseRoutesWasModified.get(1).equalsIgnoreCase(newAppName)).isTrue();
-    assertThat(routesLists.get(1).containsAll(tempRoutes)).isTrue();
 
     // verify correct routes are unmapped from Active & New application
     ArgumentCaptor<String> appNameUnMapRouteCaptor = ArgumentCaptor.forClass(String.class);
@@ -1079,13 +1074,12 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     assertThat(removedRouteList.get(1).containsAll(finalRoutes)).isTrue();
 
     ArgumentCaptor<Boolean> appEnvVariableCaptor = ArgumentCaptor.forClass(Boolean.class);
-    verify(cfDeploymentManager, times(2))
+    verify(cfDeploymentManager, times(1))
         .setEnvironmentVariableForAppStatus(any(), appEnvVariableCaptor.capture(), any());
     List<Boolean> allValues = appEnvVariableCaptor.getAllValues();
     assertThat(allValues).isNotNull();
-    assertThat(allValues.size()).isEqualTo(2);
+    assertThat(allValues.size()).isEqualTo(1);
     assertThat(allValues.get(0)).isTrue(); // for new app True means ACTIVE will be set
-    assertThat(allValues.get(1)).isFalse(); // for current active app False means STAGE will be set
 
     // verify renaming did not happen
     ArgumentCaptor<String> executionLogs = ArgumentCaptor.forClass(String.class);
@@ -1183,17 +1177,15 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     // verify routes are mapped correctly to current Active & New application
     ArgumentCaptor<String> appNameMapRouteCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<List<String>> mapRoutesCaptor = ArgumentCaptor.forClass((Class) List.class);
-    verify(pcfCommandTaskHelper, times(2))
+    verify(pcfCommandTaskHelper, times(1))
         .mapRouteMaps(appNameMapRouteCaptor.capture(), mapRoutesCaptor.capture(), any(), any());
     List<String> appWhoseRoutesWasModified = appNameMapRouteCaptor.getAllValues();
     List<List<String>> routesLists = mapRoutesCaptor.getAllValues();
     assertThat(appWhoseRoutesWasModified).isNotNull();
-    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(2);
+    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(1);
     assertThat(routesLists).isNotNull();
     assertThat(appWhoseRoutesWasModified.get(0).equalsIgnoreCase(activeAppNameAfterAppSetup)).isTrue();
     assertThat(routesLists.get(0).containsAll(finalRoutes)).isTrue();
-    assertThat(appWhoseRoutesWasModified.get(1).equalsIgnoreCase(interimAppName)).isTrue();
-    assertThat(routesLists.get(1).containsAll(tempRoutes)).isTrue();
 
     // verify correct routes are unmapped from Active & New application
     ArgumentCaptor<String> appNameUnMapRouteCaptor = ArgumentCaptor.forClass(String.class);
@@ -1211,13 +1203,12 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     assertThat(removedRouteList.get(1).containsAll(finalRoutes)).isTrue();
 
     ArgumentCaptor<Boolean> appEnvVariableCaptor = ArgumentCaptor.forClass(Boolean.class);
-    verify(cfDeploymentManager, times(2))
+    verify(cfDeploymentManager, times(1))
         .setEnvironmentVariableForAppStatus(any(), appEnvVariableCaptor.capture(), any());
     List<Boolean> allValues = appEnvVariableCaptor.getAllValues();
     assertThat(allValues).isNotNull();
-    assertThat(allValues.size()).isEqualTo(2);
-    assertThat(allValues.get(0)).isTrue(); // for new app True means ACTIVE will be set
-    assertThat(allValues.get(1)).isFalse(); // for current active app False means STAGE will be set
+    assertThat(allValues.size()).isEqualTo(1);
+    assertThat(allValues.get(0)).isTrue();
 
     // verify renaming happened
     ArgumentCaptor<String> executionLogs = ArgumentCaptor.forClass(String.class);
@@ -1329,17 +1320,15 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     // verify routes are mapped correctly to current Active & New application
     ArgumentCaptor<String> appNameMapRouteCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<List<String>> mapRoutesCaptor = ArgumentCaptor.forClass((Class) List.class);
-    verify(pcfCommandTaskHelper, times(2))
+    verify(pcfCommandTaskHelper, times(1))
         .mapRouteMaps(appNameMapRouteCaptor.capture(), mapRoutesCaptor.capture(), any(), any());
     List<String> appWhoseRoutesWasModified = appNameMapRouteCaptor.getAllValues();
     List<List<String>> routesLists = mapRoutesCaptor.getAllValues();
     assertThat(appWhoseRoutesWasModified).isNotNull();
-    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(2);
+    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(1);
     assertThat(routesLists).isNotNull();
     assertThat(appWhoseRoutesWasModified.get(0).equalsIgnoreCase(activeAppNameAfterAppSetup)).isTrue();
     assertThat(routesLists.get(0).containsAll(finalRoutes)).isTrue();
-    assertThat(appWhoseRoutesWasModified.get(1).equalsIgnoreCase(interimAppName)).isTrue();
-    assertThat(routesLists.get(1).containsAll(tempRoutes)).isTrue();
 
     // verify correct routes are unmapped from Active & New application
     ArgumentCaptor<String> appNameUnMapRouteCaptor = ArgumentCaptor.forClass(String.class);
@@ -1357,13 +1346,12 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     assertThat(removedRouteList.get(1).containsAll(finalRoutes)).isTrue();
 
     ArgumentCaptor<Boolean> appEnvVariableCaptor = ArgumentCaptor.forClass(Boolean.class);
-    verify(cfDeploymentManager, times(2))
+    verify(cfDeploymentManager, times(1))
         .setEnvironmentVariableForAppStatus(any(), appEnvVariableCaptor.capture(), any());
     List<Boolean> allValues = appEnvVariableCaptor.getAllValues();
     assertThat(allValues).isNotNull();
-    assertThat(allValues.size()).isEqualTo(2);
+    assertThat(allValues.size()).isEqualTo(1);
     assertThat(allValues.get(0)).isTrue(); // for new app True means ACTIVE will be set
-    assertThat(allValues.get(1)).isFalse(); // for current active app False means STAGE will be set
 
     // verify renaming happened
     ArgumentCaptor<String> executionLogs = ArgumentCaptor.forClass(String.class);
@@ -1478,17 +1466,15 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     // verify routes are mapped correctly to current Active & New application
     ArgumentCaptor<String> appNameMapRouteCaptor = ArgumentCaptor.forClass(String.class);
     ArgumentCaptor<List<String>> mapRoutesCaptor = ArgumentCaptor.forClass((Class) List.class);
-    verify(pcfCommandTaskHelper, times(2))
+    verify(pcfCommandTaskHelper, times(1))
         .mapRouteMaps(appNameMapRouteCaptor.capture(), mapRoutesCaptor.capture(), any(), any());
     List<String> appWhoseRoutesWasModified = appNameMapRouteCaptor.getAllValues();
     List<List<String>> routesLists = mapRoutesCaptor.getAllValues();
     assertThat(appWhoseRoutesWasModified).isNotNull();
-    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(2);
+    assertThat(appWhoseRoutesWasModified.size()).isEqualTo(1);
     assertThat(routesLists).isNotNull();
     assertThat(appWhoseRoutesWasModified.get(0).equalsIgnoreCase(activeAppNameAfterAppSetup)).isTrue();
     assertThat(routesLists.get(0).containsAll(finalRoutes)).isTrue();
-    assertThat(appWhoseRoutesWasModified.get(1).equalsIgnoreCase(interimAppName)).isTrue();
-    assertThat(routesLists.get(1).containsAll(tempRoutes)).isTrue();
 
     // verify correct routes are unmapped from Active & New application
     ArgumentCaptor<String> appNameUnMapRouteCaptor = ArgumentCaptor.forClass(String.class);
@@ -1506,13 +1492,12 @@ public class PcfRouteUpdateCommandTaskHandlerTest extends CategoryTest {
     assertThat(removedRouteList.get(1).containsAll(finalRoutes)).isTrue();
 
     ArgumentCaptor<Boolean> appEnvVariableCaptor = ArgumentCaptor.forClass(Boolean.class);
-    verify(cfDeploymentManager, times(2))
+    verify(cfDeploymentManager, times(1))
         .setEnvironmentVariableForAppStatus(any(), appEnvVariableCaptor.capture(), any());
     List<Boolean> allValues = appEnvVariableCaptor.getAllValues();
     assertThat(allValues).isNotNull();
-    assertThat(allValues.size()).isEqualTo(2);
+    assertThat(allValues.size()).isEqualTo(1);
     assertThat(allValues.get(0)).isTrue(); // for new app True means ACTIVE will be set
-    assertThat(allValues.get(1)).isFalse(); // for current active app False means STAGE will be set
 
     // verify renaming happened
     ArgumentCaptor<String> executionLogs = ArgumentCaptor.forClass(String.class);

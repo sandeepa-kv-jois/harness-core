@@ -29,5 +29,7 @@ public interface GraphGenerationService {
 
   OrchestrationGraph buildOrchestrationGraph(String planExecutionId);
 
-  void updateGraph(String planExecutionId);
+  boolean updateGraph(String planExecutionId);
+
+  boolean updateGraphWithWaitLock(String planExecutionId);
 }

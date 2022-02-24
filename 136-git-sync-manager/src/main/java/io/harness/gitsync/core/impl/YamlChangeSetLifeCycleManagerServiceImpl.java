@@ -49,6 +49,7 @@ public class YamlChangeSetLifeCycleManagerServiceImpl implements YamlChangeSetLi
       try (AccountLogContext ignore1 = new AccountLogContext(yamlChangeSet.getAccountId(), OVERRIDE_ERROR);
            AutoLogContext ignore2 = createLogContextForChangeSet(yamlChangeSet)) {
         SecurityContextBuilder.setContext(new ServicePrincipal(NG_MANAGER.getServiceId()));
+        log.info("Started processing the change set {}", yamlChangeSet.getChangesetId());
         final YamlChangeSetStatus status = changeSetHandler.process(yamlChangeSet);
         handleChangeSetStatus(yamlChangeSet, status);
       } catch (Exception e) {
@@ -99,7 +100,11 @@ public class YamlChangeSetLifeCycleManagerServiceImpl implements YamlChangeSetLi
   }
 
   private AutoLogContext createLogContextForChangeSet(YamlChangeSetDTO yamlChangeSet) {
-    return YamlProcessingLogContext.builder().changeSetId(yamlChangeSet.getChangesetId()).build(OVERRIDE_ERROR);
+    return YamlProcessingLogContext.builder()
+        .changeSetId(yamlChangeSet.getChangesetId())
+        .branchName(yamlChangeSet.getBranch())
+        .repoName(yamlChangeSet.getRepoUrl())
+        .build(OVERRIDE_ERROR);
   }
 
   private RetryPolicy<Object> getRetryPolicy(String failedAttemptMessage, String failureMessage) {

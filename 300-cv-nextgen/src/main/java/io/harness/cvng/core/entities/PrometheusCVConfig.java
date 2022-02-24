@@ -146,6 +146,7 @@ public class PrometheusCVConfig extends MetricCVConfig {
                                   .thresholds(new ArrayList<>(thresholds))
                                   .type(metricType)
                                   .name(prometheusMetricDefinition.getMetricName())
+                                  .identifier(prometheusMetricDefinition.getIdentifier())
                                   .included(true)
                                   .build());
     });

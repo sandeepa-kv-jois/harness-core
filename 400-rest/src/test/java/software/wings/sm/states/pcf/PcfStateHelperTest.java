@@ -14,10 +14,12 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.pcf.ResizeStrategy.RESIZE_NEW_FIRST;
 import static io.harness.delegate.task.pcf.CfCommandRequest.PcfCommandType.UPDATE_ROUTE;
 import static io.harness.pcf.model.PcfConstants.INSTANCE_PLACEHOLDER_TOKEN_DEPRECATED;
+import static io.harness.pcf.model.PcfConstants.INTERIM_APP_NAME_SUFFIX;
 import static io.harness.pcf.model.PcfConstants.LEGACY_NAME_PCF_MANIFEST;
 import static io.harness.pcf.model.PcfConstants.MANIFEST_YML;
 import static io.harness.pcf.model.PcfConstants.VARS_YML;
 import static io.harness.rule.OwnerRule.ADWAIT;
+import static io.harness.rule.OwnerRule.ANIL;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.IVAN;
@@ -76,17 +78,20 @@ import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
+import io.harness.delegate.beans.pcf.CfInBuiltVariablesUpdateValues;
 import io.harness.delegate.beans.pcf.CfRouteUpdateRequestConfigData;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.pcf.PcfManifestsPackage;
 import io.harness.delegate.task.pcf.request.CfCommandRouteUpdateRequest;
 import io.harness.delegate.task.pcf.response.CfCommandExecutionResponse;
+import io.harness.delegate.task.pcf.response.CfRouteUpdateCommandResponse;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.git.model.GitFile;
 import io.harness.logging.LogCallback;
 import io.harness.pcf.model.CfCliVersion;
+import io.harness.pcf.model.PcfConstants;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
@@ -1550,7 +1555,7 @@ public class PcfStateHelperTest extends WingsBaseTest {
     ArgumentCaptor<SweepingOutputInstance> captor = ArgumentCaptor.forClass(SweepingOutputInstance.class);
 
     pcfStateHelper.updateInfoVariables(
-        context, stateExecutionData, CfCommandExecutionResponse.builder().build(), false, false);
+        context, stateExecutionData, CfCommandExecutionResponse.builder().build(), false);
 
     verify(sweepingOutputService, times(1)).deleteById(APP_ID, "1");
     verify(sweepingOutputService, times(1)).ensure(captor.capture());
@@ -1596,5 +1601,447 @@ public class PcfStateHelperTest extends WingsBaseTest {
 
     assertThat(cfCliVersionOrDefault).isNotNull();
     assertThat(cfCliVersionOrDefault).isEqualTo(CfCliVersion.V6);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesVersionToVersion() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp__2";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + "__3";
+    String prevInActiveAppOldName = "PaymentApp__1";
+
+    // app should not have been renamed during version to version deployment
+    CfInBuiltVariablesUpdateValues updatedValues = CfInBuiltVariablesUpdateValues.builder().build();
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    // this should have been saved with this content after app setup step
+    InfoVariables existingInfoVariables = InfoVariables.builder()
+                                              .activeAppName(oldAppName)
+                                              .inActiveAppName(newAppName)
+                                              .oldAppName(oldAppName)
+                                              .oldAppGuid(oldAppId)
+                                              .newAppName(newAppName)
+                                              .newAppGuid(newAppId)
+                                              .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                              .build();
+
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(existingInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, false);
+
+    ArgumentCaptor<SweepingOutputInstance> outputInstanceArgumentCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(outputInstanceArgumentCaptor.capture());
+
+    SweepingOutputInstance captorValue = outputInstanceArgumentCaptor.getValue();
+    assertThat(captorValue).isNotNull();
+    InfoVariables updatedInfoVariables = (InfoVariables) captorValue.getValue();
+
+    assertThat(updatedInfoVariables.getNewAppName()).isEqualTo(newAppName);
+    assertThat(updatedInfoVariables.getOldAppName()).isEqualTo(oldAppName);
+
+    assertThat(updatedInfoVariables.getActiveAppName()).isEqualTo(newAppName);
+    assertThat(updatedInfoVariables.getInActiveAppName()).isEqualTo(oldAppName);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesVersionToVersionRollback() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp__2";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + "__3";
+    String prevInActiveAppOldName = "PaymentApp__1";
+    // app should not have been renamed during version to version rollback deployment
+    CfInBuiltVariablesUpdateValues updatedValues = CfInBuiltVariablesUpdateValues.builder().build();
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    InfoVariables afterSwapInfoVariables = InfoVariables.builder()
+                                               .activeAppName(newAppName)
+                                               .inActiveAppName(oldAppName)
+                                               .oldAppName(oldAppName)
+                                               .oldAppGuid(oldAppId)
+                                               .newAppName(newAppName)
+                                               .newAppGuid(newAppId)
+                                               .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                               .build();
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(afterSwapInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, true);
+    ArgumentCaptor<SweepingOutputInstance> rollbackSweepingCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(rollbackSweepingCaptor.capture());
+    SweepingOutputInstance rollbackValue = rollbackSweepingCaptor.getValue();
+    assertThat(rollbackSweepingCaptor).isNotNull();
+    InfoVariables rollbackInfoVariables = (InfoVariables) rollbackValue.getValue();
+    assertThat(rollbackInfoVariables.getNewAppName()).isEqualTo(newAppName);
+    assertThat(rollbackInfoVariables.getOldAppName()).isEqualTo(oldAppName);
+
+    assertThat(rollbackInfoVariables.getActiveAppName()).isEqualTo(oldAppName);
+    assertThat(rollbackInfoVariables.getInActiveAppName()).isEqualTo(prevInActiveAppOldName);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesVersionToNonVersion() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp__2";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = "PaymentApp__INACTIVE";
+    String prevInActiveAppOldName = "PaymentApp__1";
+
+    CfInBuiltVariablesUpdateValues updatedValues = CfInBuiltVariablesUpdateValues.builder()
+                                                       .oldAppGuid(oldAppId)
+                                                       .oldAppName(newAppName)
+                                                       .newAppGuid(newAppId)
+                                                       .newAppName(appPrefix)
+                                                       .build();
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    // this should have been saved with this content after app setup step
+    InfoVariables existingInfoVariables = InfoVariables.builder()
+                                              .activeAppName(oldAppName)
+                                              .inActiveAppName(newAppName)
+                                              .oldAppName(oldAppName)
+                                              .oldAppGuid(oldAppId)
+                                              .newAppName(newAppName)
+                                              .newAppGuid(newAppId)
+                                              .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                              .build();
+
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(existingInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, false);
+
+    ArgumentCaptor<SweepingOutputInstance> outputInstanceArgumentCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(outputInstanceArgumentCaptor.capture());
+
+    SweepingOutputInstance captorValue = outputInstanceArgumentCaptor.getValue();
+    assertThat(captorValue).isNotNull();
+    InfoVariables updatedInfoVariables = (InfoVariables) captorValue.getValue();
+
+    assertThat(updatedInfoVariables.getNewAppName()).isEqualTo(updatedValues.getNewAppName());
+    assertThat(updatedInfoVariables.getOldAppName()).isEqualTo(updatedValues.getOldAppName());
+
+    assertThat(updatedInfoVariables.getActiveAppName()).isEqualTo(appPrefix);
+    assertThat(updatedInfoVariables.getInActiveAppName()).isEqualTo(newAppName);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesVersionToNonVersionRollback() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp__2";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + INTERIM_APP_NAME_SUFFIX;
+    String prevInActiveAppOldName = "PaymentApp__1";
+
+    // app names would be renamed back to what it was before the deployment started during rollback
+    CfInBuiltVariablesUpdateValues updatedValues = CfInBuiltVariablesUpdateValues.builder()
+                                                       .oldAppGuid(oldAppId)
+                                                       .oldAppName(oldAppName)
+                                                       .newAppGuid(newAppId)
+                                                       .newAppName(newAppName)
+                                                       .build();
+
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    InfoVariables afterSwapInfoVariables = InfoVariables.builder()
+                                               .activeAppName(newAppName)
+                                               .inActiveAppName(oldAppName)
+                                               .oldAppName(oldAppName)
+                                               .oldAppGuid(oldAppId)
+                                               .newAppName(newAppName)
+                                               .newAppGuid(newAppId)
+                                               .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                               .build();
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(afterSwapInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, true);
+    ArgumentCaptor<SweepingOutputInstance> rollbackSweepingCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(rollbackSweepingCaptor.capture());
+    SweepingOutputInstance rollbackValue = rollbackSweepingCaptor.getValue();
+    assertThat(rollbackSweepingCaptor).isNotNull();
+    InfoVariables rollbackInfoVariables = (InfoVariables) rollbackValue.getValue();
+    assertThat(rollbackInfoVariables.getNewAppName()).isEqualTo(newAppName);
+    assertThat(rollbackInfoVariables.getOldAppName()).isEqualTo(oldAppName);
+
+    assertThat(rollbackInfoVariables.getActiveAppName()).isEqualTo(oldAppName);
+    assertThat(rollbackInfoVariables.getInActiveAppName()).isEqualTo(prevInActiveAppOldName);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesNonVersionToNonVersion() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + PcfConstants.INACTIVE_APP_NAME_SUFFIX;
+    String prevInActiveAppOldName = "PaymentApp__INACTIVE";
+
+    CfInBuiltVariablesUpdateValues updatedValues = CfInBuiltVariablesUpdateValues.builder()
+                                                       .oldAppGuid(oldAppId)
+                                                       .oldAppName(newAppName)
+                                                       .newAppGuid(newAppId)
+                                                       .newAppName(appPrefix)
+                                                       .build();
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    // this should have been saved with this content after app setup step
+    InfoVariables existingInfoVariables = InfoVariables.builder()
+                                              .activeAppName(oldAppName)
+                                              .inActiveAppName(newAppName)
+                                              .oldAppName(oldAppName)
+                                              .oldAppGuid(oldAppId)
+                                              .newAppName(newAppName)
+                                              .newAppGuid(newAppId)
+                                              .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                              .build();
+
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(existingInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, false);
+
+    ArgumentCaptor<SweepingOutputInstance> outputInstanceArgumentCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(outputInstanceArgumentCaptor.capture());
+
+    SweepingOutputInstance captorValue = outputInstanceArgumentCaptor.getValue();
+    assertThat(captorValue).isNotNull();
+    InfoVariables updatedInfoVariables = (InfoVariables) captorValue.getValue();
+
+    assertThat(updatedInfoVariables.getNewAppName()).isEqualTo(updatedValues.getNewAppName());
+    assertThat(updatedInfoVariables.getOldAppName()).isEqualTo(updatedValues.getOldAppName());
+
+    assertThat(updatedInfoVariables.getActiveAppName()).isEqualTo(appPrefix);
+    assertThat(updatedInfoVariables.getInActiveAppName()).isEqualTo(newAppName);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesNonVersionToNonVersionRollback() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + INTERIM_APP_NAME_SUFFIX;
+    String prevInActiveAppOldName = "PaymentApp__INACTIVE";
+
+    // app names would be renamed back to what it was before the deployment started during rollback
+    CfInBuiltVariablesUpdateValues updatedValues = CfInBuiltVariablesUpdateValues.builder()
+                                                       .oldAppGuid(oldAppId)
+                                                       .oldAppName(oldAppName)
+                                                       .newAppGuid(newAppId)
+                                                       .newAppName(newAppName)
+                                                       .build();
+
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    InfoVariables afterSwapInfoVariables = InfoVariables.builder()
+                                               .activeAppName(newAppName)
+                                               .inActiveAppName(oldAppName)
+                                               .oldAppName(oldAppName)
+                                               .oldAppGuid(oldAppId)
+                                               .newAppName(newAppName)
+                                               .newAppGuid(newAppId)
+                                               .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                               .build();
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(afterSwapInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, true);
+    ArgumentCaptor<SweepingOutputInstance> rollbackSweepingCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(rollbackSweepingCaptor.capture());
+    SweepingOutputInstance rollbackValue = rollbackSweepingCaptor.getValue();
+    assertThat(rollbackSweepingCaptor).isNotNull();
+    InfoVariables rollbackInfoVariables = (InfoVariables) rollbackValue.getValue();
+    assertThat(rollbackInfoVariables.getNewAppName()).isEqualTo(newAppName);
+    assertThat(rollbackInfoVariables.getOldAppName()).isEqualTo(oldAppName);
+
+    assertThat(rollbackInfoVariables.getActiveAppName()).isEqualTo(oldAppName);
+    assertThat(rollbackInfoVariables.getInActiveAppName()).isEqualTo(prevInActiveAppOldName);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesNonVersionToVersion() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + PcfConstants.INACTIVE_APP_NAME_SUFFIX;
+    String prevInActiveAppOldName = "PaymentApp__INACTIVE";
+
+    CfInBuiltVariablesUpdateValues updatedValues =
+        CfInBuiltVariablesUpdateValues.builder()
+            .oldAppGuid(oldAppId)
+            .oldAppName(appPrefix + PcfConstants.INACTIVE_APP_NAME_SUFFIX + "1")
+            .newAppGuid(newAppId)
+            .newAppName(appPrefix + PcfConstants.INACTIVE_APP_NAME_SUFFIX + "2")
+            .build();
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    // this should have been saved with this content after app setup step
+    InfoVariables existingInfoVariables = InfoVariables.builder()
+                                              .activeAppName(oldAppName)
+                                              .inActiveAppName(newAppName)
+                                              .oldAppName(oldAppName)
+                                              .oldAppGuid(oldAppId)
+                                              .newAppName(newAppName)
+                                              .newAppGuid(newAppId)
+                                              .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                              .build();
+
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(existingInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, false);
+
+    ArgumentCaptor<SweepingOutputInstance> outputInstanceArgumentCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(outputInstanceArgumentCaptor.capture());
+
+    SweepingOutputInstance captorValue = outputInstanceArgumentCaptor.getValue();
+    assertThat(captorValue).isNotNull();
+    InfoVariables updatedInfoVariables = (InfoVariables) captorValue.getValue();
+
+    assertThat(updatedInfoVariables.getNewAppName()).isEqualTo(updatedValues.getNewAppName());
+    assertThat(updatedInfoVariables.getOldAppName()).isEqualTo(updatedValues.getOldAppName());
+
+    assertThat(updatedInfoVariables.getActiveAppName()).isEqualTo(updatedValues.getNewAppName());
+    assertThat(updatedInfoVariables.getInActiveAppName()).isEqualTo(updatedValues.getOldAppName());
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesNonVersionToVersionRollback() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + INTERIM_APP_NAME_SUFFIX;
+    String prevInActiveAppOldName = "PaymentApp__INACTIVE";
+
+    // app names would be renamed back to what it was before the deployment started during rollback
+    CfInBuiltVariablesUpdateValues updatedValues = CfInBuiltVariablesUpdateValues.builder()
+                                                       .oldAppGuid(oldAppId)
+                                                       .oldAppName(oldAppName)
+                                                       .newAppGuid(newAppId)
+                                                       .newAppName(newAppName)
+                                                       .build();
+
+    CfCommandExecutionResponse response =
+        CfCommandExecutionResponse.builder()
+            .pcfCommandResponse(CfRouteUpdateCommandResponse.builder().updateValues(updatedValues).build())
+            .build();
+
+    InfoVariables afterSwapInfoVariables = InfoVariables.builder()
+                                               .activeAppName(newAppName)
+                                               .inActiveAppName(oldAppName)
+                                               .oldAppName(oldAppName)
+                                               .oldAppGuid(oldAppId)
+                                               .newAppName(newAppName)
+                                               .newAppGuid(newAppId)
+                                               .mostRecentInactiveAppVersionOldName(prevInActiveAppOldName)
+                                               .build();
+    PcfRouteUpdateStateExecutionData executionData = PcfRouteUpdateStateExecutionData.builder().build();
+    SweepingOutputInstance outputInstance = SweepingOutputInstance.builder().value(afterSwapInfoVariables).build();
+    doReturn(outputInstance).when(sweepingOutputService).find(any());
+    doReturn(SweepingOutputInquiry.builder()).when(context).prepareSweepingOutputInquiryBuilder();
+    doReturn(SweepingOutputInstance.builder()).when(context).prepareSweepingOutputBuilder(any());
+
+    pcfStateHelper.updateInfoVariables(context, executionData, response, true);
+    ArgumentCaptor<SweepingOutputInstance> rollbackSweepingCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(1)).deleteById(any(), any());
+    verify(sweepingOutputService, times(1)).ensure(rollbackSweepingCaptor.capture());
+    SweepingOutputInstance rollbackValue = rollbackSweepingCaptor.getValue();
+    assertThat(rollbackSweepingCaptor).isNotNull();
+    InfoVariables rollbackInfoVariables = (InfoVariables) rollbackValue.getValue();
+    assertThat(rollbackInfoVariables.getNewAppName()).isEqualTo(newAppName);
+    assertThat(rollbackInfoVariables.getOldAppName()).isEqualTo(oldAppName);
+
+    assertThat(rollbackInfoVariables.getActiveAppName()).isEqualTo(oldAppName);
+    assertThat(rollbackInfoVariables.getInActiveAppName()).isEqualTo(prevInActiveAppOldName);
   }
 }

@@ -10,6 +10,7 @@ package io.harness.batch.processing.anomalydetection;
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.ccm.anomaly.entities.AnomalyEntity;
 import io.harness.ccm.anomaly.service.itfc.AnomalyService;
+import io.harness.ccm.commons.beans.JobConstants;
 
 import com.google.common.base.Joiner;
 import com.google.common.collect.Iterables;
@@ -22,7 +23,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -31,18 +31,15 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 @Slf4j
 public class RemoveDuplicateAnomaliesTasklet implements Tasklet {
-  private JobParameters parameters;
-
   @Autowired @Inject private AnomalyService anomalyService;
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-    String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
-    Instant startTime = getFieldValueFromJobParams(CCMJobConstants.JOB_START_DATE);
-    log.info("[RDA] Executing delete step {} {}", accountId, startTime);
+    JobConstants jobConstants = new CCMJobConstants(chunkContext);
+    Instant startTime = Instant.ofEpochMilli(jobConstants.getJobStartTime());
+    log.info("[RDA] Executing delete step {} {}", jobConstants.getAccountId(), startTime);
 
-    List<AnomalyEntity> anomalyList = anomalyService.list(accountId, startTime);
+    List<AnomalyEntity> anomalyList = anomalyService.list(jobConstants.getAccountId(), startTime);
     log.info("[RDA] anomaly list {}", anomalyList.size());
     List<String> duplicateIds = getDuplicates(anomalyList);
     log.info("[RDA] deleting anomalies {}", duplicateIds);
@@ -117,8 +114,5 @@ public class RemoveDuplicateAnomaliesTasklet implements Tasklet {
     return Joiner.on(" ").skipNulls().join(anomaly.getClusterId(), anomaly.getNamespace(), anomaly.getWorkloadName(),
         anomaly.getGcpProject(), anomaly.getGcpProduct(), anomaly.getGcpSKUId(), anomaly.getAwsAccount(),
         anomaly.getAwsService());
-  }
-  private Instant getFieldValueFromJobParams(String fieldName) {
-    return Instant.ofEpochMilli(Long.parseLong(parameters.getString(fieldName)));
   }
 }

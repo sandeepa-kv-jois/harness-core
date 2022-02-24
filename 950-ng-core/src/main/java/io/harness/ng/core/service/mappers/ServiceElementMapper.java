@@ -32,7 +32,6 @@ public class ServiceElementMapper {
         .name(serviceRequestDTO.getName())
         .description(serviceRequestDTO.getDescription())
         .tags(convertToList(serviceRequestDTO.getTags()))
-        .version(serviceRequestDTO.getVersion())
         .build();
   }
 

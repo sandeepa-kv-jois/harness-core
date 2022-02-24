@@ -32,6 +32,7 @@ public interface AccountClient {
   String ACCOUNT_API = "ng/accounts";
   String FEATURE_FLAG_CHECK_API = "ng/accounts/feature-flag-enabled";
   String ACCOUNT_BASEURL_API = "ng/accounts/baseUrl";
+  String ACCOUNT_VANITYURL_API = "ng/accounts/vanityUrl";
   String ACCOUNT_GATEWAYBASEURL_API = "ng/accounts/gatewayBaseUrl";
   String ACCOUNT_EXISTS = "ng/accounts/exists";
   String ACCOUNT_ADMIN_API = ACCOUNT_API + "/account-admins";
@@ -99,4 +100,6 @@ public interface AccountClient {
   @GET(NG_DELEGATE_TOKEN_API + DEFAULT_PROJECT_TOKENS)
   Call<RestResponse<List<String>>> getProjectsWithActiveDefaultDelegateToken(
       @Query("accountIdentifier") String accountIdentifier);
+
+  @GET(ACCOUNT_VANITYURL_API) Call<RestResponse<String>> getVanityUrl(@Query("accountId") String accountIdentifier);
 }

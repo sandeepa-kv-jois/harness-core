@@ -14,6 +14,7 @@ import io.harness.ccm.views.entities.ClusterData;
 import io.harness.ccm.views.entities.InstanceDetails;
 import io.harness.ccm.views.entities.StorageDetails;
 
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -25,12 +26,12 @@ import lombok.experimental.FieldDefaults;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class QLCEViewEntityStatsDataPoint {
   String name;
-  String id;
-  String pricingSource;
+  @Hidden String id;
+  @Hidden String pricingSource;
   Number cost;
   Number costTrend;
-  boolean isClusterPerspective;
-  ClusterData clusterData;
-  InstanceDetails instanceDetails;
-  StorageDetails storageDetails;
+  @Hidden boolean isClusterPerspective;
+  @Hidden ClusterData clusterData;
+  @Hidden InstanceDetails instanceDetails;
+  @Hidden StorageDetails storageDetails;
 }

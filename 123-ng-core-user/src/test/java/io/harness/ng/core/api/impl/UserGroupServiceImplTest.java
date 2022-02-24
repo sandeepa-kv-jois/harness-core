@@ -36,12 +36,11 @@ import io.harness.ng.core.dto.UserGroupDTO;
 import io.harness.ng.core.dto.UserGroupFilterDTO;
 import io.harness.ng.core.user.UserInfo;
 import io.harness.ng.core.user.entities.UserGroup;
+import io.harness.ng.core.user.service.LastAdminCheckService;
 import io.harness.ng.core.user.service.NgUserService;
 import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.ng.core.spring.UserGroupRepository;
-import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
-import io.harness.user.remote.UserClient;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
@@ -58,21 +57,18 @@ import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.transaction.support.TransactionTemplate;
-import retrofit2.Call;
-import retrofit2.Response;
 
 @OwnedBy(PL)
 public class UserGroupServiceImplTest extends CategoryTest {
   @Mock private UserGroupRepository userGroupRepository;
-  @Mock private UserClient userClient;
   @Mock private OutboxService outboxService;
   @Mock private AccessControlAdminClient accessControlAdminClient;
   @Mock private TransactionTemplate transactionTemplate;
   @Mock private NgUserService ngUserService;
+  @Mock private LastAdminCheckService lastAdminCheckService;
   @Spy @Inject @InjectMocks private UserGroupServiceImpl userGroupService;
 
   private static final String ACCOUNT_IDENTIFIER = "A1";
@@ -92,10 +88,6 @@ public class UserGroupServiceImplTest extends CategoryTest {
     List<UserInfo> userInfos = new ArrayList<>();
     userInfos.add(UserInfo.builder().uuid("u1").build());
     userInfos.add(UserInfo.builder().uuid("u2").build());
-
-    Call<RestResponse<List<UserInfo>>> userClientResponseMock = Mockito.mock(Call.class);
-    doReturn(userClientResponseMock).when(userClient).listUsers(any(), any());
-    when(userClientResponseMock.execute()).thenReturn(Response.success(new RestResponse<>(userInfos)));
 
     String ACCOUNT_IDENTIFIER = "A1";
     UserGroupDTO userGroupDTO = UserGroupDTO.builder()
@@ -153,11 +145,6 @@ public class UserGroupServiceImplTest extends CategoryTest {
         .when(userGroupRepository)
         .find(any());
 
-    List<UserInfo> userInfos = new ArrayList<>();
-    Call<RestResponse<List<UserInfo>>> userClientResponseMock = Mockito.mock(Call.class);
-    doReturn(userClientResponseMock).when(userClient).listUsers(any(), any());
-    when(userClientResponseMock.execute()).thenReturn(Response.success(new RestResponse<>(userInfos)));
-
     userGroupService.removeMemberAll(ACCOUNT_IDENTIFIER, ORG_IDENTIFIER, PROJECT_IDENTIFIER, userIdentifier);
     verify(transactionTemplate, times(userGroups.size())).execute(any());
   }
@@ -178,9 +165,6 @@ public class UserGroupServiceImplTest extends CategoryTest {
 
     List<UserInfo> userInfos = new ArrayList<>();
     userInfos.add(UserInfo.builder().uuid("u1").build());
-    Call<RestResponse<List<UserInfo>>> userClientResponseMock = Mockito.mock(Call.class);
-    doReturn(userClientResponseMock).when(userClient).listUsers(any(), any());
-    when(userClientResponseMock.execute()).thenReturn(Response.success(new RestResponse<>(userInfos)));
 
     doReturn(Arrays.asList("u1", "u2")).when(ngUserService).listUserIds(any());
 

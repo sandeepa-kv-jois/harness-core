@@ -6,6 +6,8 @@ replace github.com/harness/harness-core/commons/go/lib => ../../../commons/go/li
 
 replace github.com/harness/harness-core/product/log-service => ../../../product/log-service
 
+replace github.com/harness/harness-core/product/ci/addon => ../../../product/ci/addon
+
 require (
 	github.com/alexflint/go-arg v1.3.0
 	github.com/cenkalti/backoff/v4 v4.1.0
@@ -18,8 +20,8 @@ require (
 	github.com/minio/minio-go/v6 v6.0.57
 	github.com/pkg/errors v0.9.1
 	github.com/stretchr/testify v1.6.1
-	github.com/harness/harness-core/commons/go/lib v0.0.0-00010101000000-000000000000
-	github.com/harness/harness-core/product/log-service v0.0.0-00010101000000-000000000000
+	github.com/harness/harness-core/commons/go/lib v0.0.0-20220210161509-69d6cb167b7a
+	github.com/harness/harness-core/product/log-service v0.0.0-20220210161509-69d6cb167b7a
 	go.uber.org/zap v1.15.0
 	golang.org/x/net v0.0.0-20201110031124-69a78807bb2b
 	google.golang.org/genproto v0.0.0-20200526211855-cb27e3aa2013 // indirect

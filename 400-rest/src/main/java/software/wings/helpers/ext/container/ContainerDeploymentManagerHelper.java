@@ -29,6 +29,7 @@ import software.wings.annotation.EncryptableSetting;
 import software.wings.api.HostElement;
 import software.wings.api.InstanceElement;
 import software.wings.api.PhaseElement;
+import software.wings.api.RancherClusterElement;
 import software.wings.api.ServiceElement;
 import software.wings.api.ServiceTemplateElement;
 import software.wings.beans.AzureKubernetesCluster;
@@ -38,20 +39,13 @@ import software.wings.beans.DirectKubernetesInfrastructureMapping;
 import software.wings.beans.EcsInfrastructureMapping;
 import software.wings.beans.GcpKubernetesCluster;
 import software.wings.beans.GcpKubernetesInfrastructureMapping;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.SettingAttribute;
-import software.wings.delegatetasks.DelegateProxyFactory;
-import software.wings.helpers.ext.azure.AzureHelperService;
-import software.wings.helpers.ext.ecr.EcrClassicService;
-import software.wings.helpers.ext.ecr.EcrService;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
-import software.wings.service.impl.AwsHelperService;
 import software.wings.service.impl.ContainerServiceParams;
-import software.wings.service.intfc.ArtifactStreamService;
 import software.wings.service.intfc.ServiceTemplateService;
 import software.wings.service.intfc.SettingsService;
-import software.wings.service.intfc.aws.manager.AwsEcrHelperServiceManager;
-import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.InstanceStatusSummary;
@@ -61,6 +55,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 import org.mongodb.morphia.Key;
 
 /**
@@ -71,16 +66,8 @@ import org.mongodb.morphia.Key;
 @TargetModule(HarnessModule._870_CG_ORCHESTRATION)
 public class ContainerDeploymentManagerHelper {
   @Inject private SettingsService settingsService;
-  @Inject private ArtifactStreamService artifactStreamService;
-  @Inject private ManagerDecryptionService managerDecryptionService;
   @Inject private SecretManager secretManager;
-  @Inject private AwsHelperService awsHelperService;
-  @Inject private AzureHelperService azureHelperService;
-  @Inject private EcrService ecrService;
-  @Inject private EcrClassicService ecrClassicService;
   @Inject private ServiceTemplateService serviceTemplateService;
-  @Inject private DelegateProxyFactory delegateProxyFactory;
-  @Inject private AwsEcrHelperServiceManager awsEcrHelperServiceManager;
   @Inject private ContainerMasterUrlHelper containerMasterUrlHelper;
 
   public List<InstanceStatusSummary> getInstanceStatusSummaryFromContainerInfoList(
@@ -149,7 +136,18 @@ public class ContainerDeploymentManagerHelper {
     String subscriptionId = null;
     String masterUrl = null;
     settingAttribute = settingsService.get(containerInfraMapping.getComputeProviderSettingId());
-    if (containerInfraMapping instanceof DirectKubernetesInfrastructureMapping) {
+
+    if (containerInfraMapping instanceof RancherKubernetesInfrastructureMapping) {
+      RancherKubernetesInfrastructureMapping rancherInfra =
+          (RancherKubernetesInfrastructureMapping) containerInfraMapping;
+      namespace = rancherInfra.getNamespace();
+
+      if (Objects.nonNull(context.getContextElement())
+          && context.getContextElement() instanceof RancherClusterElement) {
+        RancherClusterElement element = context.getContextElement();
+        clusterName = element.getClusterName();
+      }
+    } else if (containerInfraMapping instanceof DirectKubernetesInfrastructureMapping) {
       namespace = containerInfraMapping.getNamespace();
     } else if (containerInfraMapping instanceof GcpKubernetesInfrastructureMapping) {
       namespace = containerInfraMapping.getNamespace();
@@ -189,7 +187,15 @@ public class ContainerDeploymentManagerHelper {
     String clusterName = null;
     String cloudProviderName = null;
 
-    if (containerInfraMapping instanceof DirectKubernetesInfrastructureMapping) {
+    if (containerInfraMapping instanceof RancherKubernetesInfrastructureMapping) {
+      RancherKubernetesInfrastructureMapping rancherInfra =
+          (RancherKubernetesInfrastructureMapping) containerInfraMapping;
+      settingAttribute = settingsService.get(rancherInfra.getComputeProviderSettingId());
+      namespace = rancherInfra.getNamespace();
+
+      RancherClusterElement element = context.getContextElement();
+      clusterName = element.getClusterName();
+    } else if (containerInfraMapping instanceof DirectKubernetesInfrastructureMapping) {
       DirectKubernetesInfrastructureMapping directInfraMapping =
           (DirectKubernetesInfrastructureMapping) containerInfraMapping;
       settingAttribute = settingsService.get(directInfraMapping.getComputeProviderSettingId());

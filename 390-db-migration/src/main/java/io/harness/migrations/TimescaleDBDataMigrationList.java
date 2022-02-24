@@ -12,6 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.migrations.timescaledb.data.AddAccountNameInAccountTable;
 import io.harness.migrations.timescaledb.data.MigrateWorkflowsToTimeScaleDB;
 import io.harness.migrations.timescaledb.data.OptimizeNodeRecommendationQuery;
+import io.harness.migrations.timescaledb.data.PodInfoPartialIndexForSyncQuery;
 import io.harness.migrations.timescaledb.data.SetInstancesDeployedInDeployment;
 import io.harness.migrations.timescaledb.data.SetRollbackDurationInDeployment;
 import io.harness.migrations.timescaledb.data.UpdateEnvSvcCPInDeployment;
@@ -33,6 +34,7 @@ public class TimescaleDBDataMigrationList {
         .add(Pair.of(5, UpdateEnvSvcCPInDeployment.class))
         .add(Pair.of(6, OptimizeNodeRecommendationQuery.class))
         .add(Pair.of(7, AddAccountNameInAccountTable.class))
+        .add(Pair.of(8, PodInfoPartialIndexForSyncQuery.class))
         .build();
   }
 }

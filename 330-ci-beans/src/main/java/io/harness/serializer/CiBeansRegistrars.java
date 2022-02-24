@@ -26,6 +26,7 @@ import io.harness.beans.steps.nodes.RunTestStepNode;
 import io.harness.beans.steps.nodes.S3UploadNode;
 import io.harness.beans.steps.nodes.SaveCacheGCSNode;
 import io.harness.beans.steps.nodes.SaveCacheS3Node;
+import io.harness.beans.steps.nodes.SecurityNode;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.serializer.kryo.CIBeansKryoRegistrar;
@@ -231,6 +232,17 @@ public class CiBeansRegistrars {
                                            .build())
                    .availableAtAccountLevel(false)
                    .clazz(SaveCacheS3Node.class)
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.SECURITY)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .modulesSupported(Collections.singletonList(ModuleType.CI))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .build())
+                   .availableAtAccountLevel(false)
+                   .clazz(SecurityNode.class)
                    .build())
           .build();
 }

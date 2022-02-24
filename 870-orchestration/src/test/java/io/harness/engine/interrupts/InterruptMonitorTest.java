@@ -72,7 +72,7 @@ public class InterruptMonitorTest extends OrchestrationTestBase {
     when(planExecutionService.get(eq(planExecutionId))).thenReturn(planExecution);
     interruptMonitor.handle(interrupt);
 
-    verify(interruptService).markProcessed(eq(interrupt.getUuid()), eq(PROCESSED_SUCCESSFULLY));
+    verify(interruptService).markProcessedForceful(eq(interrupt.getUuid()), eq(PROCESSED_SUCCESSFULLY), eq(true));
   }
 
   /**
@@ -657,7 +657,8 @@ public class InterruptMonitorTest extends OrchestrationTestBase {
         .when(abortHelper)
         .abortDiscontinuingNode(stepSg2, interrupt.getUuid(), interrupt.getInterruptConfig());
     interruptMonitor.handle(interrupt);
-    verify(interruptService, times(1)).markProcessed(eq(interrupt.getUuid()), eq(PROCESSED_UNSUCCESSFULLY));
+    verify(interruptService, times(1))
+        .markProcessedForceful(eq(interrupt.getUuid()), eq(PROCESSED_UNSUCCESSFULLY), eq(true));
     Mockito.verifyNoMoreInteractions(interruptService);
   }
 }

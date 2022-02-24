@@ -35,7 +35,7 @@ public class CDNGPipelineConfigurationHelperTest extends CategoryTest {
   public void testGetExecutionStrategyList() {
     Map<ServiceDefinitionType, List<ExecutionStrategyType>> result =
         cdngPipelineConfigurationHelper.getExecutionStrategyList();
-    assertThat(result.size()).isEqualTo(2);
+    assertThat(result.size()).isEqualTo(3);
   }
 
   @Test

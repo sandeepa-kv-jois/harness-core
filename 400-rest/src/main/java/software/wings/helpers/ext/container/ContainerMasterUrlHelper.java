@@ -24,6 +24,7 @@ import software.wings.beans.Environment;
 import software.wings.beans.GcpKubernetesInfrastructureMapping;
 import software.wings.beans.InfrastructureMapping;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SyncTaskContext;
 import software.wings.delegatetasks.DelegateProxyFactory;
@@ -36,6 +37,7 @@ import software.wings.service.intfc.InfrastructureMappingService;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Singleton
 @Slf4j
@@ -72,6 +74,10 @@ public class ContainerMasterUrlHelper {
 
   public String fetchMasterUrl(
       ContainerServiceParams containerServiceParams, ContainerInfrastructureMapping infraMapping) {
+    if (infraMapping instanceof RancherKubernetesInfrastructureMapping) {
+      return StringUtils.EMPTY;
+    }
+
     if (infraMapping instanceof DirectKubernetesInfrastructureMapping) {
       final SettingAttribute settingAttribute = containerServiceParams.getSettingAttribute();
       if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {

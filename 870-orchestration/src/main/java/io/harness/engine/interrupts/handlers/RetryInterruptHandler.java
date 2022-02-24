@@ -75,8 +75,7 @@ public class RetryInterruptHandler implements InterruptHandler {
 
   @Override
   public Interrupt handleInterruptForNodeExecution(Interrupt interrupt, String nodeExecutionId) {
-    retryHelper.retryNodeExecution(
-        interrupt.getNodeExecutionId(), interrupt.getParameters(), interrupt.getUuid(), interrupt.getInterruptConfig());
+    retryHelper.retryNodeExecution(interrupt.getNodeExecutionId(), interrupt.getUuid(), interrupt.getInterruptConfig());
     planExecutionService.updateStatus(interrupt.getPlanExecutionId(), RUNNING);
     return interrupt;
   }

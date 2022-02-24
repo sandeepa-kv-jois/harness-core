@@ -63,13 +63,8 @@ public class GetFilesInFolderForkTask extends RecursiveTask<List<FileChange>> {
   protected List<FileChange> compute() {
     List<FileChange> filesList = new ArrayList<>();
     String updatedFolderPath = folderPath.endsWith("/") ? folderPath.substring(0, folderPath.length() - 1) : folderPath;
-    FindFilesInBranchRequest.Builder findFilesInBranchRequest =
-        FindFilesInBranchRequest.newBuilder()
-            .setRef(ref)
-            .setSlug(slug)
-            .setProvider(provider)
-            .setPath(updatedFolderPath)
-            .setPagination(PageRequest.newBuilder().setPage(1).build());
+    FindFilesInBranchRequest.Builder findFilesInBranchRequest = prepareRequestBuilder(updatedFolderPath);
+
     List<FileChange> filesInBranch = getAllFilesPresentInFolder(findFilesInBranchRequest);
     List<String> newFoldersToBeProcessed = getListOfNewFoldersToBeProcessed(filesInBranch);
     List<GetFilesInFolderForkTask> tasksForSubFolders = createTasksForSubFolders(newFoldersToBeProcessed);
@@ -85,8 +80,7 @@ public class GetFilesInFolderForkTask extends RecursiveTask<List<FileChange>> {
       try {
         filesInBranchResponse = scmBlockingStub.findFilesInBranch(findFilesInBranchRequest.build());
         allFilesInThisFolder.addAll(filesInBranchResponse.getFileList());
-        findFilesInBranchRequest.setPagination(
-            PageRequest.newBuilder().setPage(filesInBranchResponse.getPagination().getNext()).build());
+        setNextPage(findFilesInBranchRequest, filesInBranchResponse);
       } catch (Exception ex) {
         log.error(
             "Error while getting files from git for the ref {} in slug {} for folder {}", ref, slug, folderPath, ex);
@@ -97,7 +91,8 @@ public class GetFilesInFolderForkTask extends RecursiveTask<List<FileChange>> {
 
   private boolean hasMoreFiles(FindFilesInBranchResponse filesInBranchResponse) {
     return filesInBranchResponse != null && filesInBranchResponse.getPagination() != null
-        && filesInBranchResponse.getPagination().getNext() != 0;
+        && (filesInBranchResponse.getPagination().getNext() != 0
+            || !"".equals(filesInBranchResponse.getPagination().getNextUrl()));
   }
 
   private List<GetFilesInFolderForkTask> createTasksForSubFolders(List<String> newFoldersToBeProcessed) {
@@ -157,5 +152,29 @@ public class GetFilesInFolderForkTask extends RecursiveTask<List<FileChange>> {
       allFiles.addAll(emptyIfNull(task.join()));
     }
     return allFiles;
+  }
+
+  private FindFilesInBranchRequest.Builder prepareRequestBuilder(String folderPath) {
+    return FindFilesInBranchRequest.newBuilder()
+        .setRef(ref)
+        .setSlug(slug)
+        .setProvider(provider)
+        .setPath(folderPath)
+        .setPagination(PageRequest.newBuilder().setPage(getInitialPageNum()).build());
+  }
+
+  private void setNextPage(FindFilesInBranchRequest.Builder requestBuilder, FindFilesInBranchResponse response) {
+    requestBuilder.setPagination(PageRequest.newBuilder().setPage(response.getPagination().getNext()).build());
+    if (provider.hasBitbucketCloud()) {
+      requestBuilder.setPagination(PageRequest.newBuilder().setUrl(response.getPagination().getNextUrl()).build());
+    }
+  }
+
+  private int getInitialPageNum() {
+    int initialPageNum = 1;
+    if (provider.hasBitbucketCloud()) {
+      initialPageNum = 0;
+    }
+    return initialPageNum;
   }
 }

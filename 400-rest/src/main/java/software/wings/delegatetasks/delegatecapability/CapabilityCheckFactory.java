@@ -30,6 +30,7 @@ import io.harness.delegate.task.executioncapability.ProcessExecutorCapabilityChe
 import io.harness.delegate.task.executioncapability.SftpCapabilityCheck;
 import io.harness.delegate.task.executioncapability.SmbConnectionCapabilityCheck;
 import io.harness.delegate.task.executioncapability.SmtpCapabilityCheck;
+import io.harness.delegate.task.executioncapability.SocketConnectivityBulkOrCapabilityCheck;
 import io.harness.delegate.task.executioncapability.SocketConnectivityCapabilityCheck;
 import io.harness.delegate.task.executioncapability.SystemEnvCapabilityCheck;
 
@@ -50,6 +51,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.DEL)
 public class CapabilityCheckFactory {
   @Inject SocketConnectivityCapabilityCheck socketConnectivityCapabilityCheck;
+  @Inject SocketConnectivityBulkOrCapabilityCheck socketConnectivityBulkOrCapabilityCheck;
   @Inject ProcessExecutorCapabilityCheck processExecutorCapabilityCheck;
   @Inject AwsRegionCapabilityCheck awsRegionCapabilityCheck;
   @Inject SystemEnvCapabilityCheck systemEnvCapabilityCheck;
@@ -79,6 +81,8 @@ public class CapabilityCheckFactory {
     switch (capabilityCheckType) {
       case SOCKET:
         return socketConnectivityCapabilityCheck;
+      case SOCKET_BULK_OR:
+        return socketConnectivityBulkOrCapabilityCheck;
       case PROCESS_EXECUTOR:
         return processExecutorCapabilityCheck;
       case AWS_REGION:

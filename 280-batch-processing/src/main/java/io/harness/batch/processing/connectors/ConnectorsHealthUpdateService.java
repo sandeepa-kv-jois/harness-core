@@ -8,6 +8,7 @@
 package io.harness.batch.processing.connectors;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.shard.AccountShardService;
@@ -20,6 +21,8 @@ import io.harness.delegate.beans.connector.CEFeatures;
 import io.harness.delegate.beans.connector.CcmConnectorFilter;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.filter.FilterType;
+import io.harness.logging.AccountLogContext;
+import io.harness.logging.AutoLogContext;
 import io.harness.ng.beans.PageResponse;
 import io.harness.utils.RestCallToNGManagerClientUtils;
 
@@ -45,6 +48,7 @@ public class ConnectorsHealthUpdateService {
     List<Account> accounts = accountShardService.getCeEnabledAccounts();
     log.info("accounts size: {}", accounts.size());
     for (Account account : accounts) {
+      AutoLogContext ignore = new AccountLogContext(account.getUuid(), OVERRIDE_ERROR);
       log.info("Fetching connectors for account name {}, account id {}", account.getAccountName(), account.getUuid());
       List<ConnectorResponseDTO> nextGenConnectorResponses = getNextGenConnectorResponses(account.getUuid());
       for (ConnectorResponseDTO connector : nextGenConnectorResponses) {
@@ -56,6 +60,7 @@ public class ConnectorsHealthUpdateService {
               account.getUuid(), e);
         }
       }
+      ignore.close();
     }
   }
 

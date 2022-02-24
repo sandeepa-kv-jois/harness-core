@@ -54,6 +54,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -163,6 +164,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns pipeline execution details V2")
       })
+  @Hidden
   public ResponseDTO<PlanExecutionResponseDto>
   runPipelineWithInputSetPipelineYamlV2(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(
@@ -296,6 +298,7 @@ public class PlanExecutionResource {
         @io.swagger.v3.oas.annotations.responses.
         ApiResponse(responseCode = "default", description = "Returns pipeline execution details")
       })
+  @Hidden
   public ResponseDTO<PlanExecutionResponseDto>
   rerunPipelineWithInputSetPipelineYamlV2(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) @Parameter(

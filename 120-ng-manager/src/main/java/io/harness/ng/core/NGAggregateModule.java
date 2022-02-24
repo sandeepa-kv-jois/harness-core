@@ -8,7 +8,6 @@
 package io.harness.ng.core;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.ng.core.user.service.impl.NgUserServiceImpl.THREAD_POOL_NAME;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.manage.ManagedExecutorService;
@@ -38,9 +37,6 @@ public class NGAggregateModule extends AbstractModule {
         .toInstance(new ManagedExecutorService(Executors.newFixedThreadPool(poolSize)));
     bind(ExecutorService.class)
         .annotatedWith(Names.named("aggregate-orgs"))
-        .toInstance(new ManagedExecutorService(Executors.newFixedThreadPool(poolSize)));
-    bind(ExecutorService.class)
-        .annotatedWith(Names.named(THREAD_POOL_NAME))
         .toInstance(new ManagedExecutorService(Executors.newFixedThreadPool(poolSize)));
     bind(AggregateProjectService.class).to(AggregateProjectServiceImpl.class);
     bind(AggregateOrganizationService.class).to(AggregateOrganizationServiceImpl.class);

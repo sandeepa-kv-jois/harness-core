@@ -27,4 +27,5 @@ public class SweepingOutputInquiry {
   String workflowExecutionId;
   String phaseExecutionId;
   String stateExecutionId;
+  Boolean isOnDemandRollback;
 }

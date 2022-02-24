@@ -68,6 +68,7 @@ public final class TimeSeriesThreshold
   @NotNull private DataSourceType dataSourceType;
   @NotNull private String metricPackIdentifier;
   @NotNull private String metricName;
+  @NotNull private String metricIdentifier;
   @NotNull private TimeSeriesMetricType metricType;
   @Default private String metricGroupName = "*";
   @NotNull private TimeSeriesThresholdActionType action;

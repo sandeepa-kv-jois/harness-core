@@ -8,6 +8,7 @@
 package software.wings.service.impl.security.customsecretsmanager;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.delegate.task.winrm.AuthenticationScheme.NTLM;
 
 import static software.wings.beans.Account.GLOBAL_ACCOUNT_ID;
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
@@ -15,7 +16,6 @@ import static software.wings.beans.HostConnectionAttributes.Builder.aHostConnect
 import static software.wings.beans.SettingAttribute.Builder.aSettingAttribute;
 import static software.wings.beans.Variable.VariableBuilder.aVariable;
 import static software.wings.beans.VariableType.TEXT;
-import static software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme.NTLM;
 import static software.wings.common.TemplateConstants.HARNESS_GALLERY;
 import static software.wings.security.encryption.secretsmanagerconfigs.CustomSecretsManagerShellScript.ScriptType.BASH;
 import static software.wings.settings.SettingVariableTypes.HOST_CONNECTION_ATTRIBUTES;

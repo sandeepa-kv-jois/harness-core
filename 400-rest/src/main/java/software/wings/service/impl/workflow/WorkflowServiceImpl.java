@@ -81,6 +81,10 @@ import static software.wings.sm.StateType.KUBERNETES_DEPLOY;
 import static software.wings.sm.StateType.KUBERNETES_SETUP;
 import static software.wings.sm.StateType.PCF_RESIZE;
 import static software.wings.sm.StateType.PCF_SETUP;
+import static software.wings.sm.StateType.RANCHER_K8S_BLUE_GREEN_DEPLOY;
+import static software.wings.sm.StateType.RANCHER_K8S_CANARY_DEPLOY;
+import static software.wings.sm.StateType.RANCHER_K8S_DELETE;
+import static software.wings.sm.StateType.RANCHER_K8S_DEPLOYMENT_ROLLING;
 import static software.wings.sm.StateType.SHELL_SCRIPT;
 import static software.wings.sm.StateType.TERRAFORM_ROLLBACK;
 import static software.wings.sm.StateType.TERRAGRUNT_ROLLBACK;
@@ -333,8 +337,9 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
   private static final List<String> kubernetesArtifactNeededStateTypes =
       Arrays.asList(KUBERNETES_SETUP.name(), KUBERNETES_DEPLOY.name());
 
-  private static final List<String> k8sV2ArtifactNeededStateTypes = Arrays.asList(
-      K8S_DEPLOYMENT_ROLLING.name(), K8S_CANARY_DEPLOY.name(), K8S_BLUE_GREEN_DEPLOY.name(), K8S_APPLY.name());
+  private static final List<String> k8sV2ArtifactNeededStateTypes = Arrays.asList(K8S_DEPLOYMENT_ROLLING.name(),
+      K8S_CANARY_DEPLOY.name(), K8S_BLUE_GREEN_DEPLOY.name(), K8S_APPLY.name(), RANCHER_K8S_DEPLOYMENT_ROLLING.name(),
+      RANCHER_K8S_CANARY_DEPLOY.name(), RANCHER_K8S_BLUE_GREEN_DEPLOY.name());
 
   private static final List<String> ecsArtifactNeededStateTypes =
       Arrays.asList(ECS_SERVICE_DEPLOY.name(), ECS_SERVICE_SETUP.name(), ECS_DAEMON_SERVICE_SETUP.name());
@@ -362,8 +367,10 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
 
   private static final List<String> helmManifestNeededStateTypes = Arrays.asList(HELM_DEPLOY.name());
 
-  private static final List<String> k8sManifestNeededStateTypes = Arrays.asList(K8S_DEPLOYMENT_ROLLING.name(),
-      K8S_CANARY_DEPLOY.name(), K8S_BLUE_GREEN_DEPLOY.name(), K8S_APPLY.name(), K8S_DELETE.name());
+  private static final List<String> k8sManifestNeededStateTypes =
+      Arrays.asList(K8S_DEPLOYMENT_ROLLING.name(), K8S_CANARY_DEPLOY.name(), K8S_BLUE_GREEN_DEPLOY.name(),
+          K8S_APPLY.name(), K8S_DELETE.name(), RANCHER_K8S_DEPLOYMENT_ROLLING.name(), RANCHER_K8S_CANARY_DEPLOY.name(),
+          RANCHER_K8S_BLUE_GREEN_DEPLOY.name(), RANCHER_K8S_DELETE.name());
 
   private static final Comparator<Stencil> stencilDefaultSorter =
       Comparator.comparingInt((Stencil o) -> o.getStencilCategory().getDisplayOrder())
@@ -603,6 +610,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
 
   /**
    * {@inheritDoc}
+   *
    * @param appId
    */
   @Override
@@ -2585,6 +2593,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     if (isEmpty(applicationManifests)) {
       return null;
     }
+
     List<ApplicationManifestSummary> applicationManifestSummaryList = new ArrayList<>();
     for (ApplicationManifest applicationManifest : applicationManifests) {
       if (applicationManifest == null || applicationManifest.getHelmChartConfig() == null) {
@@ -2598,9 +2607,22 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
                 .filter(chart -> serviceId.equals(chart.getServiceId()))
                 .findFirst()
           : Optional.empty();
+
+      final String defaultAppManifestName;
+      if (helmChartOptional.isPresent()) {
+        defaultAppManifestName =
+            applicationManifests.stream()
+                .filter(appManifest -> appManifest.getUuid().equals(helmChartOptional.get().getApplicationManifestId()))
+                .map(ApplicationManifest::getName)
+                .findFirst()
+                .orElse("");
+        helmChartOptional.get().setAppManifestName(defaultAppManifestName);
+      }
+
       applicationManifestSummaryList.add(
           ApplicationManifestSummary.builder()
               .appManifestId(applicationManifest.getUuid())
+              .appManifestName(applicationManifest.getName())
               .settingId(applicationManifest.getHelmChartConfig().getConnectorId())
               .defaultManifest(helmChartOptional.map(ManifestSummary::prepareSummaryFromHelmChart).orElse(null))
               .lastCollectedManifest(ManifestSummary.prepareSummaryFromHelmChart(lastCollectedHelmChart))
@@ -2655,7 +2677,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       Optional<HelmChart> requiredHelmChart, String serviceId, String appId) {
     if (requiredHelmChart.isPresent()) {
       Map<String, List<HelmChart>> presentHelmCharts =
-          helmChartService.listHelmChartsForService(appId, serviceId, null, new PageRequest<>());
+          helmChartService.listHelmChartsForService(appId, serviceId, null, new PageRequest<>(), true);
       return presentHelmCharts.values()
           .stream()
           .flatMap(Collection::stream)
@@ -3907,6 +3929,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
       }
     } else if (orchestrationWorkflow.getOrchestrationWorkflowType() == BLUE_GREEN) {
       if (!(InfrastructureMappingType.DIRECT_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
+              || InfrastructureMappingType.RANCHER_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
               || InfrastructureMappingType.GCP_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
               || InfrastructureMappingType.AZURE_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())
               || InfrastructureMappingType.PCF_PCF.name().equals(infrastructureMapping.getInfraMappingType())
@@ -4288,6 +4311,11 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     Map<String, WorkflowStepMeta> steps = new HashMap<>();
     DeploymentType workflowPhaseDeploymentType = workflowPhase != null ? workflowPhase.getDeploymentType() : null;
     for (StepType step : stepTypes) {
+      if (featureFlagService.isNotEnabled(FeatureName.RANCHER_SUPPORT, appService.getAccountIdByAppId(appId))
+          && step.name().startsWith("RANCHER_")) {
+        continue;
+      }
+
       if (step.matches(workflowPhaseDeploymentType, orchestrationWorkflowType)) {
         WorkflowStepMeta stepMeta = WorkflowStepMeta.builder()
                                         .name(step.getName())

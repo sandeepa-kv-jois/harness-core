@@ -12,7 +12,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
-import io.harness.pms.sdk.core.steps.io.StepParameters;
 
 import java.util.Map;
 import javax.validation.constraints.NotNull;
@@ -28,6 +27,5 @@ public class InterruptPackage {
   @NonNull InterruptType interruptType;
   @NotNull InterruptConfig interruptConfig;
   String nodeExecutionId;
-  StepParameters parameters;
   Map<String, String> metadata;
 }

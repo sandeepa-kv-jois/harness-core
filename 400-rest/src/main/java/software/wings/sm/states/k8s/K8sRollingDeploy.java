@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessModule._870_CG_ORCHESTRATION;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.beans.FeatureName.NEW_KUBECTL_VERSION;
 import static io.harness.beans.FeatureName.PRUNE_KUBERNETES_RESOURCES;
+import static io.harness.beans.FeatureName.SKIP_ADDING_TRACK_LABEL_SELECTOR_IN_ROLLING;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.exception.WingsException.USER;
 
@@ -30,6 +31,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
 import software.wings.api.InstanceElementListParam;
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sApplicationManifestSourceInfo;
 import software.wings.api.k8s.K8sElement;
 import software.wings.api.k8s.K8sStateExecutionData;
@@ -38,8 +40,6 @@ import software.wings.beans.Application;
 import software.wings.beans.ContainerInfrastructureMapping;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.command.CommandUnit;
-import software.wings.delegatetasks.aws.AwsCommandHelper;
-import software.wings.helpers.ext.container.ContainerDeploymentManagerHelper;
 import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
 import software.wings.helpers.ext.k8s.request.K8sRollingDeployTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sRollingDeployTaskParameters.K8sRollingDeployTaskParametersBuilder;
@@ -49,11 +49,6 @@ import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.AppService;
-import software.wings.service.intfc.ApplicationManifestService;
-import software.wings.service.intfc.DelegateService;
-import software.wings.service.intfc.InfrastructureMappingService;
-import software.wings.service.intfc.SettingsService;
-import software.wings.service.intfc.security.SecretManager;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionResponse;
 import software.wings.sm.states.utils.StateTimeoutUtils;
@@ -66,6 +61,7 @@ import com.google.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -75,14 +71,7 @@ import lombok.Setter;
 @BreakDependencyOn("software.wings.service.intfc.DelegateService")
 public class K8sRollingDeploy extends AbstractK8sState {
   @Inject private transient ActivityService activityService;
-  @Inject private transient SecretManager secretManager;
-  @Inject private transient SettingsService settingsService;
   @Inject private transient AppService appService;
-  @Inject private transient InfrastructureMappingService infrastructureMappingService;
-  @Inject private transient DelegateService delegateService;
-  @Inject private ContainerDeploymentManagerHelper containerDeploymentManagerHelper;
-  @Inject private transient ApplicationManifestService applicationManifestService;
-  @Inject private transient AwsCommandHelper awsCommandHelper;
   @Inject private transient FeatureFlagService featureFlagService;
   @Inject private ApplicationManifestUtils applicationManifestUtils;
 
@@ -128,6 +117,12 @@ public class K8sRollingDeploy extends AbstractK8sState {
 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
+    if (k8sStateHelper.isRancherInfraMapping(context)
+        && !(Objects.nonNull(context.getContextElement())
+            && context.getContextElement() instanceof RancherClusterElement)) {
+      return k8sStateHelper.getInvalidInfraDefFailedResponse();
+    }
+
     if (k8sStateHelper.isExportManifestsEnabled(context.getAccountId()) && inheritManifests) {
       Activity activity = createK8sActivity(
           context, commandName(), stateType(), activityService, commandUnitList(false, context.getAccountId()));
@@ -193,6 +188,8 @@ public class K8sRollingDeploy extends AbstractK8sState {
             .isPruningEnabled(featureFlagService.isEnabled(PRUNE_KUBERNETES_RESOURCES, infraMapping.getAccountId()))
             .useLatestKustomizeVersion(isUseLatestKustomizeVersion(context.getAccountId()))
             .useNewKubectlVersion(featureFlagService.isEnabled(NEW_KUBECTL_VERSION, infraMapping.getAccountId()))
+            .skipAddingSelectorToDeployment(
+                featureFlagService.isEnabled(SKIP_ADDING_TRACK_LABEL_SELECTOR_IN_ROLLING, infraMapping.getAccountId()))
             .build();
 
     return queueK8sDelegateTask(context, k8sTaskParameters, appManifestMap);

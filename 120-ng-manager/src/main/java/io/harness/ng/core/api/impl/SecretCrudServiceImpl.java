@@ -9,7 +9,6 @@ package io.harness.ng.core.api.impl;
 
 import static io.harness.NGConstants.HARNESS_SECRET_MANAGER_IDENTIFIER;
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.connector.ConnectorCategory.SECRET_MANAGER;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
@@ -21,11 +20,11 @@ import static io.harness.secretmanagerclient.SecretType.SecretFile;
 import static io.harness.secretmanagerclient.SecretType.SecretText;
 
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
-import static org.springframework.data.mongodb.core.query.Criteria.where;
 
 import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.ConnectorCategory;
+import io.harness.connector.services.NGConnectorSecretManagerService;
 import io.harness.delegate.beans.FileUploadLimit;
 import io.harness.eventsframework.EventsFrameworkMetadataConstants;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
@@ -35,6 +34,8 @@ import io.harness.eventsframework.producer.Message;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SecretManagementException;
 import io.harness.ng.beans.PageResponse;
+import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.api.SecretCrudService;
@@ -51,9 +52,11 @@ import io.harness.ng.core.remote.SecretValidationMetaData;
 import io.harness.ng.core.remote.SecretValidationResultDTO;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.ValueType;
+import io.harness.secretmanagerclient.dto.SecretManagerConfigDTO;
 import io.harness.stream.BoundedInputStream;
 import io.harness.utils.PageUtils;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -81,16 +84,21 @@ public class SecretCrudServiceImpl implements SecretCrudService {
   private final SecretEntityReferenceHelper secretEntityReferenceHelper;
   private final Producer eventProducer;
   private final NGEncryptedDataService encryptedDataService;
+  private final AccountSettingsHelper accountSettingsHelper;
+  private final NGConnectorSecretManagerService ngConnectorSecretManagerService;
 
   @Inject
   public SecretCrudServiceImpl(SecretEntityReferenceHelper secretEntityReferenceHelper, FileUploadLimit fileUploadLimit,
       NGSecretServiceV2 ngSecretService, @Named(ENTITY_CRUD) Producer eventProducer,
-      NGEncryptedDataService encryptedDataService) {
+      NGEncryptedDataService encryptedDataService, AccountSettingsHelper accountSettingsHelper,
+      NGConnectorSecretManagerService ngConnectorSecretManagerService) {
     this.fileUploadLimit = fileUploadLimit;
     this.secretEntityReferenceHelper = secretEntityReferenceHelper;
     this.ngSecretService = ngSecretService;
     this.eventProducer = eventProducer;
     this.encryptedDataService = encryptedDataService;
+    this.accountSettingsHelper = accountSettingsHelper;
+    this.ngConnectorSecretManagerService = ngConnectorSecretManagerService;
   }
 
   private void checkEqualityOrThrow(Object str1, Object str2) {
@@ -139,6 +147,14 @@ public class SecretCrudServiceImpl implements SecretCrudService {
     if (SecretText.equals(dto.getType()) && isEmpty(((SecretTextSpecDTO) dto.getSpec()).getValue())) {
       throw new InvalidRequestException("value cannot be empty for a secret text.");
     }
+
+    boolean isBuiltInSMDisabled =
+        accountSettingsHelper.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
+
+    if (isBuiltInSMDisabled && checkIfSecretManagerUsedIsHarnessManaged(accountIdentifier, dto)) {
+      throw new InvalidRequestException("Built-in Harness Secret Manager cannot be used to create Secret.");
+    }
+
     if (SecretText.equals(dto.getType())) {
       NGEncryptedData encryptedData = encryptedDataService.createSecretText(accountIdentifier, dto);
       if (Optional.ofNullable(encryptedData).isPresent()) {
@@ -148,6 +164,20 @@ public class SecretCrudServiceImpl implements SecretCrudService {
       return createSecretInternal(accountIdentifier, dto, false);
     }
     throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unable to create secret remotely.", USER);
+  }
+
+  @VisibleForTesting
+  public boolean checkIfSecretManagerUsedIsHarnessManaged(String accountIdentifier, SecretDTOV2 dto) {
+    final String secretManagerIdentifier = getSecretManagerIdentifier(dto);
+    /**
+     * Using scope identifiers of secret because as of now Secrets can be created using SM at same scope. This should
+     * also change when across scope SM can be used for secret creation. *
+     */
+    final SecretManagerConfigDTO secretManagerConfig = ngConnectorSecretManagerService.getUsingIdentifier(
+        accountIdentifier, dto.getOrgIdentifier(), dto.getProjectIdentifier(), secretManagerIdentifier, false);
+
+    final Boolean isHarnessManaged = secretManagerConfig.isHarnessManaged();
+    return Boolean.TRUE.equals(isHarnessManaged);
   }
 
   private SecretResponseWrapper createSecretInternal(String accountIdentifier, SecretDTOV2 dto, boolean draft) {
@@ -207,10 +237,7 @@ public class SecretCrudServiceImpl implements SecretCrudService {
     if (isNotEmpty(secretTypes)) {
       criteria = criteria.and(SecretKeys.type).in(secretTypes);
     }
-    if (SECRET_MANAGER == sourceCategory && StringUtils.isEmpty(searchTerm)) {
-      criteria = criteria.orOperator(where(SecretKeys.secretSpec + ".secretManagerIdentifier").exists(false),
-          where(SecretKeys.secretSpec + ".secretManagerIdentifier").is(HARNESS_SECRET_MANAGER_IDENTIFIER));
-    }
+
     criteria.and(SecretKeys.owner).is(null);
     if (!StringUtils.isEmpty(searchTerm)) {
       criteria = criteria.orOperator(

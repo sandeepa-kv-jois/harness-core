@@ -748,7 +748,7 @@ public class TerraformProvisionTask extends AbstractDelegateRunnableTask {
       LogCallback logCallback) throws IOException, InterruptedException, TimeoutException {
     TerraformVersion version = terraformClient.version(parameters.getTimeoutInMillis(), scriptDirectory);
     if (!version.minVersion(0, 12)) {
-      String messageFormat = "Terraform plan json export not suppoerted in v%d.%d.%d. Minimum version is v0.12.x. "
+      String messageFormat = "Terraform plan json export not supported in v%d.%d.%d. Minimum version is v0.12.x. "
           + "Skipping command.";
       String message = format(messageFormat, version.getMajor(), version.getMinor(), version.getPatch());
       logCallback.saveExecutionLog(color("\n" + message + "\n", Yellow, Bold), WARN, CommandExecutionStatus.SKIPPED);

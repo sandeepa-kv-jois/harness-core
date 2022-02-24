@@ -162,6 +162,8 @@ public class Account extends Base implements PersistentRegularIterable {
   @FdIndex private Long ceLicenseExpiryIteration;
   @FdIndex private Long resourceLookupSyncIteration;
   @FdIndex private long delegateTelemetryPublisherIteration;
+  @FdIndex private long delegateTaskFailIteration;
+  @FdIndex private long delegateTaskRebroadcastIteration;
 
   @Getter private boolean cloudCostEnabled;
   @Getter @Setter private boolean ceAutoCollectK8sEvents;
@@ -473,6 +475,16 @@ public class Account extends Base implements PersistentRegularIterable {
       return;
     }
 
+    else if (AccountKeys.delegateTaskFailIteration.equals(fieldName)) {
+      this.delegateTaskFailIteration = nextIteration;
+      return;
+    }
+
+    else if (AccountKeys.delegateTaskRebroadcastIteration.equals(fieldName)) {
+      this.delegateTaskRebroadcastIteration = nextIteration;
+      return;
+    }
+
     throw new IllegalArgumentException("Invalid fieldName " + fieldName);
   }
 
@@ -520,6 +532,12 @@ public class Account extends Base implements PersistentRegularIterable {
 
     else if (AccountKeys.delegateTelemetryPublisherIteration.equals(fieldName)) {
       return this.delegateTelemetryPublisherIteration;
+    }
+
+    else if (AccountKeys.delegateTaskFailIteration.equals(fieldName)) {
+      return this.delegateTaskFailIteration;
+    } else if (AccountKeys.delegateTaskRebroadcastIteration.equals(fieldName)) {
+      return this.delegateTaskRebroadcastIteration;
     }
 
     throw new IllegalArgumentException("Invalid fieldName " + fieldName);
@@ -824,6 +842,8 @@ public class Account extends Base implements PersistentRegularIterable {
     public static final String isHarnessSupportAccessAllowed = "isHarnessSupportAccessAllowed";
     public static final String resourceLookupSyncIteration = "resourceLookupSyncIteration";
     public static final String instanceStatsMetricsPublisherInteration = "instanceStatsMetricsPublisherIteration";
+    public static final String delegateTaskFailIteration = "delegateTaskFailIteration";
+    public static final String delegateTaskRebroadcastIteration = "delegateTaskRebroadcastIteration";
     public static final String DELEGATE_CONFIGURATION_DELEGATE_VERSIONS =
         delegateConfiguration + "." + DelegateConfigurationKeys.delegateVersions;
   }

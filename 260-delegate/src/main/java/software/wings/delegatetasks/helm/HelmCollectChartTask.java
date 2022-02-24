@@ -11,6 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 
+import static software.wings.delegatetasks.helm.ArtifactoryHelmTaskHelper.shouldFetchHelmChartsFromArtifactory;
+
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessModule;
@@ -30,6 +32,7 @@ import software.wings.helpers.ext.helm.request.HelmChartCollectionParams.HelmCha
 import software.wings.helpers.ext.helm.response.HelmCollectChartResponse;
 
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import java.util.List;
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -42,7 +45,12 @@ import org.apache.commons.lang3.NotImplementedException;
 public class HelmCollectChartTask extends AbstractDelegateRunnableTask {
   @Inject private HelmTaskHelper helmTaskHelper;
   @Inject private DelegateLogService delegateLogService;
-  @Inject private ManifestRepositoryService manifestRepositoryService;
+  @Inject
+  @Named(ManifestRepoServiceType.HELM_COMMAND_SERVICE)
+  private ManifestRepositoryService helmCommandRepositoryService;
+  @Inject
+  @Named(ManifestRepoServiceType.ARTIFACTORY_HELM_SERVICE)
+  private ManifestRepositoryService artifactoryHelmRepositoryService;
 
   public HelmCollectChartTask(DelegateTaskPackage delegateTaskPackage, ILogStreamingTaskClient logStreamingTaskClient,
       Consumer<DelegateTaskResponse> consumer, BooleanSupplier preExecute) {
@@ -56,7 +64,12 @@ public class HelmCollectChartTask extends AbstractDelegateRunnableTask {
         format("Running Helm Collect Chart for account %s app %s", taskParams.getAccountId(), taskParams.getAppId()));
 
     try {
-      List<HelmChart> helmCharts = manifestRepositoryService.collectManifests(taskParams);
+      List<HelmChart> helmCharts;
+      if (shouldFetchHelmChartsFromArtifactory(taskParams.getHelmChartConfigParams())) {
+        helmCharts = artifactoryHelmRepositoryService.collectManifests(taskParams);
+      } else {
+        helmCharts = helmCommandRepositoryService.collectManifests(taskParams);
+      }
 
       if (taskParams.getCollectionType() == HelmChartCollectionType.SPECIFIC_VERSION) {
         // that specific version is found

@@ -21,6 +21,7 @@ import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
+import io.harness.mongo.index.SortCompoundMongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAccess;
@@ -193,6 +194,10 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
     return ambiance.getPlanExecutionId();
   }
 
+  public String getPlanId() {
+    return ambiance.getPlanExecutionId();
+  }
+
   public StepType stepType() {
     if (stepType != null) {
       return stepType;
@@ -229,7 +234,9 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
   }
 
   public static List<MongoIndex> mongoIndexes() {
-    return ImmutableList.<MongoIndex>builder()
+    return ImmutableList
+        .<MongoIndex>builder()
+        // used
         .add(CompoundMongoIndex.builder()
                  .name("planExecutionId_planNodeId_idx")
                  .field(NodeExecutionKeys.planExecutionId)
@@ -246,19 +253,8 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
                  .field(NodeExecutionKeys.oldRetry)
                  .build())
         .add(CompoundMongoIndex.builder()
-                 .name("planExecutionId_notifyId_idx")
-                 .field(NodeExecutionKeys.planExecutionId)
-                 .field(NodeExecutionKeys.notifyId)
-                 .build())
-        .add(CompoundMongoIndex.builder()
                  .name("planExecutionId_status_idx")
                  .field(NodeExecutionKeys.planExecutionId)
-                 .field(NodeExecutionKeys.status)
-                 .build())
-        .add(CompoundMongoIndex.builder()
-                 .name("planExecutionId_parentId_status_idx")
-                 .field(NodeExecutionKeys.planExecutionId)
-                 .field(NodeExecutionKeys.parentId)
                  .field(NodeExecutionKeys.status)
                  .build())
         .add(CompoundMongoIndex.builder()
@@ -285,7 +281,27 @@ public class NodeExecution implements PersistentEntity, UuidAccess, PmsNodeExecu
                  .field(NodeExecutionKeys.planExecutionId)
                  .field(NodeExecutionKeys.stageFqn)
                  .build())
+        .add(CompoundMongoIndex.builder()
+                 .name("planExecutionId_parentId_status_oldRetry_idx")
+                 .field(NodeExecutionKeys.planExecutionId)
+                 .field(NodeExecutionKeys.parentId)
+                 .field(NodeExecutionKeys.status)
+                 .field(NodeExecutionKeys.oldRetry)
+                 .build())
         .add(CompoundMongoIndex.builder().name("previous_id_idx").field(NodeExecutionKeys.previousId).build())
+        .add(SortCompoundMongoIndex.builder()
+                 .name("planExecutionId_parentId_createdAt_idx")
+                 .field(NodeExecutionKeys.planExecutionId)
+                 .field(NodeExecutionKeys.parentId)
+                 .descRangeField(NodeExecutionKeys.createdAt)
+                 .build())
+        .add(SortCompoundMongoIndex.builder()
+                 .name("planExecutionId_status_planNodeStepCategory_createdAt_idx")
+                 .field(NodeExecutionKeys.planExecutionId)
+                 .field(NodeExecutionKeys.status)
+                 .field(NodeExecutionKeys.planNodeStepCategory)
+                 .ascRangeField(NodeExecutionKeys.createdAt)
+                 .build())
         .build();
   }
 

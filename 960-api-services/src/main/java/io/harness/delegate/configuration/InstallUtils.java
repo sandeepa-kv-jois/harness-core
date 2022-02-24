@@ -114,7 +114,7 @@ public class InstallUtils {
 
   private static final String scmBaseDir = "./client-tools/scm/";
   private static final String scmBinary = "scm";
-  private static final String defaultScmVersion = "3ac4cefa";
+  private static final String defaultScmVersion = "04ad961e";
 
   private static final String KUBECTL_CDN_PATH = "public/shared/tools/kubectl/release/%s/bin/%s/amd64/kubectl";
   private static final String CHART_MUSEUM_CDN_PATH =
@@ -878,7 +878,7 @@ public class InstallUtils {
       String downloadUrl = getScmDownloadUrl(configuration);
       log.info("Download Url is {}", downloadUrl);
 
-      String script = "curl $MANAGER_PROXY_CURL -LO " + downloadUrl + "\n"
+      String script = "curl $MANAGER_PROXY_CURL -kLO " + downloadUrl + "\n"
           + "chmod +x ./scm";
 
       ProcessExecutor processExecutor = new ProcessExecutor()
@@ -1107,7 +1107,8 @@ public class InstallUtils {
       ProcessResult result = processExecutor.execute();
 
       if (result.getExitValue() == 0) {
-        kustomizePath = Paths.get(kustomizeDir + "/kustomize").toAbsolutePath().normalize().toString();
+        kustomizePath = Paths.get(kustomizeDir, "kustomize").toAbsolutePath().normalize().toString();
+        kustomizePaths.put(kustomizeVersion, kustomizePath);
         log.info(result.outputUTF8());
         if (validateKustomizeExists(kustomizeDir)) {
           log.info("kustomize path: {}", kustomizePath);
@@ -1209,6 +1210,19 @@ public class InstallUtils {
     if (isNotEmpty(delegateConfiguration.getKustomizePath())) {
       kustomizePath = delegateConfiguration.getKustomizePath();
       isCustomKustomizePath = true;
+    }
+    if (isNotEmpty(delegateConfiguration.getKubectlPath())) {
+      kubectlPaths.put(defaultKubectlVersion, delegateConfiguration.getKubectlPath());
+      kubectlPaths.put(newKubectlVersion, delegateConfiguration.getKubectlPath());
+    }
+    if (isNotEmpty(delegateConfiguration.getHelm3Path())) {
+      helmPaths.put(helm3Version, delegateConfiguration.getHelm3Path());
+    }
+    if (isNotEmpty(delegateConfiguration.getHelmPath())) {
+      helmPaths.put(helm2Version, delegateConfiguration.getHelmPath());
+    }
+    if (isNotEmpty(delegateConfiguration.getOcPath())) {
+      ocPath = delegateConfiguration.getOcPath();
     }
   }
 }

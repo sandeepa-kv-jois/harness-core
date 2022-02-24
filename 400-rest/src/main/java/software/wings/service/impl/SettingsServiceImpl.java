@@ -257,6 +257,9 @@ public class SettingsServiceImpl implements SettingsService {
   @Inject
   @Getter(onMethod = @__(@SuppressValidation))
   private Subject<SettingAttributeObserver> artifactStreamSubject = new Subject<>();
+  @Inject
+  @Getter(onMethod = @__(@SuppressValidation))
+  private Subject<SettingAttributeObserver> appManifestSubject = new Subject<>();
   @Inject private SettingAttributeDao settingAttributeDao;
   @Inject private CEMetadataRecordDao ceMetadataRecordDao;
   @Inject private RemoteObserverInformer remoteObserverInformer;
@@ -739,6 +742,16 @@ public class SettingsServiceImpl implements SettingsService {
   }
 
   @Override
+  public List<SettingAttribute> getSettingAttributeByReferencedConnector(
+      String accountId, String settingAttributeUuid) {
+    return wingsPersistence.createQuery(SettingAttribute.class)
+        .disableValidation()
+        .filter(SettingAttributeKeys.accountId, accountId)
+        .filter(SettingAttributeKeys.referencedConnector, settingAttributeUuid)
+        .asList();
+  }
+
+  @Override
   public ValidationResult validateConnectivity(SettingAttribute settingAttribute) {
     try {
       SettingAttribute existingSetting = get(settingAttribute.getAppId(), settingAttribute.getUuid());
@@ -863,6 +876,7 @@ public class SettingsServiceImpl implements SettingsService {
 
     syncCEInfra(settingAttribute);
     artifactStreamSubject.fireInform(SettingAttributeObserver::onSaved, newSettingAttribute);
+    appManifestSubject.fireInform(SettingAttributeObserver::onSaved, newSettingAttribute);
     remoteObserverInformer.sendEvent(
         ReflectionUtils.getMethod(SettingAttributeObserver.class, "onSaved", SettingAttribute.class),
         SettingsServiceImpl.class, newSettingAttribute);
@@ -1251,6 +1265,7 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     artifactStreamSubject.fireInform(SettingAttributeObserver::onUpdated, prevSettingAttribute, settingAttribute);
+    appManifestSubject.fireInform(SettingAttributeObserver::onUpdated, prevSettingAttribute, settingAttribute);
     remoteObserverInformer.sendEvent(ReflectionUtils.getMethod(SettingAttributeObserver.class, "onUpdated",
                                          SettingAttribute.class, SettingAttribute.class),
         SettingsServiceImpl.class, prevSettingAttribute, settingAttribute);
@@ -1367,6 +1382,7 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     artifactStreamSubject.fireInform(SettingAttributeObserver::onDeleted, settingAttribute);
+    appManifestSubject.fireInform(SettingAttributeObserver::onDeleted, settingAttribute);
     remoteObserverInformer.sendEvent(
         ReflectionUtils.getMethod(SettingAttributeObserver.class, "onDeleted", SettingAttribute.class),
         SettingsServiceImpl.class, settingAttribute);

@@ -10,9 +10,12 @@ package io.harness.utils;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.SortOrder;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 
+import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -51,5 +54,12 @@ public class PaginationUtils {
         .pageIndex(pageRequest.getPageIndex())
         .empty(false)
         .build();
+  }
+
+  public static void setSortOrder(PageRequest pageRequest, String fieldName, SortOrder.OrderType orderType) {
+    if (EmptyPredicate.isEmpty(pageRequest.getSortOrders())) {
+      SortOrder order = SortOrder.Builder.aSortOrder().withField(fieldName, orderType).build();
+      pageRequest.setSortOrders(ImmutableList.of(order));
+    }
   }
 }

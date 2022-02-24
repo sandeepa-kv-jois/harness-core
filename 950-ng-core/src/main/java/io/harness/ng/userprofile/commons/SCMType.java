@@ -9,6 +9,36 @@ package io.harness.ng.userprofile.commons;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
-import io.harness.annotations.dev.OwnedBy;
+import static java.util.stream.Collectors.toMap;
 
-@OwnedBy(PL) public enum SCMType { BITBUCKET, GITHUB, GITLAB, AWS_CODE_COMMIT, AZURE_DEV_OPS }
+import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.ConnectorType;
+
+import java.util.Map;
+import java.util.stream.Stream;
+
+@OwnedBy(PL)
+public enum SCMType {
+  BITBUCKET(ConnectorType.BITBUCKET),
+  GITHUB(ConnectorType.GITHUB),
+  GITLAB(ConnectorType.GITLAB),
+  AWS_CODE_COMMIT(ConnectorType.CODECOMMIT),
+  AZURE_DEV_OPS(ConnectorType.CE_AZURE);
+
+  private final ConnectorType connectorType;
+
+  SCMType(ConnectorType connectorType) {
+    this.connectorType = connectorType;
+  }
+
+  public ConnectorType getConnectorType() {
+    return connectorType;
+  }
+
+  private static final Map<ConnectorType, SCMType> connectorTypeToSCMType =
+      Stream.of(values()).collect(toMap(SCMType::getConnectorType, e -> e));
+
+  public static SCMType fromConnectorType(ConnectorType connectorType) {
+    return connectorTypeToSCMType.get(connectorType);
+  }
+}

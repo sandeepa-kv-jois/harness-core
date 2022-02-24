@@ -21,6 +21,7 @@ import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander
 import io.harness.delegate.task.ActivityAccess;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.mixin.ProcessExecutorCapabilityGenerator;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.expression.Expression;
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
@@ -38,7 +39,6 @@ import software.wings.beans.KubernetesClusterConfig;
 import software.wings.beans.SSHVaultConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.WinRmConnectionAttributes;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapability;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.service.impl.ContainerServiceParams;
@@ -103,6 +103,7 @@ public class ShellScriptParameters implements TaskParameters, ActivityAccess, Ex
   private SSHVaultConfig sshVaultConfig;
   private Boolean includeInfraSelectors;
   private boolean enableJSchLogs;
+  private Integer sshTimeOut;
 
   private Map<String, String> getResolvedEnvironmentVariables() {
     Map<String, String> resolvedEnvironment = new HashMap<>();

@@ -11,7 +11,13 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.connector.ConnectorResponseDTO;
-import io.harness.delegate.beans.connector.ConnectorType;
+import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketApiAccessType;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketHttpCredentialsDTO;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketUsernamePasswordDTO;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketUsernameTokenApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessType;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
@@ -21,12 +27,13 @@ import io.harness.delegate.beans.connector.scm.github.GithubUsernameTokenDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.InvalidRequestException;
-import io.harness.gitsync.UserPrincipal;
+import io.harness.ng.userprofile.commons.BitbucketSCMDTO;
 import io.harness.ng.userprofile.commons.GithubSCMDTO;
 import io.harness.ng.userprofile.commons.SCMType;
 import io.harness.ng.userprofile.commons.SourceCodeManagerDTO;
 import io.harness.ng.userprofile.services.api.SourceCodeManagerService;
 import io.harness.security.SourcePrincipalContextBuilder;
+import io.harness.security.UserPrincipal;
 import io.harness.security.dto.PrincipalType;
 
 import com.google.inject.Inject;
@@ -40,36 +47,54 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class UserProfileHelper {
   private final SourceCodeManagerService sourceCodeManagerService;
-  private final String ERROR_MSG_USER_PRINCIPAL_NOT_SET = "User not set for push event.";
+  private static final String ERROR_MSG_USER_PRINCIPAL_NOT_SET = "User not set for push event.";
 
   @Inject
   public UserProfileHelper(SourceCodeManagerService sourceCodeManagerService) {
     this.sourceCodeManagerService = sourceCodeManagerService;
   }
 
-  public void setConnectorDetailsFromUserProfile(
-      YamlGitConfigDTO yamlGitConfig, UserPrincipal userPrincipal, ConnectorResponseDTO connector) {
-    if (connector.getConnector().getConnectorType() != ConnectorType.GITHUB) {
-      throw new InvalidRequestException("Git Sync only supported for github connector");
+  public void setConnectorDetailsFromUserProfile(YamlGitConfigDTO yamlGitConfig, ConnectorResponseDTO connector) {
+    ScmConnector scmConnector = (ScmConnector) connector.getConnector().getConnectorConfig();
+    scmConnector.setUrl(yamlGitConfig.getRepo());
+
+    SCMType scmType = SCMType.fromConnectorType(scmConnector.getConnectorType());
+    SourceCodeManagerDTO userScmProfile =
+        getUserScmProfile(yamlGitConfig.getAccountIdentifier(), getUserPrincipal(), scmType);
+    switch (scmType) {
+      case GITHUB:
+        GithubConnectorDTO githubConnectorDTO = (GithubConnectorDTO) scmConnector;
+
+        SecretRefData tokenRef = ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) ((GithubSCMDTO) userScmProfile)
+                                                                .getAuthentication()
+                                                                .getCredentials())
+                                      .getHttpCredentialsSpec())
+                                     .getTokenRef();
+        githubConnectorDTO.setApiAccess(GithubApiAccessDTO.builder()
+                                            .type(GithubApiAccessType.TOKEN)
+                                            .spec(GithubTokenSpecDTO.builder().tokenRef(tokenRef).build())
+                                            .build());
+        break;
+
+      case BITBUCKET:
+        BitbucketConnectorDTO bitbucketConnectorDTO = (BitbucketConnectorDTO) scmConnector;
+
+        BitbucketUsernamePasswordDTO bitbucketUsernamePasswordDTO =
+            (BitbucketUsernamePasswordDTO) ((BitbucketHttpCredentialsDTO) ((BitbucketSCMDTO) userScmProfile)
+                                                .getAuthentication()
+                                                .getCredentials())
+                .getHttpCredentialsSpec();
+        bitbucketConnectorDTO.setApiAccess(BitbucketApiAccessDTO.builder()
+                                               .type(BitbucketApiAccessType.USERNAME_AND_TOKEN)
+                                               .spec(BitbucketUsernameTokenApiAccessDTO.builder()
+                                                         .username(bitbucketUsernamePasswordDTO.getUsername())
+                                                         .tokenRef(bitbucketUsernamePasswordDTO.getPasswordRef())
+                                                         .build())
+                                               .build());
+        break;
+      default:
+        throw new IllegalStateException("Unexpected value: " + scmConnector.getConnectorType());
     }
-    final GithubConnectorDTO githubConnectorDTO = (GithubConnectorDTO) connector.getConnector().getConnectorConfig();
-    githubConnectorDTO.setUrl(yamlGitConfig.getRepo());
-    final GithubSCMDTO githubUserProfile =
-        (GithubSCMDTO) getScmUserProfile(yamlGitConfig.getAccountIdentifier(), userPrincipal, SCMType.GITHUB);
-    final SecretRefData tokenRef;
-    try {
-      tokenRef =
-          ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
-                  .getHttpCredentialsSpec())
-              .getTokenRef();
-    } catch (Exception e) {
-      throw new InvalidRequestException(
-          "User Profile should contain github username token credentials for git sync", e);
-    }
-    githubConnectorDTO.setApiAccess(GithubApiAccessDTO.builder()
-                                        .type(GithubApiAccessType.TOKEN)
-                                        .spec(GithubTokenSpecDTO.builder().tokenRef(tokenRef).build())
-                                        .build());
   }
 
   public UserPrincipal getUserPrincipal() {
@@ -83,21 +108,26 @@ public class UserProfileHelper {
     throw new InvalidRequestException(ERROR_MSG_USER_PRINCIPAL_NOT_SET);
   }
 
-  public String getScmUserName(String accountIdentifier) {
-    final GithubSCMDTO githubUserProfile =
-        (GithubSCMDTO) getScmUserProfile(accountIdentifier, getUserPrincipal(), SCMType.GITHUB);
-    try {
-      return (
-          (GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubUserProfile.getAuthentication().getCredentials())
-              .getHttpCredentialsSpec())
-          .getUsername();
-    } catch (Exception e) {
-      log.error("User Profile should contain github username name for git sync", e);
-      throw new InvalidRequestException("User Profile should contain github username name for git sync", e);
+  public String getScmUserName(String accountIdentifier, SCMType scmType) {
+    SourceCodeManagerDTO userScmProfile = getUserScmProfile(accountIdentifier, getUserPrincipal(), scmType);
+    switch (scmType) {
+      case BITBUCKET:
+        BitbucketSCMDTO bitBucketSCM = (BitbucketSCMDTO) userScmProfile;
+        return ((BitbucketUsernamePasswordDTO) ((BitbucketHttpCredentialsDTO) bitBucketSCM.getAuthentication()
+                                                    .getCredentials())
+                    .getHttpCredentialsSpec())
+            .getUsername();
+      case GITHUB:
+        GithubSCMDTO githubSCM = (GithubSCMDTO) userScmProfile;
+        return ((GithubUsernameTokenDTO) ((GithubHttpCredentialsDTO) githubSCM.getAuthentication().getCredentials())
+                    .getHttpCredentialsSpec())
+            .getUsername();
+      default:
+        throw new InvalidRequestException(String.format("Unsupported Source Code Manager : %s", scmType));
     }
   }
 
-  private SourceCodeManagerDTO getScmUserProfile(String accountId, UserPrincipal userPrincipal, SCMType scmType) {
+  private SourceCodeManagerDTO getUserScmProfile(String accountId, UserPrincipal userPrincipal, SCMType scmType) {
     if (userPrincipal == null) {
       log.error(ERROR_MSG_USER_PRINCIPAL_NOT_SET);
       throw new InvalidRequestException(ERROR_MSG_USER_PRINCIPAL_NOT_SET);
@@ -107,8 +137,9 @@ public class UserProfileHelper {
     final Optional<SourceCodeManagerDTO> sourceCodeManagerDTO =
         sourceCodeManager.stream().filter(scm -> scm.getType().equals(scmType)).findFirst();
     if (!sourceCodeManagerDTO.isPresent()) {
-      log.error("User profile doesn't contain github scm details");
-      throw new InvalidRequestException("User profile doesn't contain github scm details");
+      log.error("User profile doesn't contain {} source code manager details", scmType);
+      throw new InvalidRequestException(
+          String.format("User profile doesn't contain %s source code manager details", scmType));
     }
     return sourceCodeManagerDTO.get();
   }

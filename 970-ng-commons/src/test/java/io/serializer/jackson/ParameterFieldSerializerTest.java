@@ -21,7 +21,10 @@ import io.harness.pms.yaml.validation.InputSetValidator;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.TextNode;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import java.io.IOException;
 import java.util.HashMap;
@@ -39,6 +42,7 @@ public class ParameterFieldSerializerTest extends CategoryTest implements Multil
   @Before
   public void setUp() {
     objectMapper = new ObjectMapper(new YAMLFactory());
+    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_EMPTY);
     objectMapper.registerModule(new NGHarnessJacksonModule());
   }
 
@@ -100,11 +104,39 @@ public class ParameterFieldSerializerTest extends CategoryTest implements Multil
   @Builder
   private static class SampleParams {
     ParameterField<String> inner;
+    String abc;
   }
 
   @Data
   @Builder
   private static class SampleParamsMap {
     ParameterField<Map<String, String>> innerMap;
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.VAIBHAV_SI)
+  @Category(UnitTests.class)
+  public void testParameterFieldSerializationWithNullAndEmptyValues() {
+    SampleParams sampleParams =
+        SampleParams.builder().abc("abc").inner(ParameterField.createValueField("inner")).build();
+    JsonNode jsonNode = objectMapper.valueToTree(sampleParams);
+    assertThat(jsonNode.size()).isEqualTo(2);
+
+    sampleParams = SampleParams.builder().abc("abc").inner(ParameterField.createValueField(null)).build();
+    jsonNode = objectMapper.valueToTree(sampleParams);
+    assertThat(jsonNode.size()).isEqualTo(1);
+    assertThat(jsonNode.get("inner")).isNull();
+    assertThat(jsonNode.get("abc")).isEqualTo(new TextNode("abc"));
+
+    sampleParams = SampleParams.builder().abc("abc").inner(ParameterField.createValueField("")).build();
+    jsonNode = objectMapper.valueToTree(sampleParams);
+    assertThat(jsonNode.size()).isEqualTo(1);
+    assertThat(jsonNode.get("inner")).isNull();
+    assertThat(jsonNode.get("abc")).isEqualTo(new TextNode("abc"));
+
+    sampleParams =
+        SampleParams.builder().inner(ParameterField.createExpressionField(true, "<+exp>", null, true)).build();
+    jsonNode = objectMapper.valueToTree(sampleParams);
+    assertThat(jsonNode.get("inner")).isNotNull();
   }
 }

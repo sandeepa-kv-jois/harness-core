@@ -21,6 +21,7 @@ import io.harness.persistence.HQuery;
 
 import com.google.inject.Inject;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
@@ -55,10 +56,11 @@ public class CustomHealthCustomPackForExistingProjects implements CVNGMigration 
                          .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                          .metrics(new HashSet<>(Arrays.asList(MetricDefinition.builder()
                                                                   .name(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
+                                                                  .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                                                                   .type(TimeSeriesMetricType.ERROR)
                                                                   .build())))
                          .build();
-        hPersistence.save(customPack);
+        hPersistence.saveIgnoringDuplicateKeys(Collections.singletonList(customPack));
         log.info("Saved Custom health custom pack for {}", pack.getProjectIdentifier());
       }
     }

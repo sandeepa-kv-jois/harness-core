@@ -25,6 +25,7 @@ import static io.harness.encryption.SecretRefData.SECRET_DOT_DELIMINITER;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -63,6 +64,8 @@ import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.git.model.ChangeType;
+import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.services.OrganizationService;
 import io.harness.ng.core.services.ProjectService;
 import io.harness.outbox.api.OutboxService;
@@ -95,6 +98,7 @@ public class ConnectorListWithFiltersTest extends ConnectorsTestBase {
   @Inject @InjectMocks @Spy DefaultConnectorServiceImpl connectorService;
   @Inject ConnectorRepository connectorRepository;
   @Inject FilterService filterService;
+  @Mock AccountSettingsHelper accountSettingsHelper;
   String accountIdentifier = "accountIdentifier";
   String orgIdentifier = "orgIdentifier";
   String projectIdentifier = "projectIdentifier";
@@ -107,6 +111,9 @@ public class ConnectorListWithFiltersTest extends ConnectorsTestBase {
   public void setup() {
     MockitoAnnotations.initMocks(this);
     doNothing().when(connectorService).assurePredefined(any(), any());
+    doReturn(true)
+        .when(accountSettingsHelper)
+        .getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
   }
   private ConnectorInfoDTO getConnector(String name, String identifier, String description) {
     return ConnectorInfoDTO.builder()

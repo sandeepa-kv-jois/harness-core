@@ -128,7 +128,8 @@ public class KubernetesClusterActivity extends Activity {
   @Value
   @Builder
   public static class ServiceEnvironment {
-    String serviceIdentifier;
-    String environmentIdentifier;
+    @Deprecated String serviceIdentifier;
+    @Deprecated String environmentIdentifier;
+    String monitoredServiceIdentifier;
   }
 }

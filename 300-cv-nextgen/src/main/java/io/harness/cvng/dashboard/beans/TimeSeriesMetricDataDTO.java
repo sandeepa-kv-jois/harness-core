@@ -46,15 +46,20 @@ public class TimeSeriesMetricDataDTO implements Comparable<TimeSeriesMetricDataD
     if (metricDataList == null) {
       metricDataList = new TreeSet<>();
     }
-    if (isAnalysisDone(riskScore)) {
-      totalRisk += riskScore.intValue();
-    }
+
+    totalRisk += getRiskScore(riskScore);
+
     metricDataList.add(
         MetricData.builder().timestamp(timestamp).value(value).risk(Risk.valueOf(riskScore.intValue())).build());
   }
 
-  boolean isAnalysisDone(Double riskScore) {
-    return riskScore > 0;
+  private Integer getRiskScore(Double riskScore) {
+    // returning 0 in case analysis is not done
+    if (riskScore < 0) {
+      return 0;
+    }
+    // adding this +1 as to consider the healthy service (riskScore =0) to be considered in the sorting order
+    return riskScore.intValue() + 1;
   }
 
   @Override

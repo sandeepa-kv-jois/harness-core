@@ -58,6 +58,7 @@ public abstract class ChangeIntelHandlerTestBase extends DelegateTestBase {
     assertThat(eventDTO).isNotNull();
     assertThat(eventDTO.getAccountId()).isEqualTo(accountId);
     assertThat(eventDTO.getChangeSourceIdentifier()).isEqualTo(dataCollectionInfo.getChangeSourceIdentifier());
+    assertThat(eventDTO.getMonitoredServiceIdentifier()).isEqualTo(dataCollectionInfo.getMonitoredServiceIdentifier());
     assertThat(eventDTO.getEnvIdentifier()).isEqualTo(dataCollectionInfo.getEnvIdentifier());
     assertThat(eventDTO.getServiceIdentifier()).isEqualTo(dataCollectionInfo.getServiceIdentifier());
     assertThat(eventDTO.getOrgIdentifier()).isEqualTo(dataCollectionInfo.getOrgIdentifier());

@@ -11,9 +11,12 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryArtifactBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRepoDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRequestDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
+import io.harness.cdng.artifact.resources.artifactory.service.ArtifactoryResourceService;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.artifacts.resources.util.ArtifactResourceUtils;
 import io.harness.ng.core.dto.ErrorDTO;
@@ -29,9 +32,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.Path;
@@ -55,6 +60,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ArtifactoryArtifactResource {
   private final PipelineServiceClient pipelineServiceClient;
+  private final ArtifactoryResourceService artifactoryResourceService;
 
   @GET
   @Path("getBuildDetails")
@@ -131,5 +137,38 @@ public class ArtifactoryArtifactResource {
     IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
         artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
     return ResponseDTO.newResponse(false);
+  }
+
+  @GET
+  @Path("repositoriesDetails")
+  @ApiOperation(value = "Gets repository details", nickname = "getRepositoriesDetailsForArtifactory")
+  public ResponseDTO<ArtifactoryRepoDetailsDTO> getRepositoriesDetails(
+      @NotNull @QueryParam("connectorRef") String artifactoryConnectorIdentifier,
+      @QueryParam("repositoryType") @DefaultValue("any") String repositoryType,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
+    IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
+        artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
+    ArtifactoryRepoDetailsDTO repoDetailsDTO =
+        artifactoryResourceService.getRepositories(repositoryType, connectorRef, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(repoDetailsDTO);
+  }
+
+  @GET
+  @Path("artifactBuildsDetails")
+  @ApiOperation(value = "Gets artifacts builds details", nickname = "getArtifactsBuildsDetailsForArtifactory")
+  public ResponseDTO<List<ArtifactoryArtifactBuildDetailsDTO>> getBuildsDetails(
+      @NotNull @QueryParam("connectorRef") String artifactoryConnectorIdentifier,
+      @NotNull @QueryParam("repositoryName") String repositoryName, @QueryParam("filePath") String filePath,
+      @NotNull @QueryParam("maxVersions") int maxVersions,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
+      @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
+    IdentifierRef connectorRef = IdentifierRefHelper.getIdentifierRef(
+        artifactoryConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
+    List<ArtifactoryArtifactBuildDetailsDTO> buildDetails = artifactoryResourceService.getBuildDetails(
+        repositoryName, filePath, maxVersions, connectorRef, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(buildDetails);
   }
 }

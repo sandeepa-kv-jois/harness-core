@@ -18,15 +18,21 @@ import java.util.EnumSet;
 
 @OwnedBy(HarnessTeam.DX)
 public class HintException extends WingsException {
-  public static final String HINT_AWS_IRSA_CHECK = "Check IRSA role on delegate.";
+  public static final String HINT_AWS_IRSA_CHECK =
+      "Check if the assumed IRSA role on delegate has the permissions to describe regions.";
   public static final String HINT_EMPTY_ACCESS_KEY = "Check if Access Key is empty";
   public static final String HINT_EMPTY_SECRET_KEY = "Check if Secret Key is empty";
   public static final String HINT_EMPTY_CROSS_ACCOUNT_ROLE_ARN_KEY = "Check if Cross account role ARN is empty";
   public static final String HINT_INCORRECT_ACCESS_KEY_SECRET_KEY_PERMISSIONS_KEY =
-      "Check if access key, secret key are valid. Check if user has required permissions to perform the activity.";
+      "Check if access key, secret key are valid. \nCheck if user has required permissions to describe regions.";
   public static final String HINT_INVALID_CROSS_ACCOUNT_ROLE_ARN_EXTERNAL_ID_PERMISSIONS_KEY =
-      "Check if Cross account role ARN, External Id are valid. Check if User / IAM Role on delegate / IRSA role has permission to perform sts:AssumeRole. Check if assumed Cross account role has permissions to perform the activity.";
-  public static final String HINT_AWS_IAM_ROLE_CHECK = "Check IAM role on delegate ec2.";
+      "\nCheck if Cross account role ARN, External Id are valid. \nCheck if User / IAM Role on delegate / IRSA role has permission to perform sts:AssumeRole. \nCheck if assumed Cross account role has permissions to describe regions.";
+  public static final String HINT_AWS_IAM_ROLE_CHECK =
+      "Check if the IAM role on ec2 delegate has the permissions to describe regions.";
+  public static final String HINT_AWS_CONNECTOR_NG_DOCUMENTATION =
+      "\nRefer Harness NG documentation for configuring AWS connector settings: https://ngdocs.harness.io/article/m5vkql35ca-aws-connector-settings-reference";
+  public static final String IAM_DETAILS_COMMAND =
+      "\nRun this command to check the details about the IAM user/role: `aws sts get-caller-identity`\n";
   public static final String HINT_AWS_CLIENT_UNKNOWN_ISSUE = "Check AWS client on delegate";
   public static final String HINT_ECR_IMAGE_NAME = "Check if given ECR image is available in specified region";
   public static final String HINT_AWS_ACCESS_DENIED = "Please ensure AWS credentials are valid";
@@ -47,7 +53,8 @@ public class HintException extends WingsException {
   public static final String HINT_AZURE_VAULT_SM_CRUD_DENIED =
       "Please ensure Azure Vault engine have valid permissions";
   public static final String HINT_AZURE_VAULT_SM_SUBSCRIPTION_ID_ERROR = "Please ensure Subscription ID is valid";
-  public static final String HINT_HASHICORP_VAULT_SM_ACCESS_DENIED = "Please ensure Azure Vault credentials are valid";
+  public static final String HINT_HASHICORP_VAULT_SM_ACCESS_DENIED =
+      "Please ensure Hashicorp Vault credentials are valid";
   public static final String HINT_INVALID_TAG_REFER_LINK_GCR =
       "Please check if tag is available. Refer https://cloud.google.com/sdk/gcloud/reference/container/images/list-tags for more information";
   public static final String HINT_INVALID_IMAGE_REFER_LINK_GCR =
@@ -92,6 +99,10 @@ public class HintException extends WingsException {
   public static final HintException MOVE_TO_THE_PARENT_OBJECT =
       new HintException("Navigate back to the parent object page and continue from there.");
   public static final HintException REFRESH_THE_PAGE = new HintException("Refresh the web page to update the data.");
+  public static final String DELEGATE_NOT_AVAILABLE_FOR_GIT_SYNC =
+      "Please make sure that your delegates are connected. If you are using delegate selectors, "
+      + "please ensure that a delegate exists with the delegate selector used in the Connector which is used for git sync. "
+      + "Refer %s for more information on delegate Installation";
 
   public HintException(String message) {
     super(message, null, HINT, INFO, null, null);

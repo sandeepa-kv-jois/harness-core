@@ -11,7 +11,9 @@ import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.rule.OwnerRule.PRABU;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
@@ -19,10 +21,12 @@ import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.task.TaskParameters;
-import io.harness.perpetualtask.manifest.ManifestRepositoryService;
+import io.harness.perpetualtask.manifest.ArtifactoryHelmRepositoryService;
+import io.harness.perpetualtask.manifest.HelmRepositoryService;
 import io.harness.rule.Owner;
 
 import software.wings.beans.appmanifest.HelmChart;
+import software.wings.beans.settings.helm.HttpHelmRepoConfig;
 import software.wings.helpers.ext.helm.request.HelmChartCollectionParams;
 import software.wings.helpers.ext.helm.request.HelmChartCollectionParams.HelmChartCollectionType;
 import software.wings.helpers.ext.helm.request.HelmChartConfigParams;
@@ -41,7 +45,8 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 public class HelmCollectChartTaskTest extends CategoryTest {
-  @Mock ManifestRepositoryService manifestRepositoryService;
+  @Mock HelmRepositoryService helmRepositoryService;
+  @Mock ArtifactoryHelmRepositoryService artifactoryHelmRepositoryService;
   @InjectMocks
   @Inject
   HelmCollectChartTask helmCollectChartTask = new HelmCollectChartTask(
@@ -50,6 +55,8 @@ public class HelmCollectChartTaskTest extends CategoryTest {
   @Before
   public void initMocks() {
     MockitoAnnotations.initMocks(this);
+    on(helmCollectChartTask).set("helmCommandRepositoryService", helmRepositoryService);
+    on(helmCollectChartTask).set("artifactoryHelmRepositoryService", artifactoryHelmRepositoryService);
   }
 
   @Test
@@ -58,7 +65,7 @@ public class HelmCollectChartTaskTest extends CategoryTest {
   public void testCollectAllVersions() throws Exception {
     List<HelmChart> helmCharts = Arrays.asList(HelmChart.builder().accountId("accountId").uuid("uuid").build(),
         HelmChart.builder().accountId("accountId").uuid("uuid2").build());
-    when(manifestRepositoryService.collectManifests(any())).thenReturn(helmCharts);
+    when(helmRepositoryService.collectManifests(any())).thenReturn(helmCharts);
     TaskParameters taskParameters =
         HelmChartCollectionParams.builder().collectionType(HelmChartCollectionType.ALL).build();
     HelmCollectChartResponse response = helmCollectChartTask.run(taskParameters);
@@ -73,7 +80,7 @@ public class HelmCollectChartTaskTest extends CategoryTest {
   public void testCollectSpecificVersion() throws Exception {
     List<HelmChart> helmCharts =
         Arrays.asList(HelmChart.builder().accountId("accountId").uuid("uuid").version("v1").build());
-    when(manifestRepositoryService.collectManifests(any())).thenReturn(helmCharts);
+    when(helmRepositoryService.collectManifests(any())).thenReturn(helmCharts);
     TaskParameters taskParameters =
         HelmChartCollectionParams.builder()
             .collectionType(HelmChartCollectionType.SPECIFIC_VERSION)
@@ -89,7 +96,7 @@ public class HelmCollectChartTaskTest extends CategoryTest {
   @Owner(developers = PRABU)
   @Category(UnitTests.class)
   public void testCollectSpecificVersionNotFound() throws Exception {
-    when(manifestRepositoryService.collectManifests(any())).thenReturn(Collections.emptyList());
+    when(helmRepositoryService.collectManifests(any())).thenReturn(Collections.emptyList());
     TaskParameters taskParameters =
         HelmChartCollectionParams.builder()
             .collectionType(HelmChartCollectionType.SPECIFIC_VERSION)
@@ -98,5 +105,28 @@ public class HelmCollectChartTaskTest extends CategoryTest {
     HelmCollectChartResponse response = helmCollectChartTask.run(taskParameters);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
     assertThat(response.getHelmCharts()).isNull();
+  }
+
+  @Test
+  @Owner(developers = PRABU)
+  @Category(UnitTests.class)
+  public void shouldCollectFromArtifactoryOnArtifactoryRepoAndByPassHelmFetchEnabled() throws Exception {
+    List<HelmChart> helmCharts = Arrays.asList(HelmChart.builder().accountId("accountId").uuid("uuid").build(),
+        HelmChart.builder().accountId("accountId").uuid("uuid2").build());
+    when(artifactoryHelmRepositoryService.collectManifests(any())).thenReturn(helmCharts);
+    HelmChartConfigParams helmChartConfigParams =
+        HelmChartConfigParams.builder()
+            .helmRepoConfig(HttpHelmRepoConfig.builder().chartRepoUrl("something/artifactory/something").build())
+            .bypassHelmFetch(true)
+            .build();
+    HelmChartCollectionParams taskParameters = HelmChartCollectionParams.builder()
+                                                   .collectionType(HelmChartCollectionType.ALL)
+                                                   .helmChartConfigParams(helmChartConfigParams)
+                                                   .build();
+    HelmCollectChartResponse response = helmCollectChartTask.run(taskParameters);
+    assertThat(response.getCommandExecutionStatus()).isEqualTo(SUCCESS);
+    assertThat(response.getHelmCharts().stream().map(HelmChart::getUuid).collect(Collectors.toList()))
+        .containsExactly("uuid", "uuid2");
+    verify(artifactoryHelmRepositoryService).collectManifests(taskParameters);
   }
 }

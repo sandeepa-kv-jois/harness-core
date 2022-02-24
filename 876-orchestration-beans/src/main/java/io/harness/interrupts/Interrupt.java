@@ -21,7 +21,6 @@ import io.harness.ng.DbAliases;
 import io.harness.persistence.UuidAccess;
 import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
-import io.harness.pms.sdk.core.steps.io.StepParameters;
 
 import com.google.common.collect.ImmutableList;
 import java.time.OffsetDateTime;
@@ -63,8 +62,6 @@ public class Interrupt implements PersistentRegularIterable, UuidAccess {
   @NotNull InterruptConfig interruptConfig;
   @NonNull String planExecutionId;
   String nodeExecutionId;
-  // TODO (prashant) : Remove this field from here
-  StepParameters parameters;
   Map<String, String> metadata;
   @Wither @LastModifiedDate Long lastUpdatedAt;
   @Wither @CreatedDate Long createdAt;
@@ -73,6 +70,8 @@ public class Interrupt implements PersistentRegularIterable, UuidAccess {
 
   @Getter @NonFinal @Setter Long nextIteration;
   @Builder.Default @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
+
+  Boolean fromMonitor;
 
   @Override
   public Long obtainNextIteration(String fieldName) {
@@ -131,5 +130,9 @@ public class Interrupt implements PersistentRegularIterable, UuidAccess {
                  .descSortField(InterruptKeys.createdAt)
                  .build())
         .build();
+  }
+
+  public Boolean isFromMonitor() {
+    return fromMonitor != null && fromMonitor;
   }
 }

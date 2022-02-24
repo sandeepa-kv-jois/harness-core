@@ -17,14 +17,12 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.MetricPackDTO;
-import io.harness.cvng.beans.TimeSeriesThresholdActionType;
-import io.harness.cvng.beans.TimeSeriesThresholdCriteria;
 import io.harness.cvng.core.entities.MetricPack;
 import io.harness.cvng.core.entities.MetricPack.MetricDefinition;
 import io.harness.cvng.core.entities.MetricPack.MetricPackKeys;
 import io.harness.cvng.core.entities.TimeSeriesThreshold;
-import io.harness.cvng.core.entities.TimeSeriesThreshold.TimeSeriesThresholdKeys;
 import io.harness.cvng.core.services.api.MetricPackService;
+import io.harness.cvng.core.services.api.TimeSeriesThresholdService;
 import io.harness.persistence.HPersistence;
 import io.harness.serializer.YamlUtils;
 
@@ -156,6 +154,7 @@ public class MetricPackServiceImpl implements MetricPackService {
   }
 
   @Inject private HPersistence hPersistence;
+  @Inject private TimeSeriesThresholdService timeSeriesThresholdService;
 
   @Override
   public List<MetricPackDTO> getMetricPacks(
@@ -188,7 +187,13 @@ public class MetricPackServiceImpl implements MetricPackService {
       final Map<String, MetricPack> metricPackDefinitionsFromYaml =
           getMetricPackDefinitionsFromYaml(accountId, orgIdentifier, projectIdentifier, dataSourceType);
       final ArrayList<MetricPack> metricPacks = Lists.newArrayList(metricPackDefinitionsFromYaml.values());
+      log.info(String.format(
+          "Saving Metric packs for accountId %s, orgIdentifier %s, projectIdentifier %s for dataSourceType %s",
+          accountId, orgIdentifier, projectIdentifier, dataSourceType));
       hPersistence.save(metricPacks);
+      metricPacks.forEach(metricPack
+          -> timeSeriesThresholdService.createDefaultIgnoreThresholds(
+              accountId, orgIdentifier, projectIdentifier, dataSourceType, metricPack));
       return metricPacks;
     }
 
@@ -217,22 +222,8 @@ public class MetricPackServiceImpl implements MetricPackService {
   @Override
   public void createDefaultMetricPackAndThresholds(String accountId, String orgIdentifier, String projectIdentifier) {
     List<DataSourceType> dataSourceTypes = DataSourceType.getTimeSeriesTypes();
-    log.info(String.format("Adding Metric packs for accountId %s, orgIdentifier %s, projectIdentifier %s", accountId,
-        orgIdentifier, projectIdentifier));
     for (DataSourceType dataSourceType : dataSourceTypes) {
-      final Map<String, MetricPack> metricPackDefinitionsFromYaml =
-          getMetricPackDefinitionsFromYaml(accountId, orgIdentifier, projectIdentifier, dataSourceType);
-      final ArrayList<MetricPack> metricPacks = Lists.newArrayList(metricPackDefinitionsFromYaml.values());
-
-      if (isEmpty(getMetricPacks(accountId, orgIdentifier, projectIdentifier, dataSourceType))) {
-        log.info(String.format(
-            "Saving Metric packs for accountId %s, orgIdentifier %s, projectIdentifier %s for dataSourceType %s",
-            accountId, orgIdentifier, projectIdentifier, dataSourceType));
-        hPersistence.save(metricPacks);
-        metricPacks.forEach(metricPack
-            -> createDefaultIgnoreThresholds(
-                accountId, orgIdentifier, projectIdentifier, metricPack.getIdentifier(), dataSourceType));
-      }
+      getMetricPacks(accountId, orgIdentifier, projectIdentifier, dataSourceType);
     }
   }
 
@@ -332,24 +323,6 @@ public class MetricPackServiceImpl implements MetricPackService {
   @Override
   public List<TimeSeriesThreshold> getMetricPackThresholds(String accountId, String orgIdentifier,
       String projectIdentifier, String metricPackIdentifier, DataSourceType dataSourceType) {
-    List<TimeSeriesThreshold> timeSeriesThresholds =
-        hPersistence.createQuery(TimeSeriesThreshold.class, excludeAuthority)
-            .filter(TimeSeriesThresholdKeys.accountId, accountId)
-            .filter(TimeSeriesThresholdKeys.orgIdentifier, orgIdentifier)
-            .filter(TimeSeriesThresholdKeys.projectIdentifier, projectIdentifier)
-            .filter(TimeSeriesThresholdKeys.metricPackIdentifier, metricPackIdentifier)
-            .filter(TimeSeriesThresholdKeys.dataSourceType, dataSourceType)
-            .asList();
-    if (isEmpty(timeSeriesThresholds)) {
-      return createDefaultIgnoreThresholds(
-          accountId, orgIdentifier, projectIdentifier, metricPackIdentifier, dataSourceType);
-    }
-
-    return timeSeriesThresholds;
-  }
-
-  private List<TimeSeriesThreshold> createDefaultIgnoreThresholds(String accountId, String orgIdentifier,
-      String projectIdentifier, String metricPackIdentifier, DataSourceType dataSourceType) {
     MetricPack metricPack = hPersistence.createQuery(MetricPack.class, excludeAuthority)
                                 .filter(MetricPackKeys.accountId, accountId)
                                 .filter(MetricPackKeys.orgIdentifier, orgIdentifier)
@@ -357,46 +330,10 @@ public class MetricPackServiceImpl implements MetricPackService {
                                 .filter(MetricPackKeys.identifier, metricPackIdentifier)
                                 .filter(MetricPackKeys.dataSourceType, dataSourceType)
                                 .get();
-
     Preconditions.checkNotNull(
         metricPack, "No metric pack found for project and pack ", projectIdentifier, metricPackIdentifier);
-
-    List<TimeSeriesThreshold> timeSeriesThresholds = new ArrayList<>();
-    metricPack.getMetrics().forEach(metricDefinition -> {
-      final List<TimeSeriesThresholdCriteria> thresholds = metricDefinition.getType().getThresholds();
-      thresholds.forEach(threshold
-          -> timeSeriesThresholds.add(TimeSeriesThreshold.builder()
-                                          .accountId(accountId)
-                                          .orgIdentifier(orgIdentifier)
-                                          .projectIdentifier(projectIdentifier)
-                                          .dataSourceType(dataSourceType)
-                                          .metricType(metricDefinition.getType())
-                                          .metricPackIdentifier(metricPackIdentifier)
-                                          .metricName(metricDefinition.getName())
-                                          .action(TimeSeriesThresholdActionType.IGNORE)
-                                          .criteria(threshold)
-                                          .build()));
-    });
-    saveMetricPackThreshold(accountId, orgIdentifier, projectIdentifier, dataSourceType, timeSeriesThresholds);
-    return timeSeriesThresholds;
-  }
-
-  @Override
-  public List<String> saveMetricPackThreshold(String accountId, String orgIdentifier, String projectIdentifier,
-      DataSourceType dataSourceType, List<TimeSeriesThreshold> timeSeriesThresholds) {
-    timeSeriesThresholds.forEach(timeSeriesThreshold -> {
-      timeSeriesThreshold.setAccountId(accountId);
-      timeSeriesThreshold.setOrgIdentifier(orgIdentifier);
-      timeSeriesThreshold.setProjectIdentifier(projectIdentifier);
-      timeSeriesThreshold.setDataSourceType(dataSourceType);
-    });
-    return hPersistence.save(timeSeriesThresholds);
-  }
-
-  @Override
-  public boolean deleteMetricPackThresholds(
-      String accountId, String orgIdentifier, String projectIdentifier, String thresholdId) {
-    return hPersistence.delete(TimeSeriesThreshold.class, thresholdId);
+    return timeSeriesThresholdService.getMetricPackThresholds(
+        accountId, orgIdentifier, projectIdentifier, metricPack, dataSourceType);
   }
 
   @Override

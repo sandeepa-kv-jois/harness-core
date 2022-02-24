@@ -7,6 +7,8 @@
 
 package io.harness.gitsync.core.impl;
 
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
@@ -36,11 +38,14 @@ import io.harness.gitsync.common.service.ScmOrchestratorService;
 import io.harness.gitsync.common.service.YamlGitConfigService;
 import io.harness.gitsync.common.service.gittoharness.GitToHarnessProcessorService;
 import io.harness.gitsync.core.beans.GetFilesInDiffResponseDTO;
+import io.harness.gitsync.core.beans.GitWebhookRequestAttributes;
 import io.harness.gitsync.core.dtos.GitCommitDTO;
 import io.harness.gitsync.core.dtos.YamlChangeSetDTO;
 import io.harness.gitsync.core.service.GitCommitService;
 import io.harness.gitsync.core.service.YamlChangeSetHandler;
 import io.harness.gitsync.gitsyncerror.service.GitSyncErrorService;
+import io.harness.gitsync.logger.GitProcessingLogContext;
+import io.harness.logging.AutoLogContext;
 import io.harness.utils.FilePathUtils;
 
 import com.google.inject.Inject;
@@ -71,87 +76,93 @@ public class BranchPushEventYamlChangeSetHandler implements YamlChangeSetHandler
   @Override
   public YamlChangeSetStatus process(YamlChangeSetDTO yamlChangeSetDTO) {
     String repoURL = yamlChangeSetDTO.getRepoUrl();
-
-    List<YamlGitConfigDTO> yamlGitConfigDTOList =
-        yamlGitConfigService.getByAccountAndRepo(yamlChangeSetDTO.getAccountId(), repoURL);
-    if (yamlGitConfigDTOList.isEmpty()) {
-      log.info("Repo {} doesn't exist, ignoring the branch push change set event : {}", repoURL, yamlChangeSetDTO);
-      return YamlChangeSetStatus.SKIPPED;
-    }
-
-    gitToHarnessProgressHelper.doPreRunChecks(yamlChangeSetDTO);
-
-    YamlChangeSetStatus queueStatus =
-        gitToHarnessProgressHelper.getQueueStatusIfEventInProgressOrAlreadyProcessed(yamlChangeSetDTO);
-    if (queueStatus != null) {
-      log.info("Ignoring event {} with queue status {} as event might be already completed or in process",
-          yamlChangeSetDTO, queueStatus);
-      return queueStatus;
-    }
-
-    boolean isCommitAlreadyProcessed = gitCommitService.isCommitAlreadyProcessed(yamlChangeSetDTO.getAccountId(),
-        yamlChangeSetDTO.getGitWebhookRequestAttributes().getHeadCommitId(), yamlChangeSetDTO.getRepoUrl(),
-        yamlChangeSetDTO.getBranch());
-    if (isCommitAlreadyProcessed) {
-      log.info("CommitId {} already processed, ignoring the branch push change set event : {}",
-          yamlChangeSetDTO.getGitWebhookRequestAttributes().getHeadCommitId(), yamlChangeSetDTO);
-      return YamlChangeSetStatus.SKIPPED;
-    }
-
-    // Init Progress Record for this event
-    GitToHarnessProgressDTO gitToHarnessProgressRecord = gitToHarnessProgressService.initProgress(yamlChangeSetDTO,
-        YamlChangeSetEventType.BRANCH_PUSH, GitToHarnessProcessingStepType.GET_FILES,
-        yamlChangeSetDTO.getGitWebhookRequestAttributes().getHeadCommitId());
-
-    try {
-      GitToHarnessProcessMsvcStepResponse gitToHarnessProcessMsvcStepResponse;
-
-      Optional<GitCommitDTO> gitCommitDTO = gitCommitService.findLastGitCommit(
-          yamlChangeSetDTO.getAccountId(), yamlChangeSetDTO.getRepoUrl(), yamlChangeSetDTO.getBranch());
-
-      final GitToHarnessGetFilesStepRequest getFilesStepRequest = GitToHarnessGetFilesStepRequest.builder()
-                                                                      .yamlChangeSetDTO(yamlChangeSetDTO)
-                                                                      .yamlGitConfigDTOList(yamlGitConfigDTOList)
-                                                                      .gitToHarnessProgress(gitToHarnessProgressRecord)
-                                                                      .build();
-
-      // if this branch has no commit record this means after git sync first push is from git. So getting all the files
-      // from repo using branch sync.
-      if (!gitCommitDTO.isPresent()) {
-        gitToHarnessProcessMsvcStepResponse = performBranchSync(getFilesStepRequest);
-      } else {
-        GitToHarnessGetFilesStepResponse gitToHarnessGetFilesStepResponse =
-            performGetFilesStep(getFilesStepRequest, gitCommitDTO.get());
-
-        gitToHarnessProcessMsvcStepResponse = performProcessFilesInMsvcStep(
-            GitToHarnessProcessMsvcStepRequest.builder()
-                .yamlChangeSetDTO(yamlChangeSetDTO)
-                .yamlGitConfigDTO(yamlGitConfigDTOList.get(0))
-                .gitFileChangeDTOList(gitToHarnessGetFilesStepResponse.getGitFileChangeDTOList())
-                .gitDiffResultFileDTOList(gitToHarnessGetFilesStepResponse.getGitDiffResultFileDTOList())
-                .progressRecord(gitToHarnessGetFilesStepResponse.getProgressRecord())
-                .processingCommitId(gitToHarnessGetFilesStepResponse.getProcessingCommitId())
-                .commitMessage(gitToHarnessGetFilesStepResponse.getCommitMessage())
-                .build());
+    final GitWebhookRequestAttributes gitWebhookRequestAttributes = yamlChangeSetDTO.getGitWebhookRequestAttributes();
+    try (AutoLogContext ignore1 = new GitProcessingLogContext(
+             yamlChangeSetDTO.getAccountId(), gitWebhookRequestAttributes.getHeadCommitId(), OVERRIDE_ERROR)) {
+      log.info("Processing the commitId = [{}] for the repo [{}] and branch [{}]",
+          gitWebhookRequestAttributes.getHeadCommitId(), repoURL, yamlChangeSetDTO.getBranch());
+      List<YamlGitConfigDTO> yamlGitConfigDTOList =
+          yamlGitConfigService.getByAccountAndRepo(yamlChangeSetDTO.getAccountId(), repoURL);
+      if (yamlGitConfigDTOList.isEmpty()) {
+        log.info("Repo {} doesn't exist, ignoring the branch push change set event : {}", repoURL, yamlChangeSetDTO);
+        return YamlChangeSetStatus.SKIPPED;
       }
 
-      if (gitToHarnessProcessMsvcStepResponse.getGitToHarnessProgressStatus().isFailureStatus()) {
-        log.error("G2H process files step failed with status : {}, marking branch push event as FAILED for retry",
-            gitToHarnessProcessMsvcStepResponse.getGitToHarnessProgressStatus());
+      gitToHarnessProgressHelper.doPreRunChecks(yamlChangeSetDTO);
+
+      YamlChangeSetStatus queueStatus =
+          gitToHarnessProgressHelper.getQueueStatusIfEventInProgressOrAlreadyProcessed(yamlChangeSetDTO);
+      if (queueStatus != null) {
+        log.info("Ignoring event {} with queue status {} as event might be already completed or in process",
+            yamlChangeSetDTO, queueStatus);
+        return queueStatus;
+      }
+
+      boolean isCommitAlreadyProcessed = gitCommitService.isCommitAlreadyProcessed(yamlChangeSetDTO.getAccountId(),
+          gitWebhookRequestAttributes.getHeadCommitId(), yamlChangeSetDTO.getRepoUrl(), yamlChangeSetDTO.getBranch());
+      if (isCommitAlreadyProcessed) {
+        log.info("CommitId {} already processed, ignoring the branch push change set event : {}",
+            gitWebhookRequestAttributes.getHeadCommitId(), yamlChangeSetDTO);
+        return YamlChangeSetStatus.SKIPPED;
+      }
+
+      // Init Progress Record for this event
+      GitToHarnessProgressDTO gitToHarnessProgressRecord =
+          gitToHarnessProgressService.initProgress(yamlChangeSetDTO, YamlChangeSetEventType.BRANCH_PUSH,
+              GitToHarnessProcessingStepType.GET_FILES, gitWebhookRequestAttributes.getHeadCommitId());
+
+      try {
+        GitToHarnessProcessMsvcStepResponse gitToHarnessProcessMsvcStepResponse;
+
+        Optional<GitCommitDTO> gitCommitDTO = gitCommitService.findLastGitCommit(
+            yamlChangeSetDTO.getAccountId(), yamlChangeSetDTO.getRepoUrl(), yamlChangeSetDTO.getBranch());
+
+        final GitToHarnessGetFilesStepRequest getFilesStepRequest =
+            GitToHarnessGetFilesStepRequest.builder()
+                .yamlChangeSetDTO(yamlChangeSetDTO)
+                .yamlGitConfigDTOList(yamlGitConfigDTOList)
+                .gitToHarnessProgress(gitToHarnessProgressRecord)
+                .build();
+
+        // if this branch has no commit record this means after git sync first push is from git. So getting all the
+        // files from repo using branch sync.
+        if (!gitCommitDTO.isPresent()) {
+          log.info("We haven't performed the git sync for this branch, performing full sync");
+          gitToHarnessProcessMsvcStepResponse = performBranchSync(getFilesStepRequest);
+        } else {
+          GitToHarnessGetFilesStepResponse gitToHarnessGetFilesStepResponse =
+              performGetFilesStep(getFilesStepRequest, gitCommitDTO.get());
+
+          gitToHarnessProcessMsvcStepResponse = performProcessFilesInMsvcStep(
+              GitToHarnessProcessMsvcStepRequest.builder()
+                  .yamlChangeSetDTO(yamlChangeSetDTO)
+                  .yamlGitConfigDTO(yamlGitConfigDTOList.get(0))
+                  .gitFileChangeDTOList(gitToHarnessGetFilesStepResponse.getGitFileChangeDTOList())
+                  .gitDiffResultFileDTOList(gitToHarnessGetFilesStepResponse.getGitDiffResultFileDTOList())
+                  .progressRecord(gitToHarnessGetFilesStepResponse.getProgressRecord())
+                  .processingCommitId(gitToHarnessGetFilesStepResponse.getProcessingCommitId())
+                  .commitMessage(gitToHarnessGetFilesStepResponse.getCommitMessage())
+                  .build());
+        }
+
+        if (gitToHarnessProcessMsvcStepResponse.getGitToHarnessProgressStatus().isFailureStatus()) {
+          log.error("G2H process files step failed with status : {}, marking branch push event as FAILED for retry",
+              gitToHarnessProcessMsvcStepResponse.getGitToHarnessProgressStatus());
+          return YamlChangeSetStatus.FAILED_WITH_RETRY;
+        }
+
+        return YamlChangeSetStatus.COMPLETED;
+      } catch (Exception ex) {
+        log.error("Error while processing branch push event {}", yamlChangeSetDTO, ex);
+        String gitConnectivityErrorMessage = GitConnectivityExceptionHelper.getErrorMessage(ex);
+        if (!gitConnectivityErrorMessage.isEmpty()) {
+          recordConnectivityErrors(yamlChangeSetDTO, gitConnectivityErrorMessage);
+        }
+        // Update the g2h status to ERROR
+        gitToHarnessProgressService.updateProgressStatus(
+            gitToHarnessProgressRecord.getUuid(), GitToHarnessProgressStatus.ERROR);
         return YamlChangeSetStatus.FAILED_WITH_RETRY;
       }
-
-      return YamlChangeSetStatus.COMPLETED;
-    } catch (Exception ex) {
-      log.error("Error while processing branch push event {}", yamlChangeSetDTO, ex);
-      String gitConnectivityErrorMessage = GitConnectivityExceptionHelper.getErrorMessage(ex);
-      if (!gitConnectivityErrorMessage.isEmpty()) {
-        recordConnectivityErrors(yamlChangeSetDTO, gitConnectivityErrorMessage);
-      }
-      // Update the g2h status to ERROR
-      gitToHarnessProgressService.updateProgressStatus(
-          gitToHarnessProgressRecord.getUuid(), GitToHarnessProgressStatus.ERROR);
-      return YamlChangeSetStatus.FAILED_WITH_RETRY;
     }
   }
 

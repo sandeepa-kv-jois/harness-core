@@ -10,22 +10,23 @@ package io.harness.cvng.core.transformer.changeSource;
 import io.harness.cvng.beans.change.ChangeSourceType;
 import io.harness.cvng.core.beans.monitoredService.ChangeSourceDTO;
 import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.HarnessCDCurrentGenChangeSourceSpec;
-import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.entities.changeSource.HarnessCDCurrentGenChangeSource;
 
 public class HarnessCDCurrentGenChangeSourceSpecTransformer
     extends ChangeSourceSpecTransformer<HarnessCDCurrentGenChangeSource, HarnessCDCurrentGenChangeSourceSpec> {
   @Override
   public HarnessCDCurrentGenChangeSource getEntity(
-      ServiceEnvironmentParams environmentParams, ChangeSourceDTO changeSourceDTO) {
+      MonitoredServiceParams monitoredServiceParams, ChangeSourceDTO changeSourceDTO) {
     HarnessCDCurrentGenChangeSourceSpec harnessCDCurrentGenChangeSourceSpec =
         (HarnessCDCurrentGenChangeSourceSpec) changeSourceDTO.getSpec();
     return HarnessCDCurrentGenChangeSource.builder()
-        .accountId(environmentParams.getAccountIdentifier())
-        .orgIdentifier(environmentParams.getOrgIdentifier())
-        .projectIdentifier(environmentParams.getProjectIdentifier())
-        .serviceIdentifier(environmentParams.getServiceIdentifier())
-        .envIdentifier(environmentParams.getEnvironmentIdentifier())
+        .accountId(monitoredServiceParams.getAccountIdentifier())
+        .orgIdentifier(monitoredServiceParams.getOrgIdentifier())
+        .projectIdentifier(monitoredServiceParams.getProjectIdentifier())
+        .serviceIdentifier(monitoredServiceParams.getServiceIdentifier())
+        .envIdentifier(monitoredServiceParams.getEnvironmentIdentifier())
+        .monitoredServiceIdentifier(monitoredServiceParams.getMonitoredServiceIdentifier())
         .identifier(changeSourceDTO.getIdentifier())
         .name(changeSourceDTO.getName())
         .enabled(changeSourceDTO.isEnabled())

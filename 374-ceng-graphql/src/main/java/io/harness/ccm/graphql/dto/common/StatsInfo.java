@@ -8,15 +8,18 @@
 package io.harness.ccm.graphql.dto.common;
 
 import io.leangen.graphql.annotations.GraphQLNonNull;
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Value;
 
 @Value
 @Builder
+@Schema(name = "CostOverview", description = "Overview of the cost.")
 public class StatsInfo {
-  @GraphQLNonNull String statsLabel;
-  @GraphQLNonNull String statsDescription;
-  @GraphQLNonNull String statsValue;
-  Number statsTrend;
-  Number value;
+  @Hidden @GraphQLNonNull String statsLabel;
+  @Hidden @GraphQLNonNull String statsDescription;
+  @Hidden @GraphQLNonNull String statsValue;
+  @Schema(name = "Trend", description = "Cost trend") Number statsTrend;
+  @Schema(name = "Cost", description = "Total cost") Number value;
 }

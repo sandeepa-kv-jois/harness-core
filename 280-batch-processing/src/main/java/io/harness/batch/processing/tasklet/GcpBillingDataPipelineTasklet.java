@@ -14,6 +14,7 @@ import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.dao.intfc.BillingDataPipelineRecordDao;
 import io.harness.batch.processing.service.intfc.BillingDataPipelineService;
 import io.harness.ccm.billing.dao.CloudBillingTransferRunDao;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.constants.CloudProvider;
 import io.harness.ccm.commons.entities.billing.BillingDataPipelineRecord;
 import io.harness.ccm.commons.entities.billing.CloudBillingTransferRun;
@@ -32,7 +33,6 @@ import java.io.IOException;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.bouncycastle.util.Strings;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -49,7 +49,7 @@ public class GcpBillingDataPipelineTasklet implements Tasklet {
   @Autowired private BillingDataPipelineRecordDao billingDataPipelineRecordDao;
   @Autowired private CloudBillingTransferRunDao cloudBillingTransferRunDao;
   @Autowired private BillingDataPipelineService billingDataPipelineService;
-  private JobParameters parameters;
+
   private static final String COPY_TRANSFER_JOB_NAME_TEMPLATE = "BigQueryCopyTransferJob_%s_%s";
   private static final String GCP_PRE_AGG_QUERY_TEMPLATE = "gcpPreAggQuery_%s_%s";
   private static final String GCP_COPY_SCHEDULED_QUERY_TEMPLATE = "gcpCopyScheduledQuery_%s_%s";
@@ -58,8 +58,9 @@ public class GcpBillingDataPipelineTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-    String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
+    JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
+    String accountId = jobConstants.getAccountId();
+
     if (!mainConfig.getBillingDataPipelineConfig().isGcpSyncEnabled()) {
       Account account = cloudToHarnessMappingService.getAccountInfoFromId(accountId);
       String accountName = account.getAccountName();

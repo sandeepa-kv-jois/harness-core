@@ -169,10 +169,10 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
     ExecutionContextImpl mockContext = initializeMockSetup(true, true);
     ExecutionContextImpl rollbackContext = initializeMockSetup(true, true);
     doReturn(serviceId).when(azureVMSSStateHelper).getServiceId(mockContext);
-    doReturn(true).when(azureVMSSStateHelper).isWebAppNonContainerDeployment(mockContext);
+    doReturn(false).when(azureVMSSStateHelper).isWebAppDockerDeployment(mockContext);
     doReturn(Optional.of(rollbackActivity))
         .when(azureVMSSStateHelper)
-        .getWebAppRollbackActivity(mockContext, serviceId);
+        .getWebAppPackageRollbackActivity(mockContext, serviceId);
     doReturn(rollbackContext)
         .when(azureVMSSStateHelper)
         .getExecutionContext(appId, workflowId, stateExecutionInstanceId);
@@ -281,7 +281,9 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
         .createAndSaveActivity(any(), any(), anyString(), anyString(), any(), anyListOf(CommandUnit.class));
     doReturn(managerExecutionLogCallback).when(azureVMSSStateHelper).getExecutionLogCallback(activity);
     doReturn(Optional.empty()).when(azureVMSSStateHelper).getUserDataSpecification(mockContext);
-    doReturn(appServiceStateData).when(azureVMSSStateHelper).populateAzureAppServiceData(eq(mockContext));
+    doReturn(appServiceStateData)
+        .when(azureVMSSStateHelper)
+        .populateAzureAppServiceData(eq(mockContext), any(Artifact.class));
     doReturn("service-template-id").when(serviceTemplateHelper).fetchServiceTemplateId(any());
     doReturn(delegateResult).when(delegateService).queueTask(any());
     doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());
@@ -294,7 +296,7 @@ public class AzureWebAppSlotRollbackTest extends WingsBaseTest {
       doThrow(Exception.class).when(delegateService).queueTask(any());
     }
 
-    doReturn(Optional.of(artifact)).when(azureVMSSStateHelper).getArtifactForRollback(any());
+    doReturn(Optional.of(artifact)).when(azureVMSSStateHelper).getWebAppPackageArtifactForRollback(any());
 
     String accountId = "accountId";
     ArtifactoryConfig artifactoryConfig = ArtifactoryConfig.builder()

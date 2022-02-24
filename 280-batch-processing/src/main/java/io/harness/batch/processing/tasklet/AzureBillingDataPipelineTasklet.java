@@ -11,6 +11,7 @@ import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.dao.intfc.BillingDataPipelineRecordDao;
 import io.harness.batch.processing.service.intfc.BillingDataPipelineService;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.constants.CloudProvider;
 import io.harness.ccm.commons.entities.billing.BillingDataPipelineRecord;
 
@@ -24,7 +25,6 @@ import com.google.cloud.bigquery.datatransfer.v1.TransferState;
 import com.google.inject.Singleton;
 import java.util.List;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -38,12 +38,11 @@ public class AzureBillingDataPipelineTasklet implements Tasklet {
   @Autowired private BillingDataPipelineService billingDataPipelineService;
   @Autowired private BillingDataPipelineRecordDao billingDataPipelineRecordDao;
   @Autowired protected CloudToHarnessMappingService cloudToHarnessMappingService;
-  private JobParameters parameters;
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-    String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
+    final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
+    String accountId = jobConstants.getAccountId();
     Account account = cloudToHarnessMappingService.getAccountInfoFromId(accountId);
     String accountName = account.getAccountName();
 

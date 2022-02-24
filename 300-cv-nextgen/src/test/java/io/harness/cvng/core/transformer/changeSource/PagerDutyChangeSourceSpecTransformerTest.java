@@ -40,7 +40,7 @@ public class PagerDutyChangeSourceSpecTransformerTest extends CvNextGenTestBase 
   public void test_getEntity() {
     ChangeSourceDTO changeSourceDTO = builderFactory.getPagerDutyChangeSourceDTOBuilder().build();
     ChangeSource pagerDutyChangeSource = pagerDutyChangeSourceSpecTransformer.getEntity(
-        builderFactory.getContext().getServiceEnvironmentParams(), changeSourceDTO);
+        builderFactory.getContext().getMonitoredServiceParams(), changeSourceDTO);
     assertThat(pagerDutyChangeSource.getClass()).isEqualTo(PagerDutyChangeSource.class);
     assertThat(pagerDutyChangeSource.getIdentifier()).isEqualTo(changeSourceDTO.getIdentifier());
     assertThat(pagerDutyChangeSource.getAccountId()).isEqualTo(builderFactory.getContext().getAccountId());
@@ -49,6 +49,8 @@ public class PagerDutyChangeSourceSpecTransformerTest extends CvNextGenTestBase 
     assertThat(pagerDutyChangeSource.getServiceIdentifier())
         .isEqualTo(builderFactory.getContext().getServiceIdentifier());
     assertThat(pagerDutyChangeSource.getEnvIdentifier()).isEqualTo(builderFactory.getContext().getEnvIdentifier());
+    assertThat(pagerDutyChangeSource.getMonitoredServiceIdentifier())
+        .isEqualTo(builderFactory.getContext().getMonitoredServiceParams().getMonitoredServiceIdentifier());
     assertThat(pagerDutyChangeSource.isEnabled()).isTrue();
   }
 

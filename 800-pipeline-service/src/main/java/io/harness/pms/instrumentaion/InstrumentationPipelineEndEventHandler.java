@@ -10,6 +10,7 @@ package io.harness.pms.instrumentaion;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.ACCOUNT_NAME;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.ERROR_MESSAGES;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.EVENT_TYPES;
+import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.EXCEPTION_MESSAGE;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.EXECUTION_TIME;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.FAILED_STEPS;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.FAILED_STEP_TYPES;
@@ -18,8 +19,11 @@ import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.IS_
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.LEVEL;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.NOTIFICATION_METHODS;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.NOTIFICATION_RULES_COUNT;
+import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.ORG_IDENTIFIER;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.PIPELINE_EXECUTION;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.PIPELINE_NOTIFICATION;
+import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.PLAN_EXECUTION_ID;
+import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.PROJECT_IDENTIFIER;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.STAGE_COUNT;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.STAGE_TYPES;
 import static io.harness.pms.instrumentaion.PipelineInstrumentationConstants.STATUS;
@@ -118,6 +122,9 @@ public class InstrumentationPipelineEndEventHandler implements OrchestrationEndO
 
     HashMap<String, Object> propertiesMap = new HashMap<>();
     propertiesMap.put(ACCOUNT_NAME, accountName);
+    propertiesMap.put(PROJECT_IDENTIFIER, projectId);
+    propertiesMap.put(ORG_IDENTIFIER, orgId);
+    propertiesMap.put(PLAN_EXECUTION_ID, planExecutionId);
     propertiesMap.put(STAGE_TYPES, executedModules);
     // step types
     propertiesMap.put(TRIGGER_TYPE, pipelineExecutionSummaryEntity.getExecutionTriggerInfo().getTriggerType());
@@ -135,6 +142,8 @@ public class InstrumentationPipelineEndEventHandler implements OrchestrationEndO
         PipelineInstrumentationUtils.getFailureTypesFromPipelineExecutionSummary(pipelineExecutionSummaryEntity));
     propertiesMap.put(ERROR_MESSAGES,
         PipelineInstrumentationUtils.getErrorMessagesFromPipelineExecutionSummary(pipelineExecutionSummaryEntity));
+    propertiesMap.put(
+        EXCEPTION_MESSAGE, PipelineInstrumentationUtils.extractExceptionMessage(pipelineExecutionSummaryEntity));
     propertiesMap.put(
         NOTIFICATION_METHODS, notificationInstrumentationHelper.getNotificationMethodTypes(notificationRulesList));
     String identity = ambiance.getMetadata().getTriggerInfo().getTriggeredBy().getExtraInfoMap().get("email");

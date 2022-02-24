@@ -26,9 +26,11 @@ import java.util.List;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.CDC)
 @UtilityClass
+@Slf4j
 public class RuntimeInputValuesValidator {
   public String validateStaticValues(Object templateObject, Object inputSetObject) {
     /*
@@ -55,9 +57,23 @@ public class RuntimeInputValuesValidator {
     String error = "";
     String templateValue = ((JsonNode) templateObject).asText();
     String inputSetValue = ((JsonNode) inputSetObject).asText();
+    ParameterField<?> inputSetField;
+    try {
+      inputSetField = YamlUtils.read(inputSetValue, ParameterField.class);
+    } catch (IOException e) {
+      log.error(String.format("Error mapping input set value %s to ParameterField class", inputSetValue), e);
+      throw new InvalidRequestException(
+          String.format("Error mapping input set value %s to ParameterField class", inputSetValue));
+    }
+    String inputSetFieldValue;
+    if (inputSetField.getValue() == null) {
+      inputSetFieldValue = inputSetValue;
+    } else {
+      inputSetFieldValue = inputSetField.getValue().toString();
+    }
 
     if (NGExpressionUtils.matchesInputSetPattern(templateValue)
-        && !NGExpressionUtils.isRuntimeOrExpressionField(inputSetValue)) {
+        && !NGExpressionUtils.isRuntimeOrExpressionField(inputSetFieldValue)) {
       try {
         ParameterField<?> templateField = YamlUtils.read(templateValue, ParameterField.class);
         if (templateField.getInputSetValidator() == null) {
@@ -66,7 +82,7 @@ public class RuntimeInputValuesValidator {
         InputSetValidator inputSetValidator = templateField.getInputSetValidator();
         if (inputSetValidator.getValidatorType() == REGEX) {
           boolean matchesPattern =
-              NGExpressionUtils.matchesPattern(Pattern.compile(inputSetValidator.getParameters()), inputSetValue);
+              NGExpressionUtils.matchesPattern(Pattern.compile(inputSetValidator.getParameters()), inputSetFieldValue);
           error = matchesPattern ? "" : "The value provided does not match the required regex pattern";
         } else if (inputSetValidator.getValidatorType() == ALLOWED_VALUES) {
           String[] allowedValues = inputSetValidator.getParameters().split(", *");
@@ -74,7 +90,7 @@ public class RuntimeInputValuesValidator {
           for (String allowedValue : allowedValues) {
             if (NGExpressionUtils.isRuntimeOrExpressionField(allowedValue)) {
               return error;
-            } else if (allowedValue.equals(inputSetValue)) {
+            } else if (allowedValue.equals(inputSetFieldValue)) {
               matches = true;
             }
           }
@@ -82,7 +98,7 @@ public class RuntimeInputValuesValidator {
         }
       } catch (IOException e) {
         throw new InvalidRequestException(
-            "Input set expression " + templateValue + " or " + inputSetValue + " is not valid");
+            "Input set expression " + templateValue + " or " + inputSetFieldValue + " is not valid");
       }
     }
     return error;

@@ -17,11 +17,14 @@ import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.validators.UniqueIdentifierCheck;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -32,6 +35,7 @@ import lombok.NoArgsConstructor;
 import lombok.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 @SuperBuilder
@@ -40,6 +44,25 @@ import lombok.experimental.SuperBuilder;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class StackdriverMetricHealthSourceSpec extends HealthSourceSpec {
   @UniqueIdentifierCheck @Valid private List<StackdriverDefinition> metricDefinitions;
+
+  public List<StackdriverDefinition> getMetricDefinitions() {
+    if (metricDefinitions == null) {
+      return Collections.emptyList();
+    }
+    return metricDefinitions;
+  }
+
+  @Override
+  public void validate() {
+    getMetricDefinitions().forEach(metricDefinition
+        -> Preconditions.checkArgument(
+            !(Objects.nonNull(metricDefinition.getAnalysis())
+                && Objects.nonNull(metricDefinition.getAnalysis().getDeploymentVerification())
+                && Objects.nonNull(metricDefinition.getAnalysis().getDeploymentVerification().getEnabled())
+                && metricDefinition.getAnalysis().getDeploymentVerification().getEnabled()
+                && StringUtils.isEmpty(metricDefinition.getServiceInstanceField())),
+            "Service instance field shouldn't be empty for Deployment verification"));
+  }
 
   @Override
   public CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier, String projectIdentifier,

@@ -9,8 +9,10 @@ package software.wings.yaml.handler;
 
 import static io.harness.annotations.dev.HarnessModule._955_CG_YAML;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.FeatureName.WEBHOOK_TRIGGER_AUTHORIZATION;
 import static io.harness.rule.OwnerRule.INDER;
+import static io.harness.rule.OwnerRule.LALIT;
 import static io.harness.rule.OwnerRule.RAMA;
 import static io.harness.rule.OwnerRule.VUK;
 
@@ -75,6 +77,8 @@ public class ApplicationYamlHandlerTest extends YamlHandlerTestBase {
       "harnessApiVersion: '1.0'\ntype: APPLICATION\ndescription: valid application yaml\nisGitSyncEnabled: false";
   private String validYamlContentWithManualTriggerAuthorized =
       "harnessApiVersion: '1.0'\ntype: APPLICATION\ndescription: valid application yaml\nisGitSyncEnabled: false\nisManualTriggerAuthorized: true";
+  private String validYamlContentWithWebHookSecretsMandated =
+      "harnessApiVersion: '1.0'\ntype: APPLICATION\nareWebHookSecretsMandated: true\ndescription: valid application yaml\nisGitSyncEnabled: false";
   private String validYamlFilePath = "Setup/Applications/" + APP_NAME + "/Index.yaml";
   private String invalidYamlFilePath = "Setup/ApplicationsInvalid/" + APP_NAME + "/Index.yaml";
 
@@ -265,6 +269,27 @@ public class ApplicationYamlHandlerTest extends YamlHandlerTestBase {
   public void testCRUDAndGetWithoutManualTriggerAuthorizedField() throws IOException {
     when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
     when(featureFlagService.isEnabled(WEBHOOK_TRIGGER_AUTHORIZATION, ACCOUNT_ID)).thenReturn(true);
+
+    testCRUDAndGet(validYamlContent);
+  }
+
+  @Test
+  @Owner(developers = LALIT)
+  @Category(UnitTests.class)
+  public void testCRUDAndGetWithWebHookSecretsMandatedField() throws IOException {
+    when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
+    when(featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, ACCOUNT_ID)).thenReturn(true);
+    application.setAreWebHookSecretsMandated(true);
+
+    testCRUDAndGet(validYamlContentWithWebHookSecretsMandated);
+  }
+
+  @Test
+  @Owner(developers = LALIT)
+  @Category(UnitTests.class)
+  public void testCRUDAndGetWithoutWebHookSecretsMandatedField() throws IOException {
+    when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
+    when(featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, ACCOUNT_ID)).thenReturn(true);
 
     testCRUDAndGet(validYamlContent);
   }

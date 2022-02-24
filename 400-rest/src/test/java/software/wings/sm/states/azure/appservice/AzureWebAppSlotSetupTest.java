@@ -304,8 +304,11 @@ public class AzureWebAppSlotSetupTest extends WingsBaseTest {
         .createAndSaveActivity(any(), any(), anyString(), anyString(), any(), anyListOf(CommandUnit.class));
     doReturn(managerExecutionLogCallback).when(azureVMSSStateHelper).getExecutionLogCallback(activity);
     AzureAppServiceStateData appServiceStateData = getAzureAppServiceStateData(app, env, service, artifact);
-    doReturn(appServiceStateData).when(azureVMSSStateHelper).populateAzureAppServiceData(context);
+    doReturn(appServiceStateData)
+        .when(azureVMSSStateHelper)
+        .populateAzureAppServiceData(eq(context), any(Artifact.class));
     doReturn(service).when(azureVMSSStateHelper).getServiceByAppId(context, appId);
+    doReturn(appServiceStateData).when(azureVMSSStateHelper).populateAzureAppServiceData(context);
     doReturn(serviceId).when(azureVMSSStateHelper).getServiceId(context);
   }
 
@@ -427,7 +430,7 @@ public class AzureWebAppSlotSetupTest extends WingsBaseTest {
         .when(azureVMSSStateHelper)
         .createAndSaveActivity(any(), any(), anyString(), anyString(), any(), anyListOf(CommandUnit.class));
     doReturn(managerExecutionLogCallback).when(azureVMSSStateHelper).getExecutionLogCallback(activity);
-    doThrow(Exception.class).when(azureVMSSStateHelper).populateAzureAppServiceData(eq(context));
+    doThrow(Exception.class).when(azureVMSSStateHelper).populateAzureAppServiceData(eq(context), any(Artifact.class));
 
     assertThatThrownBy(() -> state.execute(context)).isInstanceOf(InvalidRequestException.class);
   }

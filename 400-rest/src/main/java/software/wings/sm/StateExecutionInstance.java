@@ -176,6 +176,7 @@ public class StateExecutionInstance implements PersistentEntity, AccountDataRete
   @Transient private String stepId;
 
   private OrchestrationWorkflowType orchestrationWorkflowType;
+  private Boolean isOnDemandRollback;
 
   @JsonIgnore
   @SchemaIgnore

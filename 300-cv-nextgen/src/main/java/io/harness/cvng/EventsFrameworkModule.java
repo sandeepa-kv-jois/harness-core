@@ -8,6 +8,7 @@
 package io.harness.cvng;
 
 import static io.harness.AuthorizationServiceHeader.CV_NEXT_GEN;
+import static io.harness.cvng.CVConstants.STATEMACHINE_PUBLISHER;
 
 import io.harness.eventsframework.EventsFrameworkConfiguration;
 import io.harness.eventsframework.EventsFrameworkConstants;
@@ -46,6 +47,13 @@ public class EventsFrameworkModule extends AbstractModule {
       bind(Producer.class)
           .annotatedWith(Names.named(EventsFrameworkConstants.SETUP_USAGE))
           .toInstance(NoOpProducer.of(EventsFrameworkConstants.DUMMY_TOPIC_NAME));
+      bind(Producer.class)
+          .annotatedWith(Names.named(EventsFrameworkConstants.SRM_STATEMACHINE_EVENT))
+          .toInstance(NoOpProducer.of(EventsFrameworkConstants.DUMMY_TOPIC_NAME));
+      bind(Consumer.class)
+          .annotatedWith(Names.named(EventsFrameworkConstants.SRM_STATEMACHINE_EVENT))
+          .toInstance(
+              NoOpConsumer.of(EventsFrameworkConstants.DUMMY_TOPIC_NAME, EventsFrameworkConstants.DUMMY_GROUP_NAME));
     } else {
       bind(AbstractProducer.class)
           .annotatedWith(Names.named(EventsFrameworkConstants.ENTITY_CRUD))
@@ -65,6 +73,17 @@ public class EventsFrameworkModule extends AbstractModule {
           .annotatedWith(Names.named(EventsFrameworkConstants.SETUP_USAGE))
           .toInstance(RedisProducer.of(EventsFrameworkConstants.SETUP_USAGE, redisConfig,
               EventsFrameworkConstants.ENTITY_CRUD_MAX_TOPIC_SIZE, CV_NEXT_GEN.getServiceId()));
+
+      bind(Producer.class)
+          .annotatedWith(Names.named(EventsFrameworkConstants.SRM_STATEMACHINE_EVENT))
+          .toInstance(RedisProducer.of(EventsFrameworkConstants.SRM_STATEMACHINE_EVENT, redisConfig,
+              EventsFrameworkConstants.SRM_STATEMACHINE_EVENT_MAX_TOPIC_SIZE, STATEMACHINE_PUBLISHER));
+
+      bind(Consumer.class)
+          .annotatedWith(Names.named(EventsFrameworkConstants.SRM_STATEMACHINE_EVENT))
+          .toInstance(RedisConsumer.of(EventsFrameworkConstants.SRM_STATEMACHINE_EVENT, CV_NEXT_GEN.getServiceId(),
+              redisConfig, EventsFrameworkConstants.CD_DEPLOYMENT_EVENT_MAX_PROCESSING_TIME,
+              EventsFrameworkConstants.SRM_STATEMACHINE_EVENT_BATCH_SIZE));
     }
   }
 }

@@ -64,11 +64,11 @@ public class K8RollingWorkflowPhaseHelper extends K8AbstractWorkflowHelper {
         .build();
   }
 
-  private PhaseStep getRollingVerifyPhaseStep() {
+  protected PhaseStep getRollingVerifyPhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, "Verify").build();
   }
 
-  private PhaseStep getRollingWrapUpPhaseStep() {
+  protected PhaseStep getRollingWrapUpPhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.WRAP_UP).build();
   }
 
@@ -88,7 +88,7 @@ public class K8RollingWorkflowPhaseHelper extends K8AbstractWorkflowHelper {
         .build();
   }
 
-  private PhaseStep getRollingRollbackWrapUpPhaseStep() {
+  protected PhaseStep getRollingRollbackWrapUpPhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.WRAP_UP)
         .withPhaseStepNameForRollback(WorkflowServiceHelper.WRAP_UP)
         .withRollback(true)

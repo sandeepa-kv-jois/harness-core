@@ -35,7 +35,6 @@ public class InterruptManager {
                               .type(interruptPackage.getInterruptType())
                               .metadata(interruptPackage.getMetadata())
                               .nodeExecutionId(interruptPackage.getNodeExecutionId())
-                              .parameters(interruptPackage.getParameters())
                               .interruptConfig(interruptPackage.getInterruptConfig())
                               .build();
     try (AcquiredLock<?> lock = persistentLocker.waitToAcquireLock(

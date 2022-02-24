@@ -7,6 +7,7 @@
 
 package software.wings.service.impl;
 
+import static io.harness.beans.FeatureName.USE_IMMUTABLE_DELEGATE;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
@@ -31,6 +32,7 @@ import static software.wings.utils.WingsTestConstants.DELEGATE_ID;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Matchers.any;
@@ -81,6 +83,7 @@ import io.harness.delegate.events.DelegateGroupUpsertEvent;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.http.HttpTaskParameters;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.k8s.model.response.CEK8sDelegatePrerequisite;
 import io.harness.ng.core.ProjectScope;
 import io.harness.ng.core.Resource;
@@ -183,6 +186,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   @Mock private Account account;
   @Mock private DelegateProfileService delegateProfileService;
   @Mock private DelegateCache delegateCache;
+  @Mock private FeatureFlagService featureFlagService;
   @Inject @Spy private MainConfiguration mainConfiguration;
   @InjectMocks @Inject private DelegateServiceImpl delegateService;
   @InjectMocks @Inject private DelegateTaskServiceClassicImpl delegateTaskServiceClassic;
@@ -223,12 +227,24 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void whenDelegateImageProvidedByRingAndConfigThenUseRing() {
     final String delegateRingImage = "harness/delegate:ringImage";
     final PortalConfig portal = mock(PortalConfig.class);
+    when(featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, ACCOUNT_ID)).thenReturn(true);
     when(mainConfiguration.getPortal()).thenReturn(portal);
-    when(portal.getDelegateDockerImage()).thenReturn("harness/delegate:ringImage");
-
+    when(portal.getDelegateDockerImage()).thenReturn("harness/delegate:configImage");
     when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(delegateRingImage);
 
-    final String actual = delegateService.getDelegateDockerImage(ACCOUNT_ID);
+    final String actual = delegateService.getDelegateDockerImage(ACCOUNT_ID, DelegateType.KUBERNETES);
+    assertThat(actual).isEqualTo(delegateRingImage);
+  }
+
+  @Test
+  @Owner(developers = MARKOM)
+  @Category(UnitTests.class)
+  public void whenDelegateImageProvidedByRingThenUseRing() {
+    final String delegateRingImage = "harness/delegate:ringImage";
+    when(featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, ACCOUNT_ID)).thenReturn(true);
+    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(delegateRingImage);
+
+    final String actual = delegateService.getDelegateDockerImage(ACCOUNT_ID, DelegateType.KUBERNETES);
     assertThat(actual).isEqualTo(delegateRingImage);
   }
 
@@ -240,7 +256,19 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     when(mainConfiguration.getPortal()).thenReturn(portal);
     when(portal.getDelegateDockerImage()).thenReturn(null);
 
-    final String actual = delegateService.getDelegateDockerImage("accountId");
+    final String actual = delegateService.getDelegateDockerImage(ACCOUNT_ID, DelegateType.KUBERNETES);
+    assertThat(actual).isEqualTo("harness/delegate:latest");
+  }
+
+  @Test
+  @Owner(developers = MARKOM)
+  @Category(UnitTests.class)
+  public void whenImmutableButNotK8SDelegateThanDefault() {
+    final String delegateRingImage = "harness/delegate:ringImage";
+    when(featureFlagService.isEnabled(USE_IMMUTABLE_DELEGATE, ACCOUNT_ID)).thenReturn(true);
+    when(delegateRingService.getDelegateImageTag(ACCOUNT_ID)).thenReturn(delegateRingImage);
+
+    final String actual = delegateService.getDelegateDockerImage(ACCOUNT_ID, DelegateType.DOCKER);
     assertThat(actual).isEqualTo("harness/delegate:latest");
   }
 
@@ -252,7 +280,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     when(mainConfiguration.getPortal()).thenReturn(portal);
     when(portal.getUpgraderDockerImage()).thenReturn(null);
 
-    final String actual = delegateService.getUpgraderDockerImage("accountId");
+    final String actual = delegateService.getUpgraderDockerImage(ACCOUNT_ID, DelegateType.KUBERNETES);
     assertThat(actual).isEqualTo("harness/upgrader:latest");
   }
 
@@ -265,7 +293,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     when(mainConfiguration.getPortal()).thenReturn(portal);
     when(portal.getDelegateDockerImage()).thenReturn(delegateImage);
 
-    final String actual = delegateService.getDelegateDockerImage("accountId");
+    final String actual = delegateService.getDelegateDockerImage(ACCOUNT_ID, DelegateType.KUBERNETES);
     assertThat(actual).isEqualTo(delegateImage);
   }
 
@@ -278,7 +306,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     when(mainConfiguration.getPortal()).thenReturn(portal);
     when(portal.getUpgraderDockerImage()).thenReturn(upgraderImage);
 
-    final String actual = delegateService.getUpgraderDockerImage("accountId");
+    final String actual = delegateService.getUpgraderDockerImage(ACCOUNT_ID, DelegateType.KUBERNETES);
     assertThat(actual).isEqualTo(upgraderImage);
   }
 
@@ -1259,26 +1287,26 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   @Test
   @Owner(developers = BOJAN)
   @Category(UnitTests.class)
-  public void testShouldUpsertDelegateGroupWithOwner() {
-    String identifier = "";
-
+  public void testShouldNotUpsertDelegateGroupWithDifferentOwnerButSameName() {
     DelegateSetupDetails delegateSetupDetails1 = createDelegateSetupDetails()
-                                                     .identifier(identifier)
+                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId1")
                                                      .projectIdentifier("projId1")
                                                      .build();
     DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
-                                                     .identifier(identifier)
+                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId2")
                                                      .projectIdentifier("projId2")
                                                      .build();
 
-    DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
-    DelegateGroup delegateGroup2 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
-
-    assertThat(delegateGroup1.getUuid()).isNotEqualTo(delegateGroup2.getUuid());
+    delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
+    assertThatThrownBy(
+        () -> delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage(
+            "Unable to create delegate group. Delegate with same name exists. Delegate name must be unique across account.");
   }
 
   @Test
@@ -1287,11 +1315,13 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void testShouldUpsertDelegateGroupWithTheSameOwner() {
     DelegateSetupDetails delegateSetupDetails1 = createDelegateSetupDetails()
                                                      .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId1")
                                                      .projectIdentifier("projId1")
                                                      .build();
     DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
                                                      .identifier(DELEGATE_GROUP_IDENTIFIER)
+                                                     .name(TEST_DELEGATE_GROUP_NAME)
                                                      .orgIdentifier("orgId1")
                                                      .projectIdentifier("projId1")
                                                      .build();
@@ -1302,46 +1332,6 @@ public class DelegateServiceImplTest extends WingsBaseTest {
         delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
 
     assertThat(delegateGroup1).isEqualTo(delegateGroup2);
-  }
-
-  @Test
-  @Owner(developers = BOJAN)
-  @Category(UnitTests.class)
-  public void testShouldUpsertDelegateGroupWithoutOwnersProjectId() {
-    DelegateSetupDetails delegateSetupDetails1 =
-        createDelegateSetupDetails().identifier(DELEGATE_GROUP_IDENTIFIER).orgIdentifier("orgId1").build();
-    DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
-                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
-                                                     .orgIdentifier("orgId1")
-                                                     .projectIdentifier("projId1")
-                                                     .build();
-
-    DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
-    DelegateGroup delegateGroup2 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
-
-    assertThat(delegateGroup1.getUuid()).isNotEqualTo(delegateGroup2.getUuid());
-  }
-
-  @Test
-  @Owner(developers = BOJAN)
-  @Category(UnitTests.class)
-  public void testShouldUpsertDelegateGroupWithoutOwnersOrgId() {
-    DelegateSetupDetails delegateSetupDetails1 =
-        createDelegateSetupDetails().identifier(DELEGATE_GROUP_IDENTIFIER).projectIdentifier("projId1").build();
-    DelegateSetupDetails delegateSetupDetails2 = createDelegateSetupDetails()
-                                                     .identifier(DELEGATE_GROUP_IDENTIFIER)
-                                                     .orgIdentifier("orgId1")
-                                                     .projectIdentifier("projId1")
-                                                     .build();
-
-    DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
-    DelegateGroup delegateGroup2 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
-
-    assertThat(delegateGroup1.getUuid()).isNotEqualTo(delegateGroup2.getUuid());
   }
 
   @Test
@@ -1366,13 +1356,18 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldUpsertDelegateGroupWithoutOwnerAndWithOwner() {
     String identifier = "_123";
+    String delegateGroupName = "groupName";
 
-    DelegateSetupDetails delegateSetupDetails1 = createDelegateSetupDetails().identifier(identifier).build();
+    DelegateSetupDetails delegateSetupDetails1 = DelegateSetupDetails.builder()
+                                                     .identifier(identifier)
+                                                     .name(delegateGroupName)
+                                                     .delegateType(DelegateType.KUBERNETES)
+                                                     .build();
     DelegateSetupDetails delegateSetupDetails2 =
         createDelegateSetupDetails().orgIdentifier(ORG_IDENTIFIER).projectIdentifier(PROJECT_IDENTIFIER).build();
 
     DelegateGroup delegateGroup1 =
-        delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails1);
+        delegateService.upsertDelegateGroup(delegateGroupName, ACCOUNT_ID, delegateSetupDetails1);
     DelegateGroup delegateGroup2 =
         delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID, delegateSetupDetails2);
 

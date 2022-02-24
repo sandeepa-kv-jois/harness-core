@@ -199,6 +199,23 @@ public class UserResource {
   }
 
   @GET
+  @Hidden
+  @Path("admin")
+  @ApiOperation(value = "Check if user is account admin", nickname = "checkIfAccountAdmin", hidden = true)
+  @InternalApi
+  public ResponseDTO<Boolean> isUserAdmin(
+      @Parameter(
+          description =
+              "This is the User Identifier. The membership details of the user corresponding to this identifier will be checked.",
+          required = true) @NotNull @QueryParam(NGCommonEntityConstants.USER_ID) String userId,
+      @Parameter(
+          description =
+              "This is the Account Identifier. The membership details within the scope of this Account will be checked.",
+          required = true) @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
+    return ResponseDTO.newResponse(ngUserService.isAccountAdmin(userId, accountIdentifier));
+  }
+
+  @GET
   @Path("currentgen")
   @ApiOperation(value = "Get users from current gen for an account", nickname = "getCurrentGenUsers")
   @Operation(operationId = "getCurrentGenUsers",
@@ -553,6 +570,16 @@ public class UserResource {
                       .build();
     return ResponseDTO.newResponse(TRUE.equals(
         ngUserService.removeUserFromScope(userId, scope, UserMembershipUpdateSource.USER, removeUserFilter)));
+  }
+
+  @GET
+  @Hidden
+  @Path("internal/{userId}")
+  @InternalApi
+  @ApiOperation(value = "Get user", nickname = "getUserInternal", hidden = true)
+  public ResponseDTO<UserMetadataDTO> getUser(@NotNull @PathParam("userId") String userId,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
+    return ResponseDTO.newResponse(ngUserService.getUserMetadata(userId).orElse(null));
   }
 
   public Optional<String> getUserIdentifierFromSecurityContext() {

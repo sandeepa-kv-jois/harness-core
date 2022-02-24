@@ -28,7 +28,7 @@ public class AddMonitoredServiceToCVConfigMigration implements CVNGMigration {
     log.info("Begin migration for updating CVConfig with monitoredServiceIdentifier");
     Query<MonitoredService> monitoredServiceQuery = hPersistence.createQuery(MonitoredService.class);
     try (HIterator<MonitoredService> iterator = new HIterator<>(monitoredServiceQuery.fetch())) {
-      if (iterator.hasNext()) {
+      while (iterator.hasNext()) {
         MonitoredService monitoredService = iterator.next();
         Query<CVConfig> cvConfigQuery =
             hPersistence.createQuery(CVConfig.class)
@@ -36,7 +36,7 @@ public class AddMonitoredServiceToCVConfigMigration implements CVNGMigration {
                 .filter(CVConfigKeys.projectIdentifier, monitoredService.getProjectIdentifier())
                 .filter(CVConfigKeys.orgIdentifier, monitoredService.getOrgIdentifier())
                 .filter(CVConfigKeys.serviceIdentifier, monitoredService.getServiceIdentifier())
-                .filter(CVConfigKeys.envIdentifier, monitoredService.getEnvironmentIdentifierList());
+                .filter(CVConfigKeys.envIdentifier, monitoredService.getEnvironmentIdentifier());
 
         hPersistence.update(cvConfigQuery,
             hPersistence.createUpdateOperations(CVConfig.class)

@@ -20,6 +20,7 @@ import io.harness.delegate.beans.ci.k8s.CIK8CleanupTaskParams;
 import io.harness.delegate.beans.ci.k8s.K8sTaskExecutionResponse;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.task.citasks.CICleanupTaskHandler;
+import io.harness.delegate.task.citasks.cik8handler.helper.SecretVolumesHelper;
 import io.harness.delegate.task.citasks.cik8handler.k8java.CIK8JavaClientHandler;
 import io.harness.k8s.apiclient.ApiClientFactory;
 import io.harness.logging.CommandExecutionStatus;
@@ -43,6 +44,7 @@ public class CIK8CleanupTaskHandlerTest extends CategoryTest {
   @Mock private ApiClientFactory apiClientFactory;
   @Mock private ApiClient apiClient;
   @Mock private CIK8JavaClientHandler cik8JavaClientHandler;
+  @Mock private SecretVolumesHelper secretVolumesHelper;
   @InjectMocks private CIK8CleanupTaskHandler cik8DeleteSetupTaskHandler;
 
   private static final String namespace = "default";
@@ -115,6 +117,7 @@ public class CIK8CleanupTaskHandlerTest extends CategoryTest {
 
     on(cik8DeleteSetupTaskHandler).set("cik8JavaClientHandler", cik8JavaClientHandler);
 
+    when(secretVolumesHelper.getAllSecretKeys(any())).thenReturn(new ArrayList<>());
     when(cik8JavaClientHandler.deletePodWithRetries(any(), any(), any()))
         .thenReturn(new V1StatusBuilder().withStatus("Success").build());
     when(cik8JavaClientHandler.deleteService(any(), any(), any())).thenReturn(Boolean.TRUE);

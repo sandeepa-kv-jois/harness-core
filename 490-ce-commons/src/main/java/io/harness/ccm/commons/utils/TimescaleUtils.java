@@ -76,7 +76,6 @@ public class TimescaleUtils {
 
   public static Condition isAliveAtInstant(@NonNull Field<OffsetDateTime> startTimeField,
       @NonNull Field<OffsetDateTime> stopTimeField, @NonNull Instant atInstant) {
-    return startTimeField.le(toOffsetDateTime(atInstant))
-        .and(stopTimeField.isNull().or(stopTimeField.ge(toOffsetDateTime(atInstant))));
+    return startTimeField.le(toOffsetDateTime(atInstant)).and(stopTimeField.isNull());
   }
 }

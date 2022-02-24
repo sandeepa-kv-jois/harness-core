@@ -19,6 +19,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 @OwnedBy(HarnessTeam.PL)
 public interface PrivilegedRoleAssignmentService {
   PrivilegedAccessResult checkAccess(@NotNull @Valid PrivilegedAccessCheck privilegedAccessCheck);
-  void syncManagedGlobalRoleAssignments(@NotNull Set<Principal> principals, @NotEmpty String roleIdentifier);
   void deleteByRoleAssignment(@NotEmpty String id);
+  void syncRoleAssignments(@NotNull Set<Principal> principals, @NotEmpty String roleIdentifier);
 }

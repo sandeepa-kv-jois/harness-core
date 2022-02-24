@@ -139,6 +139,7 @@ public class CVDataCollectionTaskServiceImpl implements CVDataCollectionTaskServ
                                    .orgIdentifier(bundle.getOrgIdentifier())
                                    .envIdentifier(bundle.getEnvIdentifier())
                                    .serviceIdentifier(bundle.getServiceIdentifier())
+                                   .monitoredServiceIdentifier(bundle.getMonitoredServiceIdentifier())
                                    .changeSourceIdentifier(bundle.getSourceIdentifier())
                                    .build();
         K8ActivityCollectionPerpetualTaskParams k8ActivityCollectionPerpetualTaskParams =

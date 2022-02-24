@@ -16,8 +16,8 @@ import io.harness.cdng.instance.outcome.DeploymentInfoOutcome;
 import io.harness.cdng.instance.util.InstanceSyncStepResolver;
 import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
-import io.harness.engine.outputs.SweepingOutputException;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.refobjects.RefObject;
@@ -57,7 +57,7 @@ public class InstanceInfoServiceImpl implements InstanceInfoService {
     OptionalSweepingOutput optionalSweepingOutput =
         executionSweepingOutputService.resolveOptional(ambiance, sweepingOutputRefObject);
     if (!optionalSweepingOutput.isFound()) {
-      throw new SweepingOutputException(format("Not found sweeping output for step type: %s", stepType.getType()));
+      throw new InvalidRequestException(format("Not found sweeping output for step type: %s", stepType.getType()));
     }
     DeploymentInfoOutcome output = (DeploymentInfoOutcome) optionalSweepingOutput.getOutput();
 

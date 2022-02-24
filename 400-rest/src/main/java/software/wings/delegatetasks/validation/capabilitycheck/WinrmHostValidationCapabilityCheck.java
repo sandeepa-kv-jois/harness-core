@@ -18,13 +18,13 @@ import io.harness.delegate.beans.executioncapability.CapabilityResponse;
 import io.harness.delegate.beans.executioncapability.CapabilityResponse.CapabilityResponseBuilder;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.task.executioncapability.CapabilityCheck;
+import io.harness.delegate.task.winrm.WinRmSession;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.logging.LogCallback;
 import io.harness.logging.NoopExecutionCallback;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.WinRmConnectionAttributes;
-import software.wings.core.winrm.executors.WinRmSession;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.delegatetasks.validation.capabilities.BasicValidationInfo;
 import software.wings.delegatetasks.validation.capabilities.WinrmHostValidationCapability;
 import software.wings.service.intfc.security.EncryptionService;

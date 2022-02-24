@@ -213,15 +213,19 @@ public class ServiceLevelIndicatorServiceImpl implements ServiceLevelIndicatorSe
 
   @Override
   public List<ServiceLevelIndicatorDTO> get(ProjectParams projectParams, List<String> serviceLevelIndicators) {
-    List<ServiceLevelIndicator> serviceLevelIndicatorList =
-        hPersistence.createQuery(ServiceLevelIndicator.class)
-            .filter(ServiceLevelIndicatorKeys.accountId, projectParams.getAccountIdentifier())
-            .filter(ServiceLevelIndicatorKeys.orgIdentifier, projectParams.getOrgIdentifier())
-            .filter(ServiceLevelIndicatorKeys.projectIdentifier, projectParams.getProjectIdentifier())
-            .field(ServiceLevelIndicatorKeys.identifier)
-            .in(serviceLevelIndicators)
-            .asList();
+    List<ServiceLevelIndicator> serviceLevelIndicatorList = getEntities(projectParams, serviceLevelIndicators);
     return serviceLevelIndicatorList.stream().map(this::sliEntityToDTO).collect(Collectors.toList());
+  }
+
+  @Override
+  public List<ServiceLevelIndicator> getEntities(ProjectParams projectParams, List<String> serviceLevelIndicators) {
+    return hPersistence.createQuery(ServiceLevelIndicator.class)
+        .filter(ServiceLevelIndicatorKeys.accountId, projectParams.getAccountIdentifier())
+        .filter(ServiceLevelIndicatorKeys.orgIdentifier, projectParams.getOrgIdentifier())
+        .filter(ServiceLevelIndicatorKeys.projectIdentifier, projectParams.getProjectIdentifier())
+        .field(ServiceLevelIndicatorKeys.identifier)
+        .in(serviceLevelIndicators)
+        .asList();
   }
 
   @Override

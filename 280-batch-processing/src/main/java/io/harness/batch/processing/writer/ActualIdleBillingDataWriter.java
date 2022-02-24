@@ -49,8 +49,7 @@ public class ActualIdleBillingDataWriter extends EventWriter implements ItemWrit
 
   @Override
   public void write(List<? extends ActualIdleCostBatchJobData> list) throws Exception {
-    BatchJobType batchJobType =
-        CCMJobConstants.getBatchJobTypeFromJobParams(parameters, CCMJobConstants.BATCH_JOB_TYPE);
+    BatchJobType batchJobType = CCMJobConstants.getBatchJobTypeFromJobParams(parameters);
     list.forEach(entry -> {
       List<ActualIdleCostData> podsData = entry.getPodData();
       List<ActualIdleCostData> nodesData = entry.getNodeData();

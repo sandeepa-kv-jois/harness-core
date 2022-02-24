@@ -88,6 +88,7 @@ public class DatadogMetricCVConfig extends MetricCVConfig {
                                   .thresholds(new ArrayList<>(thresholds))
                                   .type(metricType)
                                   .name(definition.getMetric())
+                                  .identifier(definition.getIdentifier())
                                   .included(true)
                                   .build());
     });

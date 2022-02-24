@@ -1,0 +1,21 @@
+// Copyright 2022 Harness Inc. All rights reserved.
+// Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+// that can be found in the licenses directory at the root of this repository, also available at
+// https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+
+syntax = "proto3";
+
+package io.harness.security;
+
+option java_multiple_files = true;
+import "980-commons/src/main/proto/io/harness/security/user_principal.proto";
+import "980-commons/src/main/proto/io/harness/security/service_principal.proto";
+import "980-commons/src/main/proto/io/harness/security/service_account_principal.proto";
+
+message Principal {
+  oneof principal {
+    io.harness.security.UserPrincipal user_principal = 1;
+    io.harness.security.ServicePrincipal service_principal = 2;
+    io.harness.security.ServiceAccountPrincipal service_account_principal = 3;
+  }
+}

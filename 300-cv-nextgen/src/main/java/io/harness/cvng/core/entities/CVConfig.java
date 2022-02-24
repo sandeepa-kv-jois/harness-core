@@ -76,6 +76,13 @@ public abstract class CVConfig
                 .field(CVConfigKeys.orgIdentifier)
                 .field(CVConfigKeys.projectIdentifier)
                 .field(CVConfigKeys.identifier)
+                .build(),
+            CompoundMongoIndex.builder()
+                .name("monitoredservice_category_index")
+                .field(CVConfigKeys.accountId)
+                .field(CVConfigKeys.orgIdentifier)
+                .field(CVConfigKeys.projectIdentifier)
+                .field(CVConfigKeys.monitoredServiceIdentifier)
                 .build())
         .build();
   }

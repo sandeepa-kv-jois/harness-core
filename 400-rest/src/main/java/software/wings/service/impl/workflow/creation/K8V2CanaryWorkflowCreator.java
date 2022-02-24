@@ -30,7 +30,10 @@ import software.wings.service.impl.workflow.WorkflowServiceHelper;
 import software.wings.service.impl.workflow.WorkflowServiceTemplateHelper;
 import software.wings.service.impl.workflow.creation.helpers.K8CanaryWorkflowPhaseHelper;
 import software.wings.service.impl.workflow.creation.helpers.K8RollingWorkflowPhaseHelper;
+import software.wings.service.impl.workflow.creation.helpers.RancherK8CanaryWorkflowPhaseHelper;
+import software.wings.service.impl.workflow.creation.helpers.RancherK8RollingWorkflowPhaseHelper;
 import software.wings.service.impl.workflow.creation.helpers.WorkflowPhaseHelper;
+import software.wings.service.intfc.InfrastructureDefinitionService;
 
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -40,21 +43,29 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class K8V2CanaryWorkflowCreator extends WorkflowCreator {
   private static final String PHASE_NAME = "CANARY";
+  public static final String RANCHER_INFRA_TYPE = "RANCHER_KUBERNETES";
   @Inject private K8CanaryWorkflowPhaseHelper k8CanaryWorkflowPhaseHelper;
+  @Inject private RancherK8CanaryWorkflowPhaseHelper rancherK8CanaryWorkflowPhaseHelper;
   @Inject private K8RollingWorkflowPhaseHelper k8RollingWorkflowPhaseHelper;
+  @Inject private RancherK8RollingWorkflowPhaseHelper rancherK8RollingWorkflowPhaseHelper;
   @Inject private WorkflowServiceHelper workflowServiceHelper;
   @Inject private WorkflowServiceTemplateHelper workflowServiceTemplateHelper;
   @Inject private WorkflowPhaseHelper workflowPhaseHelper;
   @Inject private FeatureFlagService featureFlagService;
+  @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
+  private K8RollingWorkflowPhaseHelper rollingWorkflowPhaseHelperHolder;
+  private K8CanaryWorkflowPhaseHelper canaryWorkflowPhaseHelperHolder;
 
   @Override
   public Workflow createWorkflow(Workflow clientWorkflow) {
     Workflow workflow = aWorkflow().build();
+    updateCanaryWorkflowHelper(clientWorkflow.getAccountId(), clientWorkflow.getInfraDefinitionId());
+    updateRollingWorkflowHelper(clientWorkflow.getAccountId(), clientWorkflow.getInfraDefinitionId());
     MapperUtils.mapObject(clientWorkflow, workflow);
     OrchestrationWorkflow orchestrationWorkflow = workflow.getOrchestrationWorkflow();
     CanaryOrchestrationWorkflow canaryOrchestrationWorkflow = (CanaryOrchestrationWorkflow) orchestrationWorkflow;
     notNullCheck("orchestrationWorkflow", canaryOrchestrationWorkflow);
-    if (k8CanaryWorkflowPhaseHelper.isCreationRequired(canaryOrchestrationWorkflow)) {
+    if (canaryWorkflowPhaseHelperHolder.isCreationRequired(canaryOrchestrationWorkflow)) {
       addLinkedPreOrPostDeploymentSteps(canaryOrchestrationWorkflow);
       addWorkflowPhases(workflow);
     }
@@ -64,19 +75,22 @@ public class K8V2CanaryWorkflowCreator extends WorkflowCreator {
   private void addWorkflowPhases(Workflow workflow) {
     CanaryOrchestrationWorkflow orchestrationWorkflow =
         (CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow();
-    WorkflowPhase workflowCanaryPhase = k8CanaryWorkflowPhaseHelper.getWorkflowPhase(workflow, PHASE_NAME);
+    WorkflowPhase workflowCanaryPhase = canaryWorkflowPhaseHelperHolder.getWorkflowPhase(workflow, PHASE_NAME);
     orchestrationWorkflow.getWorkflowPhases().add(workflowCanaryPhase);
     orchestrationWorkflow.getRollbackWorkflowPhaseIdMap().put(workflowCanaryPhase.getUuid(),
-        k8CanaryWorkflowPhaseHelper.getRollbackPhaseForWorkflowPhase(workflowCanaryPhase));
+        canaryWorkflowPhaseHelperHolder.getRollbackPhaseForWorkflowPhase(workflowCanaryPhase));
 
-    WorkflowPhase workflowRollingPhase = k8RollingWorkflowPhaseHelper.getWorkflowPhase(workflow, "Primary");
+    WorkflowPhase workflowRollingPhase = rollingWorkflowPhaseHelperHolder.getWorkflowPhase(workflow, "Primary");
     orchestrationWorkflow.getWorkflowPhases().add(workflowRollingPhase);
     orchestrationWorkflow.getRollbackWorkflowPhaseIdMap().put(workflowRollingPhase.getUuid(),
-        k8RollingWorkflowPhaseHelper.getRollbackPhaseForWorkflowPhase(workflowRollingPhase));
+        rollingWorkflowPhaseHelperHolder.getRollbackPhaseForWorkflowPhase(workflowRollingPhase));
   }
 
   @Override
   public void attachWorkflowPhase(Workflow workflow, WorkflowPhase workflowPhase) {
+    updateCanaryWorkflowHelper(workflow.getAccountId(), workflowPhase.getInfraDefinitionId());
+    updateRollingWorkflowHelper(workflow.getAccountId(), workflowPhase.getInfraDefinitionId());
+
     workflowPhaseHelper.setCloudProviderIfNeeded(workflow, workflowPhase);
     boolean stepsGenerated = workflowPhaseHelper.addPhaseIfStepsGenerated(workflow, workflowPhase);
     if (stepsGenerated) {
@@ -94,12 +108,12 @@ public class K8V2CanaryWorkflowCreator extends WorkflowCreator {
       if (isBlank(workflowPhase.getName())) {
         workflowPhase.setName(K8S_PRIMARY_PHASE_NAME);
       }
-      workflowPhase.getPhaseSteps().addAll(k8RollingWorkflowPhaseHelper.getWorkflowPhaseSteps());
+      workflowPhase.getPhaseSteps().addAll(rollingWorkflowPhaseHelperHolder.getWorkflowPhaseSteps());
     } else if (createCanaryPhase) {
       if (isBlank(workflowPhase.getName())) {
         workflowPhase.setName(K8S_CANARY_PHASE_NAME);
       }
-      workflowPhase.getPhaseSteps().addAll(k8CanaryWorkflowPhaseHelper.getWorkflowPhaseSteps());
+      workflowPhase.getPhaseSteps().addAll(canaryWorkflowPhaseHelperHolder.getWorkflowPhaseSteps());
     } else {
       workflowPhaseHelper.addK8sEmptyPhaseStep(workflowPhase);
     }
@@ -109,14 +123,36 @@ public class K8V2CanaryWorkflowCreator extends WorkflowCreator {
     WorkflowPhase rollbackWorkflowPhase = workflowPhaseHelper.createRollbackPhase(workflowPhase);
 
     if (createPrimaryPhase) {
-      rollbackWorkflowPhase.getPhaseSteps().addAll(k8RollingWorkflowPhaseHelper.getRollbackPhaseSteps());
+      rollbackWorkflowPhase.getPhaseSteps().addAll(rollingWorkflowPhaseHelperHolder.getRollbackPhaseSteps());
     } else if (createCanaryPhase) {
-      rollbackWorkflowPhase.getPhaseSteps().addAll(k8CanaryWorkflowPhaseHelper.getRollbackPhaseSteps());
+      rollbackWorkflowPhase.getPhaseSteps().addAll(canaryWorkflowPhaseHelperHolder.getRollbackPhaseSteps());
     } else {
       workflowPhaseHelper.addK8sEmptyRollbackPhaseStep(rollbackWorkflowPhase);
     }
 
     workflowServiceTemplateHelper.addLinkedWorkflowPhaseTemplate(rollbackWorkflowPhase);
     canaryOrchestrationWorkflow.getRollbackWorkflowPhaseIdMap().put(workflowPhase.getUuid(), rollbackWorkflowPhase);
+  }
+
+  private void updateRollingWorkflowHelper(String accountId, String infraDefinitionId) {
+    if (infrastructureDefinitionService.getInfraDefById(accountId, infraDefinitionId)
+            .getInfrastructure()
+            .getInfrastructureType()
+            .equals(RANCHER_INFRA_TYPE)) {
+      this.rollingWorkflowPhaseHelperHolder = this.rancherK8RollingWorkflowPhaseHelper;
+    } else {
+      this.rollingWorkflowPhaseHelperHolder = this.k8RollingWorkflowPhaseHelper;
+    }
+  }
+
+  private void updateCanaryWorkflowHelper(String accountId, String infraDefinitionId) {
+    if (infrastructureDefinitionService.getInfraDefById(accountId, infraDefinitionId)
+            .getInfrastructure()
+            .getInfrastructureType()
+            .equals(RANCHER_INFRA_TYPE)) {
+      this.canaryWorkflowPhaseHelperHolder = this.rancherK8CanaryWorkflowPhaseHelper;
+    } else {
+      this.canaryWorkflowPhaseHelperHolder = this.k8CanaryWorkflowPhaseHelper;
+    }
   }
 }

@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.beans.PageResponse.PageResponseBuilder.aPageResponse;
 import static io.harness.rule.OwnerRule.ABHINAV;
 import static io.harness.rule.OwnerRule.ANSHUL;
+import static io.harness.rule.OwnerRule.DEEPAK;
 import static io.harness.rule.OwnerRule.IVAN;
 import static io.harness.rule.OwnerRule.ROHIT_KUMAR;
 import static io.harness.rule.OwnerRule.YOGESH;
@@ -143,6 +144,33 @@ public class YamlDirectoryServiceImplTest extends WingsBaseTest {
     assertThat(templateNode2.getName()).isEqualTo("template2.yaml");
     assertThat(templateNode2.getAccountId()).isEqualTo(accountid);
     assertThat(templateNode2.getAppId()).isEqualTo(appid);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK)
+  @Category(UnitTests.class)
+  public void test_doTemplateLibraryForApp_() {
+    final String accountid = "accountid";
+    final String appid = "appid";
+    final Application application = anApplication().accountId(accountid).appId(appid).build();
+    DirectoryPath directoryPath = new DirectoryPath("/Setup/Applications/app");
+    TemplateFolder templateFolder = TemplateFolder.builder().uuid("root_folder").name("harness").build();
+    doReturn(templateFolder)
+        .when(templateService)
+        .getTemplateTree(anyString(), anyString(), anyString(), eq(TemplateConstants.TEMPLATE_TYPES_WITH_YAML_SUPPORT));
+    PageResponse<Template> pageResponse = aPageResponse().build();
+    doReturn(pageResponse).when(templateService).list(any(PageRequest.class), anyList(), anyString(), anyBoolean());
+    doReturn(GalleryKey.ACCOUNT_TEMPLATE_GALLERY).when(templateGalleryService).getAccountGalleryKey();
+
+    final FolderNode folderNode =
+        yamlDirectoryService.doTemplateLibraryForApp(application, directoryPath, false, Collections.EMPTY_SET);
+    assertThat(folderNode.getName()).isEqualTo(APPLICATION_TEMPLATE_LIBRARY_FOLDER);
+    assertThat(folderNode.getAccountId()).isEqualTo(accountid);
+    final List<DirectoryNode> children = folderNode.getChildren();
+    assertThat(children.size()).isEqualTo(1);
+    assertThat(children.get(0).getName()).isEqualTo("harness");
+    final List<DirectoryNode> leaves = ((FolderNode) children.get(0)).getChildren();
+    assertThat(leaves.size()).isEqualTo(0);
   }
 
   @Test

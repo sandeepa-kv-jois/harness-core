@@ -147,6 +147,7 @@ import io.fabric8.openshift.client.dsl.DeployableScalableResource;
 import io.github.resilience4j.retry.Retry;
 import io.kubernetes.client.openapi.ApiClient;
 import io.kubernetes.client.openapi.ApiException;
+import io.kubernetes.client.openapi.apis.AppsV1Api;
 import io.kubernetes.client.openapi.apis.AuthenticationV1Api;
 import io.kubernetes.client.openapi.apis.CoreV1Api;
 import io.kubernetes.client.openapi.apis.VersionApi;
@@ -156,6 +157,7 @@ import io.kubernetes.client.openapi.auth.HttpBasicAuth;
 import io.kubernetes.client.openapi.auth.HttpBearerAuth;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
 import io.kubernetes.client.openapi.models.V1ConfigMapBuilder;
+import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1ObjectMetaBuilder;
 import io.kubernetes.client.openapi.models.V1Pod;
@@ -2046,6 +2048,28 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
       }
     });
     return podSupplier.get();
+  }
+
+  @Override
+  public V1Deployment getDeployment(KubernetesConfig kubernetesConfig, String namespace, String name) {
+    if (kubernetesConfig == null || isBlank(name)) {
+      return null;
+    }
+    final Supplier<V1Deployment> decorateSupplier = Retry.decorateSupplier(retry, () -> {
+      try {
+        ApiClient apiClient = kubernetesHelperService.getApiClient(kubernetesConfig);
+
+        return new AppsV1Api(apiClient).readNamespacedDeployment(name, namespace, null, null, null);
+      } catch (ApiException exception) {
+        if (isResourceNotFoundException(exception.getCode())) {
+          return null;
+        }
+        String message = format("Unable to get %s/deployment/%s. Code: %s, message: %s", namespace, name,
+            exception.getCode(), exception.getResponseBody());
+        throw new InvalidRequestException(message, exception, USER);
+      }
+    });
+    return decorateSupplier.get();
   }
 
   @Override

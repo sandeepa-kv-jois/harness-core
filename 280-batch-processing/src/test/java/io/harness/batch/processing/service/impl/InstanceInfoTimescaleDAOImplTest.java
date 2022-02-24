@@ -9,8 +9,11 @@ package io.harness.batch.processing.service.impl;
 
 import static io.harness.rule.OwnerRule.UTSAV;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
@@ -23,19 +26,21 @@ import io.harness.perpetualtask.k8s.watch.K8sWorkloadSpec;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableList;
+import java.time.Instant;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.DSLContext;
 import org.jooq.SQLDialect;
 import org.jooq.impl.DSL;
 import org.jooq.tools.jdbc.MockConnection;
 import org.jooq.tools.jdbc.MockDataProvider;
+import org.jooq.tools.jdbc.MockExecuteContext;
 import org.jooq.tools.jdbc.MockResult;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-import org.mockito.MockitoAnnotations;
+import org.mockito.ArgumentCaptor;
 import org.mockito.runners.MockitoJUnitRunner;
 
 @Slf4j
@@ -43,11 +48,12 @@ import org.mockito.runners.MockitoJUnitRunner;
 public class InstanceInfoTimescaleDAOImplTest extends CategoryTest {
   private InstanceInfoTimescaleDAO instanceInfoTimescaleDAO;
 
+  private MockDataProvider provider;
+
   @Before
   public void setUp() throws Exception {
-    MockitoAnnotations.initMocks(this);
+    provider = mock(MockDataProvider.class);
 
-    final MockDataProvider provider = mock(MockDataProvider.class);
     final MockConnection connection = new MockConnection(provider);
     final DSLContext dslContext = DSL.using(connection, SQLDialect.POSTGRES);
 
@@ -140,6 +146,22 @@ public class InstanceInfoTimescaleDAOImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testUpdateNodeStopEvent() {
     assertDoesNotThrow(() -> instanceInfoTimescaleDAO.updateNodeStopEvent(ImmutableList.of(createInstanceEvent())));
+  }
+
+  @Test
+  @Owner(developers = UTSAV)
+  @Category(UnitTests.class)
+  public void testStopInactivePodsAtTime() throws Exception {
+    assertDoesNotThrow(
+        () -> instanceInfoTimescaleDAO.stopInactivePodsAtTime("", "", Instant.now(), ImmutableList.of("id0")));
+    ArgumentCaptor<MockExecuteContext> captor = ArgumentCaptor.forClass(MockExecuteContext.class);
+
+    verify(provider, times(1)).execute(captor.capture());
+
+    String expectedSqlQuery =
+        "update \"public\".\"pod_info\" set \"stoptime\" = cast(? as timestamp(6) with time zone), \"updatedat\" = cast(? as timestamp(6) with time zone) where (\"public\".\"pod_info\".\"accountid\" = ? and \"public\".\"pod_info\".\"clusterid\" = ? and \"public\".\"pod_info\".\"instanceid\" not in (?) and \"public\".\"pod_info\".\"starttime\" <= cast(? as timestamp(6) with time zone) and \"public\".\"pod_info\".\"stoptime\" is null)";
+
+    assertThat(captor.getValue().sql()).isEqualTo(expectedSqlQuery);
   }
 
   private static void assertDoesNotThrow(Runnable runnable) {

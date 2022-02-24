@@ -132,6 +132,7 @@ public class KubernetesEntityToDTO
     KubernetesServiceAccountDTO kubernetesServiceAccountDTO =
         KubernetesServiceAccountDTO.builder()
             .serviceAccountTokenRef(new SecretRefData(k8SServiceAccount.getServiceAcccountTokenRef()))
+            .caCertRef(SecretRefHelper.createSecretRef(k8SServiceAccount.getCaCertRef()))
             .build();
     return KubernetesAuthDTO.builder().authType(SERVICE_ACCOUNT).credentials(kubernetesServiceAccountDTO).build();
   }

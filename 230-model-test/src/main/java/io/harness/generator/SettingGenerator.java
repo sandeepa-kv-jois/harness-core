@@ -42,6 +42,7 @@ import static software.wings.beans.SettingAttribute.SettingCategory.HELM_REPO;
 import static software.wings.beans.SettingAttribute.SettingCategory.SETTING;
 import static software.wings.utils.UsageRestrictionsUtils.getAllAppAllEnvUsageRestrictions;
 
+import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.generator.AccountGenerator.Accounts;
 import io.harness.generator.OwnerManager.Owners;
 import io.harness.generator.Randomizer.Seed;
@@ -68,7 +69,6 @@ import software.wings.beans.SettingAttribute.SettingAttributeKeys;
 import software.wings.beans.SettingAttribute.SettingCategory;
 import software.wings.beans.SpotInstConfig;
 import software.wings.beans.WinRmConnectionAttributes;
-import software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme;
 import software.wings.beans.config.ArtifactoryConfig;
 import software.wings.beans.config.NexusConfig;
 import software.wings.beans.settings.azureartifacts.AzureArtifactsPATConfig;

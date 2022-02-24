@@ -8,6 +8,9 @@
 package io.harness.cvng.core.utils.monitoredService;
 
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
+import io.harness.cvng.core.beans.HealthSourceMetricDefinition.SLIDTO;
+import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceSpec;
 import io.harness.cvng.core.entities.CustomHealthCVConfig;
 
@@ -27,6 +30,12 @@ public class CustomHealthSourceSpecTransformer
 
     cvConfigGroup.forEach(customHealthCVConfig -> {
       customHealthCVConfig.getMetricDefinitions().forEach(definition -> {
+        RiskProfile riskProfile = RiskProfile.builder()
+                                      .category(customHealthCVConfig.getMetricPack().getCategory())
+                                      .metricType(definition.getMetricType())
+                                      .thresholdTypes(customHealthCVConfig.getThresholdTypeOfMetric(
+                                          definition.getMetricName(), customHealthCVConfig))
+                                      .build();
         CustomHealthMetricDefinition customHealthMetricDefinition =
             CustomHealthMetricDefinition.builder()
                 .method(definition.getMethod())
@@ -36,11 +45,21 @@ public class CustomHealthSourceSpecTransformer
                 .metricName(definition.getMetricName())
                 .metricResponseMapping(definition.getMetricResponseMapping())
                 .metricName(definition.getMetricName())
-                .analysis(definition.getAnalysis())
+                .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder()
+                              .deploymentVerification(
+                                  HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
+                                      .enabled(definition.getDeploymentVerification().isEnabled())
+                                      .build())
+                              .liveMonitoring(HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder()
+                                                  .enabled(definition.getLiveMonitoring().isEnabled())
+                                                  .build())
+                              .riskProfile(riskProfile)
+                              .build())
                 .endTime(definition.getEndTime())
+                .sli(SLIDTO.builder().enabled(definition.getSli().isEnabled()).build())
                 .startTime(definition.getStartTime())
                 .identifier(definition.getIdentifier())
-                .riskProfile(definition.getRiskProfile())
+                .riskProfile(riskProfile)
                 .requestBody(definition.getRequestBody())
                 .build();
         customHealthSourceSpec.getMetricDefinitions().add(customHealthMetricDefinition);

@@ -8,8 +8,6 @@
 package io.harness.cvng.core.services.api.monitoredService;
 
 import io.harness.cvng.beans.MonitoredServiceType;
-import io.harness.cvng.beans.change.ChangeCategory;
-import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.core.beans.HealthMonitoringFlagResponse;
 import io.harness.cvng.core.beans.change.ChangeSummaryDTO;
 import io.harness.cvng.core.beans.monitoredService.AnomaliesSummaryDTO;
@@ -43,9 +41,9 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
   boolean delete(ProjectParams projectParams, String identifier);
   List<MonitoredServiceResponse> get(ProjectParams projectParams, Set<String> identifier);
   MonitoredServiceResponse get(ProjectParams projectParams, String identifier);
-  MonitoredServiceResponse get(ServiceEnvironmentParams serviceEnvironmentParams);
-  PageResponse<MonitoredServiceResponse> getList(
-      ProjectParams projectParams, String environmentIdentifier, Integer offset, Integer pageSize, String filter);
+  @Deprecated MonitoredServiceResponse get(ServiceEnvironmentParams serviceEnvironmentParams);
+  PageResponse<MonitoredServiceResponse> getList(ProjectParams projectParams, List<String> environmentIdentifiers,
+      Integer offset, Integer pageSize, String filter);
   List<MonitoredServiceWithHealthSources> getAllWithTimeSeriesHealthSources(ProjectParams projectParams);
 
   MonitoredServiceDTO getMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams);
@@ -57,7 +55,7 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   List<MonitoredService> list(@NonNull ProjectParams projectParams, @NonNull List<String> identifiers);
 
-  PageResponse<MonitoredServiceListItemDTO> list(ProjectParams projectParams, String environmentIdentifier,
+  PageResponse<MonitoredServiceListItemDTO> list(ProjectParams projectParams, String environmentIdentifiers,
       Integer offset, Integer pageSize, String filter, boolean servicesAtRiskFilter);
   List<EnvironmentResponse> listEnvironments(String accountId, String orgIdentifier, String projectIdentifier);
   MonitoredServiceResponse createDefault(
@@ -66,7 +64,10 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   HistoricalTrend getOverAllHealthScore(
       ProjectParams projectParams, String identifier, DurationDTO duration, Instant endTime);
-
+  /**
+   * use #getOverAllHealthScore with monitored service identifier instead
+   */
+  @Deprecated
   HistoricalTrend getOverAllHealthScore(
       ServiceEnvironmentParams serviceEnvironmentParams, DurationDTO duration, Instant endTime);
 
@@ -74,9 +75,12 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
 
   String getYamlTemplate(ProjectParams projectParams, MonitoredServiceType type);
 
-  List<HealthSourceDTO> getHealthSources(ServiceEnvironmentParams serviceEnvironmentParams);
-  List<ChangeEventDTO> getChangeEvents(ProjectParams projectParams, String monitoredServiceIdentifier,
-      Instant startTime, Instant endTime, List<ChangeCategory> changeCategories);
+  List<HealthSourceDTO> getHealthSources(ProjectParams projectParams, String monitoredServiceIdentifier);
+  /**
+   * use #getHealthSources with monitored service identifier instead
+   */
+  @Deprecated List<HealthSourceDTO> getHealthSources(ServiceEnvironmentParams serviceEnvironmentParams);
+
   ChangeSummaryDTO getChangeSummary(
       ProjectParams projectParams, String monitoredServiceIdentifier, Instant startTime, Instant endTime);
 
@@ -88,4 +92,7 @@ public interface MonitoredServiceService extends DeleteEntityByHandler<Monitored
       ProjectParams projectParams, String monitoredServiceIdentifier, String healthSourceIdentifier);
 
   MonitoredServiceListItemDTO getMonitoredServiceDetails(ServiceEnvironmentParams serviceEnvironmentParams);
+
+  List<String> getMonitoredServiceIdentifiers(
+      ProjectParams projectParams, List<String> services, List<String> environments);
 }

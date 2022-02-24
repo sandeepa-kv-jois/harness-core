@@ -11,7 +11,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.instance.outcome.DeploymentInfoOutcome;
 import io.harness.delegate.beans.instancesync.ServerInstanceInfo;
-import io.harness.engine.outputs.SweepingOutputException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepOutcome;
@@ -27,7 +27,7 @@ public interface InstanceInfoService {
    * @param ambiance ambiance
    * @param stepType deployment step type
    * @return list of deployed server instances info or empty list if step type is not Instance sync step
-   * @throws SweepingOutputException if step type supports Instance sync but sweeping output is not found
+   * @throws InvalidRequestException if step type supports Instance sync but sweeping output is not found
    */
   @NotNull List<ServerInstanceInfo> listServerInstances(Ambiance ambiance, StepType stepType);
 

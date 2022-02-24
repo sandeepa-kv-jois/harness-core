@@ -130,6 +130,7 @@ public class NewRelicCVConfig extends MetricCVConfig {
                                   .thresholds(new ArrayList<>(thresholds))
                                   .type(info.getMetricType())
                                   .name(info.getMetricName())
+                                  .identifier(info.getIdentifier())
                                   .included(true)
                                   .build());
     });

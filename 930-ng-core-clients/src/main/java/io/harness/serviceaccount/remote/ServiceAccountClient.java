@@ -24,7 +24,7 @@ public interface ServiceAccountClient {
   @GET(SERVICE_ACCOUNTS_API)
   Call<ResponseDTO<List<ServiceAccountDTO>>> listServiceAccounts(
       @Query(NGCommonEntityConstants.ACCOUNT_KEY) @NotEmpty String accountIdentifier,
-      @Query(NGCommonEntityConstants.ORG_KEY) @NotEmpty String orgIdentifier,
+      @Query(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @Query(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier,
       @Query(NGResourceFilterConstants.IDENTIFIERS) List<String> serviceAccountIdentifiers);
 }

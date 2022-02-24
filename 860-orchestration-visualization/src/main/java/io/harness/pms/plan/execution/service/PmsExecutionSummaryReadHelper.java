@@ -15,6 +15,7 @@ import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import java.util.List;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
@@ -27,5 +28,9 @@ public class PmsExecutionSummaryReadHelper {
 
   public long findCount(Query query) {
     return secondaryMongoTemplate.count(Query.of(query).limit(-1).skip(-1), PipelineExecutionSummaryEntity.class);
+  }
+
+  public List<PipelineExecutionSummaryEntity> find(Query query) {
+    return secondaryMongoTemplate.find(query, PipelineExecutionSummaryEntity.class);
   }
 }

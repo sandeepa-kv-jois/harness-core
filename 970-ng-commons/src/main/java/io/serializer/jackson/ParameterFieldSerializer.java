@@ -33,4 +33,9 @@ public class ParameterFieldSerializer extends StdSerializer<ParameterField<?>> {
   public void serialize(ParameterField<?> value, JsonGenerator gen, SerializerProvider provider) throws IOException {
     gen.writeObject(value.getJsonFieldValue());
   }
+
+  @Override
+  public boolean isEmpty(SerializerProvider provider, ParameterField<?> value) {
+    return ParameterField.isBlank(value);
+  }
 }

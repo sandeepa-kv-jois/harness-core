@@ -23,7 +23,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.connector.servicenow.ServiceNowConnectorDTO;
 import io.harness.encryption.SecretRefData;
-import io.harness.exception.ServiceNowException;
+import io.harness.exception.HintException;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.serializer.JsonUtils;
@@ -107,8 +107,9 @@ public class ServiceNowTaskNGHelperTest extends CategoryTest {
                                                                 .action(ServiceNowActionNG.VALIDATE_CREDENTIALS)
                                                                 .serviceNowConnectorDTO(serviceNowConnectorDTO)
                                                                 .build()))
-        .isInstanceOf(ServiceNowException.class)
-        .hasMessage("Invalid ServiceNow credentials");
+        .isInstanceOf(HintException.class)
+        .hasMessage(
+            "Check if the ServiceNow credentials are correct and you have necessary permissions to access the incident table");
     verify(secretDecryptionService).decrypt(any(), any());
   }
 

@@ -32,7 +32,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.FileData;
-import io.harness.connector.service.scm.ScmDelegateClient;
 import io.harness.delegate.k8s.beans.K8sHandlerConfig;
 import io.harness.delegate.k8s.kustomize.KustomizeTaskHelper;
 import io.harness.delegate.k8s.openshift.OpenShiftDelegateService;
@@ -43,7 +42,6 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.WingsException;
 import io.harness.filesystem.FileIo;
 import io.harness.git.model.GitFile;
-import io.harness.k8s.KubernetesContainerService;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.manifest.ManifestHelper;
 import io.harness.k8s.model.K8sDelegateTaskParams;
@@ -52,7 +50,6 @@ import io.harness.k8s.model.KubernetesResource;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.manifest.CustomManifestService;
-import io.harness.service.ScmServiceClient;
 
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitFileConfig;
@@ -96,7 +93,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 @OwnedBy(CDP)
 public class K8sTaskHelper {
   @Inject protected DelegateLogService delegateLogService;
-  @Inject private transient KubernetesContainerService kubernetesContainerService;
   @Inject private GitService gitService;
   @Inject private EncryptionService encryptionService;
   @Inject private HelmTaskHelper helmTaskHelper;
@@ -106,8 +102,6 @@ public class K8sTaskHelper {
   @Inject private HelmHelper helmHelper;
   @Inject private CustomManifestService customManifestService;
   @Inject private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
-  @Inject private ScmDelegateClient scmDelegateClient;
-  @Inject private ScmServiceClient scmServiceClient;
   @Inject private ScmFetchFilesHelper scmFetchFilesHelper;
 
   public boolean doStatusCheckAllResourcesForHelm(Kubectl client, List<KubernetesResourceId> resourceIds, String ocPath,

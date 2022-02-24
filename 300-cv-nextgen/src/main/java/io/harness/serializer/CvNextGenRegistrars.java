@@ -14,7 +14,6 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.core.beans.CVVerifyStepNode;
 import io.harness.morphia.MorphiaRegistrar;
-import io.harness.plancreator.steps.StepElementConfig;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.serializer.kryo.PmsContractsKryoRegistrar;
 import io.harness.serializer.kryo.CVNGKryoRegistrar;
@@ -67,13 +66,6 @@ public class CvNextGenRegistrars {
           .build();
   public static final ImmutableList<YamlSchemaRootClass> yamlSchemaRegistrars =
       ImmutableList.<YamlSchemaRootClass>builder()
-          .add(YamlSchemaRootClass.builder()
-                   .entityType(EntityType.DEPLOYMENT_STEPS)
-                   .availableAtProjectLevel(true)
-                   .availableAtOrgLevel(false)
-                   .availableAtAccountLevel(false)
-                   .clazz(StepElementConfig.class)
-                   .build())
           .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.VERIFY_STEP)
                    .availableAtProjectLevel(true)

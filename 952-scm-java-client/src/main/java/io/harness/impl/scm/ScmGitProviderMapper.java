@@ -42,6 +42,8 @@ import org.apache.commons.lang3.NotImplementedException;
 @OwnedBy(DX)
 public class ScmGitProviderMapper {
   @Inject(optional = true) GithubService githubService;
+  private static final String SCM_SKIP_SSL = "SCM_SKIP_SSL";
+  private static final String ADDITIONAL_CERTS_PATH = "ADDITIONAL_CERTS_PATH";
 
   public Provider mapToSCMGitProvider(ScmConnector scmConnector) {
     return mapToSCMGitProvider(scmConnector, false);
@@ -69,16 +71,26 @@ public class ScmGitProviderMapper {
     } else {
       builder.setBitbucketServer(createBitbucketServerProvider(bitbucketConnector));
     }
-    return builder.setSkipVerify(skipVerify).build();
+    return builder.setSkipVerify(skipVerify).setAdditionalCertsPath(getAdditionalCertsPath()).build();
   }
 
   private boolean checkScmSkipVerify() {
-    final String scm_skip_ssl = System.getenv("SCM_SKIP_SSL");
+    final String scm_skip_ssl = System.getenv(SCM_SKIP_SSL);
     boolean skipVerify = "true".equals(scm_skip_ssl);
     if (skipVerify) {
       log.info("Skipping verification");
     }
     return skipVerify;
+  }
+
+  private String getAdditionalCertsPath() {
+    String additionalCertsPath = "";
+    try {
+      additionalCertsPath = System.getenv(ADDITIONAL_CERTS_PATH);
+    } catch (SecurityException e) {
+      log.error("Don't have sufficient permission to query ADDITIONAL_CERTS_PATH", e);
+    }
+    return additionalCertsPath;
   }
 
   private BitbucketCloudProvider createBitbucketCloudProvider(BitbucketConnectorDTO bitbucketConnector) {
@@ -113,6 +125,7 @@ public class ScmGitProviderMapper {
         .setDebug(debug)
         .setEndpoint(GitClientHelper.getGitlabApiURL(gitlabConnector.getUrl()))
         .setSkipVerify(skipVerify)
+        .setAdditionalCertsPath(getAdditionalCertsPath())
         .build();
   }
 
@@ -134,6 +147,7 @@ public class ScmGitProviderMapper {
         .setDebug(debug)
         .setEndpoint(GitClientHelper.getGithubApiURL(githubConnector.getUrl()))
         .setSkipVerify(skipVerify)
+        .setAdditionalCertsPath(getAdditionalCertsPath())
         .build();
   }
 

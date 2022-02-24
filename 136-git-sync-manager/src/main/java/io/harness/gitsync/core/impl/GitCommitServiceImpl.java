@@ -108,11 +108,6 @@ public class GitCommitServiceImpl implements GitCommitService {
 
   @Override
   public UpdateResult upsertOnCommitIdAndRepoUrlAndGitSyncDirection(GitCommitDTO gitCommitDTO) {
-    if (isFileProcessingSummaryEmpty(gitCommitDTO.getFileProcessingSummary())) {
-      log.info("Ignoring gitCommit upsert : {} as file processing summary is empty", gitCommitDTO);
-      return UpdateResult.unacknowledged();
-    }
-
     Criteria criteria = Criteria.where(GitCommitKeys.commitId)
                             .is(gitCommitDTO.getCommitId())
                             .and(GitCommitKeys.repoURL)

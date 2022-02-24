@@ -29,6 +29,9 @@ import org.apache.commons.lang3.StringUtils;
 @UtilityClass
 public class ServiceNowCriteriaEvaluator {
   public boolean evaluateCriteria(ServiceNowTicketNG ticket, CriteriaSpecDTO criteriaSpec) {
+    if (ticket == null || ticket.getFields() == null || EmptyPredicate.isEmpty(ticket.getFields())) {
+      throw new ApprovalStepNGException("Failed to fetch ticket. Ticket number might be invalid", true);
+    }
     if (criteriaSpec instanceof JexlCriteriaSpecDTO) {
       return evaluateJexlCriteria(ticket, (JexlCriteriaSpecDTO) criteriaSpec);
     } else if (criteriaSpec instanceof KeyValuesCriteriaSpecDTO) {
@@ -62,10 +65,6 @@ public class ServiceNowCriteriaEvaluator {
     List<ConditionDTO> conditions = keyValueCriteriaSpec.getConditions();
     if (isEmpty(conditions)) {
       throw new ApprovalStepNGException("Conditions in KeyValues criteria can't be empty", true);
-    }
-
-    if (ticket == null || ticket.getFields() == null || EmptyPredicate.isEmpty(ticket.getFields())) {
-      throw new ApprovalStepNGException("Failed to fetch ticket. Ticket number might be invalid", true);
     }
 
     boolean matchAnyCondition = keyValueCriteriaSpec.isMatchAnyCondition();

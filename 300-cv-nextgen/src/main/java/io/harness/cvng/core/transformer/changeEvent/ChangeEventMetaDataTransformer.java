@@ -37,6 +37,7 @@ public abstract class ChangeEventMetaDataTransformer<E extends Activity, M exten
         .serviceIdentifier(activity.getServiceIdentifier())
         .serviceName(serviceName)
         .changeSourceIdentifier(activity.getChangeSourceIdentifier())
+        .monitoredServiceIdentifier(activity.getMonitoredServiceIdentifier())
         .envIdentifier(activity.getEnvironmentIdentifier())
         .environmentName(environmentName)
         .name(activity.getActivityName())

@@ -162,8 +162,9 @@ public abstract class Activity
 
   @NotNull private ActivityType type;
   @NotNull private String accountId;
-  private String serviceIdentifier;
-  @NotNull private String environmentIdentifier;
+  @Deprecated private String serviceIdentifier;
+  @NotNull @Deprecated private String environmentIdentifier;
+  String monitoredServiceIdentifier;
   @NotNull private String projectIdentifier;
   @NotNull private String orgIdentifier;
   private String activitySourceId;
@@ -293,6 +294,9 @@ public abstract class Activity
       }
       if (activity.getChangeSourceIdentifier() != null) {
         updateOperations.set(ActivityKeys.changeSourceIdentifier, activity.getChangeSourceIdentifier());
+      }
+      if (activity.getMonitoredServiceIdentifier() != null) {
+        updateOperations.set(ActivityKeys.monitoredServiceIdentifier, activity.getMonitoredServiceIdentifier());
       }
       if (CollectionUtils.isNotEmpty(activity.getVerificationJobInstanceIds())) {
         updateOperations.addToSet(ActivityKeys.verificationJobInstanceIds, activity.getVerificationJobInstanceIds());

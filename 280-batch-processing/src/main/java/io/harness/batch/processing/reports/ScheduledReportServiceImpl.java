@@ -7,6 +7,8 @@
 
 package io.harness.batch.processing.reports;
 
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
+
 import static software.wings.graphql.datafetcher.billing.CloudBillingHelper.unified;
 import static software.wings.security.UserThreadLocal.userGuard;
 
@@ -18,6 +20,8 @@ import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.views.entities.CEReportSchedule;
 import io.harness.ccm.views.service.impl.CEReportScheduleServiceImpl;
 import io.harness.ccm.views.service.impl.CEReportTemplateBuilderServiceImpl;
+import io.harness.logging.AccountLogContext;
+import io.harness.logging.AutoLogContext;
 
 import software.wings.beans.Account;
 import software.wings.beans.User;
@@ -73,6 +77,7 @@ public class ScheduledReportServiceImpl {
 
     accountIds.forEach(accountId -> {
       // N mongo calls for N accounts
+      AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR);
       List<CEReportSchedule> schedules = ceReportScheduleService.getAllMatchingSchedules(accountId, jobTime);
       log.info("Found schedules(total {}) : {} for account {}", schedules.size(), schedules, accountId);
       scheduleCount += schedules.size();
@@ -89,6 +94,7 @@ public class ScheduledReportServiceImpl {
           }
         }
       });
+      ignore.close();
     });
     log.info("A total of {} reportSchedules were processed", scheduleCount);
   }

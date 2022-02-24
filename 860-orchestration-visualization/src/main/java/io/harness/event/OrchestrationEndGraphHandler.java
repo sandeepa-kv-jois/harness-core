@@ -49,7 +49,7 @@ public class OrchestrationEndGraphHandler implements AsyncInformObserver, Orches
     try {
       PlanExecution planExecution = planExecutionService.get(ambiance.getPlanExecutionId());
       // One last time try to update the graph to process any unprocessed logs
-      graphGenerationService.updateGraph(planExecution.getUuid());
+      graphGenerationService.updateGraphWithWaitLock(planExecution.getUuid());
       orchestrationEventLogRepository.deleteLogsForGivenPlanExecutionId(ambiance.getPlanExecutionId());
 
       log.info("Ending Execution for planExecutionId [{}] with status [{}].", planExecution.getUuid(),

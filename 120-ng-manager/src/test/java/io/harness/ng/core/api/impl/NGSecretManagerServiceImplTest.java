@@ -9,6 +9,7 @@ package io.harness.ng.core.api.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.PHOENIKX;
+import static io.harness.rule.OwnerRule.VIKAS_M;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -16,12 +17,14 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.ConnectivityStatus;
@@ -31,9 +34,13 @@ import io.harness.connector.services.NGConnectorSecretManagerService;
 import io.harness.connector.services.NGVaultService;
 import io.harness.encryptors.KmsEncryptorsRegistry;
 import io.harness.encryptors.VaultEncryptorsRegistry;
+import io.harness.exception.DelegateServiceDriverException;
+import io.harness.exception.InvalidRequestException;
+import io.harness.exception.WingsException;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
+import io.harness.secretmanagerclient.NGSecretManagerMetadata;
 import io.harness.secretmanagerclient.dto.LocalConfigDTO;
 import io.harness.secretmanagerclient.dto.SecretManagerConfigDTO;
 import io.harness.secretmanagerclient.dto.SecretManagerMetadataDTO;
@@ -42,7 +49,10 @@ import io.harness.secretmanagerclient.dto.VaultConfigUpdateDTO;
 import io.harness.secretmanagerclient.dto.VaultMetadataSpecDTO;
 import io.harness.secretmanagerclient.remote.SecretManagerClient;
 import io.harness.security.encryption.EncryptionType;
+import io.harness.service.DelegateGrpcClientWrapper;
 
+import software.wings.beans.BaseVaultConfig;
+import software.wings.beans.VaultConfig;
 import software.wings.service.impl.security.NGEncryptorService;
 
 import java.io.IOException;
@@ -63,6 +73,8 @@ public class NGSecretManagerServiceImplTest extends CategoryTest {
   NGEncryptorService ngEncryptorService;
   NGVaultService ngVaultService;
   ConnectorService connectorService;
+  AccountClient accountClient;
+  DelegateGrpcClientWrapper delegateService;
 
   private final String ACCOUNT_IDENTIFIER = "ACCOUNT_ID";
   private final String ORG_IDENTIFIER = "ACCOUNT_ID";
@@ -79,6 +91,8 @@ public class NGSecretManagerServiceImplTest extends CategoryTest {
     ngEncryptedDataService = mock(NGEncryptedDataService.class);
     ngEncryptorService = mock(NGEncryptorService.class);
     connectorService = mock(ConnectorService.class);
+    accountClient = mock(AccountClient.class);
+    delegateService = mock(DelegateGrpcClientWrapper.class);
     ngSecretManagerService = new NGSecretManagerServiceImpl(secretManagerClient, ngConnectorSecretManagerService,
         kmsEncryptorsRegistry, vaultEncryptorsRegistry, ngVaultService);
   }
@@ -134,6 +148,49 @@ public class NGSecretManagerServiceImplTest extends CategoryTest {
     SecretManagerMetadataDTO metadataDTO = ngSecretManagerService.getMetadata("Account", null);
 
     assertThat(metadataDTO).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_ListSecretEngines_throwsDelegateServiceDriverException_withoutCause() throws WingsException {
+    BaseVaultConfig vaultConfig = VaultConfig.builder().accountId(ACCOUNT_IDENTIFIER).build();
+    vaultConfig.setNgMetadata(NGSecretManagerMetadata.builder()
+                                  .accountIdentifier(ACCOUNT_IDENTIFIER)
+                                  .orgIdentifier(ORG_IDENTIFIER)
+                                  .projectIdentifier(PROJECT_IDENTIFIER)
+                                  .build());
+    Call<RestResponse<Boolean>> request = mock(Call.class);
+    doReturn(request).when(accountClient).isFeatureFlagEnabled(any(), any());
+    when(delegateService.executeSyncTask(any()))
+        .thenThrow(new DelegateServiceDriverException("Unknown error from delegate"));
+    try {
+      ngVaultService.listSecretEngines(vaultConfig);
+    } catch (WingsException ex) {
+      assertThat(ex.getMessage()).isEqualTo("Unknown error from delegate");
+    }
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_ListSecretEngines_throwsDelegateServiceDriverException_withCause() throws WingsException {
+    BaseVaultConfig vaultConfig = VaultConfig.builder().accountId(ACCOUNT_IDENTIFIER).build();
+    vaultConfig.setNgMetadata(NGSecretManagerMetadata.builder()
+                                  .accountIdentifier(ACCOUNT_IDENTIFIER)
+                                  .orgIdentifier(ORG_IDENTIFIER)
+                                  .projectIdentifier(PROJECT_IDENTIFIER)
+                                  .build());
+    Call<RestResponse<Boolean>> request = mock(Call.class);
+    doReturn(request).when(accountClient).isFeatureFlagEnabled(any(), any());
+    when(delegateService.executeSyncTask(any()))
+        .thenThrow(new DelegateServiceDriverException("Unexpected error occurred while submitting task.",
+            new InvalidRequestException("No eligible delegates to execute task")));
+    try {
+      ngVaultService.listSecretEngines(vaultConfig);
+    } catch (WingsException ex) {
+      assertThat(ex.getMessage()).isEqualTo("No eligible delegates to execute task");
+    }
   }
 
   @Test

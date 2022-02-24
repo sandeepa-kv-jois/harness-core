@@ -66,6 +66,7 @@ import io.harness.cvng.core.jobs.MonitoringSourcePerpetualTaskHandler;
 import io.harness.cvng.core.jobs.PersistentLockCleanup;
 import io.harness.cvng.core.jobs.SLIDataCollectionTaskCreateNextTaskHandler;
 import io.harness.cvng.core.jobs.ServiceGuardDataCollectionTaskCreateNextTaskHandler;
+import io.harness.cvng.core.jobs.StatemachineEventConsumer;
 import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.exception.BadRequestExceptionMapper;
@@ -261,6 +262,7 @@ public class VerificationApplication extends Application<VerificationConfigurati
   private void createConsumerThreadsToListenToEvents(Injector injector) {
     new Thread(injector.getInstance(EntityCRUDStreamConsumer.class)).start();
     new Thread(injector.getInstance(DeploymentChangeEventConsumer.class)).start();
+    new Thread(injector.getInstance(StatemachineEventConsumer.class)).start();
   }
 
   private void scheduleMaintenanceActivities(Injector injector, VerificationConfiguration configuration) {

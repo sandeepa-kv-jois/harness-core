@@ -31,6 +31,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.SortedMap;
 import java.util.TreeMap;
+import lombok.extern.slf4j.Slf4j;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
 
 /**
@@ -40,6 +41,7 @@ import org.cloudfoundry.operations.applications.ApplicationSummary;
  *
  * The app should be renamed in these order --> NEW --> ACTIVE --> INACTIVE
  */
+@Slf4j
 public class AppRenamingRollbackOperator implements AppRenamingOperator {
   @Override
   public CfInBuiltVariablesUpdateValues renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
@@ -63,8 +65,8 @@ public class AppRenamingRollbackOperator implements AppRenamingOperator {
     Set<Map.Entry<AppType, AppRenamingData>> entries = appTypeApplicationSummaryMap.entrySet();
     for (Map.Entry<AppType, AppRenamingData> entry : entries) {
       AppRenamingData appRenamingData = entry.getValue();
-      pcfCommandTaskBaseHelper.renameApp(
-          appRenamingData.getAppSummary(), cfRequestConfig, executionLogCallback, appRenamingData.getNewName());
+      renameApp(appRenamingData.getAppSummary(), pcfCommandTaskBaseHelper, cfRequestConfig, executionLogCallback,
+          appRenamingData.getNewName(), log);
 
       if (AppType.NEW == entry.getKey()) {
         updateValuesBuilder.newAppGuid(appRenamingData.getGuid());

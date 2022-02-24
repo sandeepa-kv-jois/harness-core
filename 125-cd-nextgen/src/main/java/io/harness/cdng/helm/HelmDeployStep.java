@@ -142,6 +142,7 @@ public class HelmDeployStep extends TaskChainExecutableWithRollbackAndRbac imple
         (HelmInstallCmdResponseNG) helmCmdExecResponseNG.getHelmCommandResponse();
     nativeHelmDeployOutcomeBuilder.prevReleaseVersion(helmInstallCmdResponseNG.getPrevReleaseVersion());
     nativeHelmDeployOutcomeBuilder.newReleaseVersion(helmInstallCmdResponseNG.getPrevReleaseVersion() + 1);
+    nativeHelmDeployOutcomeBuilder.hasInstallUpgradeStarted(true);
 
     StepResponseBuilder stepResponseBuilder =
         StepResponse.builder().unitProgressList(helmCmdExecResponseNG.getCommandUnitsProgress().getUnitProgresses());

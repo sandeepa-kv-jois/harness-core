@@ -53,6 +53,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
@@ -274,10 +275,9 @@ public class PerspectiveTimeSeriesHelper {
       List<String> entityIds, String harnessAccountId, String fieldName) {
     Map<String, String> entityIdToName =
         entityMetadataService.getEntityIdToNameMapping(entityIds, harnessAccountId, fieldName);
-    Map<Timestamp, List<DataPoint>> updatedDataPointsMap = new HashMap<>();
-    List<Timestamp> timestamps = costDataPointsMap.keySet().stream().sorted().collect(Collectors.toList());
+    Map<Timestamp, List<DataPoint>> updatedDataPointsMap = new TreeMap<>();
     if (entityIdToName != null) {
-      timestamps.forEach(timestamp
+      costDataPointsMap.keySet().forEach(timestamp
           -> updatedDataPointsMap.put(
               timestamp, getUpdatedDataPoints(costDataPointsMap.get(timestamp), entityIdToName)));
       return updatedDataPointsMap;

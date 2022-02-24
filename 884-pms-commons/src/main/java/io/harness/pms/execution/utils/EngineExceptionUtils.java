@@ -102,6 +102,8 @@ public class EngineExceptionUtils {
         return io.harness.exception.FailureType.AUTHENTICATION;
       case DELEGATE_PROVISIONING_FAILURE:
         return io.harness.exception.FailureType.DELEGATE_PROVISIONING;
+      case POLICY_EVALUATION_FAILURE:
+        return io.harness.exception.FailureType.POLICY_EVALUATION_FAILURE;
       default:
         throw new InvalidRequestException("No failure mapped to " + oFailureType.name());
     }

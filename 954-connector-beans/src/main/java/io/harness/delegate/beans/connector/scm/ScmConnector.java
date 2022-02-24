@@ -10,6 +10,7 @@ package io.harness.delegate.beans.connector.scm;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.connector.ConnectorType;
 
 /**
  * Marker interface for all scm connectors.
@@ -19,4 +20,5 @@ import io.harness.annotations.dev.OwnedBy;
 public interface ScmConnector {
   void setUrl(String url);
   String getUrl();
+  ConnectorType getConnectorType();
 }

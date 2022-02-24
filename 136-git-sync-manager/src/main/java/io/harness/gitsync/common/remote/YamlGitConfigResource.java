@@ -42,6 +42,7 @@ import io.harness.ng.core.dto.FailureDTO;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Hidden;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -109,6 +110,7 @@ public class YamlGitConfigResource {
   }
 
   @PUT
+  @Hidden
   @Path("/disable")
   @ApiOperation(value = "Disable git experience", nickname = "disableGitSync", hidden = true)
   public boolean putGitExperience(

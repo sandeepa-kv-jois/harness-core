@@ -36,6 +36,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnauthorizedException;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
+import io.harness.persistence.HQuery;
 import io.harness.security.EncryptionUtils;
 
 import software.wings.api.DeploymentSummary;
@@ -72,6 +73,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -262,7 +264,7 @@ public class CloudToHarnessMappingServiceImpl implements CloudToHarnessMappingSe
       String accountId, SettingCategory category, SettingVariableTypes valueType) {
     List<SettingAttribute> settingAttributes = new ArrayList<>();
     try (HIterator<SettingAttribute> query =
-             new HIterator<>(persistence.createQuery(SettingAttribute.class, excludeAuthority)
+             new HIterator<>(persistence.createQuery(SettingAttribute.class, EnumSet.of(HQuery.QueryChecks.COUNT))
                                  .filter(SettingAttributeKeys.accountId, accountId)
                                  .filter(SettingAttributeKeys.category, category)
                                  .filter(SettingAttributeKeys.value_type, valueType)
@@ -423,8 +425,8 @@ public class CloudToHarnessMappingServiceImpl implements CloudToHarnessMappingSe
   }
 
   private ClusterRecord getCluster(String clusterId) {
-    Query<ClusterRecord> query =
-        persistence.createQuery(ClusterRecord.class).filter(ClusterRecordKeys.uuid, new ObjectId(clusterId));
+    Query<ClusterRecord> query = persistence.createQuery(ClusterRecord.class, excludeValidate)
+                                     .filter(ClusterRecordKeys.uuid, new ObjectId(clusterId));
     return query.get();
   }
 
@@ -457,8 +459,8 @@ public class CloudToHarnessMappingServiceImpl implements CloudToHarnessMappingSe
 
   @Override
   public CEUserInfo getUserForCluster(String clusterId) {
-    Query<ClusterRecord> clusterQuery =
-        persistence.createQuery(ClusterRecord.class).filter(ClusterRecordKeys.uuid, new ObjectId(clusterId));
+    Query<ClusterRecord> clusterQuery = persistence.createQuery(ClusterRecord.class, excludeValidate)
+                                            .filter(ClusterRecordKeys.uuid, new ObjectId(clusterId));
     ClusterRecord cluster = clusterQuery.get();
     if (cluster == null) {
       return null;

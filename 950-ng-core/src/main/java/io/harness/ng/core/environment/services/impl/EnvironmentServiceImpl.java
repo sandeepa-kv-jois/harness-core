@@ -290,6 +290,7 @@ public class EnvironmentServiceImpl implements EnvironmentService {
     if (isEmpty(requestEnvironment.getName())) {
       requestEnvironment.setName(requestEnvironment.getIdentifier());
     }
+    requestEnvironment.setName(requestEnvironment.getName().trim());
   }
 
   private Criteria getEnvironmentEqualityCriteria(Environment requestEnvironment, boolean deleted) {

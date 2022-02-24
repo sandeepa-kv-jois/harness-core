@@ -108,7 +108,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
       if (isNotEmpty(errorMsg)) {
         anyFilesFailed = true;
         gitFullSyncEntityService.updateStatus(
-            fullSyncEntityInfo.getAccountIdentifier(), fullSyncEntityInfo.getUuid(), FAILED);
+            fullSyncEntityInfo.getAccountIdentifier(), fullSyncEntityInfo.getUuid(), FAILED, errorMsg);
       } else {
         gitFullSyncEntityService.markSuccessful(
             fullSyncEntityInfo.getUuid(), fullSyncEntityInfo.getAccountIdentifier());
@@ -199,7 +199,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
   private void markTheGitFullSyncEntityAsQueued(List<GitFullSyncEntityInfo> allEntitiesToBeSynced) {
     for (GitFullSyncEntityInfo gitFullSyncEntityInfo : allEntitiesToBeSynced) {
       gitFullSyncEntityService.updateStatus(gitFullSyncEntityInfo.getAccountIdentifier(),
-          gitFullSyncEntityInfo.getUuid(), GitFullSyncEntityInfo.SyncStatus.QUEUED);
+          gitFullSyncEntityInfo.getUuid(), GitFullSyncEntityInfo.SyncStatus.QUEUED, null);
     }
   }
 

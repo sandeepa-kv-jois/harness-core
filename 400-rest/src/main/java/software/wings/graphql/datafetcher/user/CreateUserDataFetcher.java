@@ -79,6 +79,10 @@ public class CreateUserDataFetcher extends BaseMutatorDataFetcher<QLCreateUserIn
     userInvite.setName(qlCreateUserInput.getName());
     userInvite.setSource(UserInviteSource.builder().type(UserInviteSource.SourceType.MANUAL).uuid("").build());
     userInvite.setEmails(Arrays.asList(qlCreateUserInput.getEmail()));
+    if (isInitialized(qlCreateUserInput.getExternalUserId())) {
+      final String externalUserId = getValue(qlCreateUserInput.getExternalUserId()).orElse(null);
+      userInvite.setExternalUserId(externalUserId);
+    }
     userInvite.setAppId(GLOBAL_APP_ID);
     List<UserGroup> userGroups = new LinkedList<>();
     final RequestField<List<String>> userGroupIdsFromInput = qlCreateUserInput.getUserGroupIds();

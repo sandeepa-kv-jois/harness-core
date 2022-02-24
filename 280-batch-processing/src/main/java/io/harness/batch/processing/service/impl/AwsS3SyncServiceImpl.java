@@ -36,7 +36,7 @@ import org.zeroturnaround.exec.stream.slf4j.Slf4jStream;
 public class AwsS3SyncServiceImpl implements AwsS3SyncService {
   @Inject BatchMainConfig configuration;
 
-  private static final int SYNC_TIMEOUT_MINUTES = 5;
+  private static final int SYNC_TIMEOUT_MINUTES = 15;
   private static final String AWS_ACCESS_KEY_ID = "AWS_ACCESS_KEY_ID";
   private static final String AWS_SECRET_ACCESS_KEY = "AWS_SECRET_ACCESS_KEY";
   private static final String AWS_DEFAULT_REGION = "AWS_DEFAULT_REGION";

@@ -26,6 +26,7 @@ import io.fabric8.kubernetes.api.model.apiextensions.CustomResourceDefinition;
 import io.fabric8.kubernetes.api.model.extensions.Ingress;
 import io.fabric8.kubernetes.client.KubernetesClient;
 import io.kubernetes.client.openapi.models.V1ConfigMap;
+import io.kubernetes.client.openapi.models.V1Deployment;
 import io.kubernetes.client.openapi.models.V1ObjectMeta;
 import io.kubernetes.client.openapi.models.V1Pod;
 import io.kubernetes.client.openapi.models.V1Secret;
@@ -173,6 +174,8 @@ public interface KubernetesContainerService {
   VirtualService getIstioVirtualService(KubernetesConfig kubernetesConfig, String name);
 
   CustomResourceDefinition getCustomResourceDefinition(KubernetesClient client, IstioResource resource);
+
+  V1Deployment getDeployment(KubernetesConfig kubernetesConfig, String namespace, String name);
 
   VersionInfo getVersion(KubernetesConfig kubernetesConfig);
 

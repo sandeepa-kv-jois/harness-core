@@ -12,7 +12,7 @@ java_library(
     deps = [
         "//:lombok",
         "//870-orchestration:module",
-        "//878-pipeline-service-utilities:module",
+        "//878-ng-common-utilities:module",
         "//889-yaml-commons:module",
         "//940-notification-client:module",
         "//950-telemetry:module",

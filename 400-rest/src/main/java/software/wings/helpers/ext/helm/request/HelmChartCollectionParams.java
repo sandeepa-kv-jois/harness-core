@@ -9,9 +9,12 @@ package software.wings.helpers.ext.helm.request;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
+import static software.wings.delegatetasks.helm.ArtifactoryHelmTaskHelper.shouldFetchHelmChartsFromArtifactory;
+
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.delegate.beans.executioncapability.CapabilityType;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.task.manifests.request.ManifestCollectionParams;
 import io.harness.expression.ExpressionEvaluator;
@@ -39,6 +42,11 @@ public class HelmChartCollectionParams implements ManifestCollectionParams {
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return helmChartConfigParams.fetchRequiredExecutionCapabilities(maskingEvaluator);
+    List<ExecutionCapability> executionCapabilities =
+        helmChartConfigParams.fetchRequiredExecutionCapabilities(maskingEvaluator);
+    if (shouldFetchHelmChartsFromArtifactory(helmChartConfigParams)) {
+      executionCapabilities.removeIf(capability -> CapabilityType.HELM_INSTALL.equals(capability.getCapabilityType()));
+    }
+    return executionCapabilities;
   }
 }

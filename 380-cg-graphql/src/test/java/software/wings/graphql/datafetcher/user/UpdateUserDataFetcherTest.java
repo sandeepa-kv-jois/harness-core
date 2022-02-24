@@ -8,6 +8,7 @@
 package software.wings.graphql.datafetcher.user;
 
 import static io.harness.rule.OwnerRule.VARDAN_BANSAL;
+import static io.harness.rule.OwnerRule.VIKAS_M;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -48,13 +49,16 @@ public class UpdateUserDataFetcherTest extends CategoryTest {
   @Before
   public void setUp() throws Exception {
     MockitoAnnotations.initMocks(this);
-    configureAppService();
   }
 
   @Test
   @Owner(developers = VARDAN_BANSAL)
   @Category(UnitTests.class)
-  public void test_updateUser() {
+  public void test_updateUserWithoutExternalUserId() {
+    doReturn(User.Builder.anUser().uuid("userId").name("old name").email("test@harness.io").build())
+        .when(userService)
+        .get("userId");
+    doReturn(User.Builder.anUser().build()).when(userService).update(any(User.class));
     final QLUpdateUserInput updateUserInput = QLUpdateUserInput.builder()
                                                   .clientMutationId("clientMutationId1")
                                                   .id("userId")
@@ -78,10 +82,74 @@ public class UpdateUserDataFetcherTest extends CategoryTest {
     assertThat(userArgument.getUuid()).isEqualTo("userId");
   }
 
-  private void configureAppService() {
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_updateUserWithExternalUserId_withoutExistingExternalUserId() {
     doReturn(User.Builder.anUser().uuid("userId").name("old name").email("test@harness.io").build())
         .when(userService)
         .get("userId");
     doReturn(User.Builder.anUser().build()).when(userService).update(any(User.class));
+    final QLUpdateUserInput updateUserInput = QLUpdateUserInput.builder()
+                                                  .clientMutationId("clientMutationId1")
+                                                  .id("userId")
+                                                  .name(RequestField.ofNullable("newUserName"))
+                                                  .externalUserId(RequestField.ofNullable("newExternalUserId"))
+                                                  .build();
+    final MutationContext mutationContext = MutationContext.builder()
+                                                .accountId("accountId")
+                                                .dataFetchingEnvironment(Mockito.mock(DataFetchingEnvironment.class))
+                                                .build();
+
+    final QLUpdateUserPayload qlUpdateUserPayload =
+        updateUserDataFetcher.mutateAndFetch(updateUserInput, mutationContext);
+    assertThat(qlUpdateUserPayload.getClientMutationId()).isEqualTo("clientMutationId1");
+
+    verify(userService, times(1)).get("userId");
+    final ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
+    verify(userService, times(1)).update(userArgumentCaptor.capture());
+
+    final User userArgument = userArgumentCaptor.getValue();
+    assertThat(userArgument.getName()).isEqualTo("newUserName");
+    assertThat(userArgument.getUuid()).isEqualTo("userId");
+    assertThat(userArgument.getExternalUserId()).isEqualTo("newExternalUserId");
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_updateUserWithExternalUserId_withExistingExternalUserId() {
+    doReturn(User.Builder.anUser()
+                 .uuid("userId")
+                 .name("old name")
+                 .email("test@harness.io")
+                 .externalUserId("oldExternalUserId")
+                 .build())
+        .when(userService)
+        .get("userId");
+    doReturn(User.Builder.anUser().build()).when(userService).update(any(User.class));
+    final QLUpdateUserInput updateUserInput = QLUpdateUserInput.builder()
+                                                  .clientMutationId("clientMutationId1")
+                                                  .id("userId")
+                                                  .name(RequestField.ofNullable("newUserName"))
+                                                  .externalUserId(RequestField.ofNullable("newExternalUserId"))
+                                                  .build();
+    final MutationContext mutationContext = MutationContext.builder()
+                                                .accountId("accountId")
+                                                .dataFetchingEnvironment(Mockito.mock(DataFetchingEnvironment.class))
+                                                .build();
+
+    final QLUpdateUserPayload qlUpdateUserPayload =
+        updateUserDataFetcher.mutateAndFetch(updateUserInput, mutationContext);
+    assertThat(qlUpdateUserPayload.getClientMutationId()).isEqualTo("clientMutationId1");
+
+    verify(userService, times(1)).get("userId");
+    final ArgumentCaptor<User> userArgumentCaptor = ArgumentCaptor.forClass(User.class);
+    verify(userService, times(1)).update(userArgumentCaptor.capture());
+
+    final User userArgument = userArgumentCaptor.getValue();
+    assertThat(userArgument.getName()).isEqualTo("newUserName");
+    assertThat(userArgument.getUuid()).isEqualTo("userId");
+    assertThat(userArgument.getExternalUserId()).isEqualTo("newExternalUserId");
   }
 }

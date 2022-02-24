@@ -132,7 +132,7 @@ public class SourceCodeManagerResource {
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.
-        ApiResponse(description = "Successfully deleted Source Code Manager for the give Source Code Manager Id")
+        ApiResponse(description = "Successfully deleted Source Code Manager for the given Source Code Manager Id")
       })
   public ResponseDTO<Boolean>
   delete(@Parameter(description = "Source Code manager Identifier") @NotNull @PathParam(

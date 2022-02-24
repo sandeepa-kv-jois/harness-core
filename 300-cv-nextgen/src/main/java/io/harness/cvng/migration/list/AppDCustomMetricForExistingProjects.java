@@ -53,6 +53,7 @@ public class AppDCustomMetricForExistingProjects implements CVNGMigration {
                          .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                          .metrics(new HashSet<>(Arrays.asList(MetricDefinition.builder()
                                                                   .name(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
+                                                                  .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                                                                   .type(TimeSeriesMetricType.ERROR)
                                                                   .build())))
                          .build();

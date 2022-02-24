@@ -15,12 +15,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
-import io.harness.exception.ScmException;
 import io.harness.exception.WingsException;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub;
-import io.harness.gitsync.Principal;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
@@ -33,7 +31,9 @@ import io.harness.gitsync.scm.beans.ScmPushResponse;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
+import io.harness.security.Principal;
 import io.harness.security.SourcePrincipalContextBuilder;
+import io.harness.security.dto.ServiceAccountPrincipal;
 import io.harness.security.dto.ServicePrincipal;
 import io.harness.security.dto.UserPrincipal;
 
@@ -63,14 +63,14 @@ public class SCMGitSyncHelper {
         GitSyncGrpcClientUtils.retryAndProcessException(harnessToGitPushInfoServiceBlockingStub::pushFile, fileInfo);
     try {
       checkForError(pushFileResponse);
-    } catch (ScmException e) {
+    } catch (WingsException e) {
       throwDifferentExceptionInCaseOfChangeTypeAdd(gitBranchInfo, changeType, e);
     }
     return ScmGitUtils.createScmPushResponse(yaml, gitBranchInfo, pushFileResponse, entityDetail, changeType);
   }
 
   private void throwDifferentExceptionInCaseOfChangeTypeAdd(
-      GitEntityInfo gitBranchInfo, ChangeType changeType, ScmException e) {
+      GitEntityInfo gitBranchInfo, ChangeType changeType, WingsException e) {
     if (changeType.equals(ChangeType.ADD)) {
       final WingsException cause = ExceptionUtils.cause(ErrorCode.SCM_CONFLICT_ERROR, e);
       if (cause != null) {
@@ -149,9 +149,18 @@ public class SCMGitSyncHelper {
         return principalBuilder.setUserPrincipal(UserPrincipalMapper.toProto(userPrincipalFromContext)).build();
       case SERVICE:
         final ServicePrincipal servicePrincipalFromContext = (ServicePrincipal) sourcePrincipal;
-        final io.harness.gitsync.ServicePrincipal servicePrincipal =
-            io.harness.gitsync.ServicePrincipal.newBuilder().setName(servicePrincipalFromContext.getName()).build();
+        final io.harness.security.ServicePrincipal servicePrincipal =
+            io.harness.security.ServicePrincipal.newBuilder().setName(servicePrincipalFromContext.getName()).build();
         return principalBuilder.setServicePrincipal(servicePrincipal).build();
+      case SERVICE_ACCOUNT:
+        final ServiceAccountPrincipal serviceAccountPrincipalFromContext = (ServiceAccountPrincipal) sourcePrincipal;
+        final io.harness.security.ServiceAccountPrincipal serviceAccountPrincipal =
+            io.harness.security.ServiceAccountPrincipal.newBuilder()
+                .setName(StringValue.of(serviceAccountPrincipalFromContext.getName()))
+                .setEmail(StringValue.of(serviceAccountPrincipalFromContext.getEmail()))
+                .setUserName(StringValue.of(serviceAccountPrincipalFromContext.getUsername()))
+                .build();
+        return principalBuilder.setServiceAccountPrincipal(serviceAccountPrincipal).build();
       default:
         throw new InvalidRequestException("Principal type not set.");
     }

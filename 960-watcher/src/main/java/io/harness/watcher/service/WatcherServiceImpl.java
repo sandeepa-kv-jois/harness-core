@@ -638,7 +638,7 @@ public class WatcherServiceImpl implements WatcherService {
               boolean upgradeTimedOut = now - upgradeStarted > DELEGATE_UPGRADE_TIMEOUT;
 
               if (multiVersion) {
-                if (!expectedVersions.contains(delegateVersion) && !shutdownPending) {
+                if (!expectedVersions.toString().contains(delegateVersion) && !shutdownPending) {
                   log.info("Delegate version {} ({}) is not a published version. Future requests will go to primary.",
                       delegateVersion, delegateProcess);
                   drainingNeededList.add(delegateProcess);

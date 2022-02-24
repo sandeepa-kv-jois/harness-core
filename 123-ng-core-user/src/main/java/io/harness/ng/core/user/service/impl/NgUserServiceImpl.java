@@ -7,6 +7,7 @@
 
 package io.harness.ng.core.user.service.impl;
 
+import static io.harness.NGConstants.ACCOUNT_ADMIN_ROLE;
 import static io.harness.NGConstants.ALL_RESOURCES_INCLUDING_CHILD_SCOPES_RESOURCE_GROUP_IDENTIFIER;
 import static io.harness.NGConstants.DEFAULT_ACCOUNT_LEVEL_RESOURCE_GROUP_IDENTIFIER;
 import static io.harness.NGConstants.DEFAULT_ORGANIZATION_LEVEL_RESOURCE_GROUP_IDENTIFIER;
@@ -24,7 +25,6 @@ import static io.harness.remote.client.NGRestUtils.getResponse;
 import static io.harness.springdata.TransactionUtils.DEFAULT_TRANSACTION_RETRY_POLICY;
 import static io.harness.utils.PageUtils.getPageRequest;
 
-import static java.lang.Boolean.TRUE;
 import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toList;
 import static java.util.stream.Collectors.toSet;
@@ -34,6 +34,7 @@ import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import io.harness.Team;
 import io.harness.accesscontrol.AccessControlAdminClient;
 import io.harness.accesscontrol.principals.PrincipalDTO;
+import io.harness.accesscontrol.principals.PrincipalType;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentCreateRequestDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTO;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentFilterDTO;
@@ -42,7 +43,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.beans.Scope.ScopeKeys;
 import io.harness.exception.InvalidRequestException;
-import io.harness.exception.ProcessingException;
+import io.harness.licensing.Edition;
+import io.harness.licensing.services.LicenseService;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.AccountOrgProjectHelper;
@@ -69,9 +71,11 @@ import io.harness.ng.core.user.entities.UserMembership.UserMembershipKeys;
 import io.harness.ng.core.user.entities.UserMetadata;
 import io.harness.ng.core.user.entities.UserMetadata.UserMetadataKeys;
 import io.harness.ng.core.user.exception.InvalidUserRemoveRequestException;
+import io.harness.ng.core.user.remote.dto.LastAdminCheckFilter;
 import io.harness.ng.core.user.remote.dto.UserFilter;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
 import io.harness.ng.core.user.remote.mapper.UserMetadataMapper;
+import io.harness.ng.core.user.service.LastAdminCheckService;
 import io.harness.ng.core.user.service.NgUserService;
 import io.harness.notification.channeldetails.EmailChannel;
 import io.harness.notification.channeldetails.EmailChannel.EmailChannelBuilder;
@@ -104,10 +108,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -126,8 +126,6 @@ import org.springframework.transaction.support.TransactionTemplate;
 @Slf4j
 @OwnedBy(PL)
 public class NgUserServiceImpl implements NgUserService {
-  private static final String PROCESSING_EXCEPTION_MESSAGE = "Could not process user remove request in stipulated time";
-  public static final String THREAD_POOL_NAME = "user-service-delete";
   private static final String ACCOUNT_ADMIN = "_account_admin";
   private static final String ACCOUNT_VIEWER = "_account_viewer";
   private static final String ORGANIZATION_VIEWER = "_organization_viewer";
@@ -147,19 +145,20 @@ public class NgUserServiceImpl implements NgUserService {
   private final OutboxService outboxService;
   private final UserGroupService userGroupService;
   private final UserMetadataRepository userMetadataRepository;
-  private final ExecutorService executorService;
   private final InviteService inviteService;
   private final NotificationClient notificationClient;
   private final AccountOrgProjectHelper accountOrgProjectHelper;
+  private final LicenseService licenseService;
+  private final LastAdminCheckService lastAccountAdminCheckService;
   private static final RetryPolicy<Object> transactionRetryPolicy = DEFAULT_TRANSACTION_RETRY_POLICY;
 
   @Inject
   public NgUserServiceImpl(UserClient userClient, UserMembershipRepository userMembershipRepository,
       @Named("PRIVILEGED") AccessControlAdminClient accessControlAdminClient,
       @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate, OutboxService outboxService,
-      UserGroupService userGroupService, UserMetadataRepository userMetadataRepository,
-      @Named(THREAD_POOL_NAME) ExecutorService executorService, InviteService inviteService,
-      NotificationClient notificationClient, AccountOrgProjectHelper accountOrgProjectHelper) {
+      UserGroupService userGroupService, UserMetadataRepository userMetadataRepository, InviteService inviteService,
+      NotificationClient notificationClient, AccountOrgProjectHelper accountOrgProjectHelper,
+      LicenseService licenseService, LastAdminCheckService lastAccountAdminCheckService) {
     this.userClient = userClient;
     this.userMembershipRepository = userMembershipRepository;
     this.accessControlAdminClient = accessControlAdminClient;
@@ -167,10 +166,11 @@ public class NgUserServiceImpl implements NgUserService {
     this.outboxService = outboxService;
     this.userGroupService = userGroupService;
     this.userMetadataRepository = userMetadataRepository;
-    this.executorService = executorService;
     this.inviteService = inviteService;
     this.notificationClient = notificationClient;
     this.accountOrgProjectHelper = accountOrgProjectHelper;
+    this.licenseService = licenseService;
+    this.lastAccountAdminCheckService = lastAccountAdminCheckService;
   }
 
   @Override
@@ -316,6 +316,9 @@ public class NgUserServiceImpl implements NgUserService {
 
   @Override
   public List<UserMetadataDTO> listUsersHavingRole(Scope scope, String roleIdentifier) {
+    if (Edition.COMMUNITY.equals(licenseService.calculateAccountEdition(scope.getAccountIdentifier()))) {
+      return getUserMetadata(new ArrayList<>(listUserIds(scope)));
+    }
     PageResponse<RoleAssignmentResponseDTO> roleAssignmentPage =
         getResponse(accessControlAdminClient.getFilteredRoleAssignments(scope.getAccountIdentifier(),
             scope.getOrgIdentifier(), scope.getProjectIdentifier(), 0, DEFAULT_PAGE_SIZE,
@@ -751,41 +754,12 @@ public class NgUserServiceImpl implements NgUserService {
   }
 
   private void checkIfUserIsLastAccountAdmin(String accountIdentifier, String userId) {
-    if (isNotEmpty(getLastAdminScopes(userId, singletonList(Scope.of(accountIdentifier, null, null))))) {
+    if (!lastAccountAdminCheckService.doesAdminExistAfterRemoval(
+            accountIdentifier, new LastAdminCheckFilter(userId, null))) {
       throw new InvalidUserRemoveRequestException(
           "Removing this user will remove the last Account Admin from NG. Cannot remove the user.",
           singletonList(Scope.of(accountIdentifier, null, null)));
     }
-  }
-
-  protected List<Scope> getLastAdminScopes(String userId, List<Scope> scopes) {
-    List<Callable<Boolean>> tasks = new ArrayList<>();
-    scopes.forEach(scope -> tasks.add(() -> isUserLastAdminAtScope(userId, scope)));
-    List<Future<Boolean>> futures;
-    try {
-      futures = executorService.invokeAll(tasks, 10, TimeUnit.SECONDS);
-    } catch (InterruptedException e) {
-      Thread.currentThread().interrupt();
-      throw new ProcessingException(PROCESSING_EXCEPTION_MESSAGE);
-    }
-
-    List<Boolean> results = new ArrayList<>();
-    for (int i = 0; i < futures.size(); i++) {
-      try {
-        results.add(futures.get(i).get());
-      } catch (Exception e) {
-        log.error(PROCESSING_EXCEPTION_MESSAGE, e);
-        throw new ProcessingException(PROCESSING_EXCEPTION_MESSAGE);
-      }
-    }
-
-    List<Scope> lastAdminScopes = new ArrayList<>();
-    for (int i = 0; i < results.size(); i++) {
-      if (TRUE.equals(results.get(i))) {
-        lastAdminScopes.add(scopes.get(i));
-      }
-    }
-    return lastAdminScopes;
   }
 
   private Criteria getCriteriaForFetchingChildScopes(String userId, Scope scope) {
@@ -814,6 +788,21 @@ public class NgUserServiceImpl implements NgUserService {
     }
     List<UserMetadataDTO> scopeAdmins = listUsersHavingRole(scope, roleIdentifier);
     return scopeAdmins.stream().allMatch(userMetadata -> userId.equals(userMetadata.getUuid()));
+  }
+
+  @Override
+  public boolean isAccountAdmin(String userId, String accountIdentifier) {
+    if (Edition.COMMUNITY.equals(licenseService.calculateAccountEdition(accountIdentifier))) {
+      return isUserAtScope(userId, Scope.of(accountIdentifier, null, null));
+    }
+    PrincipalDTO principalDTO = PrincipalDTO.builder().identifier(userId).type(PrincipalType.USER).build();
+    PageResponse<RoleAssignmentResponseDTO> roleAssignmentPages = getResponse(
+        accessControlAdminClient.getFilteredRoleAssignments(accountIdentifier, null, null, 0, DEFAULT_PAGE_SIZE,
+            RoleAssignmentFilterDTO.builder()
+                .roleFilter(Collections.singleton(ACCOUNT_ADMIN_ROLE))
+                .principalFilter(Collections.singleton(principalDTO))
+                .build()));
+    return !roleAssignmentPages.getContent().isEmpty();
   }
 
   @Override

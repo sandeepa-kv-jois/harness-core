@@ -28,7 +28,13 @@ public class ShellExecutorFactoryNG {
         shellExecutorConfig);
   }
 
-  private LogCallback getExecutionLogCallback(ShellExecutorConfig shellExecutorConfig,
+  public FileBasedScriptExecutorNG getFileBasedExecutor(ShellExecutorConfig shellExecutorConfig,
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+    return new FileBasedProcessScriptExecutorNG(
+        getExecutionLogCallback(shellExecutorConfig, logStreamingTaskClient, commandUnitsProgress), true);
+  }
+
+  private static LogCallback getExecutionLogCallback(ShellExecutorConfig shellExecutorConfig,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
     return new NGDelegateLogCallback(
         logStreamingTaskClient, shellExecutorConfig.getCommandUnitName(), true, commandUnitsProgress);

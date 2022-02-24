@@ -7,6 +7,8 @@
 
 package io.harness.service.impl;
 
+import static java.lang.String.format;
+
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -17,6 +19,7 @@ import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.delegate.beans.DelegateTokenDetails.DelegateTokenDetailsBuilder;
 import io.harness.delegate.beans.DelegateTokenStatus;
+import io.harness.exception.InvalidRequestException;
 import io.harness.persistence.HPersistence;
 import io.harness.service.intfc.DelegateTokenService;
 import io.harness.utils.Misc;
@@ -27,6 +30,7 @@ import software.wings.service.impl.AuditServiceHelper;
 import software.wings.service.intfc.account.AccountCrudObserver;
 
 import com.google.inject.Inject;
+import com.mongodb.DuplicateKeyException;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Date;
@@ -49,13 +53,16 @@ public class DelegateTokenServiceImpl implements DelegateTokenService, AccountCr
     DelegateToken delegateToken = DelegateToken.builder()
                                       .accountId(accountId)
                                       .createdAt(System.currentTimeMillis())
-                                      .name(name)
+                                      .name(name.trim())
                                       .status(DelegateTokenStatus.ACTIVE)
                                       .value(Misc.generateSecretKey())
                                       .build();
 
-    persistence.save(delegateToken);
-
+    try {
+      persistence.save(delegateToken);
+    } catch (DuplicateKeyException e) {
+      throw new InvalidRequestException(format("Token with given name %s already exists for the account.", name));
+    }
     auditServiceHelper.reportForAuditingUsingAccountId(
         delegateToken.getAccountId(), null, delegateToken, Event.Type.CREATE);
 

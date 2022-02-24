@@ -20,6 +20,7 @@ import static org.apache.commons.lang3.StringUtils.SPACE;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
+import io.harness.security.dto.Principal;
 
 import com.auth0.jwt.JWT;
 import com.auth0.jwt.JWTCreator;
@@ -35,6 +36,7 @@ import java.security.interfaces.RSAKey;
 import java.util.Date;
 import java.util.Map;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 import javax.ws.rs.container.ContainerRequestContext;
 import javax.ws.rs.core.HttpHeaders;
 import lombok.experimental.UtilityClass;
@@ -49,6 +51,14 @@ public class JWTTokenServiceUtils {
 
   public Pair<Boolean, Map<String, Claim> > isServiceAuthorizationValid(String serviceToken, String serviceSecret) {
     Map<String, Claim> claimMap = verifyJWTToken(serviceToken, serviceSecret);
+    if (!claimMap.containsKey("exp")) {
+      log.warn("JWTTokenServiceUtils Class verifies JWT Token without Expiry Date.");
+      Principal principal = SecurityContextBuilder.getPrincipalFromClaims(claimMap);
+      if (principal != null) {
+        log.info(String.format(
+            "Principal type is %s and its name is %s", principal.getType().toString(), principal.getName()));
+      }
+    }
     return Pair.of(true, claimMap);
   }
 
@@ -131,6 +141,8 @@ public class JWTTokenServiceUtils {
 
       if (validityDurationInMillis != null) {
         jwtBuilder.withExpiresAt(new Date(System.currentTimeMillis() + validityDurationInMillis));
+      } else {
+        jwtBuilder.withExpiresAt(new Date(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(1)));
       }
       if (!isEmpty(claims)) {
         claims.forEach(jwtBuilder::withClaim);

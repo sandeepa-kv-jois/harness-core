@@ -23,6 +23,7 @@ import lombok.Value;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TimeSeriesMetricDefinition {
   String metricName;
+  String metricIdentifier;
   TimeSeriesMetricType metricType;
   @Default String metricGroupName = "*";
   TimeSeriesThresholdActionType actionType;

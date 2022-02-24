@@ -37,6 +37,7 @@ import io.harness.redis.RedisConfig;
 import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.repositories.NGEncryptedDataRepository;
+import io.harness.repositories.accountsetting.AccountSettingRepository;
 import io.harness.repositories.ng.core.spring.SecretRepository;
 import io.harness.rule.Owner;
 import io.harness.secretmanagerclient.SecretManagementClientModule;
@@ -60,6 +61,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.Mock;
+import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.transaction.support.TransactionTemplate;
 
 @OwnedBy(PL)
@@ -109,6 +111,20 @@ public class SecretManagementModuleTest extends CategoryTest {
       @Singleton
       ConnectorRepository connectorRepository() {
         return mock(ConnectorRepository.class);
+      }
+    });
+    modules.add(new ProviderModule() {
+      @Provides
+      @Singleton
+      AccountSettingRepository accountSettingRepository() {
+        return mock(AccountSettingRepository.class);
+      }
+    });
+    modules.add(new ProviderModule() {
+      @Provides
+      @Singleton
+      MongoTemplate getMongoTemplate() {
+        return mock(MongoTemplate.class);
       }
     });
     modules.add(new ProviderModule() {

@@ -12,9 +12,12 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import io.harness.cvng.activity.beans.DeploymentActivityResultDTO.LogsAnalysisSummary;
 import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.Cluster;
 import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.ClusterSummary;
+import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.ClusterType;
 import io.harness.cvng.analysis.beans.DeploymentLogAnalysisDTO.ResultSummary;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
+import io.harness.cvng.analysis.beans.LogAnalysisClusterWithCountDTO;
+import io.harness.cvng.analysis.beans.LogAnalysisClusterWithCountDTO.EventCount;
 import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.analysis.entities.DeploymentLogAnalysis;
 import io.harness.cvng.analysis.entities.DeploymentLogAnalysis.DeploymentLogAnalysisKeys;
@@ -40,6 +43,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -47,6 +51,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import org.mongodb.morphia.query.Sort;
@@ -111,6 +116,34 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
     return PageUtils.offsetAndLimit(logAnalysisClusters, pageParams.getPage(), pageParams.getSize());
   }
 
+  @Override
+  public LogAnalysisClusterWithCountDTO getLogAnalysisResultV2(String accountId, String verificationJobInstanceId,
+      Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, PageParams pageParams) {
+    Integer totalClusters = getTotalClusters(accountId, verificationJobInstanceId);
+    List<LogAnalysisClusterDTO> logAnalysisClusters =
+        getLogAnalysisResult(accountId, verificationJobInstanceId, label, deploymentLogAnalysisFilter);
+    PageResponse<LogAnalysisClusterDTO> paginatedLogAnalysisClusterDTO =
+        PageUtils.offsetAndLimit(logAnalysisClusters, pageParams.getPage(), pageParams.getSize());
+
+    List<LogAnalysisClusterDTO> paginatedLogAnalysisClusters = paginatedLogAnalysisClusterDTO.getContent();
+    Map<ClusterType, Long> eventCountByEventTypeMap =
+        paginatedLogAnalysisClusters.stream()
+            .map(logAnalysisClusterDTO -> logAnalysisClusterDTO.getClusterType())
+            .collect(Collectors.groupingBy(Function.identity(), Collectors.counting()));
+
+    return LogAnalysisClusterWithCountDTO.builder()
+        .totalClusters(totalClusters)
+        .eventCounts(Arrays.stream(ClusterType.values())
+                         .map(clusterType
+                             -> EventCount.builder()
+                                    .clusterType(clusterType)
+                                    .count(eventCountByEventTypeMap.getOrDefault(clusterType, 0L).intValue())
+                                    .build())
+                         .collect(Collectors.toList()))
+        .logAnalysisClusterDTO(paginatedLogAnalysisClusterDTO)
+        .build();
+  }
+
   private List<LogAnalysisClusterDTO> getLogAnalysisResult(String accountId, String verificationJobInstanceId,
       Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter) {
     List<DeploymentLogAnalysis> latestDeploymentLogAnalysis =
@@ -139,6 +172,15 @@ public class DeploymentLogAnalysisServiceImpl implements DeploymentLogAnalysisSe
     }
     logAnalysisClusters.sort((a, b) -> Double.compare(b.getScore(), a.getScore()));
     return logAnalysisClusters;
+  }
+
+  private Integer getTotalClusters(String accountId, String verificationJobInstanceId) {
+    List<DeploymentLogAnalysis> latestDeploymentLogAnalysis = getLatestDeploymentLogAnalysis(
+        accountId, verificationJobInstanceId, DeploymentLogAnalysisFilter.builder().build());
+    Integer[] totalClusters = {0};
+    latestDeploymentLogAnalysis.forEach(
+        deploymentLogAnalysis -> totalClusters[0] += deploymentLogAnalysis.getClusters().size());
+    return totalClusters[0];
   }
 
   @Override

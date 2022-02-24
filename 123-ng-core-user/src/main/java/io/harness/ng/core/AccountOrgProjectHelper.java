@@ -75,4 +75,8 @@ public class AccountOrgProjectHelper {
     }
     return organizationOpt.get().getName();
   }
+
+  public String getVanityUrl(String accountIdentifier) {
+    return RestClientUtils.getResponse(accountClient.getVanityUrl(accountIdentifier));
+  }
 }

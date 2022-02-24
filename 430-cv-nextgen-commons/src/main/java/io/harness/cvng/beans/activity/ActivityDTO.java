@@ -22,12 +22,15 @@ import lombok.experimental.SuperBuilder;
 @SuperBuilder
 @NoArgsConstructor
 @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type", include = JsonTypeInfo.As.EXISTING_PROPERTY)
+// TODO - TO be deleted.
+@Deprecated
 public abstract class ActivityDTO {
   private String accountIdentifier;
   private String projectIdentifier;
   private String orgIdentifier;
-  private String serviceIdentifier;
-  private String environmentIdentifier;
+  @Deprecated private String serviceIdentifier;
+  @Deprecated private String environmentIdentifier;
+
   @NotNull private String name;
   private List<VerificationJobRuntimeDetails> verificationJobRuntimeDetails;
   @NotNull private Long activityStartTime;

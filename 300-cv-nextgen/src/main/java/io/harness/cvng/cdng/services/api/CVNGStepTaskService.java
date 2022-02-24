@@ -10,6 +10,7 @@ package io.harness.cvng.cdng.services.api;
 import io.harness.cvng.activity.beans.DeploymentActivitySummaryDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
+import io.harness.cvng.analysis.beans.LogAnalysisClusterWithCountDTO;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
 import io.harness.cvng.cdng.entities.CVNGStepTask;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
@@ -31,7 +32,10 @@ public interface CVNGStepTaskService {
   Set<HealthSourceDTO> healthSources(String accountId, String callBackId);
   List<LogAnalysisClusterChartDTO> getDeploymentActivityLogAnalysisClusters(
       String accountId, String callBackId, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter);
+  @Deprecated
   PageResponse<LogAnalysisClusterDTO> getDeploymentActivityLogAnalysisResult(String accountId, String callBackId,
+      Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, PageParams pageParams);
+  LogAnalysisClusterWithCountDTO getDeploymentActivityLogAnalysisResultV2(String accountId, String callBackId,
       Integer label, DeploymentLogAnalysisFilter deploymentLogAnalysisFilter, PageParams pageParams);
   List<String> getTransactionNames(String accountId, String callBackId);
   List<String> getNodeNames(String accountId, String callBackId);

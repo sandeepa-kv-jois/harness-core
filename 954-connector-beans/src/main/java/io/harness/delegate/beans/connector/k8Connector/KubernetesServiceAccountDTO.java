@@ -25,4 +25,5 @@ import lombok.EqualsAndHashCode;
 @Schema(name = "KubernetesServiceAccount", description = "This contains kubernetes service account details")
 public class KubernetesServiceAccountDTO extends KubernetesAuthCredentialDTO {
   @ApiModelProperty(dataType = "string") @NotNull @SecretReference SecretRefData serviceAccountTokenRef;
+  @ApiModelProperty(dataType = "string") @SecretReference SecretRefData caCertRef;
 }

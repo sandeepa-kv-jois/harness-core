@@ -1024,9 +1024,10 @@ public class PcfCommandTaskBaseHelperTest extends CategoryTest {
     CfRequestConfig cfRequestConfig = CfRequestConfig.builder().build();
     Deque<CfAppRenameInfo> renames = new ArrayDeque<>();
 
-    Optional<String> inActiveAppOldName = pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases,
-        cfRequestConfig, releaseName, executionLogCallback, AppNamingStrategy.VERSIONING.name(), renames);
-    assertThat(inActiveAppOldName.isPresent()).isFalse();
+    CfAppSetupTimeDetails cfAppSetupTimeDetails =
+        pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig, releaseName,
+            executionLogCallback, AppNamingStrategy.VERSIONING.name(), renames);
+    assertThat(cfAppSetupTimeDetails.getOldName()).isNull();
   }
 
   @Test
@@ -1043,20 +1044,20 @@ public class PcfCommandTaskBaseHelperTest extends CategoryTest {
     CfRequestConfig cfRequestConfig = CfRequestConfig.builder().build();
     Deque<CfAppRenameInfo> renames = new ArrayDeque<>();
 
-    Optional<String> inActiveAppOldName = pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases,
-        cfRequestConfig, releaseName, executionLogCallback, AppNamingStrategy.VERSIONING.name(), renames);
-    assertThat(inActiveAppOldName.isPresent()).isFalse();
+    CfAppSetupTimeDetails cfAppSetupTimeDetails =
+        pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig, releaseName,
+            executionLogCallback, AppNamingStrategy.VERSIONING.name(), renames);
+    assertThat(cfAppSetupTimeDetails.getOldName()).isNull();
 
     previousReleases.remove(0);
-    previousReleases.remove(0);
-    inActiveAppOldName = pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig,
+    cfAppSetupTimeDetails = pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig,
         releaseName, executionLogCallback, AppNamingStrategy.VERSIONING.name(), renames);
-    assertThat(inActiveAppOldName.isPresent()).isFalse();
+    assertThat(cfAppSetupTimeDetails.getOldName()).isNull();
 
     previousReleases = Collections.emptyList(); // no apps, i.e. first deployment in non-version mode
-    inActiveAppOldName = pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig,
+    cfAppSetupTimeDetails = pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig,
         releaseName, executionLogCallback, AppNamingStrategy.VERSIONING.name(), renames);
-    assertThat(inActiveAppOldName.isPresent()).isFalse();
+    assertThat(cfAppSetupTimeDetails.getOldName()).isNull();
   }
 
   @Test
@@ -1085,9 +1086,10 @@ public class PcfCommandTaskBaseHelperTest extends CategoryTest {
       return requestConfig.getApplicationName().equals(inActiveAppCurrentName);
     });
 
-    Optional<String> inActiveAppOldName = pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases,
-        cfRequestConfig, releaseName, executionLogCallback, AppNamingStrategy.APP_NAME_WITH_VERSIONING.name(), renames);
-    assertThat(inActiveAppOldName.get()).isEqualTo(inActiveAppCurrentName);
+    CfAppSetupTimeDetails inActiveAppDetails =
+        pcfCommandTaskHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig, releaseName,
+            executionLogCallback, AppNamingStrategy.APP_NAME_WITH_VERSIONING.name(), renames);
+    assertThat(inActiveAppDetails.getOldName()).isEqualTo(inActiveAppCurrentName);
 
     ArgumentCaptor<CfRenameRequest> renamingAppCaptor = ArgumentCaptor.forClass(CfRenameRequest.class);
     ApplicationSummary inActiveAppSummary = previousReleases.get(1);

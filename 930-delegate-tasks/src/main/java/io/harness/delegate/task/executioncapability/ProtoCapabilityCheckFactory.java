@@ -32,6 +32,7 @@ public class ProtoCapabilityCheckFactory {
   @Inject SmbConnectionCapabilityCheck smbConnectionCapabilityCheck;
   @Inject SmtpCapabilityCheck smtpCapabilityCheck;
   @Inject SocketConnectivityCapabilityCheck socketConnectivityCapabilityCheck;
+  @Inject SocketConnectivityBulkOrCapabilityCheck socketConnectivityBulkOrCapabilityCheck;
   @Inject SystemEnvCapabilityCheck systemEnvCapabilityCheck;
 
   public ProtoCapabilityCheck obtainCapabilityCheck(CapabilityParameters parameters) {
@@ -67,6 +68,8 @@ public class ProtoCapabilityCheckFactory {
         return smtpCapabilityCheck;
       case SOCKET_CONNECTIVITY_PARAMETERS:
         return socketConnectivityCapabilityCheck;
+      case SOCKET_CONNECTIVITY_BULK_OR_PARAMETERS:
+        return socketConnectivityBulkOrCapabilityCheck;
       case SYSTEM_ENV_PARAMETERS:
         return systemEnvCapabilityCheck;
       default:

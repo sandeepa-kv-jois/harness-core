@@ -20,6 +20,7 @@ import static software.wings.utils.WingsTestConstants.APP_MANIFEST_NAME;
 import static software.wings.utils.WingsTestConstants.SERVICE_ID;
 import static software.wings.utils.WingsTestConstants.UUID;
 
+import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anySet;
@@ -50,7 +51,6 @@ import software.wings.service.intfc.applicationmanifest.HelmChartService;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -126,7 +126,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
         .thenReturn(ImmutableMap.of(
             APPLICATION_MANIFEST_ID, APP_MANIFEST_NAME, APPLICATION_MANIFEST_ID + 2, APP_MANIFEST_NAME + 2));
     Map<String, List<HelmChart>> appManifestHelmChartMap =
-        helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>());
+        helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>(), true);
 
     assertThat(appManifestHelmChartMap.get(APP_MANIFEST_NAME)).containsOnly(helmChart);
     assertThat(appManifestHelmChartMap.get(APP_MANIFEST_NAME + 2)).containsOnly(newHelmChart2);
@@ -187,7 +187,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
     HelmChart newHelmChart2 = generateHelmChartWithVersion("3.0");
     helmChartService.create(newHelmChart);
     helmChartService.create(newHelmChart2);
-    List<HelmChart> outHelmCharts = helmChartService.listByIds(ACCOUNT_ID, Arrays.asList("UUID1.0", "UUID2.0"));
+    List<HelmChart> outHelmCharts = helmChartService.listByIds(ACCOUNT_ID, asList("UUID1.0", "UUID2.0"));
     assertThat(outHelmCharts).containsExactlyInAnyOrder(helmChart, newHelmChart);
   }
 
@@ -196,10 +196,10 @@ public class HelmChartServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testDeleteHelmCharts() {
     List<HelmChart> helmCharts =
-        Arrays.asList(helmChart, generateHelmChartWithVersion("2.0"), generateHelmChartWithVersion("3.0"));
+        asList(helmChart, generateHelmChartWithVersion("2.0"), generateHelmChartWithVersion("3.0"));
     helmCharts.forEach(helmChart -> helmChartService.create(helmChart));
     assertThat(helmChartService.deleteHelmChartsByVersions(
-                   ACCOUNT_ID, APPLICATION_MANIFEST_ID, new HashSet(Arrays.asList("2.0", "3.0"))))
+                   ACCOUNT_ID, APPLICATION_MANIFEST_ID, new HashSet(asList("2.0", "3.0"))))
         .isTrue();
 
     List<HelmChart> finalHelmCharts =
@@ -214,7 +214,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
     helmChartService.create(helmChart);
     HelmChart helmChart2 = generateHelmChartWithVersion("2.0");
     HelmChart helmChart3 = generateHelmChartWithVersion("3.0");
-    List<HelmChart> helmCharts = Arrays.asList(helmChart, helmChart2, helmChart3);
+    List<HelmChart> helmCharts = asList(helmChart, helmChart2, helmChart3);
     assertThat(helmChartService.addCollectedHelmCharts(ACCOUNT_ID, APPLICATION_MANIFEST_ID, helmCharts)).isTrue();
 
     List<HelmChart> finalHelmCharts =
@@ -229,7 +229,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
   public void testGetHelmChartsWithVersion() {
     helmChartService.create(helmChart);
     HelmChart helmChart2 = generateHelmChartWithVersion("2.0");
-    helmChartService.addCollectedHelmCharts(ACCOUNT_ID, APPLICATION_MANIFEST_ID, Arrays.asList(helmChart, helmChart2));
+    helmChartService.addCollectedHelmCharts(ACCOUNT_ID, APPLICATION_MANIFEST_ID, asList(helmChart, helmChart2));
     HelmChart helmChartWithVersion =
         helmChartService.getManifestByVersionNumber(ACCOUNT_ID, APPLICATION_MANIFEST_ID, "2.0");
     assertThat(helmChartWithVersion).isEqualTo(helmChart2);
@@ -243,7 +243,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
     HelmChart helmChart2 = generateHelmChartWithVersion("2.1");
     HelmChart helmChart3 = generateHelmChartWithVersion("1.1");
     helmChartService.addCollectedHelmCharts(
-        ACCOUNT_ID, APPLICATION_MANIFEST_ID, Arrays.asList(helmChart, helmChart2, helmChart3));
+        ACCOUNT_ID, APPLICATION_MANIFEST_ID, asList(helmChart, helmChart2, helmChart3));
     HelmChart helmChartWithVersion =
         helmChartService.getLastCollectedManifestMatchingRegex(ACCOUNT_ID, APPLICATION_MANIFEST_ID, "2\\.*");
     assertThat(helmChartWithVersion).isEqualTo(helmChart2);
@@ -255,7 +255,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
   public void testFetchChartsFromRepo() throws InterruptedException {
     HelmChart helmChart2 = generateHelmChartWithVersion("2.1");
     when(delegateService.executeTask(any()))
-        .thenReturn(HelmCollectChartResponse.builder().helmCharts(Arrays.asList(helmChart, helmChart2)).build());
+        .thenReturn(HelmCollectChartResponse.builder().helmCharts(asList(helmChart, helmChart2)).build());
     when(manifestCollectionUtils.prepareCollectTaskParamsWithChartVersion(
              APPLICATION_MANIFEST_ID, APP_ID, HelmChartCollectionType.ALL, null))
         .thenReturn(HelmChartCollectionParams.builder()
@@ -264,7 +264,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
                         .collectionType(HelmChartCollectionType.ALL)
                         .build());
     List<HelmChart> helmCharts =
-        helmChartService.fetchChartsFromRepo(ACCOUNT_ID, APP_ID, SERVICE_ID, APPLICATION_MANIFEST_ID);
+        helmChartService.fetchChartsFromRepo(ACCOUNT_ID, APP_ID, SERVICE_ID, APPLICATION_MANIFEST_ID, true);
     assertThat(helmCharts).containsExactly(helmChart, helmChart2);
     ArgumentCaptor<DelegateTask> delegateTaskArgumentCaptor = ArgumentCaptor.forClass(DelegateTask.class);
     verify(delegateService).executeTask(delegateTaskArgumentCaptor.capture());
@@ -292,7 +292,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
                         .collectionType(HelmChartCollectionType.ALL)
                         .build());
     List<HelmChart> helmCharts =
-        helmChartService.fetchChartsFromRepo(ACCOUNT_ID, APP_ID, SERVICE_ID, APPLICATION_MANIFEST_ID);
+        helmChartService.fetchChartsFromRepo(ACCOUNT_ID, APP_ID, SERVICE_ID, APPLICATION_MANIFEST_ID, true);
     assertThat(helmCharts).isEmpty();
   }
 
@@ -301,7 +301,7 @@ public class HelmChartServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void testFetchChartByVersion() throws InterruptedException {
     when(delegateService.executeTask(any()))
-        .thenReturn(HelmCollectChartResponse.builder().helmCharts(Arrays.asList(helmChart)).build());
+        .thenReturn(HelmCollectChartResponse.builder().helmCharts(asList(helmChart)).build());
     when(manifestCollectionUtils.prepareCollectTaskParamsWithChartVersion(
              APPLICATION_MANIFEST_ID, APP_ID, HelmChartCollectionType.SPECIFIC_VERSION, helmChart.getVersion()))
         .thenReturn(HelmChartCollectionParams.builder()
@@ -349,5 +349,81 @@ public class HelmChartServiceTest extends WingsBaseTest {
     HelmChart helmChart1 = helmChartService.fetchByChartVersion(
         ACCOUNT_ID, APP_ID, SERVICE_ID, APPLICATION_MANIFEST_ID, helmChart.getVersion());
     assertThat(helmChart1).isNull();
+  }
+
+  @Test
+  @Owner(developers = INDER)
+  @Category(UnitTests.class)
+  public void testFetchChartsFromRepo_withCollectUsingDelegateFalseAndManifestCollectionEnabled() {
+    HelmChart helmChart2 = generateHelmChartWithVersion("2.1");
+    helmChartService.create(helmChart);
+    helmChartService.create(helmChart2);
+    when(applicationManifestService.getById(APP_ID, APPLICATION_MANIFEST_ID))
+        .thenReturn(ApplicationManifest.builder().storeType(StoreType.Local).enableCollection(true).build());
+
+    List<HelmChart> helmCharts =
+        helmChartService.fetchChartsFromRepo(ACCOUNT_ID, APP_ID, SERVICE_ID, APPLICATION_MANIFEST_ID, false);
+    assertThat(helmCharts).containsExactly(helmChart, helmChart2);
+  }
+
+  @Test
+  @Owner(developers = INDER)
+  @Category(UnitTests.class)
+  public void testListHelmChartsForService_withShowHelmChartsForDisabledCollectionFalse() {
+    helmChartService.create(helmChart);
+    HelmChart newHelmChart = HelmChart.builder()
+                                 .accountId(ACCOUNT_ID)
+                                 .appId(APP_ID)
+                                 .uuid("uuid")
+                                 .applicationManifestId(APPLICATION_MANIFEST_ID)
+                                 .serviceId("serviceId")
+                                 .build();
+
+    helmChartService.create(newHelmChart);
+    HelmChart newHelmChart2 = HelmChart.builder()
+                                  .accountId(ACCOUNT_ID)
+                                  .appId(APP_ID)
+                                  .uuid("uuid2")
+                                  .applicationManifestId(APPLICATION_MANIFEST_ID + 2)
+                                  .serviceId(SERVICE_ID)
+                                  .build();
+
+    helmChartService.create(newHelmChart2);
+
+    HelmChart newHelmChart3 = HelmChart.builder()
+                                  .accountId(ACCOUNT_ID)
+                                  .appId(APP_ID)
+                                  .uuid("uuid3")
+                                  .applicationManifestId(APPLICATION_MANIFEST_ID + 3)
+                                  .serviceId(SERVICE_ID)
+                                  .build();
+
+    helmChartService.create(newHelmChart3);
+    List<HelmChart> helmCharts =
+        helmChartService.listHelmChartsForService(aPageRequest()
+                                                      .addFilter(HelmChartKeys.appId, EQ, APP_ID)
+                                                      .addFilter(HelmChartKeys.serviceId, EQ, SERVICE_ID)
+                                                      .build());
+    assertThat(helmCharts).containsExactlyInAnyOrder(helmChart, newHelmChart2, newHelmChart3);
+
+    Mockito.when(applicationManifestService.getApplicationManifestByIds(eq(APP_ID), anySet()))
+        .thenReturn(asList(
+            generateAppManifestWithCollectionEnabled(APPLICATION_MANIFEST_ID, APP_MANIFEST_NAME, Boolean.TRUE),
+            generateAppManifestWithCollectionEnabled(APPLICATION_MANIFEST_ID + 2, APP_MANIFEST_NAME + 2, Boolean.FALSE),
+            generateAppManifestWithCollectionEnabled(APPLICATION_MANIFEST_ID + 3, APP_MANIFEST_NAME + 3, null)));
+    Map<String, List<HelmChart>> appManifestHelmChartMap =
+        helmChartService.listHelmChartsForService(APP_ID, SERVICE_ID, null, new PageRequest<>(), false);
+
+    assertThat(appManifestHelmChartMap.get(APP_MANIFEST_NAME)).containsOnly(helmChart);
+    assertThat(appManifestHelmChartMap.get(APP_MANIFEST_NAME + 2)).isNull();
+    assertThat(appManifestHelmChartMap.get(APP_MANIFEST_NAME + 3)).containsOnly(newHelmChart3);
+  }
+
+  private ApplicationManifest generateAppManifestWithCollectionEnabled(
+      String id, String name, Boolean collectionEnabled) {
+    ApplicationManifest applicationManifest =
+        ApplicationManifest.builder().name(name).enableCollection(collectionEnabled).storeType(StoreType.Local).build();
+    applicationManifest.setUuid(id);
+    return applicationManifest;
   }
 }

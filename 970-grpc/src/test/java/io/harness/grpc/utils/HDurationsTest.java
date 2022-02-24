@@ -8,6 +8,7 @@
 package io.harness.grpc.utils;
 
 import static io.harness.rule.OwnerRule.AVMOHAN;
+import static io.harness.rule.OwnerRule.TRUNAPUSHPA;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatIllegalArgumentException;
@@ -50,5 +51,12 @@ public class HDurationsTest extends CategoryTest {
   @Category(UnitTests.class)
   public void shouldParseMinuteAndSecond() throws Exception {
     assertThat(HDurations.parse("1m23s")).isEqualTo(Durations.fromSeconds(83));
+  }
+
+  @Test
+  @Owner(developers = TRUNAPUSHPA)
+  @Category(UnitTests.class)
+  public void shouldParseSecondsWithOptionalMillis() throws Exception {
+    assertThat(HDurations.parse("5m23.223s")).isEqualTo(Durations.fromSeconds(323));
   }
 }

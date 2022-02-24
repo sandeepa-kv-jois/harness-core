@@ -87,7 +87,7 @@ public class K8sRollingBaseHandler {
 
   public void addLabelsInDeploymentSelectorForCanary(
       boolean inCanaryWorkflow, List<KubernetesResource> managedWorkloads) {
-    if (!inCanaryWorkflow) {
+    if (!inCanaryWorkflow || isEmpty(managedWorkloads)) {
       return;
     }
 

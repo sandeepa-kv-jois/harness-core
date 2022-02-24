@@ -61,6 +61,23 @@ public class StageExecutionSelectorHelperTest extends CategoryTest {
     assertThat(s4.getMessage()).isNull();
     assertThat(s4.isToBeBlocked()).isFalse();
   }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testGetStageExecutionResponseForStageTemplates() {
+    String pipelineYaml = getPipelineWithStageTemplates();
+    List<StageExecutionResponse> stageExecutionResponse =
+        StageExecutionSelectorHelper.getStageExecutionResponse(pipelineYaml);
+    assertThat(stageExecutionResponse).hasSize(2);
+    StageExecutionResponse s0 = stageExecutionResponse.get(0);
+    assertThat(s0.getStageIdentifier()).isEqualTo("d1");
+    assertThat(s0.getStageName()).isEqualTo("d1");
+    StageExecutionResponse s1 = stageExecutionResponse.get(1);
+    assertThat(s1.getStageIdentifier()).isEqualTo("d2");
+    assertThat(s1.getStageName()).isEqualTo("d2");
+  }
+
   @Test
   @Owner(developers = NAMAN)
   @Category(UnitTests.class)
@@ -190,6 +207,37 @@ public class StageExecutionSelectorHelperTest extends CategoryTest {
         + "      identifier: d1_again\n"
         + "      name: d1 again\n"
         + "      type: Deployment";
+  }
+
+  private String getPipelineWithStageTemplates() {
+    return "pipeline:\n"
+        + "    name: nv-templates\n"
+        + "    identifier: nvtemplates\n"
+        + "    allowStageExecutions: false\n"
+        + "    projectIdentifier: naidusanity\n"
+        + "    orgIdentifier: default\n"
+        + "    tags: {}\n"
+        + "    stages:\n"
+        + "        - stage:\n"
+        + "              name: d1\n"
+        + "              identifier: d1\n"
+        + "              template:\n"
+        + "                  templateRef: run_10_tests\n"
+        + "                  versionLabel: \"1.0\"\n"
+        + "        - stage:\n"
+        + "              name: d2\n"
+        + "              identifier: d2\n"
+        + "              template:\n"
+        + "                  templateRef: D1\n"
+        + "                  versionLabel: Version1\n"
+        + "                  templateInputs:\n"
+        + "                      type: Deployment\n"
+        + "                      spec:\n"
+        + "                          infrastructure:\n"
+        + "                              infrastructureDefinition:\n"
+        + "                                  type: KubernetesDirect\n"
+        + "                                  spec:\n"
+        + "                                      namespace: <+input>\n";
   }
 
   private String getPipelineYamlForStagesRequired() {

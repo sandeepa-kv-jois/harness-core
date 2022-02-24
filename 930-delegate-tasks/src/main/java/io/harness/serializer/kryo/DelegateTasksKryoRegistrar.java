@@ -9,6 +9,7 @@ package io.harness.serializer.kryo;
 
 import io.harness.delegate.task.executioncapability.BatchCapabilityCheckTaskParameters;
 import io.harness.delegate.task.executioncapability.BatchCapabilityCheckTaskResponse;
+import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.serializer.KryoRegistrar;
 
 import software.wings.beans.command.ExecutionLogCallback;
@@ -27,5 +28,6 @@ public class DelegateTasksKryoRegistrar implements KryoRegistrar {
     kryo.register(BatchCapabilityCheckTaskResponse.class, 8201);
     kryo.register(WebhookTriggerParameters.class, 8550);
     kryo.register(WebHookTriggerResponseData.class, 8552);
+    kryo.register(AuthenticationScheme.class, 8600);
   }
 }

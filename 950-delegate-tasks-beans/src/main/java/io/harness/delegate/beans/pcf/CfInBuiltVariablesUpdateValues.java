@@ -22,4 +22,6 @@ public class CfInBuiltVariablesUpdateValues {
   private String newAppGuid;
   private String oldAppName;
   private String oldAppGuid;
+  private String activeAppName;
+  private String inActiveAppName;
 }

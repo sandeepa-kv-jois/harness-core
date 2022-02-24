@@ -140,7 +140,6 @@ public class TimeSeriesAnalysisServiceImplTest extends CvNextGenTestBase {
     projectIdentifier = generateUuid();
 
     FieldUtils.writeField(cvConfigService, "nextGenService", nextGenService, true);
-    FieldUtils.writeField(heatMapService, "cvConfigService", cvConfigService, true);
     FieldUtils.writeField(timeSeriesAnalysisService, "heatMapService", heatMapService, true);
   }
 

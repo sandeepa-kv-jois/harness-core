@@ -7,7 +7,9 @@
 
 package software.wings.sm;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.GEORGE;
+import static io.harness.rule.OwnerRule.INDER;
 import static io.harness.rule.OwnerRule.PRASHANT;
 import static io.harness.rule.OwnerRule.VIKAS_S;
 
@@ -42,7 +44,15 @@ import software.wings.sm.states.RepeatState;
 
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -679,5 +689,40 @@ public class StateMachineTest extends WingsBaseTest {
     assertThat(sm.getNextStates("command2", TransitionType.SUCCESS)).hasSize(1).containsOnly(expectedNewState2);
 
     assertThat(sm.getNextStates("command3", TransitionType.SUCCESS)).isNull();
+  }
+
+  @Test
+  @Owner(developers = INDER)
+  @Category(UnitTests.class)
+  public void stateMachineShouldBeThreadSafe() throws InterruptedException, ExecutionException {
+    int numOfThreads = 10;
+    int numIterationsPerThread = 10;
+    StateMachine stateMachine = new StateMachine();
+    ExecutorService executor = Executors.newFixedThreadPool(10);
+    CountDownLatch latch = new CountDownLatch(1);
+    List<Future<Boolean>> futures = new LinkedList<>();
+    for (int i = 0; i < numOfThreads; i++) {
+      futures.add(executor.submit(() -> {
+        String name = generateUuid();
+        latch.await();
+        for (int j = 0; j < numIterationsPerThread; j++) {
+          name = name + j;
+          State state = new StateSync(name);
+          stateMachine.addState(state);
+          State state1 = stateMachine.getState(null, name);
+          assertThat(state1).isNotNull();
+          assertThat(state1.getName()).isEqualTo(name);
+        }
+        return Boolean.TRUE;
+      }));
+    }
+
+    latch.countDown();
+    executor.shutdown();
+    executor.awaitTermination(1, TimeUnit.MINUTES);
+    for (int i = 0; i < numOfThreads; i++) {
+      assertThat(futures.get(i).get()).isEqualTo(Boolean.TRUE);
+    }
+    assertThat(stateMachine.getStates().size()).isEqualTo(numIterationsPerThread * numOfThreads);
   }
 }

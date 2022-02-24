@@ -42,6 +42,7 @@ public class AnomalyDetectionProcessor
   @Autowired BatchMainConfig mainConfig;
   @Autowired AnomalyService anomalyService;
 
+  // TODO: make this class stateless
   Set<String> anomalyHashSet;
   JobParameters parameters;
   String accountId;

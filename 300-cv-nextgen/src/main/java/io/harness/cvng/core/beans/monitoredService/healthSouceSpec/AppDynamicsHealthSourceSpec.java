@@ -19,11 +19,14 @@ import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.validators.UniqueIdentifierCheck;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.google.common.base.Preconditions;
 import com.google.common.collect.Sets;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
@@ -36,6 +39,7 @@ import lombok.Value;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.constraints.NotEmpty;
 
 @Data
@@ -48,7 +52,25 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
   @NotEmpty String applicationName;
   @NotEmpty String tierName;
   @Valid Set<MetricPackDTO> metricPacks;
-  @UniqueIdentifierCheck List<AppDMetricDefinitions> metricDefinitions;
+  @Valid @UniqueIdentifierCheck List<AppDMetricDefinitions> metricDefinitions;
+  public List<AppDMetricDefinitions> getMetricDefinitions() {
+    if (metricDefinitions == null) {
+      return Collections.emptyList();
+    }
+    return metricDefinitions;
+  }
+  @Override
+  public void validate() {
+    getMetricDefinitions().forEach(metricDefinition
+        -> Preconditions.checkArgument(
+            !(Objects.nonNull(metricDefinition.getAnalysis())
+                && Objects.nonNull(metricDefinition.getAnalysis().getDeploymentVerification())
+                && Objects.nonNull(metricDefinition.getAnalysis().getDeploymentVerification().getEnabled())
+                && metricDefinition.getAnalysis().getDeploymentVerification().getEnabled()
+                && StringUtils.isEmpty(
+                    metricDefinition.getAnalysis().getDeploymentVerification().getServiceInstanceMetricPath())),
+            "Service metric path shouldnt be empty for Deployment Verification"));
+  }
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
@@ -159,7 +181,6 @@ public class AppDynamicsHealthSourceSpec extends MetricHealthSourceSpec {
   @FieldDefaults(level = AccessLevel.PRIVATE)
   public static class AppDMetricDefinitions extends HealthSourceMetricDefinition {
     String groupName;
-
     String baseFolder;
     String metricPath;
   }

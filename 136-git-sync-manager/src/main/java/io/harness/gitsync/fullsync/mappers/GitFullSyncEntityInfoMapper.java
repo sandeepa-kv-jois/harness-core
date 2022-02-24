@@ -7,6 +7,8 @@
 
 package io.harness.gitsync.fullsync.mappers;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
 import io.harness.EntityType;
 import io.harness.common.EntityReference;
 import io.harness.gitsync.core.beans.GitFullSyncEntityInfo;
@@ -14,6 +16,7 @@ import io.harness.gitsync.core.beans.GitFullSyncEntityInfo.SyncStatus;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncEntityInfoDTO;
 import io.harness.ng.core.EntityDetail;
 
+import java.util.List;
 import java.util.Optional;
 import javax.validation.constraints.NotNull;
 import lombok.experimental.UtilityClass;
@@ -41,7 +44,7 @@ public class GitFullSyncEntityInfoMapper {
         .orgIdentifier(gitFullSyncEntityInfo.getOrgIdentifier())
         .projectIdentifier(gitFullSyncEntityInfo.getProjectIdentifier())
         .entityType(getEntityType(gitFullSyncEntityInfo.getEntityDetail()))
-        .errorMessages(gitFullSyncEntityInfo.getErrorMessage())
+        .errorMessage(getLatestErrorMsg(gitFullSyncEntityInfo.getErrorMessage()))
         .branch(gitFullSyncEntityInfo.getBranchName())
         .repoName(gitFullSyncEntityInfo.getRepoName())
         .repoUrl(gitFullSyncEntityInfo.getRepoUrl())
@@ -52,5 +55,13 @@ public class GitFullSyncEntityInfoMapper {
         .retryCount(gitFullSyncEntityInfo.getRetryCount())
         .syncStatus(SyncStatus.valueOf(gitFullSyncEntityInfo.getSyncStatus()))
         .build();
+  }
+
+  private String getLatestErrorMsg(List<String> errorMessage) {
+    if (isEmpty(errorMessage)) {
+      return null;
+    }
+    int size = errorMessage.size();
+    return errorMessage.get(size - 1);
   }
 }

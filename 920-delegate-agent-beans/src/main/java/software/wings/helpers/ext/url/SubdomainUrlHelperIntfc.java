@@ -30,4 +30,6 @@ public interface SubdomainUrlHelperIntfc {
   String getWatcherMetadataUrl(String accountId, String managerHost, String deployMode);
 
   String getPortalBaseUrlWithoutSeparator(String accountId);
+
+  String getVanityUrl(String accountId);
 }

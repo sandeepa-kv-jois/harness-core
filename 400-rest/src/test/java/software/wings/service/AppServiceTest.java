@@ -13,6 +13,7 @@ package software.wings.service;
 
 import static io.harness.annotations.dev.HarnessModule._870_CG_ORCHESTRATION;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.FeatureName.WEBHOOK_TRIGGER_AUTHORIZATION;
 import static io.harness.eraro.ErrorCode.INVALID_ARGUMENT;
 import static io.harness.persistence.HQuery.excludeAuthority;
@@ -21,6 +22,7 @@ import static io.harness.rule.OwnerRule.ANUBHAW;
 import static io.harness.rule.OwnerRule.DEEPAK_PUTHRAYA;
 import static io.harness.rule.OwnerRule.GEORGE;
 import static io.harness.rule.OwnerRule.INDER;
+import static io.harness.rule.OwnerRule.LALIT;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.SRINIVAS;
 
@@ -427,6 +429,54 @@ public class AppServiceTest extends WingsBaseTest {
     verify(updateOperations)
         .set("keywords", new HashSet<>(asList("App_Name".toLowerCase(), "Description".toLowerCase())));
     verify(updateOperations, never()).set("isManualTriggerAuthorized", true);
+    verify(wingsPersistence).update(query, updateOperations);
+    verify(wingsPersistence, times(2)).get(Application.class, APP_ID);
+    verify(yamlPushService).pushYamlChangeSet(ACCOUNT_ID, application, application, Type.UPDATE, false, true);
+  }
+
+  @Test
+  @Owner(developers = LALIT)
+  @Category(UnitTests.class)
+  public void shouldUpdateApplicationWithAreWebHookSecretsMandated() {
+    when(featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, ACCOUNT_ID)).thenReturn(true);
+    Application application = anApplication().uuid(APP_ID).name(APP_NAME).accountId(ACCOUNT_ID).build();
+    when(wingsPersistence.get(Application.class, APP_ID)).thenReturn(application);
+
+    appService.update(anApplication()
+                          .uuid(APP_ID)
+                          .name("App_Name")
+                          .description("Description")
+                          .isManualTriggerAuthorized(true)
+                          .areWebHookSecretsMandated(true)
+                          .accountId(ACCOUNT_ID)
+                          .build());
+    verify(query).filter(ID_KEY, APP_ID);
+    verify(updateOperations).set("name", "App_Name");
+    verify(updateOperations).set("description", "Description");
+    verify(updateOperations)
+        .set("keywords", new HashSet<>(asList("App_Name".toLowerCase(), "Description".toLowerCase())));
+    verify(updateOperations).set("areWebHookSecretsMandated", true);
+    verify(wingsPersistence).update(query, updateOperations);
+    verify(wingsPersistence, times(2)).get(Application.class, APP_ID);
+    verify(yamlPushService).pushYamlChangeSet(ACCOUNT_ID, application, application, Type.UPDATE, false, true);
+  }
+
+  @Test
+  @Owner(developers = LALIT)
+  @Category(UnitTests.class)
+  public void shouldUpdateApplicationWithoutAreWebHookSecretsMandated() {
+    when(featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, ACCOUNT_ID)).thenReturn(true);
+    Application application = anApplication().uuid(APP_ID).name(APP_NAME).accountId(ACCOUNT_ID).build();
+    when(wingsPersistence.get(Application.class, APP_ID)).thenReturn(application);
+
+    appService.update(
+        anApplication().uuid(APP_ID).name("App_Name").description("Description").accountId(ACCOUNT_ID).build());
+    verify(query).filter(ID_KEY, APP_ID);
+    verify(updateOperations).set("name", "App_Name");
+    verify(updateOperations).set("description", "Description");
+    verify(updateOperations)
+        .set("keywords", new HashSet<>(asList("App_Name".toLowerCase(), "Description".toLowerCase())));
+    verify(updateOperations, never()).set("areWebHookSecretsMandated", true);
     verify(wingsPersistence).update(query, updateOperations);
     verify(wingsPersistence, times(2)).get(Application.class, APP_ID);
     verify(yamlPushService).pushYamlChangeSet(ACCOUNT_ID, application, application, Type.UPDATE, false, true);

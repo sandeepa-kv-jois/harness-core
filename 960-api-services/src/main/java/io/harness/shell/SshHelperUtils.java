@@ -19,9 +19,16 @@ import static io.harness.eraro.ErrorCode.SSH_SESSION_TIMEOUT;
 import static io.harness.eraro.ErrorCode.UNKNOWN_ERROR;
 import static io.harness.eraro.ErrorCode.UNKNOWN_HOST;
 import static io.harness.eraro.ErrorCode.UNREACHABLE_HOST;
+import static io.harness.logging.CommandExecutionStatus.RUNNING;
+import static io.harness.logging.LogLevel.ERROR;
+import static io.harness.logging.LogLevel.INFO;
+import static io.harness.logging.LogLevel.WARN;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
+import io.harness.logging.CommandExecutionStatus;
+import io.harness.logging.LogCallback;
+import io.harness.logging.LogLevel;
 
 import com.jcraft.jsch.JSchException;
 import com.sun.mail.iap.ConnectionException;
@@ -31,6 +38,7 @@ import java.net.NoRouteToHostException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.function.Consumer;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -78,5 +86,36 @@ public class SshHelperUtils {
       }
     }
     return errorConst;
+  }
+
+  public static void checkAndSaveExecutionLog(String line, LogCallback logCallback, boolean shouldSaveExecutionLogs) {
+    checkAndSaveExecutionLog(line, RUNNING, INFO, logCallback, shouldSaveExecutionLogs);
+  }
+
+  public static void checkAndSaveExecutionLogWarn(
+      String line, LogCallback logCallback, boolean shouldSaveExecutionLogs) {
+    checkAndSaveExecutionLog(line, RUNNING, WARN, logCallback, shouldSaveExecutionLogs);
+  }
+
+  public static void checkAndSaveExecutionLogError(
+      String line, LogCallback logCallback, boolean shouldSaveExecutionLogs) {
+    checkAndSaveExecutionLog(line, RUNNING, ERROR, logCallback, shouldSaveExecutionLogs);
+  }
+
+  public static void checkAndSaveExecutionLog(String line, CommandExecutionStatus commandExecutionStatus,
+      LogLevel logLevel, LogCallback logCallback, boolean shouldSaveExecutionLogs) {
+    if (shouldSaveExecutionLogs) {
+      logCallback.saveExecutionLog(line, logLevel, commandExecutionStatus);
+    }
+  }
+
+  public static Consumer<String> checkAndSaveExecutionLogFunction(
+      LogCallback logCallback, boolean shouldSaveExecutionLogs) {
+    return line -> checkAndSaveExecutionLog(line, logCallback, shouldSaveExecutionLogs);
+  }
+
+  public static Consumer<String> checkAndSaveExecutionLogErrorFunction(
+      LogCallback logCallback, boolean shouldSaveExecutionLogs) {
+    return line -> checkAndSaveExecutionLogError(line, logCallback, shouldSaveExecutionLogs);
   }
 }

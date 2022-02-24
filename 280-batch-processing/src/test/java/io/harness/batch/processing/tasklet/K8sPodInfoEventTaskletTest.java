@@ -124,7 +124,8 @@ public class K8sPodInfoEventTaskletTest extends BaseTaskletTest {
   public void setup() {
     when(config.getBatchQueryConfig()).thenReturn(BatchQueryConfig.builder().queryBatchSize(50).build());
     when(clusterDataGenerationValidator.shouldGenerateClusterData(any(), any())).thenReturn(true);
-    when(instanceDataBulkWriteService.updateList(any())).thenReturn(true);
+    when(instanceDataBulkWriteService.updateInstanceEvent(any())).thenReturn(true);
+    when(instanceDataBulkWriteService.upsertInstanceInfo(any())).thenReturn(true);
     when(harnessServiceInfoFetcher.fetchHarnessServiceInfo(any(), any(), any(), any(), any()))
         .thenReturn(Optional.empty());
     when(featureFlagService.isEnabled(eq(FeatureName.NODE_RECOMMENDATION_1), eq(ACCOUNT_ID))).thenReturn(false);

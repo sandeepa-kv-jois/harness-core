@@ -8,10 +8,10 @@
 package software.wings.graphql.datafetcher.secrets;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.winrm.AuthenticationScheme.KERBEROS;
+import static io.harness.delegate.task.winrm.AuthenticationScheme.NTLM;
 
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
-import static software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme.KERBEROS;
-import static software.wings.beans.WinRmConnectionAttributes.AuthenticationScheme.NTLM;
 import static software.wings.settings.SettingVariableTypes.WINRM_CONNECTION_ATTRIBUTES;
 
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -19,6 +19,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.exception.InvalidRequestException;
 
 import software.wings.beans.SettingAttribute;
@@ -85,7 +86,7 @@ public class WinRMCredentialController {
   public SettingAttribute createSettingAttribute(
       @NotNull QLWinRMCredentialInput winRMCredentialInput, String accountId) {
     validateSettingAttribute(winRMCredentialInput, accountId);
-    WinRmConnectionAttributes.AuthenticationScheme authenticationScheme = NTLM;
+    AuthenticationScheme authenticationScheme = NTLM;
     boolean skipCertChecks = true;
     boolean useSSL = true;
     if (winRMCredentialInput.getSkipCertCheck() != null) {

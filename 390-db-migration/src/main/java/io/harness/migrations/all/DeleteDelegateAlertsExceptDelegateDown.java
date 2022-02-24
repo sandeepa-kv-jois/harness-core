@@ -53,6 +53,8 @@ public class DeleteDelegateAlertsExceptDelegateDown implements Migration {
         persistence.delete(persistence.createQuery(Alert.class).field(AlertKeys.uuid).in(idsToDelete));
         log.info("deleted: " + deleted);
       }
+    } catch (Exception e) {
+      log.error("Error occurred during migration for deleting all delegate alerts except DelegateDown alert.", e);
     }
     log.info(
         "Migration complete for deleting delegate alerts except DELEGATE_DOWN alert. Deleted " + deleted + " records.");

@@ -11,6 +11,7 @@ import io.harness.accesscontrol.principals.PrincipalType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Value;
@@ -20,13 +21,10 @@ import org.hibernate.validator.constraints.NotEmpty;
 @OwnedBy(HarnessTeam.PL)
 @Value
 @Builder
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class PrivilegedRoleAssignment {
-  String scopeIdentifier;
-  boolean global;
   @Wither @NotNull PrincipalType principalType;
   @Wither @NotEmpty String principalIdentifier;
   @NotEmpty String roleIdentifier;
-  String linkedRoleAssignment;
-  @Wither String userGroupIdentifier;
-  boolean managed;
+  String linkedRoleAssignment; // for backward compatibility deleteByRoleAssignment
 }

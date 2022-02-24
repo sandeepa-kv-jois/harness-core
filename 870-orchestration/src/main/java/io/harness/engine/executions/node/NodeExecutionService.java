@@ -43,6 +43,9 @@ public interface NodeExecutionService {
   List<NodeExecution> fetchNodeExecutionsWithoutOldRetriesAndStatusIn(
       String planExecutionId, EnumSet<Status> statuses, boolean shouldUseProjections, Set<String> fieldsToBeIncluded);
 
+  List<NodeExecution> fetchNodeExecutionsWithoutOldRetriesAndStatusIn(String planExecutionId, EnumSet<Status> statuses,
+      boolean shouldUseProjections, Set<String> fieldsToBeIncluded, Set<String> fieldsToBeExcluded);
+
   List<NodeExecution> fetchChildrenNodeExecutions(String planExecutionId, String parentId);
 
   List<NodeExecution> fetchChildrenNodeExecutions(
@@ -85,19 +88,19 @@ public interface NodeExecutionService {
   List<NodeExecution> findByParentIdAndStatusIn(String parentId, EnumSet<Status> flowingStatuses);
 
   default List<NodeExecution> findAllChildren(String planExecutionId, String parentId, boolean includeParent) {
-    return findAllChildrenWithStatusIn(
-        planExecutionId, parentId, EnumSet.noneOf(Status.class), includeParent, false, new HashSet<>());
+    return findAllChildrenWithStatusIn(planExecutionId, parentId, EnumSet.noneOf(Status.class), includeParent, false,
+        new HashSet<>(), new HashSet<>());
   }
 
-  default List<NodeExecution> findAllChildren(
-      String planExecutionId, String parentId, boolean includeParent, Set<String> fieldsToBeIncluded) {
-    return findAllChildrenWithStatusIn(
-        planExecutionId, parentId, EnumSet.noneOf(Status.class), includeParent, true, fieldsToBeIncluded);
+  default List<NodeExecution> findAllChildren(String planExecutionId, String parentId, boolean includeParent,
+      Set<String> fieldsToBeIncluded, Set<String> fieldsToBeExcluded) {
+    return findAllChildrenWithStatusIn(planExecutionId, parentId, EnumSet.noneOf(Status.class), includeParent, true,
+        fieldsToBeIncluded, fieldsToBeExcluded);
   }
 
   List<NodeExecution> findAllChildrenWithStatusIn(String planExecutionId, String parentId,
       EnumSet<Status> flowingStatuses, boolean includeParent, boolean shouldUseProjections,
-      Set<String> fieldsToBeIncluded);
+      Set<String> fieldsToBeIncluded, Set<String> fieldsToBeExcluded);
 
   List<NodeExecution> findAllChildrenWithStatusIn(
       String planExecutionId, String parentId, EnumSet<Status> flowingStatuses, boolean includeParent);
@@ -114,8 +117,6 @@ public interface NodeExecutionService {
 
   Map<String, String> fetchNodeExecutionFromNodeUuidsAndPlanExecutionId(
       List<String> identifierOfSkipStages, String previousExecutionId);
-
-  List<NodeExecution> getStageNodesFromPlanExecutionId(String planExecutionId);
 
   List<String> fetchStageFqnFromStageIdentifiers(String planExecutionId, List<String> stageIdentifiers);
 

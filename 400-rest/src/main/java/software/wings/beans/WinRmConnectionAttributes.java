@@ -15,6 +15,7 @@ import static software.wings.audit.ResourceType.CONNECTION_ATTRIBUTES;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
+import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.encryption.Encrypted;
 import io.harness.expression.ExpressionEvaluator;
 
@@ -67,8 +68,6 @@ public class WinRmConnectionAttributes extends SettingValue implements Encryptab
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     return new ArrayList<>();
   }
-
-  public enum AuthenticationScheme { BASIC, NTLM, KERBEROS }
 
   public WinRmConnectionAttributes() {
     super(SettingVariableTypes.WINRM_CONNECTION_ATTRIBUTES.name());

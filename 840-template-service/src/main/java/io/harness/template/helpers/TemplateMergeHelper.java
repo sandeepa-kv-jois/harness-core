@@ -52,6 +52,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
@@ -307,13 +308,17 @@ public class TemplateMergeHelper {
   private JsonNode mergeTemplateInputsToTemplateSpecInTemplateYaml(JsonNode templateInputs, JsonNode templateSpec) {
     Map<String, JsonNode> dummyTemplateSpecMap = new LinkedHashMap<>();
     dummyTemplateSpecMap.put(DUMMY_NODE, templateSpec);
+    String dummyTemplateSpecYaml = convertToYaml(dummyTemplateSpecMap);
 
-    Map<String, JsonNode> dummyTemplateInputsMap = new LinkedHashMap<>();
-    dummyTemplateInputsMap.put(DUMMY_NODE, templateInputs);
-    String dummyTemplateInputsYaml = convertToYaml(dummyTemplateInputsMap);
+    String mergedYaml = dummyTemplateSpecYaml;
+    String dummyTemplateInputsYaml = "";
+    if (templateInputs != null) {
+      Map<String, JsonNode> dummyTemplateInputsMap = new LinkedHashMap<>();
+      dummyTemplateInputsMap.put(DUMMY_NODE, templateInputs);
+      dummyTemplateInputsYaml = convertToYaml(dummyTemplateInputsMap);
 
-    String mergedYaml =
-        mergeInputSetFormatYamlToOriginYaml(convertToYaml(dummyTemplateSpecMap), dummyTemplateInputsYaml);
+      mergedYaml = mergeInputSetFormatYamlToOriginYaml(dummyTemplateSpecYaml, dummyTemplateInputsYaml);
+    }
 
     try {
       String finalMergedYaml = removeOmittedRuntimeInputsFromMergedYaml(mergedYaml, dummyTemplateInputsYaml);
@@ -330,11 +335,14 @@ public class TemplateMergeHelper {
 
     YamlConfig mergedYamlConfig = new YamlConfig(mergedYaml);
     Map<FQN, Object> mergedYamlConfigMap = mergedYamlConfig.getFqnToValueMap();
-    YamlConfig templateInputsYamlConfig = new YamlConfig(templateInputsYaml);
-    Map<FQN, Object> templateInputsYamlConfigMap = templateInputsYamlConfig.getFqnToValueMap();
+    Map<FQN, Object> templateInputsYamlConfigMap = new HashMap<>();
+    if (isNotEmpty(templateInputsYaml)) {
+      YamlConfig templateInputsYamlConfig = new YamlConfig(templateInputsYaml);
+      templateInputsYamlConfigMap = templateInputsYamlConfig.getFqnToValueMap();
+    }
     Map<FQN, Object> resMap = new LinkedHashMap<>();
 
-    mergedYamlConfigMap.keySet().forEach(key -> {
+    for (FQN key : mergedYamlConfigMap.keySet()) {
       Object value = mergedYamlConfigMap.get(key);
       if (!templateInputsYamlConfigMap.containsKey(key) && !(value instanceof ArrayNode)) {
         String mergedValue = ((JsonNode) value).asText();
@@ -344,7 +352,7 @@ public class TemplateMergeHelper {
       } else {
         resMap.put(key, value);
       }
-    });
+    }
 
     return (new YamlConfig(resMap, mergedYamlNode)).getYaml();
   }

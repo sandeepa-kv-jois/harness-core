@@ -117,6 +117,7 @@ public final class MetricPack implements PersistentEntity, UuidAware, CreatedAtA
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class MetricDefinition {
     @Trimmed @NotEmpty private String name;
+    @NotEmpty private String identifier;
     @NotNull private TimeSeriesMetricType type;
     private String path;
     private String validationPath;

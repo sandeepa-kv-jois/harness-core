@@ -12,19 +12,20 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"github.com/harness/harness-core/product/ci/addon/testintelligence/mocks"
 	"os"
 	"testing"
 	"time"
 
+	"github.com/harness/harness-core/product/ci/addon/testintelligence/mocks"
+
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/exec"
 	mexec "github.com/harness/harness-core/commons/go/lib/exec"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -169,7 +170,7 @@ instrPackages: p1, p2, p3`
 export TMPDIR=/test/tmp
 export HARNESS_JAVA_AGENT=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini
 echo x
-mvn -am -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test
+mvn -am -DharnessArgLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test
 echo y`
 	got, err := r.getCmd(ctx, outputFile)
 	assert.Nil(t, err)
@@ -242,7 +243,7 @@ instrPackages: p1, p2, p3`
 export TMPDIR=/test/tmp
 export HARNESS_JAVA_AGENT=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini
 echo x
-mvn -am -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test
+mvn -am -DharnessArgLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test
 echo y`
 	got, err := r.getCmd(ctx, outputFile)
 	assert.Nil(t, err)
@@ -310,7 +311,7 @@ instrPackages: p1, p2, p3`
 export TMPDIR=/test/tmp
 export HARNESS_JAVA_AGENT=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini
 echo x
-mvn -am -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test
+mvn -am -DharnessArgLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test
 echo y`
 	got, err := r.getCmd(ctx, outputFile)
 	assert.Nil(t, err)

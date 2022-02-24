@@ -25,8 +25,10 @@ import io.harness.capability.ProcessExecutorParameters;
 import io.harness.capability.SftpCapabilityParameters;
 import io.harness.capability.SmbConnectionParameters;
 import io.harness.capability.SmtpParameters;
+import io.harness.capability.SocketConnectivityBulkOrParameters;
 import io.harness.capability.SocketConnectivityParameters;
 import io.harness.capability.SystemEnvParameters;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.delegate.beans.executioncapability.AwsRegionCapability;
 import io.harness.delegate.beans.executioncapability.CapabilityResponse;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
@@ -41,6 +43,7 @@ import io.harness.delegate.beans.executioncapability.ProcessExecutorCapability;
 import io.harness.delegate.beans.executioncapability.SftpCapability;
 import io.harness.delegate.beans.executioncapability.SmbConnectionCapability;
 import io.harness.delegate.beans.executioncapability.SmtpCapability;
+import io.harness.delegate.beans.executioncapability.SocketConnectivityBulkOrExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SocketConnectivityExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SystemEnvCheckerCapability;
 import io.harness.k8s.model.HelmVersion;
@@ -67,6 +70,7 @@ public class CapabilityProtoConverter {
       case SFTP_CAPABILITY_PARAMETERS:
       case SMB_CONNECTION_PARAMETERS:
       case SOCKET_CONNECTIVITY_PARAMETERS:
+      case SOCKET_CONNECTIVITY_BULK_OR_PARAMETERS:
       case SYSTEM_ENV_PARAMETERS:
         return true;
       case SMTP_PARAMETERS:
@@ -187,6 +191,19 @@ public class CapabilityProtoConverter {
           socketConnectivityParametersBuilder.setUrl(socketConnectivityExecutionCapability.getUrl());
         }
         return builder.setSocketConnectivityParameters(socketConnectivityParametersBuilder).build();
+      case SOCKET_BULK_OR:
+        SocketConnectivityBulkOrExecutionCapability socketConnectivityBulkOrExecutionCapability =
+            (SocketConnectivityBulkOrExecutionCapability) executionCapability;
+        SocketConnectivityBulkOrParameters.Builder socketConnectivityBulkOrParametersBuilder =
+            SocketConnectivityBulkOrParameters.newBuilder();
+
+        if (EmptyPredicate.isNotEmpty(socketConnectivityBulkOrExecutionCapability.getHostNames())) {
+          socketConnectivityBulkOrParametersBuilder.addAllHostNames(
+              socketConnectivityBulkOrExecutionCapability.getHostNames());
+        }
+        socketConnectivityBulkOrParametersBuilder.setPort(socketConnectivityBulkOrExecutionCapability.getPort());
+
+        return builder.setSocketConnectivityBulkOrParameters(socketConnectivityBulkOrParametersBuilder).build();
       case SYSTEM_ENV:
         SystemEnvCheckerCapability systemEnvCheckerCapability = (SystemEnvCheckerCapability) executionCapability;
         return builder

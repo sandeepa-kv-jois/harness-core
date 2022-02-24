@@ -232,8 +232,7 @@ public class CIK8JavaClientHandler {
 
     if (kubernetesApiResponse.getHttpStatusCode() == 404) {
       log.warn("Pod {} not found ", podName);
-      v1Status.setStatus("Failure");
-      return v1Status;
+      throw new PodNotFoundException("Failed to delete pod " + podName);
     } else {
       throw new RuntimeException("Failed to delete pod " + podName);
     }

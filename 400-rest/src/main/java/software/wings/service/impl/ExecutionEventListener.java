@@ -13,8 +13,6 @@ import static io.harness.expression.ExpressionEvaluator.containsVariablePattern;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.ff.FeatureFlagService;
-import io.harness.lock.PersistentLocker;
 import io.harness.queue.QueueConsumer;
 import io.harness.queue.QueueListener;
 
@@ -22,11 +20,8 @@ import software.wings.beans.AzureKubernetesInfrastructureMapping;
 import software.wings.beans.DirectKubernetesInfrastructureMapping;
 import software.wings.beans.GcpKubernetesInfrastructureMapping;
 import software.wings.beans.InfrastructureMapping;
-import software.wings.dl.WingsPersistence;
-import software.wings.service.intfc.AppService;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.service.intfc.InfrastructureMappingService;
-import software.wings.service.intfc.WorkflowExecutionService;
-import software.wings.sm.StateMachineExecutor;
 
 import com.google.inject.Inject;
 import lombok.extern.slf4j.Slf4j;
@@ -35,14 +30,7 @@ import lombok.extern.slf4j.Slf4j;
 @TargetModule(_870_CG_ORCHESTRATION)
 @Slf4j
 public class ExecutionEventListener extends QueueListener<ExecutionEvent> {
-  @Inject private WingsPersistence wingsPersistence;
-  @Inject private PersistentLocker persistentLocker;
-  @Inject private StateMachineExecutor stateMachineExecutor;
   @Inject private InfrastructureMappingService infrastructureMappingService;
-  @Inject private FeatureFlagService featureFlagService;
-  @Inject private AppService appService;
-  @Inject private WorkflowExecutionService workflowExecutionService;
-  @Inject private software.wings.service.impl.WorkflowExecutionUpdate executionUpdate;
 
   @Inject
   public ExecutionEventListener(QueueConsumer<ExecutionEvent> queueConsumer) {
@@ -67,6 +55,12 @@ public class ExecutionEventListener extends QueueListener<ExecutionEvent> {
         if (infrastructureMapping instanceof DirectKubernetesInfrastructureMapping
             && containsVariablePattern(
                 ((DirectKubernetesInfrastructureMapping) infrastructureMapping).getNamespace())) {
+          namespaceExpression = true;
+          break;
+        }
+        if (infrastructureMapping instanceof RancherKubernetesInfrastructureMapping
+            && containsVariablePattern(
+                ((RancherKubernetesInfrastructureMapping) infrastructureMapping).getNamespace())) {
           namespaceExpression = true;
           break;
         }

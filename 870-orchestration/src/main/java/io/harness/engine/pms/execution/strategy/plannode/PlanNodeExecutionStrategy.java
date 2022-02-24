@@ -35,7 +35,6 @@ import io.harness.exception.exceptionmanager.ExceptionManager;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.execution.NodeExecutionMetadata;
-import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.logging.AutoLogContext;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
@@ -46,7 +45,6 @@ import io.harness.pms.contracts.execution.ExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
-import io.harness.pms.data.OrchestrationMap;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.EngineExceptionUtils;
@@ -55,7 +53,7 @@ import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
 import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
-import io.harness.springdata.TransactionHelper;
+import io.harness.serializer.KryoSerializer;
 import io.harness.waiter.WaitNotifyEngine;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -93,34 +91,11 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
   @Inject private WaitNotifyEngine waitNotifyEngine;
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private PmsOutcomeService outcomeService;
-  @Inject private TransactionHelper transactionHelper;
-  @Inject private PmsGraphStepDetailsService pmsGraphStepDetailsService;
+  @Inject private KryoSerializer kryoSerializer;
 
   @Override
-  public NodeExecution createNodeExecution(
-      @NotNull Ambiance ambiance, @NotNull PlanNode node, String notifyId, String parentId, String previousId) {
-    final NodeExecution persistedNodeExecution = persistNodeExecution(ambiance, node, notifyId, parentId, previousId);
-    if (persistedNodeExecution == null) {
-      throw new RuntimeException("Failed to save node execution");
-    }
-
-    return transactionHelper.performTransaction(() -> {
-      boolean skipUnresolvedExpressionsCheck = node.isSkipUnresolvedExpressionsCheck();
-      log.info("Starting to Resolve step parameters and Inputs");
-      PmsStepParameters resolvedParameters =
-          resolveParameters(ambiance, node.getStepParameters(), skipUnresolvedExpressionsCheck);
-      PmsStepParameters resolvedInputs =
-          resolveParameters(ambiance, node.getStepInputs(), skipUnresolvedExpressionsCheck);
-      NodeExecution updatedNodeExecution =
-          nodeExecutionService.update(persistedNodeExecution.withResolvedParams(resolvedParameters));
-      pmsGraphStepDetailsService.addStepInputs(
-          persistedNodeExecution.getUuid(), ambiance.getPlanExecutionId(), resolvedInputs);
-      return updatedNodeExecution;
-    });
-  }
-
-  private NodeExecution persistNodeExecution(
-      @NotNull Ambiance ambiance, @NotNull PlanNode node, String notifyId, String parentId, String previousId) {
+  public NodeExecution createNodeExecution(@NotNull Ambiance ambiance, @NotNull PlanNode node,
+      NodeExecutionMetadata metadata, String notifyId, String parentId, String previousId) {
     String uuid = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
     NodeExecution nodeExecution = NodeExecution.builder()
                                       .uuid(uuid)
@@ -143,11 +118,17 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
     return nodeExecutionService.save(nodeExecution);
   }
 
-  private PmsStepParameters resolveParameters(
-      Ambiance ambiance, OrchestrationMap unresolvedParams, boolean skipUnresolvedCheck) {
-    Object resolvedStepParameters = pmsEngineExpressionService.resolve(ambiance, unresolvedParams, skipUnresolvedCheck);
-    return PmsStepParameters.parse(
+  private void resolveParameters(Ambiance ambiance, PmsStepParameters stepParameters, boolean skipUnresolvedCheck) {
+    String nodeExecutionId = Objects.requireNonNull(AmbianceUtils.obtainCurrentRuntimeId(ambiance));
+    log.info("Starting to Resolve step parameters");
+    Object resolvedStepParameters = pmsEngineExpressionService.resolve(ambiance, stepParameters, skipUnresolvedCheck);
+    PmsStepParameters resolvedParameters = PmsStepParameters.parse(
         OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedStepParameters));
+    // TODO (prashant) : This is a hack right now to serialize in binary as findAndModify is not honoring converter
+    // for maps Find a better way to do this
+    nodeExecutionService.update(nodeExecutionId,
+        ops -> ops.set(NodeExecutionKeys.resolvedParams, kryoSerializer.asDeflatedBytes(resolvedParameters)));
+    log.info("Resolved to step parameters");
   }
 
   @Override
@@ -162,6 +143,8 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
         return;
       }
       log.info("Proceeding with  Execution. Reason : {}", check.getReason());
+
+      resolveParameters(ambiance, planNode.getStepParameters(), planNode.isSkipUnresolvedExpressionsCheck());
 
       if (facilitationHelper.customFacilitatorPresent(planNode)) {
         facilitateEventPublisher.publishEvent(ambiance, planNode);
@@ -290,7 +273,6 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
                                                 .stepOutcomeRefs(outcomeService.fetchOutcomeRefs(nodeExecutionId))
                                                 .failureInfo(nodeExecution.getFailureInfo())
                                                 .identifier(level.getIdentifier())
-                                                .group(level.getGroup())
                                                 .status(nodeExecution.getStatus())
                                                 .adviserResponse(nodeExecution.getAdviserResponse())
                                                 .build();

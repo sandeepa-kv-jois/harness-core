@@ -7,9 +7,11 @@
 
 package software.wings.graphql.datafetcher.application;
 
+import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.FeatureName.WEBHOOK_TRIGGER_AUTHORIZATION;
 import static io.harness.rule.OwnerRule.HINGER;
 import static io.harness.rule.OwnerRule.INDER;
+import static io.harness.rule.OwnerRule.LALIT;
 import static io.harness.rule.OwnerRule.ROHIT_KUMAR;
 
 import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_APPLICATIONS;
@@ -263,6 +265,86 @@ public class UpdateApplicationDataFetcherTest extends CategoryTest {
         .getArguments();
     doReturn("accountid").when(utils).getAccountId(dataFetchingEnvironment);
     doReturn(false).when(featureFlagService).isEnabled(eq(WEBHOOK_TRIGGER_AUTHORIZATION), anyString());
+
+    assertThatThrownBy(() -> updateApplicationDataFetcher.get(dataFetchingEnvironment))
+        .isInstanceOf(InvalidRequestException.class);
+  }
+
+  @Test
+  @Owner(developers = LALIT)
+  @Category(UnitTests.class)
+  public void test_mutateAndFetch_WithWebHookSecretsMandated() throws Exception {
+    final DataFetchingEnvironment dataFetchingEnvironment = Mockito.mock(DataFetchingEnvironment.class);
+    doReturn(ImmutableMap.builder()
+                 .put("clientMutationId", "req1")
+                 .put("applicationId", "appid")
+                 .put("name", "new_app_name")
+                 .put("description", "new description")
+                 .put("areWebHookSecretsMandated", "true")
+                 .build())
+        .when(dataFetchingEnvironment)
+        .getArguments();
+    doReturn("accountid").when(utils).getAccountId(dataFetchingEnvironment);
+    doReturn(true).when(featureFlagService).isEnabled(eq(GITHUB_WEBHOOK_AUTHENTICATION), anyString());
+
+    final Application applicationArgument;
+    {
+      final QLUpdateApplicationPayload qlUpdateApplicationPayload =
+          updateApplicationDataFetcher.get(dataFetchingEnvironment);
+      ArgumentCaptor<Application> applicationArgumentCaptor = ArgumentCaptor.forClass(Application.class);
+      verify(appService, times(1)).update(applicationArgumentCaptor.capture());
+      applicationArgument = applicationArgumentCaptor.getValue();
+      assertThat(applicationArgument.getName()).isEqualTo("new_app_name");
+      assertThat(applicationArgument.getDescription()).isEqualTo("new description");
+      assertThat(applicationArgument.getAppId()).isEqualTo("appid");
+      assertThat(applicationArgument.getUuid()).isEqualTo("appid");
+      assertThat(applicationArgument.getAccountId()).isEqualTo("accountid");
+      assertThat(applicationArgument.getAreWebHookSecretsMandated()).isTrue();
+    }
+    {
+      doReturn(new HashMap<String, String>() {
+        {
+          put("clientMutationId", "req1");
+          put("applicationId", "appid");
+          put("name", "new_app_name_2");
+          put("description", null);
+          put("areWebHookSecretsMandated", null);
+        }
+      })
+          .when(dataFetchingEnvironment)
+          .getArguments();
+      doReturn(applicationArgument).when(appService).get("appid");
+
+      final QLUpdateApplicationPayload qlUpdateApplicationPayload =
+          updateApplicationDataFetcher.get(dataFetchingEnvironment);
+      ArgumentCaptor<Application> applicationArgumentCaptor = ArgumentCaptor.forClass(Application.class);
+      verify(appService, times(2)).update(applicationArgumentCaptor.capture());
+      final Application applicationArgument2 = applicationArgumentCaptor.getValue();
+      assertThat(applicationArgument2.getName()).isEqualTo("new_app_name_2");
+      assertThat(applicationArgument2.getDescription()).isNull();
+      assertThat(applicationArgument2.getAppId()).isEqualTo("appid");
+      assertThat(applicationArgument2.getUuid()).isEqualTo("appid");
+      assertThat(applicationArgument2.getAccountId()).isEqualTo("accountid");
+      assertThat(applicationArgument2.getAreWebHookSecretsMandated()).isFalse();
+    }
+  }
+
+  @Test
+  @Owner(developers = LALIT)
+  @Category(UnitTests.class)
+  public void test_mutateAndFetch_WithWebHookSecretsMandatedAndFfOff() throws Exception {
+    final DataFetchingEnvironment dataFetchingEnvironment = Mockito.mock(DataFetchingEnvironment.class);
+    doReturn(ImmutableMap.builder()
+                 .put("clientMutationId", "req1")
+                 .put("applicationId", "appid")
+                 .put("name", "new_app_name")
+                 .put("description", "new description")
+                 .put("areWebHookSecretsMandated", true)
+                 .build())
+        .when(dataFetchingEnvironment)
+        .getArguments();
+    doReturn("accountid").when(utils).getAccountId(dataFetchingEnvironment);
+    doReturn(false).when(featureFlagService).isEnabled(eq(GITHUB_WEBHOOK_AUTHENTICATION), anyString());
 
     assertThatThrownBy(() -> updateApplicationDataFetcher.get(dataFetchingEnvironment))
         .isInstanceOf(InvalidRequestException.class);

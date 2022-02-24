@@ -17,11 +17,9 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 public class DelegateTaskMetricContext extends AutoMetricContext {
-  public DelegateTaskMetricContext(String accountId, boolean ng, String taskType, boolean async) {
+  public DelegateTaskMetricContext(String accountId, String taskType) {
     put("accountId", accountId);
-    put("ng", String.valueOf(ng));
     put("taskType", taskType);
-    put("async", String.valueOf(async));
   }
 
   public DelegateTaskMetricContext(String accountId) {

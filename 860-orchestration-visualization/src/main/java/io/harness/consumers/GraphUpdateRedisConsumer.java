@@ -19,32 +19,31 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.eventsframework.api.Consumer;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
 import io.harness.eventsframework.consumer.Message;
-import io.harness.logging.AutoLogContext;
 import io.harness.pms.contracts.visualisation.log.OrchestrationLogEvent;
 import io.harness.pms.events.base.PmsRedisConsumer;
 import io.harness.queue.QueueController;
 import io.harness.service.GraphGenerationService;
 
-import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.InvalidProtocolBufferException;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Objects;
-import java.util.Set;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @OwnedBy(PIPELINE)
+@Singleton
 public class GraphUpdateRedisConsumer implements PmsRedisConsumer {
   private static final int WAIT_TIME_IN_SECONDS = 30;
-
-  private static final Duration THRESHOLD_PROCESS_DURATION = Duration.ofMillis(100);
 
   Consumer eventConsumer;
   GraphGenerationService graphGenerationService;
@@ -99,43 +98,46 @@ public class GraphUpdateRedisConsumer implements PmsRedisConsumer {
 
   private void pollAndProcessMessages() {
     List<Message> messages = eventConsumer.read(Duration.ofSeconds(WAIT_TIME_IN_SECONDS));
-    List<OrchestrationLogEvent> orchestrationLogEvents =
-        messages.stream()
-            .map(message -> {
-              try {
-                return OrchestrationLogEvent.parseFrom(message.getMessage().getData());
-              } catch (InvalidProtocolBufferException e) {
-                log.error("Could not map message to OrchestrationLogEvent");
-                return null;
-              }
-            })
-            .filter(Objects::nonNull)
-            .collect(Collectors.toList());
-    messages.forEach(message -> eventConsumer.acknowledge(message.getId()));
+    Map<String, List<String>> planExIdToMessageMap = mapPlanExecutionToMessages(messages);
+    for (Map.Entry<String, List<String>> entry : planExIdToMessageMap.entrySet()) {
+      executorService.submit(GraphUpdateDispatcher.builder()
+                                 .planExecutionId(entry.getKey())
+                                 .startTs(System.currentTimeMillis())
+                                 .graphGenerationService(graphGenerationService)
+                                 .messageIds(entry.getValue())
+                                 .consumer(eventConsumer)
+                                 .build());
+    }
+  }
 
-    Set<String> planExecutionIds =
-        orchestrationLogEvents.stream().map(OrchestrationLogEvent::getPlanExecutionId).collect(Collectors.toSet());
-    for (String planExecutionId : planExecutionIds) {
-      long startTs = System.currentTimeMillis();
-      executorService.submit(() -> {
-        try (AutoLogContext autoLogContext = new AutoLogContext(
-                 ImmutableMap.of("planExecutionId", planExecutionId), AutoLogContext.OverrideBehavior.OVERRIDE_NESTS)) {
-          checkAndLogSchedulingDelays(planExecutionId, startTs);
-          graphGenerationService.updateGraph(planExecutionId);
-        } catch (Exception ex) {
-          log.error("Exception occurred while updating graph with planExecutionId {}", planExecutionId, ex);
+  private Map<String, List<String>> mapPlanExecutionToMessages(List<Message> messages) {
+    Map<String, List<String>> result = new HashMap<>();
+    for (Message message : messages) {
+      OrchestrationLogEvent event = buildEventFromMessage(message);
+      if (event == null) {
+        continue;
+      }
+      result.compute(event.getPlanExecutionId(), (k, v) -> {
+        if (v == null) {
+          return new ArrayList<>(Collections.singletonList(message.getId()));
+        } else {
+          v.add(message.getId());
+          return v;
         }
       });
     }
+    return result;
   }
 
-  private void checkAndLogSchedulingDelays(String planExecutionId, long startTs) {
-    Duration scheduleDuration = Duration.ofMillis(System.currentTimeMillis() - startTs);
-    if (THRESHOLD_PROCESS_DURATION.compareTo(scheduleDuration) < 0) {
-      log.warn("[PMS_MESSAGE_LISTENER] Handler for graphUpdate event with planExecutionId {} called after {} delay",
-          planExecutionId, scheduleDuration);
+  private OrchestrationLogEvent buildEventFromMessage(Message message) {
+    try {
+      return OrchestrationLogEvent.parseFrom(message.getMessage().getData());
+    } catch (InvalidProtocolBufferException e) {
+      log.error("Could not map message to OrchestrationLogEvent");
+      return null;
     }
   }
+
   @Override
   public void shutDown() {
     shouldStop.set(true);

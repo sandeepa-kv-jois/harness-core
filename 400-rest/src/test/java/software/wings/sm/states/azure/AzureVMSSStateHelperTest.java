@@ -1194,7 +1194,7 @@ public class AzureVMSSStateHelperTest extends CategoryTest {
     when(context.getAppId()).thenReturn(appId);
     doReturn(service).when(serviceResourceService).getWithDetails(appId, serviceId);
 
-    assertThat(azureVMSSStateHelper.isWebAppNonContainerDeployment(context)).isFalse();
+    assertThat(azureVMSSStateHelper.isWebAppDockerDeployment(context)).isTrue();
   }
 
   @Test
@@ -1216,7 +1216,7 @@ public class AzureVMSSStateHelperTest extends CategoryTest {
     when(serviceResourceService.findArtifactForOnDemandWorkflow(appId, workflowExecutionId))
         .thenReturn(Optional.of(rollbackArtifact));
 
-    Optional<Artifact> artifact = azureVMSSStateHelper.getArtifactForRollback(context, serviceId);
+    Optional<Artifact> artifact = azureVMSSStateHelper.getWebAppPackageArtifactForRollback(context, serviceId);
     assertThat(artifact.isPresent()).isTrue();
     assertThat(artifact.get()).isEqualTo(rollbackArtifact);
   }

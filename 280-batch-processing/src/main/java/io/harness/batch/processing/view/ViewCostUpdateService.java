@@ -7,6 +7,8 @@
 
 package io.harness.batch.processing.view;
 
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
+
 import static software.wings.graphql.datafetcher.billing.CloudBillingHelper.unified;
 
 import io.harness.batch.processing.config.BatchMainConfig;
@@ -15,6 +17,8 @@ import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.views.entities.CEView;
 import io.harness.ccm.views.entities.ViewState;
 import io.harness.ccm.views.service.CEViewService;
+import io.harness.logging.AccountLogContext;
+import io.harness.logging.AutoLogContext;
 
 import software.wings.beans.Account;
 import software.wings.graphql.datafetcher.billing.CloudBillingHelper;
@@ -40,6 +44,7 @@ public class ViewCostUpdateService {
     List<Account> ceEnabledAccounts = accountShardService.getCeEnabledAccounts();
     List<String> accountIds = ceEnabledAccounts.stream().map(Account::getUuid).collect(Collectors.toList());
     accountIds.forEach(accountId -> {
+      AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR);
       List<CEView> views = ceViewService.getViewByState(accountId, ViewState.COMPLETED);
       views.forEach(view -> {
         log.info("Updating view {}", view.getUuid());
@@ -51,6 +56,7 @@ public class ViewCostUpdateService {
           log.error("Exception while updating cost", ex);
         }
       });
+      ignore.close();
     });
     log.info("Updated views for all accounts");
   }

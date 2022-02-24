@@ -29,7 +29,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
 import static org.assertj.core.api.Assertions.failBecauseExceptionWasNotThrown;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyInt;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -39,8 +38,6 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.harness.accesscontrol.AccessControlAdminClient;
-import io.harness.accesscontrol.roleassignments.api.RoleAssignmentResponseDTO;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
@@ -48,10 +45,10 @@ import io.harness.configuration.DeployMode;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.InvalidCredentialsException;
 import io.harness.exception.WingsException;
-import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.rule.Owner;
+import io.harness.usermembership.remote.UserMembershipClient;
 
 import software.wings.WingsBaseTest;
 import software.wings.app.MainConfiguration;
@@ -101,7 +98,7 @@ public class AuthenticationManagerTest extends WingsBaseTest {
   @Mock private AuthenticationUtils AUTHENTICATION_UTL;
   @Mock private AuthService AUTHSERVICE;
   @Mock private AccountService accountService;
-  @Mock private AccessControlAdminClient accessControlAdminClient;
+  @Mock private UserMembershipClient userMembershipClient;
   @Mock private FailedLoginAttemptCountChecker failedLoginAttemptCountChecker;
 
   @Captor ArgumentCaptor<String> argCaptor;
@@ -437,18 +434,14 @@ public class AuthenticationManagerTest extends WingsBaseTest {
     when(AUTHSERVICE.generateBearerTokenForUser(mockUser)).thenReturn(authenticatedUser);
     doNothing().when(AUTHSERVICE).auditLogin(any(), any());
     when(accountService.get(accountId)).thenReturn(account);
-    Call<ResponseDTO<PageResponse<RoleAssignmentResponseDTO>>> request = mock(Call.class);
-    doReturn(request)
-        .when(accessControlAdminClient)
-        .getFilteredRoleAssignments(anyString(), anyString(), anyString(), anyInt(), anyInt(), any());
-    RoleAssignmentResponseDTO dummyRole = RoleAssignmentResponseDTO.builder().harnessManaged(true).build();
-    ResponseDTO<PageResponse<RoleAssignmentResponseDTO>> mockResponse = ResponseDTO.newResponse(
-        PageResponse.<RoleAssignmentResponseDTO>builder().content(Collections.singletonList(dummyRole)).build());
+    Call<ResponseDTO<Boolean>> request = mock(Call.class);
+    doReturn(request).when(userMembershipClient).isUserAdmin(anyString(), anyString());
+    ResponseDTO<Boolean> mockResponse = ResponseDTO.newResponse(true);
     doReturn(Response.success(mockResponse)).when(request).execute();
     assertThat(authenticationManager.loginUsingHarnessPassword(basicToken, accountId)).isEqualTo(authenticatedUser);
   }
 
-  @Test(expected = NullPointerException.class)
+  @Test(expected = WingsException.class)
   @Owner(developers = VIKAS_M)
   @Category(UnitTests.class)
   public void testHarnessLocalLoginNgNotAdmin() throws IOException {
@@ -465,15 +458,11 @@ public class AuthenticationManagerTest extends WingsBaseTest {
     when(AUTHSERVICE.generateBearerTokenForUser(mockUser)).thenReturn(authenticatedUser);
     doNothing().when(AUTHSERVICE).auditLogin(any(), any());
     when(accountService.get(accountId)).thenReturn(account);
-    Call<ResponseDTO<PageResponse<RoleAssignmentResponseDTO>>> request = mock(Call.class);
-    doReturn(request)
-        .when(accessControlAdminClient)
-        .getFilteredRoleAssignments(anyString(), anyString(), anyString(), anyInt(), anyInt(), any());
-    PageResponse<RoleAssignmentResponseDTO> response = PageResponse.<RoleAssignmentResponseDTO>builder().build();
-    ResponseDTO<PageResponse<RoleAssignmentResponseDTO>> mockResponse = ResponseDTO.newResponse(response);
+    Call<ResponseDTO<Boolean>> request = mock(Call.class);
+    doReturn(request).when(userMembershipClient).isUserAdmin(anyString(), anyString());
+    ResponseDTO<Boolean> mockResponse = ResponseDTO.newResponse(false);
     doReturn(Response.success(mockResponse)).when(request).execute();
-    assertThat(authenticationManager.loginUsingHarnessPassword(basicToken, accountId))
-        .isEqualTo(NullPointerException.class);
+    authenticationManager.loginUsingHarnessPassword(basicToken, accountId);
   }
 
   @Test

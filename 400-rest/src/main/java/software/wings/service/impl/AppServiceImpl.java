@@ -9,6 +9,7 @@ package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessModule._870_CG_ORCHESTRATION;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.FeatureName.WEBHOOK_TRIGGER_AUTHORIZATION;
 import static io.harness.data.structure.CollectionUtils.trimmedLowercaseSet;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -387,6 +388,11 @@ public class AppServiceImpl implements AppService {
     if (featureFlagService.isEnabled(WEBHOOK_TRIGGER_AUTHORIZATION, savedApp.getAccountId())
         && app.getIsManualTriggerAuthorized() != null) {
       operations.set(ApplicationKeys.isManualTriggerAuthorized, app.getIsManualTriggerAuthorized());
+    }
+
+    if (featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, savedApp.getAccountId())
+        && app.getAreWebHookSecretsMandated() != null) {
+      operations.set(ApplicationKeys.areWebHookSecretsMandated, app.getAreWebHookSecretsMandated());
     }
 
     setUnset(operations, "description", app.getDescription());

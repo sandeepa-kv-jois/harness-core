@@ -25,6 +25,8 @@ public interface ServiceLevelIndicatorService {
 
   List<ServiceLevelIndicatorDTO> get(ProjectParams projectParams, List<String> serviceLevelIndicators);
 
+  List<ServiceLevelIndicator> getEntities(ProjectParams projectParams, List<String> serviceLevelIndicators);
+
   List<String> update(ProjectParams projectParams, List<ServiceLevelIndicatorDTO> serviceLevelIndicatorDTOList,
       String serviceLevelObjectiveIdentifier, List<String> serviceLevelIndicatorsList, String monitoredServiceIndicator,
       String healthSourceIndicator, TimePeriod timePeriod);
@@ -34,6 +36,7 @@ public interface ServiceLevelIndicatorService {
   ServiceLevelIndicator get(String sliId);
 
   List<CVConfig> fetchCVConfigForSLI(ServiceLevelIndicator serviceLevelIndicator);
+
   List<CVConfig> fetchCVConfigForSLI(String sliId);
 
   ServiceLevelIndicator getServiceLevelIndicator(ProjectParams projectParams, String identifier);

@@ -177,6 +177,10 @@ if [[ "" != "$CONNECTOR_HEALTH_UPDATE_CRON" ]]; then
   yq write -i $CONFIG_FILE scheduler-jobs-config.connectorHealthUpdateJobCron "$CONNECTOR_HEALTH_UPDATE_CRON"
 fi
 
+if [[ "" != "$AWS_ACCOUNT_TAGS_COLLECTION_CRON" ]]; then
+  yq write -i $CONFIG_FILE scheduler-jobs-config.awsAccountTagsCollectionJobCron "$AWS_ACCOUNT_TAGS_COLLECTION_CRON"
+fi
+
 if [[ "" != "$HARNESS_CE_AZURE_CLIENTID" ]]; then
   yq write -i $CONFIG_FILE azureStorageSyncConfig.azureAppClientId "$HARNESS_CE_AZURE_CLIENTID"
 fi
@@ -233,6 +237,10 @@ if [[ "" != "$CONNECTOR_HEALTH_UPDATE_JOB_ENABLED" ]]; then
   yq write -i $CONFIG_FILE connectorHealthUpdateJobConfig.enabled "$CONNECTOR_HEALTH_UPDATE_JOB_ENABLED"
 fi
 
+if [[ "" != "$AWS_ACCOUNT_TAGS_COLLECTION_JOB_ENABLED" ]]; then
+  yq write -i $CONFIG_FILE awsAccountTagsCollectionJobConfig.enabled "$AWS_ACCOUNT_TAGS_COLLECTION_JOB_ENABLED"
+fi
+
 replace_key_value cfClientConfig.apiKey "$CF_CLIENT_API_KEY"
 replace_key_value cfClientConfig.configUrl "$CF_CLIENT_CONFIG_URL"
 replace_key_value cfClientConfig.eventUrl "$CF_CLIENT_EVENT_URL"
@@ -246,3 +254,6 @@ replace_key_value featureFlagConfig.syncFeaturesToCF "$SYNC_FEATURES_TO_CF"
 
 replace_key_value banzaiRecommenderConfig.baseUrl "$BANZAI_RECOMMENDER_BASEURL"
 replace_key_value awsCurBilling "$AWS_CUR_BILLING"
+
+replace_key_value gcpConfig.gcpProjectId "$GCP_PROJECT_ID"
+replace_key_value gcpConfig.gcpAwsConnectorCrudPubSubTopic "$GCP_AWS_CONNECTOR_CRUD_PUBSUB_TOPIC"

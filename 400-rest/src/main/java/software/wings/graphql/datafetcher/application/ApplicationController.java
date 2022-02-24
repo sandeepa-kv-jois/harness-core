@@ -25,6 +25,7 @@ public class ApplicationController {
         .description(application.getDescription())
         .createdAt(application.getCreatedAt())
         .createdBy(UserController.populateUser(application.getCreatedBy()))
-        .isManualTriggerAuthorized(application.getIsManualTriggerAuthorized());
+        .isManualTriggerAuthorized(application.getIsManualTriggerAuthorized())
+        .areWebHookSecretsMandated(application.getAreWebHookSecretsMandated());
   }
 }

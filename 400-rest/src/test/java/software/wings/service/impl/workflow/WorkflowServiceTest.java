@@ -30,6 +30,7 @@ import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.PRASHANT;
 import static io.harness.rule.OwnerRule.RUSHABH;
 import static io.harness.rule.OwnerRule.SATYAM;
+import static io.harness.rule.OwnerRule.SHUBHAM_MAHESHWARI;
 import static io.harness.rule.OwnerRule.SRINIVAS;
 import static io.harness.rule.OwnerRule.UJJAWAL;
 import static io.harness.rule.OwnerRule.YOGESH;
@@ -201,6 +202,11 @@ import static software.wings.sm.StepType.K8S_SCALE;
 import static software.wings.sm.StepType.K8S_TRAFFIC_SPLIT;
 import static software.wings.sm.StepType.KUBERNETES_SWAP_SERVICE_SELECTORS;
 import static software.wings.sm.StepType.NEW_RELIC_DEPLOYMENT_MARKER;
+import static software.wings.sm.StepType.RANCHER_K8S_CANARY_DEPLOY;
+import static software.wings.sm.StepType.RANCHER_K8S_DELETE;
+import static software.wings.sm.StepType.RANCHER_K8S_DEPLOYMENT_ROLLING;
+import static software.wings.sm.StepType.RANCHER_KUBERNETES_SWAP_SERVICE_SELECTORS;
+import static software.wings.sm.StepType.RANCHER_RESOLVE;
 import static software.wings.sm.StepType.RESOURCE_CONSTRAINT;
 import static software.wings.sm.StepType.SERVICENOW_CREATE_UPDATE;
 import static software.wings.sm.StepType.TERRAFORM_APPLY;
@@ -368,6 +374,9 @@ import software.wings.infra.PhysicalInfra;
 import software.wings.rules.Listeners;
 import software.wings.service.StaticMap;
 import software.wings.service.impl.AuditServiceHelper;
+import software.wings.service.impl.workflow.creation.K8V2BlueGreenWorkflowCreator;
+import software.wings.service.impl.workflow.creation.abstractfactories.AbstractWorkflowFactory;
+import software.wings.service.impl.workflow.creation.abstractfactories.K8sV2WorkflowFactory;
 import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ArtifactService;
@@ -431,6 +440,7 @@ import org.mockito.InOrder;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
+import org.mockito.Spy;
 import org.mockito.stubbing.Answer;
 import org.mongodb.morphia.query.FieldEnd;
 import org.mongodb.morphia.query.Query;
@@ -475,9 +485,11 @@ public class WorkflowServiceTest extends WingsBaseTest {
   @Mock private PersonalizationService personalizationService;
   @Mock private AuditServiceHelper auditServiceHelper;
   @Mock private HarnessTagService harnessTagService;
+  @Spy @Inject private AbstractWorkflowFactory abstractWorkflowFactory;
 
   @InjectMocks @Inject private WorkflowServiceHelper workflowServiceHelper;
   @InjectMocks @Inject private WorkflowServiceTemplateHelper workflowServiceTemplateHelper;
+  @InjectMocks @Inject private K8V2BlueGreenWorkflowCreator k8V2BlueGreenWorkflowCreator;
 
   private StencilPostProcessor stencilPostProcessor = mock(StencilPostProcessor.class,
       (Answer<List<Stencil>>) invocationOnMock -> (List<Stencil>) invocationOnMock.getArguments()[0]);
@@ -4549,6 +4561,8 @@ public class WorkflowServiceTest extends WingsBaseTest {
         ((CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow()).getWorkflowPhases().get(0).getUuid();
     assertThat(workflow).isNotNull().hasFieldOrProperty("uuid").hasFieldOrPropertyWithValue("appId", APP_ID);
     when(serviceResourceService.exist(anyString(), anyString())).thenReturn(true);
+    when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
+    when(featureFlagService.isNotEnabled(FeatureName.RANCHER_SUPPORT, ACCOUNT_ID)).thenReturn(true);
     WorkflowCategorySteps workflowCategorySteps =
         workflowService.calculateCategorySteps(workflow, user.getUuid(), phaseId, K8S_PHASE_STEP.name(), 0, false);
     assertThat(workflowCategorySteps.getCategories()).isNotEmpty();
@@ -4559,6 +4573,37 @@ public class WorkflowServiceTest extends WingsBaseTest {
         .contains(tuple(WorkflowStepType.KUBERNETES.name(), WorkflowStepType.KUBERNETES.getDisplayName(),
             asList(K8S_CANARY_DEPLOY.name(), K8S_DEPLOYMENT_ROLLING.name(), KUBERNETES_SWAP_SERVICE_SELECTORS.name(),
                 K8S_TRAFFIC_SPLIT.name(), K8S_SCALE.name(), K8S_DELETE.name(), K8S_APPLY.name())));
+    validateCommonCategories(workflowCategorySteps, true, false, false);
+
+    assertThat(workflowCategorySteps.getCategories())
+        .extracting(WorkflowCategoryStepsMeta::getId)
+        .doesNotContain(ARTIFACT.name());
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM_MAHESHWARI)
+  @Category(UnitTests.class)
+  public void categoriesForRancherK8SWorkflow() throws IllegalArgumentException {
+    when(serviceResourceService.getDeploymentType(any(), any(), anyString())).thenReturn(KUBERNETES);
+    Workflow workflow = workflowService.createWorkflow(constructK8SWorkflow());
+    String phaseId =
+        ((CanaryOrchestrationWorkflow) workflow.getOrchestrationWorkflow()).getWorkflowPhases().get(0).getUuid();
+    assertThat(workflow).isNotNull().hasFieldOrProperty("uuid").hasFieldOrPropertyWithValue("appId", APP_ID);
+    when(serviceResourceService.exist(anyString(), anyString())).thenReturn(true);
+    when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
+    when(featureFlagService.isNotEnabled(FeatureName.RANCHER_SUPPORT, ACCOUNT_ID)).thenReturn(false);
+    WorkflowCategorySteps workflowCategorySteps =
+        workflowService.calculateCategorySteps(workflow, user.getUuid(), phaseId, K8S_PHASE_STEP.name(), 0, false);
+    assertThat(workflowCategorySteps.getCategories()).isNotEmpty();
+
+    assertThat(workflowCategorySteps.getCategories())
+        .extracting(
+            WorkflowCategoryStepsMeta::getId, WorkflowCategoryStepsMeta::getName, WorkflowCategoryStepsMeta::getStepIds)
+        .contains(tuple(WorkflowStepType.KUBERNETES.name(), WorkflowStepType.KUBERNETES.getDisplayName(),
+            asList(K8S_CANARY_DEPLOY.name(), K8S_DEPLOYMENT_ROLLING.name(), KUBERNETES_SWAP_SERVICE_SELECTORS.name(),
+                K8S_TRAFFIC_SPLIT.name(), K8S_SCALE.name(), K8S_DELETE.name(), K8S_APPLY.name(), RANCHER_RESOLVE.name(),
+                RANCHER_K8S_DEPLOYMENT_ROLLING.name(), RANCHER_K8S_CANARY_DEPLOY.name(),
+                RANCHER_KUBERNETES_SWAP_SERVICE_SELECTORS.name(), RANCHER_K8S_DELETE.name())));
     validateCommonCategories(workflowCategorySteps, true, false, false);
 
     assertThat(workflowCategorySteps.getCategories())
@@ -4623,6 +4668,8 @@ public class WorkflowServiceTest extends WingsBaseTest {
                         .cloudProviderType(CloudProviderType.GCP)
                         .infrastructure(GoogleKubernetesEngine.builder().build())
                         .build());
+    when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
+    when(featureFlagService.isNotEnabled(FeatureName.RANCHER_SUPPORT, ACCOUNT_ID)).thenReturn(true);
 
     Workflow workflow = workflowService.createWorkflow(constructK8SBlueGreenWorkflow());
     String phaseId =
@@ -4877,7 +4924,12 @@ public class WorkflowServiceTest extends WingsBaseTest {
   public void testK8sV2BGWorkflowHasRouteUpdateStepInRollbackPhase() {
     Workflow workflow = constructBlueGreenWorkflow();
     when(infrastructureDefinitionService.get(APP_ID, INFRA_DEFINITION_ID)).thenReturn(constructGKInfraDef());
+    when(infrastructureDefinitionService.getInfraDefById(anyString(), anyString())).thenReturn(constructGKInfraDef());
 
+    K8sV2WorkflowFactory k8sV2WorkflowFactory = mock(K8sV2WorkflowFactory.class);
+    when(abstractWorkflowFactory.getWorkflowCreatorFactory(AbstractWorkflowFactory.Category.K8S_V2))
+        .thenReturn(k8sV2WorkflowFactory);
+    when(k8sV2WorkflowFactory.getWorkflowCreator(any())).thenReturn(k8V2BlueGreenWorkflowCreator);
     when(serviceResourceService.get(APP_ID, SERVICE_ID, false))
         .thenReturn(Service.builder()
                         .name(SERVICE_NAME)

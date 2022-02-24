@@ -17,8 +17,10 @@ import static io.harness.k8s.model.K8sExpressions.canaryDestination;
 import static io.harness.k8s.model.K8sExpressions.canaryWorkload;
 import static io.harness.k8s.model.K8sExpressions.stableDestination;
 import static io.harness.k8s.model.K8sExpressions.virtualServiceName;
+import static io.harness.pcf.model.PcfConstants.CONTEXT_ACTIVE_APP_NAME_EXPR;
 import static io.harness.pcf.model.PcfConstants.CONTEXT_APP_FINAL_ROUTES_EXPR;
 import static io.harness.pcf.model.PcfConstants.CONTEXT_APP_TEMP_ROUTES_EXPR;
+import static io.harness.pcf.model.PcfConstants.CONTEXT_INACTIVE_APP_NAME_EXPR;
 import static io.harness.pcf.model.PcfConstants.CONTEXT_NEW_APP_GUID_EXPR;
 import static io.harness.pcf.model.PcfConstants.CONTEXT_NEW_APP_NAME_EXPR;
 import static io.harness.pcf.model.PcfConstants.CONTEXT_NEW_APP_ROUTES_EXPR;
@@ -322,8 +324,9 @@ public abstract class ExpressionBuilder {
 
   private static Collection<String> getPcfWorkflowExprAfterSetupState() {
     return asList(CONTEXT_NEW_APP_GUID_EXPR, CONTEXT_NEW_APP_NAME_EXPR, CONTEXT_NEW_APP_ROUTES_EXPR,
-        CONTEXT_OLD_APP_GUID_EXPR, CONTEXT_OLD_APP_NAME_EXPR, CONTEXT_OLD_APP_ROUTES_EXPR,
-        CONTEXT_APP_FINAL_ROUTES_EXPR, CONTEXT_APP_TEMP_ROUTES_EXPR);
+        CONTEXT_OLD_APP_GUID_EXPR, CONTEXT_OLD_APP_NAME_EXPR, CONTEXT_ACTIVE_APP_NAME_EXPR,
+        CONTEXT_INACTIVE_APP_NAME_EXPR, CONTEXT_OLD_APP_ROUTES_EXPR, CONTEXT_APP_FINAL_ROUTES_EXPR,
+        CONTEXT_APP_TEMP_ROUTES_EXPR);
   }
 
   protected Set<String> getServiceVariables(String appId, List<String> entityIds) {

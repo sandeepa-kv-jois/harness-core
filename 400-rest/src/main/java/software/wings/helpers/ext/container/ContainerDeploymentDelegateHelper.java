@@ -13,23 +13,23 @@ import static org.apache.commons.lang3.StringUtils.EMPTY;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.delegate.task.k8s.ContainerDeploymentDelegateBaseHelper;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.k8s.model.KubernetesConfig;
-import io.harness.k8s.oidc.OidcTokenRetriever;
 import io.harness.logging.LogCallback;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AzureConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.KubernetesClusterConfig;
+import software.wings.beans.RancherConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.cloudprovider.gke.GkeClusterService;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
+import software.wings.delegatetasks.rancher.RancherTaskHelper;
 import software.wings.helpers.ext.azure.AzureHelperService;
 import software.wings.helpers.ext.k8s.request.K8sClusterConfig;
 import software.wings.service.impl.ContainerServiceParams;
@@ -59,8 +59,7 @@ public class ContainerDeploymentDelegateHelper {
   @Inject private GkeClusterService gkeClusterService;
   @Inject private KubernetesContainerService kubernetesContainerService;
   @Inject private EncryptionService encryptionService;
-  @Inject private OidcTokenRetriever oidcTokenRetriever;
-  @Inject private ContainerDeploymentDelegateBaseHelper containerDeploymentDelegateBaseHelper;
+  @Inject private RancherTaskHelper rancherTaskHelper;
 
   private static final String KUBE_CONFIG_DIR = "./repository/helm/.kube/";
   private static final int KUBERNETESS_116_VERSION = 116;
@@ -115,7 +114,17 @@ public class ContainerDeploymentDelegateHelper {
     String namespace = containerServiceParam.getNamespace();
 
     KubernetesConfig kubernetesConfig;
-    if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {
+
+    if (settingAttribute.getValue() instanceof RancherConfig) {
+      try {
+        SettingValue cloudProvider = settingAttribute.getValue();
+        kubernetesConfig = rancherTaskHelper.createKubeconfig(
+            (RancherConfig) cloudProvider, encryptedDataDetails, containerServiceParam.getClusterName(), namespace);
+      } catch (Exception e) {
+        throw new InvalidRequestException(
+            "Unable to fetch KubeConfig from Rancher for cluster: " + containerServiceParam.getClusterName(), e);
+      }
+    } else if (settingAttribute.getValue() instanceof KubernetesClusterConfig) {
       KubernetesClusterConfig kubernetesClusterConfig = (KubernetesClusterConfig) settingAttribute.getValue();
       encryptionService.decrypt(kubernetesClusterConfig, encryptedDataDetails, false);
       ExceptionMessageSanitizer.storeAllSecretsForSanitizing(kubernetesClusterConfig, encryptedDataDetails);
@@ -144,7 +153,15 @@ public class ContainerDeploymentDelegateHelper {
     String namespace = k8sClusterConfig.getNamespace();
 
     KubernetesConfig kubernetesConfig;
-    if (cloudProvider instanceof KubernetesClusterConfig) {
+    if (cloudProvider instanceof RancherConfig) {
+      try {
+        kubernetesConfig = rancherTaskHelper.createKubeconfig(
+            (RancherConfig) cloudProvider, encryptedDataDetails, k8sClusterConfig.getClusterName(), namespace);
+      } catch (Exception e) {
+        throw new InvalidRequestException(
+            "Unable to fetch KubeConfig from Rancher for cluster: " + k8sClusterConfig.getClusterName(), e);
+      }
+    } else if (cloudProvider instanceof KubernetesClusterConfig) {
       KubernetesClusterConfig kubernetesClusterConfig = (KubernetesClusterConfig) cloudProvider;
       encryptionService.decrypt(kubernetesClusterConfig, encryptedDataDetails, isInstanceSync);
       ExceptionMessageSanitizer.storeAllSecretsForSanitizing(kubernetesClusterConfig, encryptedDataDetails);

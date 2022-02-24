@@ -2582,6 +2582,10 @@ public class UserServiceImpl implements UserService {
       updateOperations.set(UserKeys.lastLogin, user.getLastLogin());
     }
 
+    if (isNotEmpty(user.getExternalUserId())) {
+      updateOperations.set(UserKeys.externalUserId, user.getExternalUserId());
+    }
+
     return updateUser(user.getUuid(), updateOperations);
   }
 

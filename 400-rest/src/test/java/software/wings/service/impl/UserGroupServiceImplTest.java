@@ -28,6 +28,7 @@ import static io.harness.rule.OwnerRule.SATYAM;
 import static io.harness.rule.OwnerRule.UJJAWAL;
 import static io.harness.rule.OwnerRule.VARDAN_BANSAL;
 import static io.harness.rule.OwnerRule.VIKAS;
+import static io.harness.rule.OwnerRule.VIKAS_M;
 import static io.harness.rule.OwnerRule.VOJIN;
 
 import static software.wings.beans.Account.Builder.anAccount;
@@ -106,6 +107,7 @@ import software.wings.beans.Event.Type;
 import software.wings.beans.LicenseInfo;
 import software.wings.beans.Role;
 import software.wings.beans.User;
+import software.wings.beans.UserGroupEntityReference;
 import software.wings.beans.notification.NotificationSettings;
 import software.wings.beans.notification.SlackNotificationSetting;
 import software.wings.beans.security.AccountPermissions;
@@ -1346,6 +1348,105 @@ public class UserGroupServiceImplTest extends WingsBaseTest {
     // User has TEMPLATE_MANAGEMENT Account Permission and but no Application Permissions
     doReturn(appIds).when(appService).getAppIdsByAccountId(ACCOUNT_ID);
     verifyNoApplicationTemplatePermissions(new HashSet<>(Arrays.asList(ACCOUNT_MANAGEMENT, TEMPLATE_MANAGEMENT)));
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_addParentsReferenceWithExistingParents() {
+    UserGroupEntityReference reference1 = UserGroupEntityReference.builder()
+                                              .id("pipelineId1")
+                                              .accountId(accountId)
+                                              .appId("appId1")
+                                              .entityType("PIPELINE")
+                                              .build();
+    UserGroupEntityReference reference2 = UserGroupEntityReference.builder()
+                                              .id("pipelineId2")
+                                              .accountId(accountId)
+                                              .appId("appId2")
+                                              .entityType("PIPELINE")
+                                              .build();
+    UserGroup userGroup = builder()
+                              .accountId(accountId)
+                              .uuid("userGroupId")
+                              .description(description)
+                              .name(userGroupName)
+                              .parents(new HashSet<>(Arrays.asList(reference1, reference2)))
+                              .build();
+
+    persistence.save(userGroup);
+    UserGroupEntityReference reference3 = UserGroupEntityReference.builder()
+                                              .id("pipelineId3")
+                                              .accountId(accountId)
+                                              .appId("appId3")
+                                              .entityType("PIPELINE")
+                                              .build();
+
+    userGroupService.addParentsReference("userGroupId", accountId, "appId3", "pipelineId3");
+    UserGroup updatedUserGroup = persistence.get(UserGroup.class, "userGroupId");
+    assertThat(updatedUserGroup.getParents().size()).isEqualTo(3);
+    assertThat(updatedUserGroup.getParents())
+        .isEqualTo(new HashSet<>(Arrays.asList(reference1, reference2, reference3)));
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_addParentsReferenceWithoutExistingParents() {
+    UserGroup userGroup =
+        builder().accountId(accountId).uuid("userGroupId").description(description).name(userGroupName).build();
+
+    persistence.save(userGroup);
+    UserGroupEntityReference reference = UserGroupEntityReference.builder()
+                                             .id("pipelineId")
+                                             .accountId(accountId)
+                                             .appId("appId")
+                                             .entityType("PIPELINE")
+                                             .build();
+
+    userGroupService.addParentsReference("userGroupId", accountId, "appId", "pipelineId");
+    UserGroup updatedUserGroup = persistence.get(UserGroup.class, "userGroupId");
+    assertThat(updatedUserGroup.getParents().size()).isEqualTo(1);
+    assertThat(updatedUserGroup.getParents()).isEqualTo(new HashSet<>(Collections.singleton(reference)));
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_removeParentsReference() {
+    UserGroupEntityReference reference = UserGroupEntityReference.builder()
+                                             .id("pipelineId")
+                                             .accountId(accountId)
+                                             .appId("appId")
+                                             .entityType("PIPELINE")
+                                             .build();
+    UserGroup userGroup = builder()
+                              .accountId(accountId)
+                              .uuid("userGroupId")
+                              .description(description)
+                              .name(userGroupName)
+                              .parents(new HashSet<>(Collections.singleton(reference)))
+                              .build();
+
+    persistence.save(userGroup);
+
+    userGroupService.removeParentsReference("userGroupId", accountId, "appId", "pipelineId");
+    UserGroup updatedUserGroup = persistence.get(UserGroup.class, "userGroupId");
+    assertThat(updatedUserGroup.getParents().size()).isEqualTo(0);
+  }
+
+  @Test
+  @Owner(developers = VIKAS_M)
+  @Category(UnitTests.class)
+  public void test_removeParentsReferenceWithoutHavingAnExistingReference() {
+    UserGroup userGroup =
+        builder().accountId(accountId).uuid("userGroupId").description(description).name(userGroupName).build();
+
+    persistence.save(userGroup);
+
+    userGroupService.removeParentsReference("userGroupId", accountId, "appId", "pipelineId");
+    UserGroup updatedUserGroup = persistence.get(UserGroup.class, "userGroupId");
+    assertThat(updatedUserGroup.getParents().size()).isEqualTo(0);
   }
 
   private Set<String> getAppIds(UserGroup userGroup) {

@@ -10,6 +10,7 @@ package io.harness.app;
 import static io.harness.annotations.dev.HarnessTeam.CI;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
+import static io.harness.pms.contracts.plan.ExpansionRequestType.KEY;
 import static io.harness.pms.listener.NgOrchestrationNotifyEventListener.NG_ORCHESTRATION;
 
 import static java.util.Collections.singletonList;
@@ -38,6 +39,7 @@ import io.harness.enforcement.client.usage.RestrictionUsageInterface;
 import io.harness.enforcement.constants.FeatureRestrictionName;
 import io.harness.exception.GeneralException;
 import io.harness.govern.ProviderModule;
+import io.harness.governance.DefaultConnectorRefExpansionHandler;
 import io.harness.health.HealthService;
 import io.harness.maintenance.MaintenanceController;
 import io.harness.mongo.AbstractMongoModule;
@@ -48,12 +50,14 @@ import io.harness.persistence.HPersistence;
 import io.harness.persistence.NoopUserProvider;
 import io.harness.persistence.Store;
 import io.harness.persistence.UserProvider;
+import io.harness.pms.contracts.plan.JsonExpansionInfo;
 import io.harness.pms.events.base.PipelineEventConsumerController;
 import io.harness.pms.listener.NgOrchestrationNotifyEventListener;
 import io.harness.pms.sdk.PmsSdkConfiguration;
 import io.harness.pms.sdk.PmsSdkInitHelper;
 import io.harness.pms.sdk.PmsSdkModule;
 import io.harness.pms.sdk.core.SdkDeployMode;
+import io.harness.pms.sdk.core.governance.JsonExpansionHandlerInfo;
 import io.harness.pms.sdk.execution.events.facilitators.FacilitatorEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.interrupts.InterruptEventRedisConsumer;
 import io.harness.pms.sdk.execution.events.node.advise.NodeAdviseEventRedisConsumer;
@@ -63,6 +67,7 @@ import io.harness.pms.sdk.execution.events.orchestrationevent.OrchestrationEvent
 import io.harness.pms.sdk.execution.events.plan.CreatePartialPlanRedisConsumer;
 import io.harness.pms.sdk.execution.events.progress.ProgressEventRedisConsumer;
 import io.harness.pms.serializer.jackson.PmsBeansJacksonModule;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.queue.QueueListenerController;
 import io.harness.queue.QueuePublisher;
 import io.harness.registrars.ExecutionAdvisers;
@@ -398,7 +403,21 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
         .executionPoolConfig(config.getPmsSdkExecutionPoolConfig())
         .orchestrationEventPoolConfig(config.getPmsSdkOrchestrationEventPoolConfig())
         .planCreatorServiceInternalConfig(config.getPmsPlanCreatorServicePoolConfig())
+        .jsonExpansionHandlers(getJsonExpansionHandlers())
         .build();
+  }
+
+  private List<JsonExpansionHandlerInfo> getJsonExpansionHandlers() {
+    List<JsonExpansionHandlerInfo> jsonExpansionHandlers = new ArrayList<>();
+    JsonExpansionInfo connectorRefExpansionInfo =
+        JsonExpansionInfo.newBuilder().setKey(YAMLFieldNameConstants.CONNECTOR_REF).setExpansionType(KEY).build();
+    JsonExpansionHandlerInfo connectorRefExpansionHandlerInfo =
+        JsonExpansionHandlerInfo.builder()
+            .jsonExpansionInfo(connectorRefExpansionInfo)
+            .expansionHandler(DefaultConnectorRefExpansionHandler.class)
+            .build();
+    jsonExpansionHandlers.add(connectorRefExpansionHandlerInfo);
+    return jsonExpansionHandlers;
   }
 
   private void scheduleJobs(Injector injector, CIManagerConfiguration config) {

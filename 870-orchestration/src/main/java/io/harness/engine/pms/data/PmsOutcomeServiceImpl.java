@@ -21,7 +21,6 @@ import io.harness.data.OutcomeInstance.OutcomeInstanceKeys;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.expressions.ExpressionEvaluatorProvider;
 import io.harness.engine.expressions.functors.NodeExecutionEntityType;
-import io.harness.engine.outcomes.OutcomeException;
 import io.harness.exception.UnresolvedExpressionsException;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -38,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.EnumSet;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -228,6 +228,31 @@ public class PmsOutcomeServiceImpl implements PmsOutcomeService {
       outcomeUuids.add(uuid);
     }
     return outcomeUuids;
+  }
+
+  @Override
+  public Map<String, List<StepOutcomeRef>> fetchOutcomeRefs(List<String> nodeExecutionIds) {
+    Map<String, List<StepOutcomeRef>> refMap = new HashMap<>();
+    Query query = query(where(OutcomeInstanceKeys.producedByRuntimeId).in(nodeExecutionIds));
+    query.fields()
+        .include(OutcomeInstanceKeys.uuid)
+        .include(OutcomeInstanceKeys.name)
+        .include(OutcomeInstanceKeys.producedBy);
+
+    List<OutcomeInstance> instances = mongoTemplate.find(query, OutcomeInstance.class);
+    for (OutcomeInstance oi : instances) {
+      StepOutcomeRef stepOutcomeRef =
+          StepOutcomeRef.newBuilder().setName(oi.getName()).setInstanceId(oi.getUuid()).build();
+      refMap.compute(oi.getProducedBy().getRuntimeId(), (k, v) -> {
+        if (v == null) {
+          return new ArrayList<>(Collections.singletonList(stepOutcomeRef));
+        } else {
+          v.add(stepOutcomeRef);
+          return v;
+        }
+      });
+    }
+    return refMap;
   }
 
   private OptionalOutcome resolveOptionalUsingProducerSetupId(Ambiance ambiance, RefObject refObject) {

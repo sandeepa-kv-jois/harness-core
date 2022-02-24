@@ -48,6 +48,7 @@ public class SchemaFetcher {
   @Nullable
   public List<PartialSchemaDTO> fetchSchema(
       String accountId, ModuleType moduleType, List<YamlSchemaWithDetails> yamlSchemaWithDetailsList) {
+    log.info("[PMS] Fetching schema for {}", moduleType.name());
     long startTs = System.currentTimeMillis();
     try {
       SchemaCacheKey schemaCacheKey =
@@ -67,12 +68,13 @@ public class SchemaFetcher {
 
       return partialSchemaDTOS;
     } catch (Exception e) {
-      log.warn(format("[PMS] Unable to get %s schema information", moduleType.name()), e);
+      log.warn(format("[PMS] Unable to get %s schema", moduleType.name()), e);
       return null;
     }
   }
 
   public YamlSchemaDetailsWrapper fetchSchemaDetail(String accountId, ModuleType moduleType) {
+    log.info("[PMS] Fetching schema information for {}", moduleType.name());
     try {
       SchemaCacheKey schemaCacheKey =
           SchemaCacheKey.builder().accountIdentifier(accountId).moduleType(moduleType).build();

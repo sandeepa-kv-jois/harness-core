@@ -7,6 +7,7 @@
 
 package software.wings.graphql.datafetcher.application;
 
+import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.FeatureName.WEBHOOK_TRIGGER_AUTHORIZATION;
 
 import static software.wings.beans.Application.Builder.anApplication;
@@ -59,6 +60,7 @@ public class UpdateApplicationDataFetcher
             .name(existingApplication.getName())
             .description(existingApplication.getDescription())
             .isManualTriggerAuthorized(existingApplication.getIsManualTriggerAuthorized())
+            .areWebHookSecretsMandated(existingApplication.getAreWebHookSecretsMandated())
             .yamlGitConfig(existingApplication.getYamlGitConfig()); // yaml config because the way update is written, it
                                                                     // assumes this would be coming
 
@@ -79,6 +81,18 @@ public class UpdateApplicationDataFetcher
       applicationBuilder.isManualTriggerAuthorized(isManualTriggerAuthorized);
     } else if (existingApplication.getIsManualTriggerAuthorized() != null) {
       applicationBuilder.isManualTriggerAuthorized(false);
+    }
+
+    Boolean areWebHookSecretsMandated = qlUpdateApplicationInput.getAreWebHookSecretsMandated();
+
+    if (Boolean.TRUE.equals(areWebHookSecretsMandated)
+        && !featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, existingApplication.getAccountId())) {
+      throw new InvalidRequestException("Please enable feature flag to mandate git webhooks secrets");
+    }
+    if (areWebHookSecretsMandated != null) {
+      applicationBuilder.areWebHookSecretsMandated(areWebHookSecretsMandated);
+    } else if (existingApplication.getAreWebHookSecretsMandated() != null) {
+      applicationBuilder.areWebHookSecretsMandated(false);
     }
 
     return applicationBuilder.build();

@@ -98,8 +98,10 @@ import software.wings.beans.ErrorStrategy;
 import software.wings.beans.GcpKubernetesInfrastructureMapping;
 import software.wings.beans.InfraMappingSweepingOutput;
 import software.wings.beans.InfrastructureMapping;
+import software.wings.beans.InfrastructureMappingType;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.PcfInfrastructureMapping;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.ServiceTemplate;
 import software.wings.beans.ServiceVariable;
 import software.wings.beans.ServiceVariable.Type;
@@ -110,6 +112,7 @@ import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.customdeployment.CustomDeploymentTypeDTO;
 import software.wings.common.InfrastructureConstants;
+import software.wings.common.RancherK8sClusterProcessor;
 import software.wings.common.VariableProcessor;
 import software.wings.expression.ArtifactLabelEvaluator;
 import software.wings.expression.ManagerExpressionEvaluator;
@@ -189,6 +192,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
   private static final SecureRandom random = new SecureRandom();
   private static final Pattern wildCharPattern = Pattern.compile("[-+*/\\\\ &$\"'.|]");
   private static final Pattern argsCharPattern = Pattern.compile("[()\"']");
+  private static final String CURRENT_STEP_LITERAL = "currentStep";
 
   @Inject private BuildSourceService buildSourceService;
   @Inject private transient ArtifactService artifactService;
@@ -956,6 +960,10 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     }
     contextMap = new LateBindingMap();
 
+    if (stateExecutionInstance != null) {
+      contextMap.put(CURRENT_STEP_LITERAL, buildStateInfo(stateExecutionInstance));
+    }
+
     // add state execution data
     stateExecutionInstance.getStateExecutionMap().forEach(
         (key, value) -> contextMap.put(normalizeStateName(key), value));
@@ -1056,6 +1064,19 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
       contextMap.put("sweepingOutputSecrets",
           SweepingOutputSecretManagerFunctor.builder().simpleEncryption(new SimpleEncryption()).build());
     }
+
+    String infraMappingId = fetchInfraMappingId();
+    if (infraMappingId != null) {
+      String appId = getAppId();
+      InfrastructureMapping infrastructureMapping = infrastructureMappingService.get(appId, infraMappingId);
+      if (infrastructureMapping != null
+          && InfrastructureMappingType.RANCHER_KUBERNETES.name().equals(infrastructureMapping.getInfraMappingType())) {
+        contextMap.put(RancherK8sClusterProcessor.FILTERED_CLUSTERS_EXPR_PREFIX,
+            expressionProcessorFactory.getExpressionProcessor(
+                RancherK8sClusterProcessor.EXPRESSION_EQUAL_PATTERN, this));
+      }
+    }
+
     return contextMap;
   }
 
@@ -1065,6 +1086,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
 
   private Map<String, Object> prepareContext(StateExecutionContext stateExecutionContext) {
     Map<String, Object> map = prepareCacheContext(stateExecutionContext);
+
     if (stateExecutionContext == null) {
       return map;
     }
@@ -1080,6 +1102,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     if (stateExecutionData != null) {
       map = copyIfNeeded(map);
       map.put(normalizeStateName(getStateExecutionInstance().getDisplayName()), stateExecutionData);
+
       if (isNotEmpty(stateExecutionData.getTemplateVariable())) {
         map = copyIfNeeded(map);
         map.putAll(stateExecutionData.getTemplateVariable());
@@ -1097,6 +1120,13 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
       map.put(ExpressionEvaluator.ARTIFACT_FILE_NAME_VARIABLE, stateExecutionContext.getArtifactFileName());
     }
     return map;
+  }
+
+  private StateInfo buildStateInfo(StateExecutionInstance stateExecutionInstance) {
+    return StateInfo.builder()
+        .name(stateExecutionInstance.getStateName())
+        .type(stateExecutionInstance.getStateType())
+        .build();
   }
 
   @Override
@@ -1284,6 +1314,7 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
     builder.phaseExecutionId(phaseExecutionId);
 
     builder.stateExecutionId(stateExecutionInstance.getUuid());
+    builder.isOnDemandRollback(stateExecutionInstance.getIsOnDemandRollback());
     return builder;
   }
 
@@ -1303,6 +1334,8 @@ public class ExecutionContextImpl implements DeploymentExecutionContext {
         namespace = ((AzureKubernetesInfrastructureMapping) infrastructureMapping).getNamespace();
       } else if (infrastructureMapping instanceof DirectKubernetesInfrastructureMapping) {
         namespace = ((DirectKubernetesInfrastructureMapping) infrastructureMapping).getNamespace();
+      } else if (infrastructureMapping instanceof RancherKubernetesInfrastructureMapping) {
+        namespace = ((RancherKubernetesInfrastructureMapping) infrastructureMapping).getNamespace();
       } else {
         unhandled(infrastructureMapping.getInfraMappingType());
       }

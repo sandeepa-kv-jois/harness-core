@@ -9,6 +9,7 @@ package io.harness.batch.processing.metrics;
 
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.config.BatchMainConfig;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.license.CeLicenseInfo;
 import io.harness.event.handler.segment.SegmentConfig;
 import io.harness.telemetry.Destination;
@@ -30,7 +31,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -46,18 +46,15 @@ public class CeProductMetricsTasklet implements Tasklet {
   @Autowired private CeCloudMetricsService ceCloudMetricsService;
   @Autowired private CENGTelemetryService cengTelemetryService;
   @Autowired TelemetryReporter telemetryReporter;
-  private JobParameters parameters;
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
     if (mainConfiguration.getSegmentConfig().isEnabled()) {
-      parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-      String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
+      final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
+      String accountId = jobConstants.getAccountId();
 
-      Instant start = CCMJobConstants.getFieldValueFromJobParams(parameters, CCMJobConstants.JOB_START_DATE)
-                          .minus(3, ChronoUnit.DAYS);
-      Instant end = CCMJobConstants.getFieldValueFromJobParams(parameters, CCMJobConstants.JOB_END_DATE)
-                        .minus(3, ChronoUnit.DAYS);
+      Instant start = Instant.ofEpochMilli(jobConstants.getJobStartTime()).minus(3, ChronoUnit.DAYS);
+      Instant end = Instant.ofEpochMilli(jobConstants.getJobEndTime()).minus(3, ChronoUnit.DAYS);
       log.info("Sending CE account traits through Segment group call.");
       sendStatsToSegment(accountId, start, end);
 

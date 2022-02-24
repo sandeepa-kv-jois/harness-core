@@ -16,6 +16,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.Level;
 import io.harness.eraro.ResponseMessage;
+import io.harness.exception.runtime.HashiCorpVaultRuntimeException;
 import io.harness.logging.ExceptionLogger;
 
 import java.util.EnumSet;
@@ -107,6 +108,8 @@ public class ExceptionUtils {
       } else {
         return t.getClass().getSimpleName() + (t.getMessage() == null ? "" : ": " + t.getMessage());
       }
+    } else if (t instanceof HashiCorpVaultRuntimeException) {
+      return "After 3 tries, encryption for vault secret failed with the error " + t.getMessage();
     } else {
       return t.getClass().getSimpleName() + (t.getMessage() == null ? "" : ": " + t.getMessage());
     }

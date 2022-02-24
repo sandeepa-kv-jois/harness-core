@@ -28,6 +28,10 @@ public class CCMJobConstants extends JobConstants {
     super.jobEndTime = getFieldLongValueFromJobParams(jobParameters, JOB_END_DATE);
   }
 
+  public static CCMJobConstants fromContext(final ChunkContext chunkContext) {
+    return new CCMJobConstants(chunkContext);
+  }
+
   public CCMJobConstants(final StepExecution stepExecution) {
     this(stepExecution.getJobParameters());
   }
@@ -44,7 +48,7 @@ public class CCMJobConstants extends JobConstants {
     return Long.valueOf(Objects.requireNonNull(parameters.getString(fieldName)));
   }
 
-  public static BatchJobType getBatchJobTypeFromJobParams(JobParameters parameters, String fieldName) {
-    return BatchJobType.valueOf(parameters.getString(fieldName));
+  public static BatchJobType getBatchJobTypeFromJobParams(JobParameters parameters) {
+    return BatchJobType.valueOf(parameters.getString(BATCH_JOB_TYPE));
   }
 }

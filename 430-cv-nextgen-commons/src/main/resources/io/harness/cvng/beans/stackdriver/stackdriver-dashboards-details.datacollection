@@ -6,15 +6,38 @@ Var dashboardUrl = concat(Env:baseUrl, Env:path)
 Var responseList = []
 Var dashboardResponse = sync-call(url=Var:dashboardUrl, header=Var:header)
 
-Var widgets = extract(Var:dashboardResponse, $.gridLayout.widgets)
+Var widgetsInGridLayout = extract(Var:dashboardResponse, $.gridLayout.widgets)
+Var tilesInMosaicLayout = extract(Var:dashboardResponse, $.mosaicLayout.tiles)
+Var nullObject = null
 
-foreach widget in Var:widgets {
-  Var widgetName = extract(Var:widget, $.title)
-  Var dataset = extract(Var:widget, $.xyChart.dataSets)
-  Var dashMap = {}
-  Var:dashMap.put("widgetName", Var:widgetName)
-  Var:dashMap.put("dataSets", Var:dataset)
-  Var:responseList.append(Var:dashMap)
+if Var:widgetsInGridLayout != Var:nullObject {
+    foreach widget in Var:widgetsInGridLayout {
+       Var widgetName = extract(Var:widget, $.title)
+       if Var:widgetName != Var:nullObject{
+          Var dataset = extract(Var:widget, $.xyChart.dataSets)
+          if Var:dataset != Var:nullObject {
+              Var dashMap = {}
+              Var:dashMap.put("widgetName", Var:widgetName)
+              Var:dashMap.put("dataSets", Var:dataset)
+              Var:responseList.append(Var:dashMap)
+          }
+      }
+   }
+}
+
+if Var:tilesInMosaicLayout != Var:nullObject {
+    foreach tile in Var:tilesInMosaicLayout {
+       Var widgetName = extract(Var:tile, $.widget.title)
+       if Var:widgetName != Var:nullObject{
+          Var dataset = extract(Var:tile, $.widget.xyChart.dataSets)
+          if Var:dataset != Var:nullObject {
+              Var dashMap = {}
+              Var:dashMap.put("widgetName", Var:widgetName)
+              Var:dashMap.put("dataSets", Var:dataset)
+              Var:responseList.append(Var:dashMap)
+          }
+       }
+    }
 }
 
 return Var:responseList

@@ -43,6 +43,8 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.delegatetasks.azure.appservice.deployment.context.AzureAppServiceDockerDeploymentContext;
+import software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier;
+import software.wings.delegatetasks.azure.appservice.deployment.verifier.SwapSlotStatusVerifier;
 
 import com.microsoft.azure.management.appservice.DeploymentSlot;
 import java.util.Collections;
@@ -119,7 +121,11 @@ public class AzureAppServiceDeploymentServiceTest extends WingsBaseTest {
     doReturn(Optional.of(deploymentSlot))
         .when(mockAzureWebClient)
         .getDeploymentSlotByName(azureWebClientContext, SLOT_NAME);
-
+    doReturn(
+        "2022-02-07T17:03:05.566Z INFO  - Initiating warm up request to container dev-harness-docker_0_a83fad5d for site dev-harness-docker"
+            .getBytes())
+        .when(deploymentSlot)
+        .getContainerLogs();
     azureAppServiceDeploymentService.deployDockerImage(
         azureAppServiceDockerDeploymentContext, AzureAppServicePreDeploymentData.builder().build());
 
@@ -222,6 +228,11 @@ public class AzureAppServiceDeploymentServiceTest extends WingsBaseTest {
     doReturn(Optional.of(deploymentSlot))
         .when(mockAzureWebClient)
         .getDeploymentSlotByName(azureWebClientContext, SLOT_NAME);
+    doReturn(
+        "2022-02-07T17:03:05.566Z INFO  - Initiating warm up request to container dev-harness-docker_0_a83fad5d for site dev-harness-docker"
+            .getBytes())
+        .when(deploymentSlot)
+        .getContainerLogs();
 
     azureAppServiceDeploymentService.deployDockerImage(
         azureAppServiceDockerDeploymentContext, AzureAppServicePreDeploymentData.builder().build());

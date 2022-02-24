@@ -13,11 +13,11 @@ import static io.harness.azure.model.AzureConstants.START_DEPLOYMENT_SLOT;
 import static io.harness.azure.model.AzureConstants.STOP_DEPLOYMENT_SLOT;
 import static io.harness.rule.OwnerRule.ANIL;
 
-import static software.wings.delegatetasks.azure.appservice.deployment.SlotStatusVerifier.SlotStatus.RUNNING;
-import static software.wings.delegatetasks.azure.appservice.deployment.SlotStatusVerifier.SlotStatus.STOPPED;
-import static software.wings.delegatetasks.azure.appservice.deployment.SlotStatusVerifier.SlotStatusVerifierType.START_VERIFIER;
-import static software.wings.delegatetasks.azure.appservice.deployment.SlotStatusVerifier.SlotStatusVerifierType.STOP_VERIFIER;
-import static software.wings.delegatetasks.azure.appservice.deployment.SlotStatusVerifier.SlotStatusVerifierType.SWAP_VERIFIER;
+import static software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier.SlotStatus.RUNNING;
+import static software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier.SlotStatus.STOPPED;
+import static software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier.SlotStatusVerifierType.START_VERIFIER;
+import static software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier.SlotStatusVerifierType.STOP_VERIFIER;
+import static software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier.SlotStatusVerifierType.SWAP_VERIFIER;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -44,6 +44,7 @@ import io.harness.logging.LogCallback;
 import io.harness.rule.Owner;
 
 import software.wings.delegatetasks.azure.AzureServiceCallBack;
+import software.wings.delegatetasks.azure.appservice.deployment.verifier.SlotStatusVerifier;
 
 import com.google.common.util.concurrent.FakeTimeLimiter;
 import com.google.common.util.concurrent.TimeLimiter;
@@ -230,8 +231,8 @@ public class SlotSteadyStateCheckerTest extends CategoryTest {
     AzureServiceCallBack restCallBack = new AzureServiceCallBack(mockLogCallback, SLOT_SWAP);
     restCallBack.failure(mock(Throwable.class));
 
-    SlotSwapper swapper =
-        new SlotSwapper(SOURCE_SLOT, TARGET_SLOT, azureWebClient, azureWebClientContext, restCallBack, mockLogCallback);
+    SwapSlotTask swapper = new SwapSlotTask(
+        SOURCE_SLOT, TARGET_SLOT, azureWebClient, azureWebClientContext, restCallBack, mockLogCallback);
 
     ExecutorService executorService = Executors.newFixedThreadPool(1);
     executorService.submit(swapper);

@@ -29,6 +29,7 @@ import io.harness.logging.CommandExecutionStatus;
 import io.harness.tasks.ResponseData;
 
 import software.wings.api.InstanceElementListParam;
+import software.wings.api.RancherClusterElement;
 import software.wings.api.k8s.K8sElement;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
@@ -62,6 +63,7 @@ import com.google.inject.Inject;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -113,6 +115,12 @@ public class K8sBlueGreenDeploy extends AbstractK8sState {
 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
+    if (k8sStateHelper.isRancherInfraMapping(context)
+        && !(Objects.nonNull(context.getContextElement())
+            && context.getContextElement() instanceof RancherClusterElement)) {
+      return k8sStateHelper.getInvalidInfraDefFailedResponse();
+    }
+
     if (k8sStateHelper.isExportManifestsEnabled(context.getAccountId()) && inheritManifests) {
       Activity activity = createK8sActivity(
           context, commandName(), stateType(), activityService, commandUnitList(false, context.getAccountId()));

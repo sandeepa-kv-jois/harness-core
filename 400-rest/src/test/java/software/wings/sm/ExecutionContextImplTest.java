@@ -13,6 +13,7 @@ import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.BRETT;
 import static io.harness.rule.OwnerRule.GARVIT;
 import static io.harness.rule.OwnerRule.GEORGE;
+import static io.harness.rule.OwnerRule.HINGER;
 import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.SATYAM;
@@ -1237,5 +1238,27 @@ public class ExecutionContextImplTest extends WingsBaseTest {
     context.populateDeploymentSpecificInfoInInfraMappingElement(infra, phaseElement, builder);
     assertThat(builder.build().getHelm().getReleaseName()).isEqualTo(releaseName);
     assertThat(inquiryCaptor.getValue().getName()).isEqualTo(HelmReleaseInfoElement.SWEEPING_OUTPUT_NAME);
+  }
+
+  @Test
+  @Owner(developers = HINGER)
+  @Category(UnitTests.class)
+  public void shouldRenderExpressionForCurrentStep() {
+    when(limitCheckerFactory.getInstance(Mockito.any())).thenReturn(mockChecker());
+
+    StateExecutionInstance stateExecutionInstance = new StateExecutionInstance();
+    stateExecutionInstance.setDisplayName("abc");
+    stateExecutionInstance.setStateName("abc");
+    stateExecutionInstance.setStateType("SHELL_SCRIPT");
+
+    ExecutionContextImpl context = prepareContext(stateExecutionInstance);
+
+    String nameExp = "${currentStep.name}";
+    String typeExp = "${currentStep.type}";
+    String stateName = context.renderExpression(nameExp);
+    String stateType = context.renderExpression(typeExp);
+
+    assertThat(stateName).isEqualTo("abc");
+    assertThat(stateType).isEqualTo("SHELL_SCRIPT");
   }
 }

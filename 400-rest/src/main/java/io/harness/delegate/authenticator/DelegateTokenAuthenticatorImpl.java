@@ -21,8 +21,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.context.GlobalContext;
-import io.harness.delegate.beans.DelegateNgToken;
-import io.harness.delegate.beans.DelegateNgToken.DelegateNgTokenKeys;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenStatus;
@@ -30,12 +28,10 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.InvalidTokenException;
 import io.harness.exception.RevokedTokenException;
 import io.harness.exception.WingsException;
-import io.harness.ff.FeatureFlagService;
 import io.harness.globalcontex.DelegateTokenGlobalContextData;
 import io.harness.manage.GlobalContextManager;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
-import io.harness.persistence.NameAndValueAccess;
 import io.harness.security.DelegateTokenAuthenticator;
 
 import software.wings.beans.Account;
@@ -49,8 +45,8 @@ import com.nimbusds.jose.JWEDecrypter;
 import com.nimbusds.jose.KeyLengthException;
 import com.nimbusds.jose.crypto.DirectDecrypter;
 import com.nimbusds.jwt.EncryptedJWT;
+import com.nimbusds.jwt.JWTClaimsSet;
 import java.text.ParseException;
-import java.util.Date;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import javax.crypto.spec.SecretKeySpec;
@@ -64,7 +60,6 @@ import org.mongodb.morphia.query.Query;
 @OwnedBy(DEL)
 @TargetModule(HarnessModule._420_DELEGATE_SERVICE)
 public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticator {
-  @Inject private FeatureFlagService featureFlagService;
   @Inject private HPersistence persistence;
 
   private final LoadingCache<String, String> keyCache =
@@ -95,7 +90,7 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
         } catch (ParseException e) {
           log.warn("Couldn't parse token", e);
         }
-        log.warn("Delegate {} is using REVOKED delegate token", delegateHostName);
+        log.error("Delegate {} is using REVOKED delegate token", delegateHostName);
         throw new RevokedTokenException("Invalid delegate token. Delegate is using revoked token", USER_ADMIN);
       }
 
@@ -103,11 +98,12 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
     }
 
     try {
-      Date expirationDate = encryptedJWT.getJWTClaimsSet().getExpirationTime();
-      if (System.currentTimeMillis() > expirationDate.getTime()) {
+      JWTClaimsSet jwtClaimsSet = encryptedJWT.getJWTClaimsSet();
+      if (System.currentTimeMillis() > jwtClaimsSet.getExpirationTime().getTime()) {
+        log.error("Delegate {} is using EXPIRED delegate token", jwtClaimsSet.getIssuer());
         throw new InvalidRequestException("Unauthorized", EXPIRED_TOKEN, null);
       }
-    } catch (ParseException ex) {
+    } catch (Exception ex) {
       throw new InvalidRequestException("Unauthorized", ex, EXPIRED_TOKEN, null);
     }
   }
@@ -135,15 +131,7 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
                                      .field(DelegateTokenKeys.status)
                                      .equal(status);
 
-    boolean result = decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT, false);
-    if (!result) {
-      Query<DelegateNgToken> queryNg = persistence.createQuery(DelegateNgToken.class)
-                                           .field(DelegateNgTokenKeys.accountId)
-                                           .equal(accountId)
-                                           .field(DelegateNgTokenKeys.status)
-                                           .equal(status);
-      result = decryptDelegateTokenByQuery(queryNg, accountId, status, encryptedJWT, true);
-    }
+    boolean result = decryptDelegateTokenByQuery(query, accountId, status, encryptedJWT);
     long time_end = System.currentTimeMillis() - time_start;
     log.debug("Delegate Token verification for accountId {} and status {} has taken {} milliseconds.", accountId,
         status.name(), time_end);
@@ -152,11 +140,12 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
 
   // TODO: Arpit associate delegate token correspondingly
   private boolean decryptDelegateTokenByQuery(
-      Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT, boolean isNg) {
-    try (HIterator<NameAndValueAccess> records = new HIterator<>(query.fetch())) {
-      for (NameAndValueAccess delegateToken : records) {
+      Query query, String accountId, DelegateTokenStatus status, EncryptedJWT encryptedJWT) {
+    try (HIterator<DelegateToken> iterator = new HIterator<>(query.fetch())) {
+      while (iterator.hasNext()) {
+        DelegateToken delegateToken = iterator.next();
         try {
-          if (isNg) {
+          if (delegateToken.isNg()) {
             decryptDelegateToken(encryptedJWT, decodeBase64ToString(delegateToken.getValue()));
           } else {
             decryptDelegateToken(encryptedJWT, delegateToken.getValue());
@@ -171,10 +160,13 @@ public class DelegateTokenAuthenticatorImpl implements DelegateTokenAuthenticato
           }
           return true;
         } catch (Exception e) {
-          log.debug("Fail to decrypt Delegate JWT using delete token {} for the account {}", delegateToken.getName(),
+          log.debug("Fail to decrypt Delegate JWT using delegate token {} for the account {}", delegateToken.getName(),
               accountId);
         }
       }
+      return false;
+    } catch (Exception e) {
+      log.error("Error occurred during fetching list of delegate tokens from db while authenticating.");
       return false;
     }
   }

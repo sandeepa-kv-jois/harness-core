@@ -117,6 +117,7 @@ public class StackdriverCVConfig extends MetricCVConfig {
                                   .thresholds(new ArrayList<>(thresholds))
                                   .type(metricType)
                                   .name(definition.getMetricName())
+                                  .identifier(definition.getIdentifier())
                                   .included(true)
                                   .build());
     });

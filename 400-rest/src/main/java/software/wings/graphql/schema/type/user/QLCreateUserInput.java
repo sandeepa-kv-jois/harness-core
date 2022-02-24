@@ -26,5 +26,6 @@ public class QLCreateUserInput implements QLMutationInput {
   private String clientMutationId;
   private String name;
   private String email;
+  private RequestField<String> externalUserId;
   private RequestField<List<String>> userGroupIds;
 }

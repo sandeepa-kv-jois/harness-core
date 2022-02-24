@@ -24,14 +24,12 @@ public class CDNGBeanRegistrars {
   public final ImmutableSet<Class<? extends KryoRegistrar>> kryoRegistrars =
       ImmutableSet.<Class<? extends KryoRegistrar>>builder()
           .addAll(ManagerRegistrars.kryoRegistrars)
-          .addAll(OrchestrationStepsModuleRegistrars.kryoRegistrars)
           .add(NGBeanKryoRegistrar.class)
           .build();
 
   public final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
       ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
           .addAll(ManagerRegistrars.morphiaRegistrars)
-          .addAll(OrchestrationStepsModuleRegistrars.morphiaRegistrars)
           .add(NGBeanMorphiaRegistrar.class)
           .build();
 

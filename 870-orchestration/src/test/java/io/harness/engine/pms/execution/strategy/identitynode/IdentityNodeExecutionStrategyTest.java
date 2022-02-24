@@ -25,7 +25,6 @@ import io.harness.OrchestrationTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.engine.ExecutionEngineDispatcher;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanService;
@@ -100,7 +99,7 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNode() {
+  public void shouldTestRunNode() {
     String planExecutionId = generateUuid();
     Ambiance ambiance = Ambiance.newBuilder()
                             .setPlanExecutionId(planExecutionId)
@@ -115,9 +114,9 @@ public class IdentityNodeExecutionStrategyTest extends OrchestrationTestBase {
                                             .build();
     doReturn(NodeExecution.builder().build())
         .when(executionStrategy)
-        .createNodeExecution(ambiance, identityPlanNode, null, null, null);
-    executionStrategy.triggerNode(ambiance, identityPlanNode, null);
-    verify(executorService).submit(any(ExecutionEngineDispatcher.class));
+        .createNodeExecution(ambiance, identityPlanNode, null, null, null, null);
+    executionStrategy.runNode(ambiance, identityPlanNode, null);
+    verify(executorService).submit(any(Runnable.class));
   }
 
   @Test

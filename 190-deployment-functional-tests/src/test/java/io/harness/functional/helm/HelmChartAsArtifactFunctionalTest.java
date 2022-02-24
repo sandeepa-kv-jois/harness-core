@@ -191,8 +191,8 @@ public class HelmChartAsArtifactFunctionalTest extends AbstractFunctionalTest {
   }
 
   private HelmChart createHelmChartsAndGetWithVersion(Service service, String version) {
-    Map<String, List<HelmChart>> helmChartMap =
-        helmChartService.listHelmChartsForService(application.getUuid(), service.getUuid(), null, new PageRequest<>());
+    Map<String, List<HelmChart>> helmChartMap = helmChartService.listHelmChartsForService(
+        application.getUuid(), service.getUuid(), null, new PageRequest<>(), true);
     List<HelmChart> existing = helmChartMap.values().stream().flatMap(Collection::stream).collect(Collectors.toList());
 
     Set<String> existingVersion = new HashSet<>();

@@ -54,14 +54,13 @@ public abstract class ChangeSource
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-                 .name("unique_index")
+                 .name("old_unique_index")
                  .field(ChangeSourceKeys.accountId)
                  .field(ChangeSourceKeys.orgIdentifier)
                  .field(ChangeSourceKeys.projectIdentifier)
                  .field(ChangeSourceKeys.envIdentifier)
                  .field(ChangeSourceKeys.serviceIdentifier)
                  .field(ChangeSourceKeys.identifier)
-                 .unique(true)
                  .build())
         .add(CompoundMongoIndex.builder()
                  .name("demo_generation_index")
@@ -72,6 +71,14 @@ public abstract class ChangeSource
                  .name("data_collection_iteration")
                  .field(ChangeSourceKeys.type)
                  .field(ChangeSourceKeys.dataCollectionTaskIteration)
+                 .build())
+        .add(CompoundMongoIndex.builder()
+                 .name("monitored_service_idx")
+                 .field(ChangeSourceKeys.accountId)
+                 .field(ChangeSourceKeys.orgIdentifier)
+                 .field(ChangeSourceKeys.projectIdentifier)
+                 .field(ChangeSourceKeys.monitoredServiceIdentifier)
+                 .field(ChangeSourceKeys.identifier)
                  .build())
         .build();
   }
@@ -85,8 +92,10 @@ public abstract class ChangeSource
   @NotNull String orgIdentifier;
   @NotNull String projectIdentifier;
 
-  @NotNull String serviceIdentifier;
-  @NotNull String envIdentifier;
+  @Deprecated String serviceIdentifier;
+  @Deprecated String envIdentifier;
+
+  String monitoredServiceIdentifier;
 
   @NotNull String identifier;
   @NotNull ChangeSourceType type;

@@ -33,8 +33,8 @@ public interface HelmChartService extends OwnedByApplicationManifest {
 
   HelmChart get(String appId, String helmChartId);
 
-  Map<String, List<HelmChart>> listHelmChartsForService(
-      String appId, String serviceId, String manifestSearchString, PageRequest<HelmChart> PageRequest);
+  Map<String, List<HelmChart>> listHelmChartsForService(String appId, String serviceId, String manifestSearchString,
+      PageRequest<HelmChart> PageRequest, boolean showHelmChartsForDisabledCollection);
 
   HelmChart getLastCollectedManifest(String accountId, String applicationManifestUuid);
 
@@ -57,7 +57,8 @@ public interface HelmChartService extends OwnedByApplicationManifest {
   HelmChart fetchByChartVersion(
       String accountId, String appId, String serviceId, String appManifestName, String chartVersion);
 
-  List<HelmChart> fetchChartsFromRepo(String accountId, String appId, String serviceId, String appManifestName);
+  List<HelmChart> fetchChartsFromRepo(
+      String accountId, String appId, String serviceId, String appManifestName, boolean collectUsingDelegate);
 
   HelmChart createHelmChartWithVersionForAppManifest(ApplicationManifest appManifest, String versionNumber);
 }

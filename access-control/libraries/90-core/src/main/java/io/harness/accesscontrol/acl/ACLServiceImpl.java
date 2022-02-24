@@ -35,15 +35,15 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class ACLServiceImpl implements ACLService {
   private final ACLDAO aclDAO;
-  private final Set<String> disabledPermissions;
+  private final PermissionService permissionService;
+  private static final PermissionFilter permissionFilter =
+      PermissionFilter.builder().statusFilter(Sets.newHashSet(INACTIVE, EXPERIMENTAL, STAGING)).build();
+  private volatile Set<String> disabledPermissions;
 
   @Inject
   public ACLServiceImpl(ACLDAO aclDAO, PermissionService permissionService) {
     this.aclDAO = aclDAO;
-    PermissionFilter permissionFilter =
-        PermissionFilter.builder().statusFilter(Sets.newHashSet(INACTIVE, EXPERIMENTAL, STAGING)).build();
-    disabledPermissions =
-        permissionService.list(permissionFilter).stream().map(Permission::getIdentifier).collect(Collectors.toSet());
+    this.permissionService = permissionService;
   }
 
   private PermissionCheckResult getPermissionCheckResult(PermissionCheck permissionCheck, boolean permitted) {
@@ -60,6 +60,7 @@ public class ACLServiceImpl implements ACLService {
   public List<PermissionCheckResult> checkAccess(Principal principal, List<PermissionCheck> permissionChecks) {
     List<Boolean> allowedAccessList = aclDAO.checkForAccess(principal, permissionChecks);
     List<PermissionCheckResult> permissionCheckResults = new ArrayList<>();
+    ensureDisabledPermissions();
 
     for (int i = 0; i < permissionChecks.size(); i++) {
       PermissionCheck permissionCheck = permissionChecks.get(i);
@@ -71,5 +72,16 @@ public class ACLServiceImpl implements ACLService {
     }
 
     return permissionCheckResults;
+  }
+
+  private void ensureDisabledPermissions() {
+    if (disabledPermissions == null) {
+      updateDisabledPermissions();
+    }
+  }
+
+  private void updateDisabledPermissions() {
+    disabledPermissions =
+        permissionService.list(permissionFilter).stream().map(Permission::getIdentifier).collect(Collectors.toSet());
   }
 }

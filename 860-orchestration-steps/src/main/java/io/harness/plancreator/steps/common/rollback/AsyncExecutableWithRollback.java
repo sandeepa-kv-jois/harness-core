@@ -21,7 +21,7 @@ import com.google.inject.Inject;
 import java.util.Map;
 
 @OwnedBy(CDC)
-@TargetModule(HarnessModule._878_PIPELINE_SERVICE_UTILITIES)
+@TargetModule(HarnessModule._878_NG_COMMON_UTILITIES)
 public abstract class AsyncExecutableWithRollback implements AsyncExecutable<StepElementParameters> {
   @Inject ExecutionSweepingOutputService executionSweepingOutputService;
   @Override

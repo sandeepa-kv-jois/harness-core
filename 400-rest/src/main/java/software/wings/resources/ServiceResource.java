@@ -833,9 +833,11 @@ public class ServiceResource {
   @AuthRule(permissionType = PermissionType.SERVICE, action = Action.READ)
   public RestResponse<Map<String, List<HelmChart>>> getHelmChartVersions(@QueryParam("appId") String appId,
       @PathParam("serviceId") String serviceId, @QueryParam("manifestSearchString") String manifestSearchString,
-      @BeanParam PageRequest<HelmChart> pageRequest) {
-    return new RestResponse<>(
-        helmChartService.listHelmChartsForService(appId, serviceId, manifestSearchString, pageRequest));
+      @BeanParam PageRequest<HelmChart> pageRequest,
+      @QueryParam("showHelmChartsForDisabledCollection") @DefaultValue(
+          "true") boolean showHelmChartsForDisabledCollection) {
+    return new RestResponse<>(helmChartService.listHelmChartsForService(
+        appId, serviceId, manifestSearchString, pageRequest, showHelmChartsForDisabledCollection));
   }
 
   @PUT

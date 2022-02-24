@@ -252,4 +252,10 @@ public class SubdomainUrlHelper implements SubdomainUrlHelperIntfc {
     log.info("Returning {} as download URL for account {}", portalUrl, accountId);
     return portalUrl;
   }
+
+  @Override
+  public String getVanityUrl(String accountId) {
+    Optional<String> subdomainUrl = getCustomSubdomainUrl(accountId);
+    return subdomainUrl.orElse(null);
+  }
 }

@@ -24,7 +24,7 @@ import io.harness.cvng.core.beans.monitoredService.MetricDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.PrometheusHealthSourceSpec;
-import io.harness.persistence.HPersistence;
+import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 import io.harness.rule.ResourceTestRule;
@@ -32,9 +32,11 @@ import io.harness.rule.ResourceTestRule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 import javax.ws.rs.client.Entity;
+import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.GenericType;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
@@ -48,8 +50,7 @@ import org.yaml.snakeyaml.Yaml;
 
 public class MonitoredServiceResourceTest extends CvNextGenTestBase {
   @Inject private Injector injector;
-  @Inject private HPersistence hPersistence;
-
+  @Inject private MonitoredServiceService monitoredServiceService;
   private BuilderFactory builderFactory;
   private static MonitoredServiceResource monitoredServiceResource = new MonitoredServiceResource();
 
@@ -242,6 +243,50 @@ public class MonitoredServiceResourceTest extends CvNextGenTestBase {
     assertThat(response.readEntity(String.class))
         .contains(
             "{\"field\":\"identifier\",\"message\":\"can be 64 characters long and can only contain alphanumeric, underscore and $ characters, and not start with a number\"}");
+  }
+
+  @Test
+  @Owner(developers = KAMAL)
+  @Category(UnitTests.class)
+  public void testListMonitoredService_listScreenAPI() {
+    monitoredServiceService.createDefault(builderFactory.getProjectParams(), "service1", "env1");
+    monitoredServiceService.createDefault(builderFactory.getProjectParams(), "service2", "env2");
+    monitoredServiceService.createDefault(builderFactory.getProjectParams(), "service3", "env1");
+
+    WebTarget webTarget = RESOURCES.client()
+                              .target("http://localhost:9998/monitored-service/")
+                              .queryParam("accountId", builderFactory.getContext().getAccountId())
+                              .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
+                              .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
+                              .queryParam("offset", 0)
+                              .queryParam("pageSize", 10);
+    webTarget = webTarget.queryParam("environmentIdentifier", "env1");
+    Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE).get();
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response.readEntity(String.class)).contains("\"totalItems\":2");
+  }
+
+  @Test
+  @Owner(developers = KAMAL)
+  @Category(UnitTests.class)
+  public void testListMonitoredService_dependenciesList() {
+    monitoredServiceService.createDefault(builderFactory.getProjectParams(), "service1", "env1");
+    monitoredServiceService.createDefault(builderFactory.getProjectParams(), "service2", "env2");
+    monitoredServiceService.createDefault(builderFactory.getProjectParams(), "service3", "env1");
+
+    WebTarget webTarget = RESOURCES.client()
+                              .target("http://localhost:9998/monitored-service/list")
+                              .queryParam("accountId", builderFactory.getContext().getAccountId())
+                              .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
+                              .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
+                              .queryParam("offset", 0)
+                              .queryParam("pageSize", 10);
+    for (String envIdentifier : Arrays.asList("env1", "env2")) {
+      webTarget = webTarget.queryParam("environmentIdentifiers", envIdentifier);
+    }
+    Response response = webTarget.request(MediaType.APPLICATION_JSON_TYPE).get();
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response.readEntity(String.class)).contains("\"totalItems\":3");
   }
 
   private static String convertToJson(String yamlString) {

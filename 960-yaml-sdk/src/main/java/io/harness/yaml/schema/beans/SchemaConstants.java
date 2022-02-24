@@ -12,6 +12,9 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import io.harness.annotations.dev.OwnedBy;
 @OwnedBy(DX)
 public class SchemaConstants {
+  public static final String PIPELINE_NODE = "pipeline";
+  public static final String STAGES_NODE = "stages";
+  public static final String PARALLEL_NODE = "parallel";
   public static final String IF_NODE = "if";
   public static final String THEN_NODE = "then";
   public static final String ALL_OF_NODE = "allOf";

@@ -7,14 +7,18 @@
 
 package software.wings.sm.states.azure.appservices;
 
+import static io.harness.beans.OrchestrationWorkflowType.BLUE_GREEN;
+
 import static software.wings.sm.StateType.AZURE_WEBAPP_SLOT_ROLLBACK;
 
 import io.harness.azure.model.AzureConstants;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.appservice.AzureAppServicePreDeploymentData;
 import io.harness.delegate.task.azure.appservice.webapp.request.AzureWebAppRollbackParameters;
 
+import software.wings.beans.artifact.Artifact;
 import software.wings.beans.command.AzureWebAppCommandUnit;
 import software.wings.beans.command.CommandUnit;
 import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
@@ -76,6 +80,7 @@ public class AzureWebAppSlotRollback extends AzureWebAppSlotSetup {
         .resourceGroupName(azureAppServiceStateData.getResourceGroup())
         .preDeploymentData(contextElement.getPreDeploymentData())
         .timeoutIntervalInMin(contextElement.getAppServiceSlotSetupTimeOut())
+        .blueGreen(azureVMSSStateHelper.isBlueGreenWorkflow(context))
         .build();
   }
 
@@ -93,23 +98,40 @@ public class AzureWebAppSlotRollback extends AzureWebAppSlotSetup {
 
   @Override
   protected boolean shouldExecute(ExecutionContext context) {
-    if (verifyIfContextElementExist(context)) {
-      AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
-      AzureAppServicePreDeploymentData preDeploymentData = contextElement.getPreDeploymentData();
-      boolean preDeploymentDataFound = preDeploymentData != null;
-      if (!preDeploymentDataFound) {
-        setStepSkipMsg("No Azure App service setup context element found. Skipping rollback");
-        return false;
-      }
+    if (!verifyIfContextElementExist(context)) {
+      return false;
+    }
 
-      if (!azureVMSSStateHelper.getArtifactForRollback(context).isPresent()) {
-        setStepSkipMsg("Not found artifact for rollback. Skipping rollback");
-        return false;
-      }
+    if (!isPreDeploymentDataPresent(context)) {
+      setStepSkipMsg("No Azure App service setup context element found. Skipping rollback");
+      return false;
+    }
 
+    if (azureVMSSStateHelper.isWebAppDockerDeployment(context)) {
       return true;
     }
-    return false;
+
+    if (!azureVMSSStateHelper.getWebAppPackageArtifactForRollback(context).isPresent()) {
+      setStepSkipMsg("Not found artifact for rollback. Skipping rollback");
+      return false;
+    }
+
+    return true;
+  }
+
+  private boolean isPreDeploymentDataPresent(ExecutionContext context) {
+    AzureAppServiceSlotSetupContextElement contextElement = readContextElement(context);
+    AzureAppServicePreDeploymentData preDeploymentData = contextElement.getPreDeploymentData();
+    return preDeploymentData != null;
+  }
+
+  @Override
+  protected Artifact getWebAppPackageArtifact(ExecutionContext context) {
+    if (azureVMSSStateHelper.isWebAppDockerDeployment(context)) {
+      return null;
+    }
+
+    return azureVMSSStateHelper.getWebAppPackageArtifactForRollbackExceptionally(context);
   }
 
   @Override
@@ -147,19 +169,13 @@ public class AzureWebAppSlotRollback extends AzureWebAppSlotSetup {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
+  protected List<CommandUnit> commandUnits(OrchestrationWorkflowType workflowType, boolean isGitFetch) {
     List<CommandUnit> commandUnits = new ArrayList<>();
-    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.STOP_DEPLOYMENT_SLOT));
-    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONFIGURATION_SETTINGS));
-    if (isNonDocker) {
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_ARTIFACT));
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
-    } else {
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_DEPLOYMENT_SLOT_CONTAINER_SETTINGS));
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.START_DEPLOYMENT_SLOT));
-      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_DOCKER_IMAGE));
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.UPDATE_SLOT_CONFIGURATION_SETTINGS));
+    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOY_TO_SLOT));
+    if (BLUE_GREEN != workflowType) {
+      commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.SLOT_TRAFFIC_PERCENTAGE));
     }
-    commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.SLOT_TRAFFIC_PERCENTAGE));
     commandUnits.add(new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
     return commandUnits;
   }

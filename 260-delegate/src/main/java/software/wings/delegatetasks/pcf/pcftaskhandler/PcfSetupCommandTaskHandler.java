@@ -79,10 +79,10 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Deque;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -169,11 +169,21 @@ public class PcfSetupCommandTaskHandler extends PcfCommandTaskHandler {
           isVersioningChanged(nonVersioning, previousReleases, cfCommandSetupRequest.getReleaseNamePrefix());
       int activeAppRevision = -1;
       String inActiveAppOldName = "";
+      CfAppSetupTimeDetails mostRecentInactiveAppVersionDetails = CfAppSetupTimeDetails.builder().build();
+
+      if (!cfCommandSetupRequest.isBlueGreen()) {
+        mostRecentInactiveAppVersionDetails = pcfCommandTaskBaseHelper.getInActiveApplicationDetailsBeforeNewExecution(
+            previousReleases, cfRequestConfig, executionLogCallback);
+        inActiveAppOldName = mostRecentInactiveAppVersionDetails.getOldName();
+      }
+
       if (cfCommandSetupRequest.isBlueGreen()) {
-        Optional<String> inActiveAppBeforeBGDeployment =
+        mostRecentInactiveAppVersionDetails =
             pcfCommandTaskBaseHelper.renameInActiveAppDuringBGDeployment(previousReleases, cfRequestConfig,
                 cfCommandSetupRequest.getReleaseNamePrefix(), executionLogCallback, existingAppNamingStrategy, renames);
-        inActiveAppOldName = inActiveAppBeforeBGDeployment.orElse("");
+        inActiveAppOldName = isNotEmpty(mostRecentInactiveAppVersionDetails.getOldName())
+            ? mostRecentInactiveAppVersionDetails.getOldName()
+            : "";
       } else if (versioningChanged && !cfCommandSetupRequest.isBlueGreen()) {
         executionLogCallback.saveExecutionLog(getVersionChangeMessage(nonVersioning));
         activeAppRevision = executeVersioningChange(
@@ -190,10 +200,10 @@ public class PcfSetupCommandTaskHandler extends PcfCommandTaskHandler {
       ApplicationSummary activeApplication = pcfCommandTaskBaseHelper.findActiveApplication(
           executionLogCallback, cfCommandSetupRequest.isBlueGreen(), cfRequestConfig, previousReleases);
 
-      CfAppSetupTimeDetails mostRecentInactiveAppVersionDetails =
+      mostRecentInactiveAppVersionDetails =
           getInActiveApplicationDetails(executionLogCallback, cfCommandSetupRequest.isBlueGreen(), activeApplication,
-              previousReleases, cfRequestConfig, inActiveAppOldName);
-      if (cfCommandSetupRequest.isBlueGreen()) {
+              previousReleases, cfRequestConfig, inActiveAppOldName, mostRecentInactiveAppVersionDetails);
+      if (cfCommandSetupRequest.isBlueGreen() && (nonVersioning || versioningChanged)) {
         executionLogCallback.saveExecutionLog(getInActiveAppMessage(mostRecentInactiveAppVersionDetails));
       }
 
@@ -325,9 +335,10 @@ public class PcfSetupCommandTaskHandler extends PcfCommandTaskHandler {
       return "No in-active app found";
     }
     Integer initialInstanceCount = mostRecentInactiveAppVersionDetails.getInitialInstanceCount();
-    return String.format("Considering [%s] as in-active app. Instance count - [%d]",
+    List<String> urls = mostRecentInactiveAppVersionDetails.getUrls();
+    return String.format("Considering [%s] as in-active app. Instance count - [%d]. Routes - %s",
         PcfUtils.encodeColor(mostRecentInactiveAppVersionDetails.getApplicationName()),
-        initialInstanceCount != null ? initialInstanceCount : 0);
+        initialInstanceCount != null ? initialInstanceCount : 0, isEmpty(urls) ? Collections.emptyList() : urls);
   }
 
   private void handleAppRenameRevert(Deque<CfAppRenameInfo> renames, CfRequestConfig cfRequestConfig,
@@ -484,16 +495,16 @@ public class PcfSetupCommandTaskHandler extends PcfCommandTaskHandler {
 
   private CfAppSetupTimeDetails getInActiveApplicationDetails(LogCallback executionLogCallback, boolean blueGreen,
       ApplicationSummary activeApplication, List<ApplicationSummary> previousReleases, CfRequestConfig cfRequestConfig,
-      String inActiveAppOldName) throws PivotalClientApiException {
+      String inActiveAppOldName, CfAppSetupTimeDetails inActiveAppDetails) throws PivotalClientApiException {
     ApplicationSummary mostRecentInactiveApplication = pcfCommandTaskBaseHelper.getMostRecentInactiveApplication(
         executionLogCallback, blueGreen, activeApplication, previousReleases, cfRequestConfig);
     if (mostRecentInactiveApplication == null) {
-      return CfAppSetupTimeDetails.builder().build();
+      return inActiveAppDetails;
     }
     return CfAppSetupTimeDetails.builder()
         .applicationGuid(mostRecentInactiveApplication.getId())
         .applicationName(mostRecentInactiveApplication.getName())
-        .oldName(inActiveAppOldName)
+        .oldName(isEmpty(inActiveAppOldName) ? mostRecentInactiveApplication.getName() : inActiveAppOldName)
         .initialInstanceCount(mostRecentInactiveApplication.getRunningInstances())
         .urls(new ArrayList<>(mostRecentInactiveApplication.getUrls()))
         .build();

@@ -7,6 +7,8 @@
 
 package io.harness.migrations.all;
 
+import static io.harness.persistence.HQuery.excludeValidate;
+
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 import static org.reflections.Reflections.log;
@@ -45,7 +47,7 @@ public class GcpConfigMultipleDelegateMigration implements Migration {
       log.info(StringUtils.join(DEBUG_LINE, "Starting moving variable names for accountId:", accountId));
 
       try (HIterator<SettingAttribute> settingAttributes = new HIterator<>(
-               wingsPersistence.createQuery(SettingAttribute.class)
+               wingsPersistence.createQuery(SettingAttribute.class, excludeValidate)
                    .filter(SettingAttributeKeys.accountId, accountId)
                    .filter(SettingAttributeKeys.value + "." + SettingValueKeys.type, CloudProviderType.GCP.name())
                    .fetch())) {

@@ -9,6 +9,7 @@ package io.harness.ccm.config;
 
 import static io.harness.annotations.dev.HarnessTeam.CE;
 import static io.harness.persistence.HPersistence.upsertReturnNewOptions;
+import static io.harness.persistence.HQuery.excludeValidate;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.config.GcpOrganization.GcpOrganizationKeys;
@@ -48,7 +49,9 @@ public class GcpOrganizationDao {
   }
 
   public GcpOrganization get(String uuid) {
-    return persistence.createQuery(GcpOrganization.class).filter(GcpOrganizationKeys.uuid, new ObjectId(uuid)).get();
+    return persistence.createQuery(GcpOrganization.class, excludeValidate)
+        .filter(GcpOrganizationKeys.uuid, new ObjectId(uuid))
+        .get();
   }
 
   public List<GcpOrganization> list(String accountId) {
@@ -62,7 +65,7 @@ public class GcpOrganizationDao {
   }
 
   public boolean delete(String accountId, String uuid) {
-    Query<GcpOrganization> query = persistence.createQuery(GcpOrganization.class)
+    Query<GcpOrganization> query = persistence.createQuery(GcpOrganization.class, excludeValidate)
                                        .field(GcpOrganizationKeys.accountId)
                                        .equal(accountId)
                                        .filter(GcpOrganizationKeys.uuid, new ObjectId(uuid));

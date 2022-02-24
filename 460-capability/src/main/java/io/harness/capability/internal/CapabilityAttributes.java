@@ -43,6 +43,8 @@ public class CapabilityAttributes {
         return Duration.ofHours(6);
       case SOCKET_CONNECTIVITY_PARAMETERS:
         return Duration.ofHours(6);
+      case SOCKET_CONNECTIVITY_BULK_OR_PARAMETERS:
+        return Duration.ofHours(6);
       case SYSTEM_ENV_PARAMETERS:
         return Duration.ofHours(6);
       case SMTP_PARAMETERS:
@@ -79,6 +81,8 @@ public class CapabilityAttributes {
       case SMB_CONNECTION_PARAMETERS:
         return Duration.ofHours(4);
       case SOCKET_CONNECTIVITY_PARAMETERS:
+        return Duration.ofHours(4);
+      case SOCKET_CONNECTIVITY_BULK_OR_PARAMETERS:
         return Duration.ofHours(4);
       case SYSTEM_ENV_PARAMETERS:
         return Duration.ofHours(4);
@@ -119,6 +123,9 @@ public class CapabilityAttributes {
         return "Checking that SMB resource " + parameters.getSmbConnectionParameters().getSmbUrl() + " is reachable";
       case SOCKET_CONNECTIVITY_PARAMETERS:
         return "Checking that the socket " + getSocketConnectivityUrl(parameters) + " is reachable";
+      case SOCKET_CONNECTIVITY_BULK_OR_PARAMETERS:
+        return "Checking that one of the host socket "
+            + parameters.getSocketConnectivityBulkOrParameters().getHostNamesList() + " is reachable";
       case SYSTEM_ENV_PARAMETERS:
         return "Checking that on the system property `" + parameters.getSystemEnvParameters().getProperty()
             + "` equals `" + parameters.getSystemEnvParameters().getComparate() + "`";

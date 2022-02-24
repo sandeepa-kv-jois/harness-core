@@ -27,11 +27,6 @@ import static io.harness.remote.client.NGRestUtils.getResponse;
 
 import static org.apache.cxf.common.util.UrlUtils.urlDecode;
 
-import io.harness.accesscontrol.AccessControlAdminClient;
-import io.harness.accesscontrol.principals.PrincipalDTO;
-import io.harness.accesscontrol.principals.PrincipalType;
-import io.harness.accesscontrol.roleassignments.api.RoleAssignmentFilterDTO;
-import io.harness.accesscontrol.roleassignments.api.RoleAssignmentResponseDTO;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -42,11 +37,11 @@ import io.harness.exception.AccessDeniedException;
 import io.harness.exception.InvalidCredentialsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.ng.core.account.DefaultExperience;
 import io.harness.ng.core.account.OauthProviderType;
 import io.harness.user.remote.UserClient;
+import io.harness.usermembership.remote.UserMembershipClient;
 
 import software.wings.app.MainConfiguration;
 import software.wings.beans.Account;
@@ -74,7 +69,6 @@ import com.google.inject.name.Named;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -104,7 +98,7 @@ public class AuthenticationManager {
   @Inject private AuditServiceHelper auditServiceHelper;
   @Inject private LoginSettingsService loginSettingsService;
   @Inject private DeployVariant deployVariant;
-  @Named("PRIVILEGED") @Inject private AccessControlAdminClient accessControlAdminClient;
+  @Inject @Named("PRIVILEGED") private UserMembershipClient userMembershipClient;
   private UserClient userClient;
   private static final String LOGIN_ERROR_CODE_INVALIDSSO = "#/login?errorCode=invalidsso";
   private static final String LOGIN_ERROR_CODE_SAMLTESTSUCCESS = "#/login?errorCode=samltestsuccess";
@@ -438,14 +432,7 @@ public class AuthenticationManager {
     Account account = isEmpty(accountId) ? authenticationUtils.getDefaultAccount(user) : accountService.get(accountId);
 
     if (DefaultExperience.NG.equals(account.getDefaultExperience())) {
-      PrincipalDTO principalDTO = PrincipalDTO.builder().identifier(user.getUuid()).type(PrincipalType.USER).build();
-      PageResponse<RoleAssignmentResponseDTO> roleAssignmentPages =
-          getResponse(accessControlAdminClient.getFilteredRoleAssignments(accountId, null, null, 0, DEFAULT_PAGE_SIZE,
-              RoleAssignmentFilterDTO.builder()
-                  .roleFilter(Collections.singleton(NG_ADMIN_ROLE_IDENTIFIER))
-                  .principalFilter(Collections.singleton(principalDTO))
-                  .build()));
-      if (roleAssignmentPages.getContent().isEmpty()) {
+      if (!Boolean.TRUE.equals(getResponse(userMembershipClient.isUserAdmin(user.getUuid(), accountId)))) {
         throw new WingsException(INVALID_CREDENTIAL, USER);
       }
       return user;

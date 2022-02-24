@@ -45,6 +45,7 @@ import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.security.annotations.PublicApi;
 import io.harness.security.annotations.PublicApiWithWhitelist;
 import io.harness.security.annotations.ScimAPI;
+import io.harness.security.dto.Principal;
 
 import software.wings.beans.AuthToken;
 import software.wings.beans.User;
@@ -77,10 +78,12 @@ import javax.ws.rs.core.Context;
 import javax.ws.rs.core.HttpHeaders;
 import javax.ws.rs.core.MultivaluedMap;
 import javax.ws.rs.core.Response;
+import lombok.extern.slf4j.Slf4j;
 
 @Singleton
 @Priority(AUTHENTICATION)
 @OwnedBy(PL)
+@Slf4j
 @TargetModule(HarnessModule._360_CG_MANAGER)
 public class AuthenticationFilter implements ContainerRequestFilter {
   @VisibleForTesting public static final String API_KEY_HEADER = "X-Api-Key";
@@ -319,6 +322,14 @@ public class AuthenticationFilter implements ContainerRequestFilter {
   private void setPrincipal(String tokenString) {
     if (tokenString.length() > 32) {
       Map<String, Claim> claimMap = verifyJWTToken(tokenString, secretManager.getJWTSecret(JWT_CATEGORY.AUTH_SECRET));
+      if (!claimMap.containsKey("exp")) {
+        log.warn(this.getClass().getName() + " verifies JWT Token without Expiry Date.");
+        Principal principal = SecurityContextBuilder.getPrincipalFromClaims(claimMap);
+        if (principal != null) {
+          log.info(String.format(
+              "Principal type is %s and its name is %s", principal.getType().toString(), principal.getName()));
+        }
+      }
       SecurityContextBuilder.setContext(claimMap);
     }
   }

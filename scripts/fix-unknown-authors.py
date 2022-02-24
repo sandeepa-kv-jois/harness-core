@@ -34,6 +34,7 @@ owner_map = {
     "mark.lu@harness.io": "UTKARSH",
     "meenakshi.raikwar@harness.io": "MEENAKSHI",
     "nataraja@harness.io": "NATARAJA",
+    "navneet.das@harness.io": "NAVNEET",
     "parnian@harness.io": "PARNIAN",
     "pooja.singhal@harness.io": "POOJA",
     "pranjal@harness.io": "PRANJAL",

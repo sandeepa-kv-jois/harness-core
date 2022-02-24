@@ -16,6 +16,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.artifactory.ArtifactoryConfigRequest;
 import io.harness.delegate.task.ListNotifyResponseData;
 
+import software.wings.beans.appmanifest.HelmChart;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 import software.wings.utils.RepositoryType;
@@ -82,4 +83,7 @@ public interface ArtifactoryService {
       ArtifactoryConfigRequest artifactoryConfig, String repoType, String artifactPath, String repositoryType);
 
   Long getFileSize(ArtifactoryConfigRequest artifactoryConfig, Map<String, String> metadata);
+
+  List<HelmChart> getHelmCharts(
+      ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String chartName, int maxVersions);
 }

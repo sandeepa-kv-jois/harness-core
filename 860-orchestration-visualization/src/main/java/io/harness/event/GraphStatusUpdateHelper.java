@@ -79,7 +79,6 @@ public class GraphStatusUpdateHelper {
     } catch (Exception e) {
       log.error(
           "[PMS_GRAPH]  [{}] event failed for [{}] for plan [{}]", eventType, nodeExecutionId, planExecutionId, e);
-      throw e;
     }
     return orchestrationGraph;
   }

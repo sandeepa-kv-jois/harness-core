@@ -13,9 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
-import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
-import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.exception.InvalidRequestException;
@@ -43,12 +41,12 @@ public class CustomHealthCVConfigTest extends CategoryTest {
     CustomHealthCVConfig.MetricDefinition metricDefinition =
         CustomHealthCVConfig.MetricDefinition.builder()
             .method(CustomHealthMethod.GET)
-            .queryType(HealthSourceQueryType.HOST_BASED)
+            .queryType(HealthSourceQueryType.SERVICE_BASED)
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
-            .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder().build())
-            .riskProfile(RiskProfile.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
             .urlPath("https://dd.com")
             .build();
 
@@ -71,8 +69,10 @@ public class CustomHealthCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenLiveMonitoringIsTrueForHostBasedQuery() {
-    metricDefinitions.get(0).getAnalysis().setLiveMonitoring(
-        HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder().enabled(true).build());
+    metricDefinitions.get(0).setQueryType(HealthSourceQueryType.HOST_BASED);
+    metricDefinitions.get(0).setDeploymentVerification(
+        AnalysisInfo.DeploymentVerification.builder().enabled(true).build());
+    metricDefinitions.get(0).setLiveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build());
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Host based queries can only be used for deployment verification.");
@@ -82,8 +82,8 @@ public class CustomHealthCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenDeploymentVerificationIsTrueForServiceBasedQuery() {
-    metricDefinitions.get(0).getAnalysis().setDeploymentVerification(
-        HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder().enabled(true).build());
+    metricDefinitions.get(0).setDeploymentVerification(
+        AnalysisInfo.DeploymentVerification.builder().enabled(true).build());
     metricDefinitions.get(0).setQueryType(HealthSourceQueryType.SERVICE_BASED);
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(InvalidRequestException.class)
@@ -100,14 +100,9 @@ public class CustomHealthCVConfigTest extends CategoryTest {
             .queryType(HealthSourceQueryType.HOST_BASED)
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
-            .analysis(
-                HealthSourceMetricDefinition.AnalysisDTO.builder()
-                    .deploymentVerification(HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
-                                                .enabled(true)
-                                                .build())
-                    .build())
-            .riskProfile(RiskProfile.builder().build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(false).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
             .urlPath("https://dd.com")
             .build();
     metricDefinitions.add(metricDefinition);

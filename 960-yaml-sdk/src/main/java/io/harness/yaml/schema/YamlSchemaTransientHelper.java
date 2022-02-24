@@ -55,6 +55,7 @@ public class YamlSchemaTransientHelper {
       add(EntityType.RESTORE_CACHE_S3);
       add(EntityType.SAVE_CACHE_GCS);
       add(EntityType.SAVE_CACHE_S3);
+      add(EntityType.SECURITY);
       add(EntityType.ARTIFACTORY_UPLOAD);
       add(EntityType.GCS_UPLOAD);
       add(EntityType.S3_UPLOAD);
@@ -64,6 +65,21 @@ public class YamlSchemaTransientHelper {
       add(EntityType.HARNESS_APPROVAL_STEP);
       add(EntityType.BARRIER_STEP);
       add(EntityType.VERIFY_STEP);
+      add(EntityType.FLAG_CONFIGURATION);
+      add(EntityType.K8S_APPLY_STEP);
+      add(EntityType.K8S_BLUE_GREEN_DEPLOY_STEP);
+      add(EntityType.K8S_ROLLING_DEPLOY_STEP);
+      add(EntityType.K8S_ROLLING_ROLLBACK_STEP);
+      add(EntityType.K8S_SCALE_STEP);
+      add(EntityType.K8S_DELETE_STEP);
+      add(EntityType.K8S_BG_SWAP_SERVICES_STEP);
+      add(EntityType.K8S_CANARY_DELETE_STEP);
+      add(EntityType.TERRAFORM_APPLY_STEP);
+      add(EntityType.TERRAFORM_PLAN_STEP);
+      add(EntityType.TERRAFORM_DESTROY_STEP);
+      add(EntityType.TERRAFORM_ROLLBACK_STEP);
+      add(EntityType.HELM_DEPLOY_STEP);
+      add(EntityType.HELM_ROLLBACK_STEP);
       add(EntityType.POLICY_STEP);
     }
   };
@@ -98,6 +114,9 @@ public class YamlSchemaTransientHelper {
   }
 
   public void removeV2StepEnumsFromStepElementConfig(JsonNode stepElementConfigNode) {
+    if (stepElementConfigNode == null) {
+      return;
+    }
     Set<String> v2StepTypes = allStepV2EntityTypes.stream().map(EntityType::getYamlName).collect(Collectors.toSet());
     removeV2StepFromAllOfNode((ArrayNode) stepElementConfigNode.get(ALL_OF_NODE), v2StepTypes);
     ArrayNode enumNode = (ArrayNode) stepElementConfigNode.get(PROPERTIES_NODE).get(TYPE_NODE).get(ENUM_NODE);

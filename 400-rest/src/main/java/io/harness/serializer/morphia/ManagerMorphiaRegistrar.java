@@ -248,6 +248,7 @@ import software.wings.beans.Pipeline;
 import software.wings.beans.PipelineExecution;
 import software.wings.beans.Preference;
 import software.wings.beans.PrometheusConfig;
+import software.wings.beans.RancherKubernetesInfrastructureMapping;
 import software.wings.beans.ResourceConstraintInstance;
 import software.wings.beans.ResourceConstraintNotification;
 import software.wings.beans.ResourceLookup;
@@ -733,6 +734,13 @@ import software.wings.sm.states.provision.TerraformRollbackState;
 import software.wings.sm.states.provision.TerragruntApplyState;
 import software.wings.sm.states.provision.TerragruntDestroyState;
 import software.wings.sm.states.provision.TerragruntRollbackState;
+import software.wings.sm.states.rancher.RancherK8sBlueGreenDeploy;
+import software.wings.sm.states.rancher.RancherK8sCanaryDeploy;
+import software.wings.sm.states.rancher.RancherK8sDelete;
+import software.wings.sm.states.rancher.RancherK8sRollingDeploy;
+import software.wings.sm.states.rancher.RancherK8sRollingDeployRollback;
+import software.wings.sm.states.rancher.RancherKubernetesSwapServiceSelectors;
+import software.wings.sm.states.rancher.RancherResolveState;
 import software.wings.sm.states.spotinst.SpotInstDeployState;
 import software.wings.sm.states.spotinst.SpotInstDeployStateExecutionData;
 import software.wings.sm.states.spotinst.SpotInstListenerUpdateRollbackState;
@@ -868,6 +876,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     set.add(DeploymentSummary.class);
     set.add(DeploymentTimeSeriesEvent.class);
     set.add(DirectKubernetesInfrastructureMapping.class);
+    set.add(RancherKubernetesInfrastructureMapping.class);
     set.add(DockerArtifactStream.class);
     set.add(DynaTraceCVServiceConfiguration.class);
     set.add(EcrArtifactStream.class);
@@ -1471,6 +1480,15 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("sm.states.k8s.K8sRollingDeployRollback", K8sRollingDeployRollback.class);
     w.put("sm.states.k8s.K8sScale", K8sScale.class);
     w.put("sm.states.k8s.K8sTrafficSplitState", K8sTrafficSplitState.class);
+
+    w.put("sm.states.RancherResolveState", RancherResolveState.class);
+    w.put("sm.states.RancherK8sRollingDeploy", RancherK8sRollingDeploy.class);
+    w.put("sm.states.RancherK8sRollingDeployRollback", RancherK8sRollingDeployRollback.class);
+    w.put("sm.states.RancherK8sCanaryDeploy", RancherK8sCanaryDeploy.class);
+    w.put("sm.states.RancherK8sDelete", RancherK8sDelete.class);
+    w.put("sm.states.RancherK8sBlueGreenDeploy", RancherK8sBlueGreenDeploy.class);
+    w.put("sm.states.RancherKubernetesSwapServiceSelectors", RancherKubernetesSwapServiceSelectors.class);
+
     w.put("sm.states.KubernetesDeploy", KubernetesDeploy.class);
     w.put("sm.states.KubernetesDeployRollback", KubernetesDeployRollback.class);
     w.put("sm.states.KubernetesSetup", KubernetesSetup.class);

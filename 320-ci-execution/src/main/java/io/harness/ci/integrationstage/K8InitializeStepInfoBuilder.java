@@ -296,6 +296,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       case RESTORE_CACHE_S3:
       case RESTORE_CACHE_GCS:
       case SAVE_CACHE_GCS:
+      case SECURITY:
       case UPLOAD_ARTIFACTORY:
       case UPLOAD_S3:
       case UPLOAD_GCS:
@@ -342,6 +343,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .containerType(CIContainerType.PLUGIN)
         .stepIdentifier(identifier)
         .stepName(stepName)
+        .imagePullPolicy(RunTimeInputHandler.resolveImagePullPolicy(CIStepInfoUtils.getImagePullPolicy(stepInfo)))
+        .privileged(resolveBooleanParameter(CIStepInfoUtils.getPrivilegedMode(stepInfo), false))
         .runAsUser(runAsUser)
         .build();
   }
@@ -675,6 +678,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       case RESTORE_CACHE_S3:
       case SAVE_CACHE_S3:
       case SAVE_CACHE_GCS:
+      case SECURITY:
         return getContainerMemoryLimit(((PluginCompatibleStep) ciStepInfo).getResources(), stepElement.getType(),
             stepElement.getIdentifier(), accountId);
       default:
@@ -739,6 +743,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
       case RESTORE_CACHE_S3:
       case SAVE_CACHE_S3:
       case SAVE_CACHE_GCS:
+      case SECURITY:
         return getContainerCpuLimit(((PluginCompatibleStep) ciStepInfo).getResources(), stepElement.getType(),
             stepElement.getIdentifier(), accountId);
       default:

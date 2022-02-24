@@ -14,10 +14,12 @@ import static software.wings.sm.StateType.AZURE_WEBAPP_SLOT_SWAP;
 
 import io.harness.azure.model.AzureConstants;
 import io.harness.beans.ExecutionStatus;
+import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.delegate.task.azure.AzureTaskExecutionResponse;
 import io.harness.delegate.task.azure.appservice.webapp.request.AzureWebAppSwapSlotsParameters;
 import io.harness.delegate.task.azure.appservice.webapp.response.AzureWebAppSwapSlotsResponse;
 
+import software.wings.beans.artifact.Artifact;
 import software.wings.beans.command.AzureWebAppCommandUnit;
 import software.wings.beans.command.CommandUnit;
 import software.wings.beans.command.CommandUnitDetails.CommandUnitType;
@@ -103,6 +105,11 @@ public class AzureWebAppSlotSwap extends AbstractAzureAppServiceState {
   }
 
   @Override
+  protected Artifact getWebAppPackageArtifact(ExecutionContext context) {
+    return null;
+  }
+
+  @Override
   protected String commandType() {
     return APP_SERVICE_SLOT_SWAP;
   }
@@ -114,7 +121,7 @@ public class AzureWebAppSlotSwap extends AbstractAzureAppServiceState {
   }
 
   @Override
-  protected List<CommandUnit> commandUnits(boolean isNonDocker, boolean isGitFetch) {
+  protected List<CommandUnit> commandUnits(OrchestrationWorkflowType workflowType, boolean isGitFetch) {
     return ImmutableList.of(new AzureWebAppCommandUnit(AzureConstants.SLOT_SWAP),
         new AzureWebAppCommandUnit(AzureConstants.DEPLOYMENT_STATUS));
   }

@@ -9,6 +9,7 @@ package software.wings.sm.states.pcf;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.beans.ExecutionStatus.FAILED;
+import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.beans.FeatureName.CF_ALLOW_SPECIAL_CHARACTERS;
 import static io.harness.beans.FeatureName.CF_CUSTOM_EXTRACTION;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
@@ -96,6 +97,7 @@ import io.harness.beans.FeatureName;
 import io.harness.beans.SweepingOutputInstance;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
 import io.harness.delegate.beans.pcf.CfInternalConfig;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.manifests.response.CustomManifestValuesFetchResponse;
@@ -107,12 +109,14 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.expression.VariableResolverTracker;
 import io.harness.ff.FeatureFlagService;
 import io.harness.logging.CommandExecutionStatus;
+import io.harness.pcf.model.PcfConstants;
 import io.harness.rule.Owner;
 import io.harness.tasks.ResponseData;
 
 import software.wings.WingsBaseTest;
 import software.wings.api.PhaseElement;
 import software.wings.api.ServiceElement;
+import software.wings.api.pcf.InfoVariables;
 import software.wings.api.pcf.PcfSetupStateExecutionData;
 import software.wings.app.MainConfiguration;
 import software.wings.app.PortalConfig;
@@ -684,6 +688,62 @@ public class PcfSetupStateTest extends WingsBaseTest {
 
     pcfSetupState.handleAsyncInternal(context, response);
     verify(activityService, times(1)).updateStatus("activityId", APP_ID, FAILED);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesAfterAppSetup() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + PcfConstants.INACTIVE_APP_NAME_SUFFIX;
+    String prevInActiveAppOldName = "PaymentApp__INACTIVE";
+
+    CfAppSetupTimeDetails mostRecentInactiveAppVersion =
+        CfAppSetupTimeDetails.builder().oldName(prevInActiveAppOldName).applicationName(appPrefix + "__0").build();
+
+    CfAppSetupTimeDetails activeApp =
+        CfAppSetupTimeDetails.builder().applicationName(oldAppName).applicationGuid(oldAppId).build();
+
+    CfAppSetupTimeDetails newApp =
+        CfAppSetupTimeDetails.builder().applicationName(newAppName).applicationGuid(newAppId).build();
+
+    CfSetupCommandResponse pcfCommandResponse = CfSetupCommandResponse.builder()
+                                                    .mostRecentInactiveAppVersion(mostRecentInactiveAppVersion)
+                                                    .downsizeDetails(Collections.singletonList(activeApp))
+                                                    .newApplicationDetails(newApp)
+                                                    .build();
+
+    CfCommandExecutionResponse cfCommandExecutionResponse = CfCommandExecutionResponse.builder()
+                                                                .pcfCommandResponse(pcfCommandResponse)
+                                                                .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+                                                                .build();
+
+    Map<String, ResponseData> response = new HashMap<>();
+    response.put("activityId", cfCommandExecutionResponse);
+
+    PcfSetupStateExecutionData pcfSetupStateExecutionData = context.getStateExecutionData();
+    pcfSetupStateExecutionData.setTaskType(PCF_COMMAND_TASK);
+    pcfSetupStateExecutionData.setActivityId("activityId");
+    pcfSetupStateExecutionData.setStandardBlueGreen(true);
+    pcfSetupStateExecutionData.setAppId(APP_ID);
+    pcfSetupStateExecutionData.setInfraMappingId(INFRA_MAPPING_ID);
+
+    ExecutionResponse executionResponse = pcfSetupState.handleAsyncInternal(context, response);
+    assertThat(executionResponse.getExecutionStatus()).isEqualTo(SUCCESS);
+
+    ArgumentCaptor<SweepingOutputInstance> outputInstanceArgumentCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(2)).save(outputInstanceArgumentCaptor.capture());
+    List<SweepingOutputInstance> allValues = outputInstanceArgumentCaptor.getAllValues();
+    assertThat(allValues.size()).isEqualTo(2);
+    InfoVariables infoVariables = (InfoVariables) allValues.get(1).getValue();
+    assertThat(infoVariables.getActiveAppName()).isEqualTo(oldAppName);
+    assertThat(infoVariables.getInActiveAppName()).isEqualTo(newAppName);
+    assertThat(infoVariables.getMostRecentInactiveAppVersionOldName()).isEqualTo(prevInActiveAppOldName);
   }
 
   @Test

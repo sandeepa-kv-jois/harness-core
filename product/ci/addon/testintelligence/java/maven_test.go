@@ -7,6 +7,8 @@ package java
 
 import (
 	"context"
+	"testing"
+
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	mexec "github.com/harness/harness-core/commons/go/lib/exec"
@@ -14,7 +16,6 @@ import (
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	"github.com/harness/harness-core/product/ci/ti-service/types"
 	"go.uber.org/zap"
-	"testing"
 )
 
 func TestMaven_GetCmd(t *testing.T) {
@@ -43,7 +44,7 @@ func TestMaven_GetCmd(t *testing.T) {
 			name:                 "run all tests with non-empty test list and -Duser parameters",
 			args:                 "clean test -Duser.timezone=US/Mountain -Duser.locale=en/US",
 			runOnlySelectedTests: false,
-			want:                 "mvn -am -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test",
+			want:                 "mvn -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test",
 			expectedErr:          false,
 			tests:                []types.RunnableTest{t1, t2},
 		},
@@ -51,7 +52,7 @@ func TestMaven_GetCmd(t *testing.T) {
 			name:                 "run all tests with empty test list and no -Duser parameters",
 			args:                 "clean test",
 			runOnlySelectedTests: false,
-			want:                 "mvn -am -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test",
+			want:                 "mvn -am -DharnessArgLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini -DargLine=-javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini clean test",
 			expectedErr:          false,
 			tests:                []types.RunnableTest{},
 		},
@@ -59,7 +60,7 @@ func TestMaven_GetCmd(t *testing.T) {
 			name:                 "run selected tests with given test list and -Duser parameters",
 			args:                 "clean test -Duser.timezone=US/Mountain -Duser.locale=en/US",
 			runOnlySelectedTests: true,
-			want:                 "mvn -Dtest=pkg1.cls1,pkg2.cls2 -am -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test",
+			want:                 "mvn -Dtest=pkg1.cls1,pkg2.cls2 -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test",
 			expectedErr:          false,
 			tests:                []types.RunnableTest{t1, t2},
 		},
@@ -75,7 +76,7 @@ func TestMaven_GetCmd(t *testing.T) {
 			name:                 "run selected tests with repeating test list and -Duser parameters",
 			args:                 "clean test -B -2C-Duser.timezone=US/Mountain -Duser.locale=en/US",
 			runOnlySelectedTests: true,
-			want:                 "mvn -Dtest=pkg1.cls1,pkg2.cls2 -am -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test -B -2C",
+			want:                 "mvn -Dtest=pkg1.cls1,pkg2.cls2 -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test -B -2C",
 			expectedErr:          false,
 			tests:                []types.RunnableTest{t1, t2, t1, t2},
 		},
@@ -83,7 +84,7 @@ func TestMaven_GetCmd(t *testing.T) {
 			name:                 "run selected tests with single test and -Duser parameters and or condition",
 			args:                 "clean test -B -2C -Duser.timezone=US/Mountain -Duser.locale=en/US || true",
 			runOnlySelectedTests: true,
-			want:                 "mvn -Dtest=pkg2.cls2 -am -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test -B -2C   || true",
+			want:                 "mvn -Dtest=pkg2.cls2 -am -DharnessArgLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" -DargLine=\"-Duser.timezone=US/Mountain -Duser.locale=en/US -javaagent:/addon/bin/java-agent.jar=/test/tmp/config.ini\" clean test -B -2C   || true",
 			expectedErr:          false,
 			tests:                []types.RunnableTest{t2},
 		},

@@ -29,6 +29,7 @@ import io.harness.batch.processing.writer.constants.K8sCCMConstants;
 import io.harness.beans.FeatureName;
 import io.harness.ccm.commons.beans.InstanceState;
 import io.harness.ccm.commons.beans.InstanceType;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.beans.Resource;
 import io.harness.ccm.commons.constants.CloudProvider;
 import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
@@ -63,7 +64,7 @@ public class K8sNodeInfoTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
-    final CCMJobConstants jobConstants = new CCMJobConstants(chunkContext);
+    final JobConstants jobConstants = new CCMJobConstants(chunkContext);
     int batchSize = config.getBatchQueryConfig().getQueryBatchSize();
 
     String messageType = EventTypeConstants.K8S_NODE_INFO;
@@ -78,7 +79,7 @@ public class K8sNodeInfoTasklet implements Tasklet {
                                                 .filter(x -> x.getAccountId() != null)
                                                 .collect(Collectors.toList());
 
-      instanceDataBulkWriteService.updateList(
+      instanceDataBulkWriteService.upsertInstanceInfo(
           instanceInfoList.stream()
               .filter(x -> x.getMetaData().containsKey(InstanceMetaDataConstants.INSTANCE_CATEGORY))
               .collect(Collectors.toList()));

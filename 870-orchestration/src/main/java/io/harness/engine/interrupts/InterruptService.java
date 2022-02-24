@@ -31,6 +31,8 @@ public interface InterruptService {
 
   Interrupt markProcessed(String interruptId, State interruptState);
 
+  Interrupt markProcessedForceful(String interruptId, State interruptState, boolean forceful);
+
   Interrupt markProcessing(String interruptId);
 
   List<Interrupt> fetchActivePlanLevelInterrupts(String planExecutionId);

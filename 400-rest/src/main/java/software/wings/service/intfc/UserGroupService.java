@@ -220,4 +220,8 @@ public interface UserGroupService
   void maskCePermissions(UserGroup userGroup);
 
   void maintainTemplatePermissions(UserGroup userGroup);
+
+  void addParentsReference(String userGroupId, String accountId, String appId, String pipelineId);
+
+  void removeParentsReference(String userGroupId, String accountId, String appId, String pipelineId);
 }

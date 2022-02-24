@@ -46,9 +46,6 @@ import org.springframework.batch.repeat.RepeatStatus;
 import org.springframework.beans.factory.annotation.Autowired;
 import retrofit2.Response;
 
-/**
- * This class is stateful as of now, we are not processing accounts in parallel.
- */
 @Slf4j
 @OwnedBy(CE)
 public class K8sNodeRecommendationTasklet implements Tasklet {
@@ -58,11 +55,9 @@ public class K8sNodeRecommendationTasklet implements Tasklet {
   @Autowired private VMPricingService vmPricingService;
   @Autowired private ClusterHelper clusterHelper;
 
-  private JobConstants jobConstants;
-
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    this.jobConstants = new CCMJobConstants(chunkContext);
+    JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
 
     List<NodePoolId> nodePoolIdList = k8sRecommendationDAO.getUniqueNodePools(jobConstants.getAccountId());
 
@@ -73,12 +68,12 @@ public class K8sNodeRecommendationTasklet implements Tasklet {
         continue;
       }
 
-      TotalResourceUsage totalResourceUsage = getTotalResourceUsageAndInsert(nodePoolId);
+      TotalResourceUsage totalResourceUsage = getTotalResourceUsageAndInsert(jobConstants, nodePoolId);
 
-      logTotalResourceUsage(nodePoolId, totalResourceUsage);
+      logTotalResourceUsage(jobConstants, nodePoolId, totalResourceUsage);
 
       try {
-        calculateAndSaveRecommendation(nodePoolId, totalResourceUsage);
+        calculateAndSaveRecommendation(jobConstants, nodePoolId, totalResourceUsage);
       } catch (InvalidRequestException
               ex) { // This an acceptable exception in the sense that the next recommendation job should proceed.
         log.warn("Not generating recommendation for: {} with TRU: {}", nodePoolId, totalResourceUsage, ex);
@@ -88,22 +83,24 @@ public class K8sNodeRecommendationTasklet implements Tasklet {
     return null;
   }
 
-  private TotalResourceUsage getTotalResourceUsageAndInsert(@NonNull NodePoolId nodePoolId) {
+  private TotalResourceUsage getTotalResourceUsageAndInsert(
+      @NonNull JobConstants jobConstants, @NonNull NodePoolId nodePoolId) {
     TotalResourceUsage totalResourceUsage =
         k8sRecommendationDAO.maxResourceOfAllTimeBucketsForANodePool(jobConstants, nodePoolId);
     k8sRecommendationDAO.insertNodePoolAggregated(jobConstants, nodePoolId, totalResourceUsage);
     return totalResourceUsage;
   }
 
-  private void logTotalResourceUsage(@NonNull NodePoolId nodePoolId, @NonNull TotalResourceUsage totalResourceUsage) {
+  private void logTotalResourceUsage(@NonNull JobConstants jobConstants, @NonNull NodePoolId nodePoolId,
+      @NonNull TotalResourceUsage totalResourceUsage) {
     log.info("TotalResourceUsage for {}:{} is {} between {} and {}", jobConstants.getAccountId(), nodePoolId.toString(),
         totalResourceUsage.toString(), toOffsetDateTime(jobConstants.getJobStartTime()),
         toOffsetDateTime(jobConstants.getJobEndTime()));
   }
 
-  private void calculateAndSaveRecommendation(
-      @NonNull NodePoolId nodePoolId, @NonNull TotalResourceUsage totalResourceUsage) {
-    K8sServiceProvider serviceProvider = getCurrentNodePoolConfiguration(nodePoolId);
+  private void calculateAndSaveRecommendation(@NonNull JobConstants jobConstants, @NonNull NodePoolId nodePoolId,
+      @NonNull TotalResourceUsage totalResourceUsage) {
+    K8sServiceProvider serviceProvider = getCurrentNodePoolConfiguration(jobConstants, nodePoolId);
     log.info("serviceProvider: {}", serviceProvider);
 
     RecommendClusterRequest request = RecommendationUtils.constructNodeRecommendationRequest(totalResourceUsage);
@@ -122,7 +119,8 @@ public class K8sNodeRecommendationTasklet implements Tasklet {
     recommendationCrudService.upsertNodeRecommendation(mongoEntityId, jobConstants, nodePoolId, clusterName, stats);
   }
 
-  private K8sServiceProvider getCurrentNodePoolConfiguration(@NonNull NodePoolId nodePoolId) {
+  private K8sServiceProvider getCurrentNodePoolConfiguration(
+      @NonNull JobConstants jobConstants, @NonNull NodePoolId nodePoolId) {
     K8sServiceProvider serviceProvider = k8sRecommendationDAO.getServiceProvider(jobConstants, nodePoolId);
 
     populateVMInfo(serviceProvider);

@@ -11,7 +11,7 @@ import "google/protobuf/wrappers.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_detail.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_scope_info.proto";
 import "io/harness/gitsync/change_type.proto";
-import "io/harness/gitsync/user_principal.proto";
+import "980-commons/src/main/proto/io/harness/security/principal.proto";
 
 option java_multiple_files = true;
 
@@ -48,7 +48,7 @@ message FileInfo {
   bool is_new_branch = 6;
   google.protobuf.StringValue base_branch = 7;
   string folder_path = 8;
-  Principal principal = 9;
+  io.harness.security.Principal principal = 9;
   map<string, string> context_map = 10;
   string yaml = 11;
   io.harness.gitsync.ChangeType change_type = 12;
@@ -70,16 +70,6 @@ message PushFileResponse {
 
 message IsGitSyncEnabled {
   bool enabled = 1;
-}
-message Principal {
-  oneof principal {
-    io.harness.gitsync.UserPrincipal user_principal = 1;
-    ServicePrincipal service_principal = 2;
-  }
-}
-
-message ServicePrincipal {
-  string name = 1;
 }
 
 message RepoDetails {

@@ -168,6 +168,7 @@ public class GitToHarnessSdkProcessorImpl implements GitToHarnessSdkProcessor {
     try {
       // todo(abhinav): Do parallel processing.
       for (ChangeSet changeSet : changeSets.getChangeSetList()) {
+        log.info("Processing the file [{}]", changeSet.getFilePath());
         final FileProcessingStatus status = processingResponseMap.get(changeSet.getFilePath()).getStatus();
         if (!status.equals(FileProcessingStatus.UNPROCESSED)) {
           continue;

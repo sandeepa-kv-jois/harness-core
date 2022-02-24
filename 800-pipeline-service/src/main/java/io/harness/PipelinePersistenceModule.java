@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.persistance.GitSyncablePersistenceConfig;
 import io.harness.mongo.MongoConfig;
 import io.harness.notification.NotificationChannelPersistenceConfig;
+import io.harness.pms.outbox.PipelineOutboxPersistenceConfig;
 import io.harness.springdata.HMongoTemplate;
 import io.harness.springdata.HTransactionTemplate;
 import io.harness.springdata.SpringPersistenceConfig;
@@ -30,8 +31,8 @@ import org.springframework.transaction.support.TransactionTemplate;
 public class PipelinePersistenceModule extends SpringPersistenceModule {
   @Override
   protected Class<?>[] getConfigClasses() {
-    return new Class[] {
-        SpringPersistenceConfig.class, NotificationChannelPersistenceConfig.class, GitSyncablePersistenceConfig.class};
+    return new Class[] {SpringPersistenceConfig.class, NotificationChannelPersistenceConfig.class,
+        GitSyncablePersistenceConfig.class, PipelineOutboxPersistenceConfig.class};
   }
 
   @Provides

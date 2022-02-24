@@ -7,6 +7,7 @@
 
 package io.harness.gitsync.core.fullsync;
 
+import static io.harness.rule.OwnerRule.BHAVYA;
 import static io.harness.rule.OwnerRule.PHOENIKX;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
@@ -35,6 +36,8 @@ import io.harness.rule.Owner;
 import com.google.inject.Inject;
 import com.google.protobuf.StringValue;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -44,6 +47,8 @@ public class GitFullSyncEntityServiceImplTest extends GitSyncTestBase {
   public static final String ACCOUNT = "account";
   public static final String ORG = "org";
   public static final String PROJECT = "project";
+  public static final String FILE_PATH = "filePath";
+  public static final String ERROR_MSG = "error";
   private GitFullSyncEntityServiceImpl gitFullSyncEntityService;
   @Inject private GitFullSyncEntityRepository gitFullSyncEntityRepository;
   @Inject private EntityDetailProtoToRestMapper entityDetailProtoToRestMapper;
@@ -159,5 +164,22 @@ public class GitFullSyncEntityServiceImplTest extends GitSyncTestBase {
             .entityTypes(Arrays.asList(EntityType.INPUT_SETS))
             .build());
     assertThat(count).isEqualTo(6);
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void testUpdateStatus() {
+    createFullSyncFile(
+        ACCOUNT, ORG, PROJECT, FILE_PATH, EntityTypeProtoEnum.CONNECTORS, random(String.class), SyncStatus.QUEUED);
+    Optional<GitFullSyncEntityInfo> gitFullSyncEntityInfo =
+        gitFullSyncEntityService.get(ACCOUNT, ORG, PROJECT, FILE_PATH);
+
+    gitFullSyncEntityService.updateStatus(ACCOUNT, gitFullSyncEntityInfo.get().getUuid(), SyncStatus.FAILED, ERROR_MSG);
+    Optional<GitFullSyncEntityInfo> updateGitFullSyncEntityInfo =
+        gitFullSyncEntityService.get(ACCOUNT, ORG, PROJECT, FILE_PATH);
+    assertThat(updateGitFullSyncEntityInfo.isPresent()).isEqualTo(true);
+    assertThat(updateGitFullSyncEntityInfo.get().getSyncStatus()).isEqualTo(SyncStatus.FAILED.toString());
+    assertThat(updateGitFullSyncEntityInfo.get().getErrorMessage()).isEqualTo(Collections.singletonList(ERROR_MSG));
   }
 }

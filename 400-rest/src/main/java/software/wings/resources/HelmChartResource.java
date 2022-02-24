@@ -62,6 +62,19 @@ public class HelmChartResource {
   public RestResponse<List<HelmChart>> list(@QueryParam("accountId") String accountId,
       @QueryParam("appId") String appId, @QueryParam("serviceId") String serviceId,
       @QueryParam("applicationManifestId") String applicationManifestId) {
-    return new RestResponse<>(helmChartService.fetchChartsFromRepo(accountId, appId, serviceId, applicationManifestId));
+    return new RestResponse<>(
+        helmChartService.fetchChartsFromRepo(accountId, appId, serviceId, applicationManifestId, true));
+  }
+
+  @GET
+  @Path("collectIfCollectionDisabled")
+  @Timed
+  @ExceptionMetered
+  @AuthRule(permissionType = PermissionType.SERVICE, action = Action.READ)
+  public RestResponse<List<HelmChart>> getHelmCharts(@QueryParam("accountId") String accountId,
+      @QueryParam("appId") String appId, @QueryParam("serviceId") String serviceId,
+      @QueryParam("applicationManifestId") String applicationManifestId) {
+    return new RestResponse<>(
+        helmChartService.fetchChartsFromRepo(accountId, appId, serviceId, applicationManifestId, false));
   }
 }

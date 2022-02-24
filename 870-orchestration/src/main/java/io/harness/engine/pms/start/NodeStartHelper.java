@@ -22,19 +22,24 @@ import io.harness.engine.pms.commons.events.PmsEventSender;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.expression.EngineExpressionEvaluator;
+import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.start.NodeStartEvent;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
+import io.harness.pms.data.OrchestrationMap;
+import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.events.base.PmsEventCategory;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
 import io.harness.pms.sdk.core.execution.NodeExecutionUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.pms.timeout.SdkTimeoutTrackerParameters;
+import io.harness.pms.utils.OrchestrationMapBackwardCompatibilityUtils;
 import io.harness.serializer.KryoSerializer;
+import io.harness.springdata.TransactionHelper;
 import io.harness.timeout.TimeoutCallback;
 import io.harness.timeout.TimeoutEngine;
 import io.harness.timeout.TimeoutInstance;
@@ -59,11 +64,14 @@ public class NodeStartHelper {
   @Inject private TimeoutEngine timeoutEngine;
   @Inject private PlanService planService;
   @Inject private PmsEngineExpressionService pmsEngineExpressionService;
+  @Inject private TransactionHelper transactionHelper;
+  @Inject private PmsGraphStepDetailsService pmsGraphStepDetailsService;
 
   public void startNode(Ambiance ambiance, FacilitatorResponseProto facilitatorResponse) {
     String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
     Status targetStatus = calculateStatusFromMode(facilitatorResponse.getExecutionMode());
-    NodeExecution nodeExecution = prepareNodeExecutionForInvocation(ambiance, targetStatus, facilitatorResponse);
+    PlanNode node = planService.fetchNode(ambiance.getPlanId(), AmbianceUtils.obtainCurrentSetupId(ambiance));
+    NodeExecution nodeExecution = prepareNodeExecutionForInvocation(ambiance, targetStatus, node);
     if (nodeExecution == null) {
       // This is just for debugging if this is happening then the node status has changed from QUEUED
       // This should never happen
@@ -72,11 +80,10 @@ public class NodeStartHelper {
       throw new NodeExecutionUpdateFailedException("Cannot Start node Execution");
     }
     log.info("Sending NodeExecution START event");
-    sendEvent(nodeExecution, facilitatorResponse.getPassThroughDataBytes());
+    sendEvent(nodeExecution, node, facilitatorResponse.getPassThroughDataBytes());
   }
 
-  private void sendEvent(NodeExecution nodeExecution, ByteString passThroughData) {
-    PlanNode planNode = planService.fetchNode(nodeExecution.getAmbiance().getPlanId(), nodeExecution.nodeId());
+  private void sendEvent(NodeExecution nodeExecution, PlanNode planNode, ByteString passThroughData) {
     NodeStartEvent nodeStartEvent = NodeStartEvent.newBuilder()
                                         .setAmbiance(nodeExecution.getAmbiance())
                                         .addAllRefObjects(planNode.getRefObjects())
@@ -88,16 +95,15 @@ public class NodeStartHelper {
         nodeExecution.module(), true);
   }
 
-  private NodeExecution prepareNodeExecutionForInvocation(
-      Ambiance ambiance, Status targetStatus, FacilitatorResponseProto facilitatorResponse) {
+  private NodeExecution prepareNodeExecutionForInvocation(Ambiance ambiance, Status targetStatus, PlanNode planNode) {
     String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
-    PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), AmbianceUtils.obtainCurrentSetupId(ambiance));
-
-    List<String> timeoutInstanceIds = registerTimeouts(ambiance, planNode.getTimeoutObtainments());
-    return nodeExecutionService.updateStatusWithOps(nodeExecutionId, targetStatus, ops -> {
-      setUnset(ops, NodeExecutionKeys.timeoutInstanceIds, timeoutInstanceIds);
-      ops.set(NodeExecutionKeys.mode, facilitatorResponse.getExecutionMode());
-    }, EnumSet.noneOf(Status.class));
+    return transactionHelper.performTransaction(() -> {
+      List<String> timeoutInstanceIds = registerTimeouts(ambiance, planNode.getTimeoutObtainments());
+      resolveInputs(ambiance, planNode.getStepInputs(), planNode.isSkipUnresolvedExpressionsCheck());
+      return nodeExecutionService.updateStatusWithOps(nodeExecutionId, targetStatus, ops -> {
+        setUnset(ops, NodeExecutionKeys.timeoutInstanceIds, timeoutInstanceIds);
+      }, EnumSet.noneOf(Status.class));
+    });
   }
 
   private Status calculateStatusFromMode(ExecutionMode executionMode) {
@@ -151,5 +157,15 @@ public class NodeStartHelper {
     Map<String, Object> m = NodeExecutionUtils.extractObject(RecastOrchestrationUtils.toJson(o));
     String json = RecastOrchestrationUtils.toJson(evaluator.resolve(m, false));
     return (T) RecastOrchestrationUtils.fromJson(json, cls);
+  }
+
+  private void resolveInputs(Ambiance ambiance, OrchestrationMap stepInputs, boolean skipUnresolvedCheck) {
+    String nodeExecutionId = AmbianceUtils.obtainCurrentRuntimeId(ambiance);
+    log.info("Starting to Resolve step Inputs");
+    Object resolvedInputs = pmsEngineExpressionService.resolve(ambiance, stepInputs, skipUnresolvedCheck);
+    PmsStepParameters parameterInputs =
+        PmsStepParameters.parse(OrchestrationMapBackwardCompatibilityUtils.extractToOrchestrationMap(resolvedInputs));
+    pmsGraphStepDetailsService.addStepInputs(nodeExecutionId, ambiance.getPlanExecutionId(), parameterInputs);
+    log.info("Resolved step Inputs");
   }
 }

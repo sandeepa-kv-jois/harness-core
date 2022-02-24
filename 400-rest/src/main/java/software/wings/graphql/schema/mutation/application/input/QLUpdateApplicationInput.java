@@ -27,4 +27,5 @@ public class QLUpdateApplicationInput implements QLMutationInput {
   private RequestField<String> name;
   private RequestField<String> description;
   private Boolean isManualTriggerAuthorized;
+  private Boolean areWebHookSecretsMandated;
 }

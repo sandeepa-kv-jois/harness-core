@@ -25,6 +25,7 @@ import io.harness.persistence.UuidAware;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import javax.validation.constraints.Size;
@@ -55,21 +56,13 @@ public final class MonitoredService
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-                 .name("unique_query_idx")
-                 .unique(true)
+                 .name("old_unique_query_idx")
                  .field(MonitoredServiceKeys.accountId)
                  .field(MonitoredServiceKeys.orgIdentifier)
                  .field(MonitoredServiceKeys.projectIdentifier)
-                 .field(MonitoredServiceKeys.identifier)
-                 .build())
-        .add(CompoundMongoIndex.builder()
-                 .name("unique_service_environment_idx")
-                 .unique(true)
-                 .field(MonitoredServiceKeys.accountId)
-                 .field(MonitoredServiceKeys.orgIdentifier)
-                 .field(MonitoredServiceKeys.projectIdentifier)
-                 .field(MonitoredServiceKeys.serviceIdentifier)
                  .field(MonitoredServiceKeys.environmentIdentifier)
+                 .field(MonitoredServiceKeys.serviceIdentifier)
+                 .field(MonitoredServiceKeys.identifier)
                  .build())
         .build();
   }
@@ -104,5 +97,11 @@ public final class MonitoredService
       return new ArrayList<>();
     }
     return changeSourceIdentifiers;
+  }
+  public List<String> getEnvironmentIdentifierList() {
+    if (environmentIdentifierList == null) {
+      return Collections.emptyList();
+    }
+    return environmentIdentifierList;
   }
 }

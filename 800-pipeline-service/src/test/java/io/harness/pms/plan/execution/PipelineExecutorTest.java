@@ -184,17 +184,17 @@ public class PipelineExecutorTest extends CategoryTest {
 
     RetryExecutionParameters retryExecutionParameters = RetryExecutionParameters.builder().isRetry(false).build();
     doReturn(pipelineEntity).when(executionHelper).fetchPipelineEntity(accountId, orgId, projectId, pipelineId);
-    doReturn(executionTriggerInfo).when(executionHelper).buildTriggerInfo(originalExecutionId);
+    doReturn(executionTriggerInfo).when(executionHelper).buildTriggerInfo(null, originalExecutionId);
     if (EmptyPredicate.isEmpty(stageIdentifiers)) {
       doReturn(execArgs)
           .when(executionHelper)
           .buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml, Collections.emptyList(),
-              Collections.emptyMap(), executionTriggerInfo, originalExecutionId, retryExecutionParameters);
+              Collections.emptyMap(), executionTriggerInfo, originalExecutionId, retryExecutionParameters, null);
     } else {
       doReturn(execArgs)
           .when(executionHelper)
           .buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml, stageIdentifiers, Collections.emptyMap(),
-              executionTriggerInfo, originalExecutionId, retryExecutionParameters);
+              executionTriggerInfo, originalExecutionId, retryExecutionParameters, null);
     }
 
     doReturn(planExecution)
@@ -212,15 +212,15 @@ public class PipelineExecutorTest extends CategoryTest {
 
     RetryExecutionParameters retryExecutionParameters = RetryExecutionParameters.builder().isRetry(false).build();
     verify(executionHelper, times(1)).fetchPipelineEntity(accountId, orgId, projectId, pipelineId);
-    verify(executionHelper, times(1)).buildTriggerInfo(originalExecutionId);
+    verify(executionHelper, times(1)).buildTriggerInfo(null, originalExecutionId);
     if (EmptyPredicate.isEmpty(stageIdentifiers)) {
       verify(executionHelper, times(1))
           .buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml, Collections.emptyList(),
-              Collections.emptyMap(), executionTriggerInfo, originalExecutionId, retryExecutionParameters);
+              Collections.emptyMap(), executionTriggerInfo, originalExecutionId, retryExecutionParameters, null);
     } else {
       verify(executionHelper, times(1))
           .buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml, stageIdentifiers, Collections.emptyMap(),
-              executionTriggerInfo, originalExecutionId, retryExecutionParameters);
+              executionTriggerInfo, originalExecutionId, retryExecutionParameters, null);
     }
     verify(executionHelper, times(1))
         .startExecution(accountId, orgId, projectId, metadata, planExecutionMetadata, false, null, null);

@@ -12,10 +12,10 @@ harness-core Project Dev environment setup instructions
 
 
 2. Download and Install Java 8
-dd
-NOTE: Brew will download and install latest version of OpenJDK/JRE, its recommended to install OpenJDK/JRE_1.8.0_242 to be in sync with version everyone is using in the team. 
 
-Download OpenJDK 1.8-242 (jdk8u242-b08) JRE Installer from [Java archive downloads](https://adoptopenjdk.net/archive.html), unzip it, then set `JAVA_HOME` and `PATH` accordingly.
+   *Note: Brew will download and install the latest version of OpenJDK/JRE, its recommended to install OpenJDK/JRE_1.8.0_242 to be in sync with the version everyone is using in the team.*
+
+   To setup the recommended version, download the OpenJDK 1.8-242 (jdk8u242-b08) JRE .pkg from [AdoptOpenJDK](https://github.com/AdoptOpenJDK/openjdk8-binaries/releases/tag/jdk8u242-b08) and install it. Make sure to update `JAVA_HOME` and `PATH` accordingly (see step 5).
 
 3. Install bazel:
 ```
@@ -36,7 +36,7 @@ export JAVA_HOME=$(/usr/libexec/java_home -v1.8)
 
 Do not add the first line on MacOS Catalina
 
-If bash used, the better option migh be specifying full path to jdk, e.g:
+If bash used, the better option might be specifying full path to jdk, e.g:
 
 ```
 export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/Home
@@ -49,7 +49,7 @@ export JAVA_HOME=/Library/Java/JavaVirtualMachines/adoptopenjdk-8.jdk/Contents/H
 ```
 
 7. Download and install `buf`
-Complete this step only if you actively working with the protocol buffer files.
+Complete this step only if you are actively working with the protocol buffer files.
 ```
 brew tap bufbuild/buf
 brew install buf
@@ -59,6 +59,13 @@ To check if your protobuf files are according to the coding standards execute in
 ```
 buf lint
 ```
+
+8. Install Docker
+
+Official steps to install docker on mac: [docker.com](https://docs.docker.com/desktop/mac/install/).
+
+9. If you are on MacOS make sure you have Xcode installed
+
 
 ### Git setup
 
@@ -94,13 +101,7 @@ buf lint
 
    (Optional) Follow https://help.github.com/articles/adding-a-new-ssh-key-to-your-github-account/
    to setup your SSH keys. You can then use SSH to interact with git
-
-3. Bazel install
-
-    Create a file `.bazelrc` in your harness-core repo root with the following content
-    ```
-    import bazelrc.local
-    ```
+   
     NOTE: If you have regular bazel installed, please uninstall bazel and install bazelisk. It allows us to use the git repo to synchronize everyone's installation of bazel.
 
 4. Setup the build purpose
@@ -170,7 +171,7 @@ buf lint
 
 7. If TimeScaleDB has to be enabled (Optional for now)
 
-   a. Start TimeScaleDB using the following docker command: `docker run -d --name harness-timescaledb -v ~/timescaledb/data:/var/lib/postgresql/data -p 5432:5432 --rm -e POSTGRES_USER=admin -e POSTGRES_DB=harness -e POSTGRES_PASSWORD=password timescale/timescaledb`
+   a. Start TimeScaleDB using the following docker command: `docker run -d --name harness-timescaledb -v ~/timescaledb/data:/var/lib/postgresql/data -p 5432:5432 --rm -e POSTGRES_USER=admin -e POSTGRES_DB=harness -e POSTGRES_PASSWORD=password timescale/timescaledb:latest-pg14`
 
    b. Set the TimeScaleDB config in the config.yml
   ```
@@ -238,6 +239,10 @@ alias runui='run_ui'
 ### Editing setup
 
 1. Install [clang-format](https://clang.llvm.org/docs/ClangFormat.html) (11.0.0)
+If on MacOS you can download this via brew `brew install clang-format@11`
+
+else
+
 Download the clang 11.0.0 tar from [this page](https://releases.llvm.org/download.html)
 Untar the downloaded file and add it to your PATH in `~/.bashrc` or `~/.zshrc`
 
@@ -261,7 +266,10 @@ helper shell scripts:
 
 1. Install IntelliJ
    
-   **NOTE** Bazel plugin usually doesn't support the latest IntelliJ versions, so install the [last supported version](https://github.com/bazelbuild/intellij/blob/master/intellij_platform_sdk/build_defs.bzl#L11).
+   It's recommended to install the latest version of IntelliJ that's supported by the Bazel Plugin. To find the latest supported version, please refer to the [bazel github project](https://github.com/bazelbuild/intellij/blob/master/intellij_platform_sdk/build_defs.bzl#L11).
+
+   After identifying the desired version of IntelliJ, you can download it from [jetbrains.com](https://www.jetbrains.com/idea/download/other.html).
+
 2. Import `harness-core` as a Bazel project
    1. Open `File > Import Bazel Project...`
    1. Enter `/path/to/repo/harness-core` for Workspace, click Next
@@ -280,10 +288,17 @@ helper shell scripts:
    assign whatever key combination you would like it to be triggered on.
 
 4. Install Lombok Plugin: https://projectlombok.org/setup/intellij
+   
+   *Not required for IntelliJ 2020.3 and later versions - the Lombok Plugin comes pre-bundled with IntelliJ*
+
 5. Install SonarLint plugin:
    - This plugin is really helpful to analyze your code for issues as you code.
    - Go to `Preferences -> Plugins` ->  type SonarLint -> Install plugin. (Will need to restart Intellij)
-   - Go to `Preferences -> Tools -> SonarLint`. Check "Automatically trigger analysis". Add a connection to `https://sonar.harness.io`. You'll need to create a custom token.
+   - Go to `Preferences -> Tools -> SonarLint`.
+   
+      Check "Automatically trigger analysis".
+   
+      Add a SonarQube connection to `https://sonar.harness.io` (requires VPN connection). As part of the connection-setup you'll be directed to sonar.harness.io to create a custom security token.
    - Go to `Preferences -> Tools -> SonarLint -> Project Settings`. Check "Bind project to sonarqube", and select the connection, and set project as `portal_bazel`. This is so that we use the same rules locally instead of the default rules.
     ![config image](img/sonar-config.png).
    - Go to `Preferences -> Editor -> Colorscheme -> Sonarlint`. For Blocker, Critical & Major, untick "Inherit values from" checkbox and configure a different highlighting style. These violations are treated as release blockers and this configuration is to highlight them differently from regular warnings.

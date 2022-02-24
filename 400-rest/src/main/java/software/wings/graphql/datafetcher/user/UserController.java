@@ -39,6 +39,7 @@ public class UserController {
         .isUserLocked(user.isUserLocked())
         .isPasswordExpired(user.isPasswordExpired())
         .isImportedFromIdentityProvider(user.isImported())
+        .externalUserId(user.getExternalUserId())
         .build();
   }
 }

@@ -28,6 +28,12 @@ public interface HeatMapService {
       @NotNull CVMonitoringCategory category, @NotNull Instant timeStamp, double riskScore, long anomalousMetricsCount,
       long anomalousLogsCount);
 
+  Map<String, RiskData> getLatestHealthScore(
+      @NonNull ProjectParams projectParams, @NonNull List<String> monitoredServiceIdentifiers);
+  /**
+   * use #getLatestHealthScore with monitored service identifier instead
+   */
+  @Deprecated
   Map<ServiceEnvKey, RiskData> getLatestHealthScore(@NonNull ProjectParams projectParams,
       @NonNull List<String> serviceIdentifiers, @NonNull List<String> envIdentifiers);
 
@@ -40,6 +46,6 @@ public interface HeatMapService {
   Map<ServiceEnvKey, RiskData> getLatestRiskScoreByServiceMap(
       ProjectParams projectParams, List<Pair<String, String>> serviceEnvIdentifiers);
 
-  HistoricalTrend getOverAllHealthScore(ProjectParams projectParams, String serviceIdentifier,
-      String environmentIdentifier, DurationDTO duration, Instant endTime);
+  HistoricalTrend getOverAllHealthScore(
+      ProjectParams projectParams, String monitoredServiceIdentifier, DurationDTO duration, Instant endTime);
 }

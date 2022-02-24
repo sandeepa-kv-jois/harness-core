@@ -29,6 +29,7 @@ import io.harness.beans.steps.CIStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
+import io.harness.ci.utils.ValidationUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.ff.CIFeatureFlagService;
@@ -85,6 +86,7 @@ public class VmInitializeStepUtils {
     }
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
     validateStageConfig(integrationStageConfig, accountId);
+    ValidationUtils.validateVmInfraDependencies(integrationStageConfig.getServiceDependencies());
 
     Map<String, String> volumeToMountPath = getVolumeToMountPath(integrationStageConfig.getSharedPaths());
     return VmBuildJobInfo.builder()
@@ -156,6 +158,7 @@ public class VmInitializeStepUtils {
         case RESTORE_CACHE_S3:
         case RESTORE_CACHE_GCS:
         case SAVE_CACHE_GCS:
+        case SECURITY:
         case UPLOAD_ARTIFACTORY:
         case UPLOAD_S3:
         case UPLOAD_GCS:

@@ -58,7 +58,7 @@ public class LdapSearch implements LdapValidator {
   @NotBlank String bindCredential;
 
   private static final int pageSize = 1000;
-  private static final String SAM_ACCOUNT_NAME = "samAccountName";
+  private static final String SAM_ACCOUNT_NAME = "sAMAccountName";
 
   /**
    * This is required in case of Oracle Directory services

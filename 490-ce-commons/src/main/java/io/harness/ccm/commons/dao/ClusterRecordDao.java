@@ -31,8 +31,8 @@ public class ClusterRecordDao {
   }
 
   public ClusterRecord get(String clusterId) {
-    Query<ClusterRecord> query =
-        persistence.createQuery(ClusterRecord.class).filter(ClusterRecordKeys.uuid, new ObjectId(clusterId));
+    Query<ClusterRecord> query = persistence.createQuery(ClusterRecord.class, excludeValidate)
+                                     .filter(ClusterRecordKeys.uuid, new ObjectId(clusterId));
     return query.get();
   }
 

@@ -13,14 +13,18 @@ import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ANSHUL;
+import static io.harness.rule.OwnerRule.TATHAGAT;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -232,5 +236,34 @@ public class K8sRollingBaseHandlerTest extends CategoryTest {
         .isEqualTo(thrownException);
 
     verify(logCallback, times(1)).saveExecutionLog(thrownException.getMessage(), ERROR, FAILURE);
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testAddLabelsInDeploymentSelectorAddSelector() {
+    KubernetesResource resource = mock(KubernetesResource.class);
+    prepareMockedKubernetesResource(resource);
+    List<KubernetesResource> resources = Collections.singletonList(resource);
+    k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(true, resources);
+    verify(resource, times(1)).addLabelsInDeploymentSelector(anyMap());
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testAddLabelsInDeploymentSelectorNonCanary() {
+    KubernetesResource resource = mock(KubernetesResource.class);
+    prepareMockedKubernetesResource(resource);
+    List<KubernetesResource> resources = Collections.singletonList(resource);
+
+    k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(false, resources);
+    verify(resource, never()).addLabelsInDeploymentSelector(anyMap());
+  }
+
+  private void prepareMockedKubernetesResource(KubernetesResource resource) {
+    KubernetesResourceId resourceId = mock(KubernetesResourceId.class);
+    when(resource.getResourceId()).thenReturn(resourceId);
+    when(resourceId.getKind()).thenReturn(Kind.Deployment.name());
   }
 }

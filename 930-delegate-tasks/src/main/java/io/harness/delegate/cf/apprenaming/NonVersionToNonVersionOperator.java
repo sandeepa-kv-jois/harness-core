@@ -19,6 +19,7 @@ import io.harness.pcf.model.PcfConstants;
 
 import java.util.List;
 import java.util.TreeMap;
+import lombok.extern.slf4j.Slf4j;
 import org.cloudfoundry.operations.applications.ApplicationSummary;
 
 /**
@@ -40,6 +41,7 @@ import org.cloudfoundry.operations.applications.ApplicationSummary;
  * OrderService_INACTIVE    --> OrderService
  * OrderService_interim     --> OrderService_INACTIVE
  */
+@Slf4j
 public class NonVersionToNonVersionOperator implements AppRenamingOperator {
   @Override
   public CfInBuiltVariablesUpdateValues renameApp(CfRouteUpdateRequestConfigData cfRouteUpdateConfigData,
@@ -55,7 +57,8 @@ public class NonVersionToNonVersionOperator implements AppRenamingOperator {
     if (!appTypeApplicationSummaryMap.containsKey(AppType.ACTIVE)) {
       // first deployment in non-version -> non-version
       ApplicationSummary applicationSummary = appTypeApplicationSummaryMap.get(AppType.NEW).getAppSummary();
-      pcfCommandTaskBaseHelper.renameApp(applicationSummary, cfRequestConfig, executionLogCallback, cfAppNamePrefix);
+      renameApp(
+          applicationSummary, pcfCommandTaskBaseHelper, cfRequestConfig, executionLogCallback, cfAppNamePrefix, log);
       updateValuesBuilder.newAppGuid(applicationSummary.getId());
       updateValuesBuilder.newAppName(cfAppNamePrefix);
       return updateValuesBuilder.build();
@@ -64,15 +67,16 @@ public class NonVersionToNonVersionOperator implements AppRenamingOperator {
     ApplicationSummary currentActiveApplicationSummary =
         appTypeApplicationSummaryMap.get(AppType.ACTIVE).getAppSummary();
     String intermediateName = PcfConstants.generateInterimAppName(cfAppNamePrefix);
-    pcfCommandTaskBaseHelper.renameApp(
-        currentActiveApplicationSummary, cfRequestConfig, executionLogCallback, intermediateName);
+    renameApp(currentActiveApplicationSummary, pcfCommandTaskBaseHelper, cfRequestConfig, executionLogCallback,
+        intermediateName, log);
 
     ApplicationSummary newApplicationSummary = appTypeApplicationSummaryMap.get(AppType.NEW).getAppSummary();
-    pcfCommandTaskBaseHelper.renameApp(newApplicationSummary, cfRequestConfig, executionLogCallback, cfAppNamePrefix);
+    renameApp(
+        newApplicationSummary, pcfCommandTaskBaseHelper, cfRequestConfig, executionLogCallback, cfAppNamePrefix, log);
 
     String inActiveName = cfAppNamePrefix + PcfConstants.INACTIVE_APP_NAME_SUFFIX;
-    pcfCommandTaskBaseHelper.renameApp(
-        currentActiveApplicationSummary, cfRequestConfig, executionLogCallback, inActiveName, intermediateName);
+    renameApp(currentActiveApplicationSummary, pcfCommandTaskBaseHelper, cfRequestConfig, executionLogCallback,
+        inActiveName, intermediateName, log);
 
     updateValuesBuilder.newAppGuid(newApplicationSummary.getId());
     updateValuesBuilder.newAppName(cfAppNamePrefix);

@@ -56,7 +56,6 @@ import io.harness.cvng.core.entities.SplunkCVConfig;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.dashboard.entities.HeatMap;
-import io.harness.cvng.dashboard.services.api.HeatMapService;
 import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.statemachine.beans.AnalysisInput;
 import io.harness.cvng.verificationjob.entities.TestVerificationJob;
@@ -98,7 +97,6 @@ public class LogAnalysisServiceImplTest extends CvNextGenTestBase {
   @Inject private DeploymentLogAnalysisService deploymentLogAnalysisService;
   @Inject private VerificationJobInstanceService verificationJobInstanceService;
   @Inject private VerificationJobService verificationJobService;
-  @Inject private HeatMapService heatMapService;
   @Mock private NextGenService nextGenService;
   private Instant instant;
   private String accountId;
@@ -115,8 +113,6 @@ public class LogAnalysisServiceImplTest extends CvNextGenTestBase {
     instant = Instant.parse("2020-07-27T10:44:11.000Z");
     verificationTaskId = verificationTaskService.getServiceGuardVerificationTaskId(cvConfig.getAccountId(), cvConfigId);
     FieldUtils.writeField(cvConfigService, "nextGenService", nextGenService, true);
-    FieldUtils.writeField(heatMapService, "cvConfigService", cvConfigService, true);
-    FieldUtils.writeField(logAnalysisService, "heatMapService", heatMapService, true);
   }
 
   @Test

@@ -177,6 +177,10 @@ if [[ "" != "$CONNECTOR_HEALTH_UPDATE_CRON" ]]; then
   yq write -i $CONFIG_FILE scheduler-jobs-config.connectorHealthUpdateJobCron "$CONNECTOR_HEALTH_UPDATE_CRON"
 fi
 
+if [[ "" != "$AWS_ACCOUNT_TAGS_COLLECTION_CRON" ]]; then
+  yq write -i $CONFIG_FILE scheduler-jobs-config.awsAccountTagsCollectionJobCron "$AWS_ACCOUNT_TAGS_COLLECTION_CRON"
+fi
+
 if [[ "" != "$HARNESS_CE_AZURE_CLIENTID" ]]; then
   yq write -i $CONFIG_FILE azureStorageSyncConfig.azureAppClientId "$HARNESS_CE_AZURE_CLIENTID"
 fi
@@ -231,6 +235,10 @@ fi
 
 if [[ "" != "$CONNECTOR_HEALTH_UPDATE_JOB_ENABLED" ]]; then
   yq write -i $CONFIG_FILE connectorHealthUpdateJobConfig.enabled "$CONNECTOR_HEALTH_UPDATE_JOB_ENABLED"
+fi
+
+if [[ "" != "$AWS_ACCOUNT_TAGS_COLLECTION_JOB_ENABLED" ]]; then
+  yq write -i $CONFIG_FILE awsAccountTagsCollectionJobConfig.enabled "$AWS_ACCOUNT_TAGS_COLLECTION_JOB_ENABLED"
 fi
 
 replace_key_value cfClientConfig.apiKey "$CF_CLIENT_API_KEY"

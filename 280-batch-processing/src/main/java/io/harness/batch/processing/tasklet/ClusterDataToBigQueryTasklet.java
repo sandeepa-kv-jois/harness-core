@@ -17,6 +17,7 @@ import io.harness.batch.processing.ccm.BatchJobType;
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.service.impl.GoogleCloudStorageServiceImpl;
+import io.harness.batch.processing.service.intfc.WorkloadRepository;
 import io.harness.batch.processing.tasklet.dto.HarnessTags;
 import io.harness.batch.processing.tasklet.reader.BillingDataReader;
 import io.harness.batch.processing.tasklet.support.HarnessEntitiesService;
@@ -24,6 +25,8 @@ import io.harness.batch.processing.tasklet.support.HarnessEntitiesService.Harnes
 import io.harness.batch.processing.tasklet.support.HarnessTagService;
 import io.harness.batch.processing.tasklet.support.K8SWorkloadService;
 import io.harness.ccm.commons.beans.InstanceType;
+import io.harness.ccm.commons.beans.JobConstants;
+import io.harness.ccm.commons.entities.k8s.K8sWorkload;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -40,10 +43,12 @@ import java.time.ZonedDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.EqualsAndHashCode;
+import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.file.DataFileWriter;
 import org.apache.avro.io.DatumWriter;
@@ -62,9 +67,9 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
   @Autowired private BatchMainConfig config;
   @Autowired private BillingDataServiceImpl billingDataService;
   @Autowired private GoogleCloudStorageServiceImpl googleCloudStorageService;
-  @Autowired private K8SWorkloadService k8SWorkloadService;
   @Autowired private HarnessTagService harnessTagService;
   @Autowired private HarnessEntitiesService harnessEntitiesService;
+  @Autowired private WorkloadRepository workloadRepository;
 
   private static final String defaultParentWorkingDirectory = "./avro/";
   private static final String defaultBillingDataFileNameDaily = "billing_data_%s_%s_%s.avro";
@@ -77,12 +82,25 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
           .maximumSize(CACHE_SIZE)
           .build(key -> harnessEntitiesService.fetchEntityName(key.getEntity(), key.getEntityId()));
 
+  @Value
+  @EqualsAndHashCode
+  @VisibleForTesting
+  public static class Key {
+    String accountId;
+    String clusterId;
+    String namespace;
+
+    public static Key getKeyFromInstanceData(InstanceBillingData instanceBillingData) {
+      return new Key(
+          instanceBillingData.getAccountId(), instanceBillingData.getClusterId(), instanceBillingData.getNamespace());
+    }
+  }
+
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
     JobParameters parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-    BatchJobType batchJobType =
-        CCMJobConstants.getBatchJobTypeFromJobParams(parameters, CCMJobConstants.BATCH_JOB_TYPE);
-    final CCMJobConstants jobConstants = new CCMJobConstants(chunkContext);
+    BatchJobType batchJobType = CCMJobConstants.getBatchJobTypeFromJobParams(parameters);
+    final JobConstants jobConstants = new CCMJobConstants(chunkContext);
     int batchSize = config.getBatchQueryConfig().getQueryBatchSize();
 
     BillingDataReader billingDataReader = new BillingDataReader(billingDataService, jobConstants.getAccountId(),
@@ -103,11 +121,10 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
     boolean avroFileWithSchemaExists = false;
     do {
       instanceBillingDataList = billingDataReader.getNext();
-      refreshLabelCache(jobConstants.getAccountId(), instanceBillingDataList);
-      List<ClusterBillingData> clusterBillingData = instanceBillingDataList.stream()
-                                                        .map(this::convertInstanceBillingDataToAVROObjects)
-                                                        .collect(Collectors.toList());
-      writeDataToAvro(jobConstants.getAccountId(), clusterBillingData, billingDataFileName, avroFileWithSchemaExists);
+      List<ClusterBillingData> clusterBillingDataList = getClusterBillingDataForBatch(instanceBillingDataList);
+      log.debug("clusterBillingDataList size: {}", clusterBillingDataList.size());
+      writeDataToAvro(
+          jobConstants.getAccountId(), clusterBillingDataList, billingDataFileName, avroFileWithSchemaExists);
       avroFileWithSchemaExists = true;
     } while (instanceBillingDataList.size() == batchSize);
 
@@ -123,29 +140,43 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
   }
 
   @VisibleForTesting
-  public void refreshLabelCache(String accountId, @NotNull List<InstanceBillingData> instanceBillingDataList) {
-    final List<InstanceBillingData> dataNotPresentInLabelsCache =
-        instanceBillingDataList.stream()
-            .filter(instanceBillingData
-                -> ImmutableSet.of(InstanceType.K8S_POD.name(), InstanceType.K8S_POD_FARGATE.name())
-                       .contains(instanceBillingData.getInstanceType()))
-            .filter(instanceBillingData
-                -> null
-                    == k8SWorkloadService.getK8sWorkloadLabel(accountId, instanceBillingData.getClusterId(),
-                        instanceBillingData.getNamespace(), instanceBillingData.getWorkloadName()))
-            .collect(Collectors.toList());
+  public List<ClusterBillingData> getClusterBillingDataForBatch(List<InstanceBillingData> instanceBillingDataList) {
+    List<ClusterBillingData> clusterBillingDataList = new ArrayList<>();
 
-    final Map<K8SWorkloadService.CacheKey, HashSet<String>> clusterNamespaceWorkload = new HashMap<>();
+    Map<Key, List<InstanceBillingData>> instanceBillingDataGrouped =
+        instanceBillingDataList.stream().collect(Collectors.groupingBy(Key::getKeyFromInstanceData));
 
-    for (InstanceBillingData instanceBillingData : dataNotPresentInLabelsCache) {
-      K8SWorkloadService.CacheKey key = new K8SWorkloadService.CacheKey(
-          accountId, instanceBillingData.getClusterId(), instanceBillingData.getNamespace(), null);
+    for (Key key : instanceBillingDataGrouped.keySet()) {
+      List<InstanceBillingData> instances = instanceBillingDataGrouped.get(key);
+      Map<K8SWorkloadService.CacheKey, Map<String, String>> labelMap = getLabelMapForGroup(instances, key);
+      log.debug("labelMap: {}", labelMap);
 
-      clusterNamespaceWorkload.computeIfAbsent(key, k -> new HashSet<>()).add(instanceBillingData.getWorkloadName());
+      for (InstanceBillingData instanceBillingData : instances) {
+        Map<String, String> labels = labelMap.get(
+            new K8SWorkloadService.CacheKey(instanceBillingData.getAccountId(), instanceBillingData.getClusterId(),
+                instanceBillingData.getNamespace(), instanceBillingData.getWorkloadName()));
+        ClusterBillingData clusterBillingData = convertInstanceBillingDataToAVROObjects(instanceBillingData, labels);
+        clusterBillingDataList.add(clusterBillingData);
+      }
     }
 
-    clusterNamespaceWorkload.forEach(
-        (key, workloadNames) -> k8SWorkloadService.updateK8sWorkloadLabelCache(key, workloadNames));
+    return clusterBillingDataList;
+  }
+
+  @VisibleForTesting
+  public Map<K8SWorkloadService.CacheKey, Map<String, String>> getLabelMapForGroup(
+      List<InstanceBillingData> instanceBillingDataList, Key key) {
+    String accountId = key.getAccountId();
+    String clusterId = key.getClusterId();
+    String namespace = key.getNamespace();
+    Set<String> workloadNames =
+        instanceBillingDataList.stream().map(InstanceBillingData::getWorkloadName).collect(Collectors.toSet());
+    List<K8sWorkload> workloads = workloadRepository.getWorkload(accountId, clusterId, namespace, workloadNames);
+    Map<K8SWorkloadService.CacheKey, Map<String, String>> labelMap = new HashMap<>();
+    workloads.forEach(workload
+        -> labelMap.put(new K8SWorkloadService.CacheKey(accountId, clusterId, namespace, workload.getName()),
+            workload.getLabels()));
+    return labelMap;
   }
 
   private void writeDataToAvro(String accountId, List<ClusterBillingData> instanceBillingDataAvro,
@@ -166,7 +197,8 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
     dataFileWriter.close();
   }
 
-  private ClusterBillingData convertInstanceBillingDataToAVROObjects(InstanceBillingData instanceBillingData) {
+  private ClusterBillingData convertInstanceBillingDataToAVROObjects(
+      InstanceBillingData instanceBillingData, Map<String, String> k8sWorkloadLabel) {
     String accountId = instanceBillingData.getAccountId();
     ClusterBillingData clusterBillingData = new ClusterBillingData();
     clusterBillingData.setAppid(instanceBillingData.getAppId());
@@ -263,10 +295,6 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
     List<Label> labels = new ArrayList<>();
     if (ImmutableSet.of(InstanceType.K8S_POD.name(), InstanceType.K8S_POD_FARGATE.name())
             .contains(instanceBillingData.getInstanceType())) {
-      Map<String, String> k8sWorkloadLabel =
-          k8SWorkloadService.getK8sWorkloadLabel(accountId, instanceBillingData.getClusterId(),
-              instanceBillingData.getNamespace(), instanceBillingData.getWorkloadName());
-
       if (null != k8sWorkloadLabel) {
         k8sWorkloadLabel.forEach((key, value) -> {
           Label workloadLabel = new Label();

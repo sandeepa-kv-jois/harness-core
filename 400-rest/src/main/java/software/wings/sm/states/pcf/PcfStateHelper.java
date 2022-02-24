@@ -843,15 +843,15 @@ public class PcfStateHelper {
   }
 
   public void updateInfoVariables(ExecutionContext context, PcfRouteUpdateStateExecutionData stateExecutionData,
-      CfCommandExecutionResponse executionResponse, boolean rollback, boolean upSizeInActiveApp) {
+      CfCommandExecutionResponse executionResponse, boolean rollback) {
     SweepingOutputInstance sweepingOutputInstance = sweepingOutputService.find(
         context.prepareSweepingOutputInquiryBuilder().name(InfoVariables.SWEEPING_OUTPUT_NAME).build());
 
     if (sweepingOutputInstance != null) {
       InfoVariables infoVariables = (InfoVariables) sweepingOutputInstance.getValue();
       sweepingOutputService.deleteById(context.getAppId(), sweepingOutputInstance.getUuid());
-      infoVariables.setNewAppRoutes(getNewAppRoutes(stateExecutionData, rollback, upSizeInActiveApp));
-      updateAppDetails(infoVariables, executionResponse);
+      infoVariables.setNewAppRoutes(getNewAppRoutes(stateExecutionData, rollback));
+      updateAppDetails(infoVariables, executionResponse, rollback);
       sweepingOutputService.ensure(context.prepareSweepingOutputBuilder(getSweepingOutputScope(context))
                                        .name(InfoVariables.SWEEPING_OUTPUT_NAME)
                                        .value(infoVariables)
@@ -859,24 +859,24 @@ public class PcfStateHelper {
     }
   }
 
-  private List<String> getNewAppRoutes(
-      PcfRouteUpdateStateExecutionData stateExecutionData, boolean rollback, boolean upSizeInActiveApp) {
+  private List<String> getNewAppRoutes(PcfRouteUpdateStateExecutionData stateExecutionData, boolean rollback) {
     if (rollback) {
-      return upSizeInActiveApp ? Collections.emptyList()
-                               : stateExecutionData.getPcfRouteUpdateRequestConfigData().getTempRoutes();
+      return Collections.emptyList();
     }
-    return stateExecutionData.getPcfRouteUpdateRequestConfigData().getFinalRoutes();
+    CfRouteUpdateRequestConfigData configData = stateExecutionData.getPcfRouteUpdateRequestConfigData();
+    return configData != null ? configData.getFinalRoutes() : Collections.emptyList();
   }
 
-  private void updateAppDetails(InfoVariables infoVariables, CfCommandExecutionResponse executionResponse) {
+  private void updateAppDetails(
+      InfoVariables infoVariables, CfCommandExecutionResponse executionResponse, boolean rollback) {
     CfCommandResponse pcfCommandResponse = executionResponse.getPcfCommandResponse();
     if (!(pcfCommandResponse instanceof CfRouteUpdateCommandResponse)) {
       return;
     }
 
     CfRouteUpdateCommandResponse routeUpdateCommandResponse = (CfRouteUpdateCommandResponse) pcfCommandResponse;
-    CfInBuiltVariablesUpdateValues updateValues = routeUpdateCommandResponse.getUpdatedValues();
-    if (updateValues == null) {
+    CfInBuiltVariablesUpdateValues updatedValues = routeUpdateCommandResponse.getUpdatedValues();
+    if (updatedValues == null) {
       return;
     }
     String oldAppGuid = infoVariables.getOldAppGuid();
@@ -884,44 +884,55 @@ public class PcfStateHelper {
     String newAppGuid = infoVariables.getNewAppGuid();
     String newAppName = infoVariables.getNewAppName();
 
-    if (isNotEmpty(updateValues.getNewAppGuid()) && isNotEmpty(newAppGuid)
-        && newAppGuid.equals(updateValues.getNewAppGuid()) && isNotEmpty(updateValues.getNewAppName())
-        && !updateValues.getNewAppName().equals(newAppName)) {
-      infoVariables.setNewAppGuid(updateValues.getNewAppGuid());
-      infoVariables.setNewAppName(updateValues.getNewAppName());
+    if (isNotEmpty(updatedValues.getNewAppGuid()) && isNotEmpty(newAppGuid)
+        && newAppGuid.equals(updatedValues.getNewAppGuid()) && isNotEmpty(updatedValues.getNewAppName())
+        && !updatedValues.getNewAppName().equals(newAppName)) {
+      infoVariables.setNewAppGuid(updatedValues.getNewAppGuid());
+      infoVariables.setNewAppName(updatedValues.getNewAppName());
     }
-    if (isNotEmpty(updateValues.getOldAppGuid()) && isNotEmpty(oldAppGuid)
-        && oldAppGuid.equals(updateValues.getOldAppGuid()) && isNotEmpty(updateValues.getOldAppName())
-        && !updateValues.getOldAppName().equals(oldAppName)) {
-      infoVariables.setOldAppGuid(updateValues.getOldAppGuid());
-      infoVariables.setOldAppName(updateValues.getOldAppName());
+    if (isNotEmpty(updatedValues.getOldAppGuid()) && isNotEmpty(oldAppGuid)
+        && oldAppGuid.equals(updatedValues.getOldAppGuid()) && isNotEmpty(updatedValues.getOldAppName())
+        && !updatedValues.getOldAppName().equals(oldAppName)) {
+      infoVariables.setOldAppGuid(updatedValues.getOldAppGuid());
+      infoVariables.setOldAppName(updatedValues.getOldAppName());
     }
+
+    infoVariables.setActiveAppName(rollback ? infoVariables.getOldAppName() : infoVariables.getNewAppName());
+    infoVariables.setInActiveAppName(
+        rollback ? infoVariables.getMostRecentInactiveAppVersionOldName() : infoVariables.getOldAppName());
   }
 
   public void updateAppNamesVariables(ExecutionContext context, CfDeployCommandResponse cfDeployCommandResponse) {
+    PcfDeployStateExecutionData stateExecutionData = (PcfDeployStateExecutionData) context.getStateExecutionData();
+    SetupSweepingOutputPcf setupSweepingOutputPcf = stateExecutionData.getSetupSweepingOutputPcf();
     SweepingOutputInstance sweepingOutputInstance = sweepingOutputService.find(
         context.prepareSweepingOutputInquiryBuilder().name(InfoVariables.SWEEPING_OUTPUT_NAME).build());
     CfInBuiltVariablesUpdateValues updatedValues = cfDeployCommandResponse.getUpdatedValues();
 
     if (sweepingOutputInstance != null && updatedValues != null) {
       InfoVariables infoVariables = (InfoVariables) sweepingOutputInstance.getValue();
-      String oldAppGuid = infoVariables.getOldAppGuid();
-      String oldAppName = infoVariables.getOldAppName();
+      infoVariables.setNewAppName(null);
+      infoVariables.setNewAppGuid(null);
+      infoVariables.setNewAppRoutes(null);
 
-      String updatedOldAppName = updatedValues.getOldAppName();
-
-      if (isNotEmpty(oldAppGuid) && isNotEmpty(updatedValues.getOldAppGuid())
-          && oldAppGuid.equals(updatedValues.getOldAppGuid()) && isNotEmpty(updatedOldAppName)
-          && !updatedOldAppName.equals(oldAppName)) {
-        infoVariables.setOldAppGuid(updatedValues.getOldAppGuid());
-        infoVariables.setOldAppName(updatedOldAppName);
-
-        sweepingOutputService.deleteById(context.getAppId(), sweepingOutputInstance.getUuid());
-        sweepingOutputService.ensure(context.prepareSweepingOutputBuilder(getSweepingOutputScope(context))
-                                         .name(InfoVariables.SWEEPING_OUTPUT_NAME)
-                                         .value(infoVariables)
-                                         .build());
+      if (setupSweepingOutputPcf != null && !setupSweepingOutputPcf.isStandardBlueGreenWorkflow()) {
+        String oldAppGuid = infoVariables.getOldAppGuid();
+        String oldAppName = infoVariables.getOldAppName();
+        String updatedOldAppName = updatedValues.getOldAppName();
+        if (isNotEmpty(oldAppGuid) && isNotEmpty(updatedValues.getOldAppGuid())
+            && oldAppGuid.equals(updatedValues.getOldAppGuid()) && isNotEmpty(updatedOldAppName)
+            && !updatedOldAppName.equals(oldAppName)) {
+          infoVariables.setOldAppGuid(updatedValues.getOldAppGuid());
+          infoVariables.setOldAppName(updatedOldAppName);
+        }
+        infoVariables.setActiveAppName(infoVariables.getOldAppName());
+        infoVariables.setInActiveAppName(infoVariables.getMostRecentInactiveAppVersionOldName());
       }
+      sweepingOutputService.deleteById(context.getAppId(), sweepingOutputInstance.getUuid());
+      sweepingOutputService.ensure(context.prepareSweepingOutputBuilder(getSweepingOutputScope(context))
+                                       .name(InfoVariables.SWEEPING_OUTPUT_NAME)
+                                       .value(infoVariables)
+                                       .build());
     }
   }
 

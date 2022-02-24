@@ -13,18 +13,14 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.cvng.analysis.beans.Risk;
-import io.harness.cvng.analysis.services.api.AnalysisService;
 import io.harness.cvng.beans.CVMonitoringCategory;
-import io.harness.cvng.client.NextGenService;
 import io.harness.cvng.core.beans.monitoredService.DurationDTO;
 import io.harness.cvng.core.beans.monitoredService.HistoricalTrend;
 import io.harness.cvng.core.beans.monitoredService.RiskData;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.services.CVNextGenConstants;
-import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.utils.ServiceEnvKey;
-import io.harness.cvng.dashboard.beans.HeatMapDTO;
 import io.harness.cvng.dashboard.entities.HeatMap;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapKeys;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapResolution;
@@ -32,7 +28,6 @@ import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk;
 import io.harness.cvng.dashboard.entities.HeatMap.HeatMapRisk.HeatMapRiskKeys;
 import io.harness.cvng.dashboard.services.api.HeatMapService;
 import io.harness.cvng.utils.CVNGParallelExecutor;
-import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
 
 import com.google.common.base.Preconditions;
@@ -63,14 +58,9 @@ import org.mongodb.morphia.query.Query;
 
 public class HeatMapServiceImpl implements HeatMapService {
   private static final int RISK_TIME_BUFFER_MINS = 15;
-  public static final int RISK_THRESHOLD = 50;
-  public static final int POPOVER_NUMBER_OF_MAX_RISKS = 3;
   @Inject private HPersistence hPersistence;
-  @Inject private CVConfigService cvConfigService;
   @Inject private Clock clock;
-  @Inject private AnalysisService analysisService;
   @Inject private CVNGParallelExecutor cvngParallelExecutor;
-  @Inject private NextGenService nextGenService;
 
   @Override
   public void updateRiskScore(String accountId, String orgIdentifier, String projectIdentifier,
@@ -106,6 +96,7 @@ public class HeatMapServiceImpl implements HeatMapService {
                                         .filter(HeatMapKeys.projectIdentifier, projectIdentifier)
                                         .filter(HeatMapKeys.serviceIdentifier, serviceIdentifier)
                                         .filter(HeatMapKeys.envIdentifier, envIdentifier)
+                                        .filter(HeatMapKeys.monitoredServiceIdentifier, monitoredServiceIdentifier)
                                         .filter(HeatMapKeys.category, category)
                                         .filter(HeatMapKeys.heatMapResolution, heatMapResolution)
                                         .filter(HeatMapKeys.heatMapBucketStartTime, bucketStartTime)
@@ -156,8 +147,8 @@ public class HeatMapServiceImpl implements HeatMapService {
     }
   }
 
-  private List<HeatMap> getLatestHeatMaps(
-      ProjectParams projectParams, List<String> serviceIdentifiers, List<String> envIdentifiers) {
+  private List<HeatMap> getLatestHeatMaps(ProjectParams projectParams, List<String> serviceIdentifiers,
+      List<String> envIdentifiers, List<String> monitoredServiceIdentifiers) {
     HeatMapResolution heatMapResolution = HeatMapResolution.FIVE_MIN;
     Instant bucketEndTime = roundDownTo5MinBoundary(clock.instant()).minus(RISK_TIME_BUFFER_MINS, ChronoUnit.MINUTES);
     Query<HeatMap> heatMapQuery = hPersistence.createQuery(HeatMap.class, excludeAuthority)
@@ -172,6 +163,9 @@ public class HeatMapServiceImpl implements HeatMapService {
     }
     if (serviceIdentifiers != null) {
       heatMapQuery.field(HeatMapKeys.serviceIdentifier).in(serviceIdentifiers);
+    }
+    if (monitoredServiceIdentifiers != null) {
+      heatMapQuery.field(HeatMapKeys.monitoredServiceIdentifier).in(monitoredServiceIdentifiers);
     }
     List<HeatMap> heatMapList = heatMapQuery.asList();
     Map<HeatMapKey, HeatMap> heatMapMap = new HashMap<>();
@@ -204,7 +198,7 @@ public class HeatMapServiceImpl implements HeatMapService {
   public Map<ServiceEnvKey, RiskData> getLatestHealthScore(@NonNull ProjectParams projectParams,
       @NonNull List<String> serviceIdentifiers, @NonNull List<String> envIdentifiers) {
     Map<ServiceEnvKey, RiskData> latestHealthScoresMap = new HashMap<>();
-    List<HeatMap> latestHeatMaps = getLatestHeatMaps(projectParams, serviceIdentifiers, envIdentifiers);
+    List<HeatMap> latestHeatMaps = getLatestHeatMaps(projectParams, serviceIdentifiers, envIdentifiers, null);
     Map<ServiceEnvKey, List<HeatMap>> heatMapMap = latestHeatMaps.stream().collect(Collectors.groupingBy(x
         -> ServiceEnvKey.builder()
                .serviceIdentifier(x.getServiceIdentifier())
@@ -214,6 +208,25 @@ public class HeatMapServiceImpl implements HeatMapService {
       double riskScore =
           heatMaps.stream().mapToDouble(x -> x.getHeatMapRisks().iterator().next().getRiskScore()).max().orElse(-1.0);
       latestHealthScoresMap.put(serviceEnvKey,
+          RiskData.builder()
+              .healthScore(Risk.getHealthScoreFromRiskScore(riskScore))
+              .riskStatus(Risk.getRiskFromRiskScore(riskScore))
+              .build());
+    });
+    return latestHealthScoresMap;
+  }
+
+  @Override
+  public Map<String, RiskData> getLatestHealthScore(
+      @NonNull ProjectParams projectParams, @NonNull List<String> monitoredServiceIdentifiers) {
+    Map<String, RiskData> latestHealthScoresMap = new HashMap<>();
+    List<HeatMap> latestHeatMaps = getLatestHeatMaps(projectParams, null, null, monitoredServiceIdentifiers);
+    Map<String, List<HeatMap>> heatMapMap =
+        latestHeatMaps.stream().collect(Collectors.groupingBy(x -> x.getMonitoredServiceIdentifier()));
+    heatMapMap.forEach((monitoredServiceIdentifier, heatMaps) -> {
+      double riskScore =
+          heatMaps.stream().mapToDouble(x -> x.getHeatMapRisks().iterator().next().getRiskScore()).max().orElse(-1.0);
+      latestHealthScoresMap.put(monitoredServiceIdentifier,
           RiskData.builder()
               .healthScore(Risk.getHealthScoreFromRiskScore(riskScore))
               .riskStatus(Risk.getRiskFromRiskScore(riskScore))
@@ -377,17 +390,17 @@ public class HeatMapServiceImpl implements HeatMapService {
   }
 
   @Override
-  public HistoricalTrend getOverAllHealthScore(ProjectParams projectParams, String serviceIdentifier,
-      String environmentIdentifier, DurationDTO duration, Instant endTime) {
-    HistoricalTrend historicalTrend = getHealthScoreBars(projectParams, serviceIdentifier, environmentIdentifier,
-        duration, endTime, HeatMapResolution.resolutionForDurationDTO(duration));
+  public HistoricalTrend getOverAllHealthScore(
+      ProjectParams projectParams, String monitoredServiceIdentifier, DurationDTO duration, Instant endTime) {
+    HistoricalTrend historicalTrend = getHealthScoreBars(projectParams, monitoredServiceIdentifier, duration, endTime,
+        HeatMapResolution.resolutionForDurationDTO(duration));
     historicalTrend.reduceHealthScoreDataToXPoints(
         historicalTrend.getHealthScores().size() / CVNextGenConstants.CVNG_TIMELINE_BUCKET_COUNT);
     return historicalTrend;
   }
 
-  private HistoricalTrend getHealthScoreBars(ProjectParams projectParams, String serviceIdentifier,
-      String environmentIdentifier, DurationDTO duration, Instant endTime, HeatMapResolution resolutionToReadFrom) {
+  private HistoricalTrend getHealthScoreBars(ProjectParams projectParams, String monitoredServiceIdentifier,
+      DurationDTO duration, Instant endTime, HeatMapResolution resolutionToReadFrom) {
     Preconditions.checkState(duration.getDuration().toMinutes() % resolutionToReadFrom.getResolution().toMinutes() == 0
             && (duration.getDuration().toMinutes() / resolutionToReadFrom.getResolution().toMinutes()) % 48 == 0,
         String.format("Cannot calculate health score bar for the given duration %s per minutes %s", duration,
@@ -402,8 +415,7 @@ public class HeatMapServiceImpl implements HeatMapService {
                                       .filter(HeatMapKeys.accountId, projectParams.getAccountIdentifier())
                                       .filter(HeatMapKeys.orgIdentifier, projectParams.getOrgIdentifier())
                                       .filter(HeatMapKeys.projectIdentifier, projectParams.getProjectIdentifier())
-                                      .filter(HeatMapKeys.serviceIdentifier, serviceIdentifier)
-                                      .filter(HeatMapKeys.envIdentifier, environmentIdentifier)
+                                      .filter(HeatMapKeys.monitoredServiceIdentifier, monitoredServiceIdentifier)
                                       .filter(HeatMapKeys.heatMapResolution, heatMapResolution)
                                       .field(HeatMapKeys.heatMapBucketEndTime)
                                       .greaterThan(trendStartTime)
@@ -428,45 +440,6 @@ public class HeatMapServiceImpl implements HeatMapService {
       });
     });
     return historicalTrend;
-  }
-
-  private Map<Instant, HeatMapDTO> getHeatMapsFromDB(String accountId, String orgIdentifier, String projectIdentifier,
-      String serviceIdentifier, String envIdentifier, CVMonitoringCategory category, Instant startTime, Instant endTime,
-      HeatMapResolution heatMapResolution) {
-    Instant startTimeBucketBoundary = getBoundaryOfResolution(startTime, heatMapResolution.getBucketSize());
-    Instant endTimeBucketBoundary = getBoundaryOfResolution(endTime, heatMapResolution.getBucketSize());
-    Map<Instant, HeatMapDTO> heatMapDTOS = new HashMap<>();
-    try (HIterator<HeatMap> heatMapRecords =
-             new HIterator<>(hPersistence.createQuery(HeatMap.class, excludeAuthority)
-                                 .filter(HeatMapKeys.accountId, accountId)
-                                 .filter(HeatMapKeys.orgIdentifier, orgIdentifier)
-                                 .filter(HeatMapKeys.projectIdentifier, projectIdentifier)
-                                 .filter(HeatMapKeys.serviceIdentifier, serviceIdentifier)
-                                 .filter(HeatMapKeys.envIdentifier, envIdentifier)
-                                 .filter(HeatMapKeys.category, category)
-                                 .filter(HeatMapKeys.heatMapResolution, heatMapResolution)
-                                 .field(HeatMapKeys.heatMapBucketStartTime)
-                                 .greaterThanOrEq(startTimeBucketBoundary)
-                                 .field(HeatMapKeys.heatMapBucketStartTime)
-                                 .lessThanOrEq(endTimeBucketBoundary)
-                                 .fetch())) {
-      while (heatMapRecords.hasNext()) {
-        HeatMap heatMap = heatMapRecords.next();
-        heatMap.getHeatMapRisks()
-            .stream()
-            .filter(heatMapRisk
-                -> heatMapRisk.getStartTime().compareTo(startTime) >= 0
-                    && heatMapRisk.getStartTime().compareTo(endTime) <= 0)
-            .forEach(heatMapRisk
-                -> heatMapDTOS.put(heatMapRisk.getStartTime(),
-                    HeatMapDTO.builder()
-                        .startTime(heatMapRisk.getStartTime().toEpochMilli())
-                        .endTime(heatMapRisk.getEndTime().toEpochMilli())
-                        .riskScore(heatMapRisk.getRiskScore())
-                        .build()));
-      }
-    }
-    return heatMapDTOS;
   }
 
   private Instant getBoundaryOfResolution(Instant input, Duration resolution) {

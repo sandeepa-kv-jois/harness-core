@@ -16,7 +16,6 @@ import io.harness.gitsync.core.beans.GitFullSyncEntityInfo;
 import io.harness.gitsync.sdk.GitSyncApiConstants;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -41,5 +40,5 @@ public class GitFullSyncEntityInfoDTO {
   @Schema(description = GitSyncApiConstants.REPO_URL_PARAM_MESSAGE) String repoUrl;
   @Schema(description = GitSyncApiConstants.FOLDER_PATH_PARAM_MESSAGE) String rootFolder;
   @Schema(description = "This is the number of Full Sync retry attempts") long retryCount;
-  @Schema(description = "This is the list of Full Sync errors") List<String> errorMessages;
+  @Schema(description = "Contains the error while syncing the entity") String errorMessage;
 }

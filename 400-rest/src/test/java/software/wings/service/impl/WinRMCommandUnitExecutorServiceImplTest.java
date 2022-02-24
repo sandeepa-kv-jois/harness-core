@@ -47,6 +47,7 @@ import static org.mockito.Mockito.when;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ShellExecutionException;
 import io.harness.exception.TimeoutException;
@@ -63,7 +64,6 @@ import software.wings.beans.command.SetupEnvCommandUnit;
 import software.wings.beans.infrastructure.Host;
 import software.wings.core.winrm.executors.WinRmExecutor;
 import software.wings.core.winrm.executors.WinRmExecutorFactory;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.delegatetasks.DelegateLogService;
 
 import com.google.common.collect.ImmutableMap;

@@ -28,9 +28,11 @@ public class KubernetesExceptionMessages {
   public final String MULTIPLE_SERVICES = "Multiple unmarked services found in manifest";
   public final String BG_CONFLICTING_SERVICE = "Found conflicting service [%s] in the cluster";
   public final String BG_SWAP_SERVICES_FAILED = "Failed to swap services [%s, %s]";
-  public final String SCALE_CLI_FAILED = "Failed to scale resource: %s";
 
   public final String ROLLBACK_CLI_FAILED = "Failed to rollback resource %s in namespace %s to revision %s";
 
   public final String FAILED_TO_READ_MANIFEST_FILE = "Failed to read file at path [%s]";
+
+  public final String CHARACTER_LIMIT_ERROR = ".*must be no more than \\d+ characters.*";
+  public final String INVALID_CHARACTERS_ERROR = ".*must consist of lower case alphanumeric characters.*";
 }

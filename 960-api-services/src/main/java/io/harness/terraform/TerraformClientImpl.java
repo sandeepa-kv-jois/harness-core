@@ -10,6 +10,11 @@ package io.harness.terraform;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+import static io.harness.logging.LogLevel.WARN;
+
+import static software.wings.beans.LogColor.Yellow;
+import static software.wings.beans.LogHelper.color;
+import static software.wings.beans.LogWeight.Bold;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
@@ -175,6 +180,16 @@ public class TerraformClientImpl implements TerraformClient {
       String scriptDirectory, @Nonnull LogCallback executionLogCallback,
       @Nonnull PlanJsonLogOutputStream planJsonLogOutputStream)
       throws InterruptedException, TimeoutException, IOException {
+    TerraformVersion version = version(timeoutInMillis, scriptDirectory);
+    if (!version.minVersion(0, 12)) {
+      String messageFormat = "Terraform plan json export not supported in v%d.%d.%d. Minimum version is v0.12.x. "
+          + "Skipping command.";
+      String message = format(messageFormat, version.getMajor(), version.getMinor(), version.getPatch());
+      executionLogCallback.saveExecutionLog(
+          color("\n" + message + "\n", Yellow, Bold), WARN, CommandExecutionStatus.SKIPPED);
+      return CliResponse.builder().commandExecutionStatus(CommandExecutionStatus.SKIPPED).build();
+    }
+
     String command = "terraform show -json " + planName;
     return executeTerraformCLICommand(command, timeoutInMillis, envVariables, scriptDirectory, executionLogCallback,
         command, planJsonLogOutputStream);

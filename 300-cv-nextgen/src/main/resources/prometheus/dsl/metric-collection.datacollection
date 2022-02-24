@@ -16,7 +16,6 @@ while Var:index !=  Var:lengthOfItems {
         Var hostQuery = concat(Env:baseUrl, "api/v1/label/", Var:serviceInstanceField, "/values?start=", Env:startTimeSeconds,"&end=", Env:endTimeSeconds, "&match[]=", Var:filters)
         Var hostResult = sync-call(url=Var:hostQuery, header=Env:commonHeaders)
         Var hostList = extract(Var:hostResult,$.data)
-
         foreach host in Var:hostList {
             Var hostFilter = concat(",",Var:serviceInstanceField, "=\"", Var:host, "\"}")
             print Var:hostFilter
@@ -34,6 +33,7 @@ while Var:index !=  Var:lengthOfItems {
                 Var:returnList.append(Var:tsRecord)
               }
             }
+            Var:query = Env:queryList[Var:index]
         }
 
     }

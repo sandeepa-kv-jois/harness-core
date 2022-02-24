@@ -72,7 +72,7 @@ public class CfRunPluginCommandRequest extends CfCommandRequest
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     return Arrays.asList(PcfConnectivityCapability.builder().endpointUrl(getPcfConfig().getEndpointUrl()).build(),
         PcfInstallationCapability.builder()
-            .criteria(format("CF CLI version: %s is installed", cfCliVersion))
+            .criteria(format("Checking that CF CLI version: %s is installed", cfCliVersion))
             .version(cfCliVersion)
             .build());
   }

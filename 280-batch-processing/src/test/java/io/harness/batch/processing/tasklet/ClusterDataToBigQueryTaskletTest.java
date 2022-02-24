@@ -8,23 +8,28 @@
 package io.harness.batch.processing.tasklet;
 
 import static io.harness.rule.OwnerRule.ROHIT;
-import static io.harness.rule.OwnerRule.UTSAV;
+import static io.harness.rule.OwnerRule.TRUNAPUSHPA;
 
+import static junit.framework.TestCase.assertEquals;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.harness.avro.ClusterBillingData;
+import io.harness.avro.Label;
 import io.harness.batch.processing.billing.timeseries.data.InstanceBillingData;
 import io.harness.batch.processing.billing.timeseries.service.impl.BillingDataServiceImpl;
 import io.harness.batch.processing.ccm.BatchJobType;
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.service.impl.GoogleCloudStorageServiceImpl;
+import io.harness.batch.processing.service.intfc.WorkloadRepository;
 import io.harness.batch.processing.tasklet.support.K8SWorkloadService;
 import io.harness.category.element.UnitTests;
 import io.harness.ccm.commons.beans.InstanceType;
+import io.harness.ccm.commons.entities.k8s.K8sWorkload;
 import io.harness.rule.Owner;
 import io.harness.testsupport.BaseTaskletTest;
 
@@ -37,12 +42,11 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.runners.MockitoJUnitRunner;
@@ -56,13 +60,21 @@ import org.springframework.batch.repeat.RepeatStatus;
 public class ClusterDataToBigQueryTaskletTest extends BaseTaskletTest {
   public static final String BILLING_DATA = "billing_data";
   public static final int BATCH_SIZE = 500;
+  private static final String INSTANCE_ID = "instanceId";
   private static final String CLUSTER_ID = "clusterId";
+  private static final String SETTING_ID = "settingId";
+  private static final String UID = "uid";
+  private static final String KIND = "kind";
   private static final String NAMESPACE = "namespace";
+  private static final String LABEL_KEY = "labelKey";
+  private static final String LABEL_VALUE = "labelValue";
+  private static final String NAME_0 = "name_0";
+  private static final String NAME_1 = "name_1";
 
   @Mock BillingDataServiceImpl billingDataService;
   @Mock private BatchMainConfig config;
   @Mock GoogleCloudStorageServiceImpl googleCloudStorageService;
-  @Mock private K8SWorkloadService k8SWorkloadService;
+  @Mock private WorkloadRepository workloadRepository;
   @InjectMocks ClusterDataToBigQueryTasklet clusterDataToBigQueryTasklet;
   @Mock private ChunkContext chunkContext;
   @Mock private StepContext stepContext;
@@ -74,38 +86,7 @@ public class ClusterDataToBigQueryTaskletTest extends BaseTaskletTest {
 
   @Before
   public void setup() {
-    InstanceBillingData instanceBillingData = InstanceBillingData.builder()
-                                                  .startTimestamp(START_TIME_MILLIS)
-                                                  .endTimestamp(END_TIME_MILLIS)
-                                                  .accountId(ACCOUNT_ID)
-                                                  .instanceId("instanceId")
-                                                  .instanceType("instanceType")
-                                                  .billingAmount(BigDecimal.ZERO)
-                                                  .cpuBillingAmount(BigDecimal.ZERO)
-                                                  .memoryBillingAmount(BigDecimal.ZERO)
-                                                  .idleCost(BigDecimal.ZERO)
-                                                  .cpuIdleCost(BigDecimal.ZERO)
-                                                  .memoryIdleCost(BigDecimal.ZERO)
-                                                  .systemCost(BigDecimal.ZERO)
-                                                  .cpuSystemCost(BigDecimal.ZERO)
-                                                  .memorySystemCost(BigDecimal.ZERO)
-                                                  .actualIdleCost(BigDecimal.ZERO)
-                                                  .cpuActualIdleCost(BigDecimal.ZERO)
-                                                  .memoryActualIdleCost(BigDecimal.ZERO)
-                                                  .unallocatedCost(BigDecimal.ZERO)
-                                                  .cpuUnallocatedCost(BigDecimal.ZERO)
-                                                  .memoryUnallocatedCost(BigDecimal.ZERO)
-                                                  .storageBillingAmount(BigDecimal.ZERO)
-                                                  .storageActualIdleCost(BigDecimal.ZERO)
-                                                  .storageUnallocatedCost(BigDecimal.ZERO)
-                                                  .storageUtilizationValue(0D)
-                                                  .storageRequest(0D)
-                                                  .maxStorageUtilizationValue(0D)
-                                                  .maxStorageRequest(0D)
-                                                  .orgIdentifier("orgIdentifier")
-                                                  .projectIdentifier("projectIdentifier")
-                                                  .build();
-
+    InstanceBillingData instanceBillingData = createBillingData(NAME_0);
     when(config.getBatchQueryConfig()).thenReturn(BatchQueryConfig.builder().queryBatchSize(BATCH_SIZE).build());
     when(billingDataService.read(ACCOUNT_ID, Instant.ofEpochMilli(START_TIME_MILLIS),
              Instant.ofEpochMilli(END_TIME_MILLIS), BATCH_SIZE, 0, BatchJobType.CLUSTER_DATA_TO_BIG_QUERY))
@@ -128,33 +109,89 @@ public class ClusterDataToBigQueryTaskletTest extends BaseTaskletTest {
   }
 
   @Test
-  @Owner(developers = UTSAV)
+  @Owner(developers = TRUNAPUSHPA)
   @Category(UnitTests.class)
-  public void testRefreshLabelCache() {
-    final List<InstanceBillingData> dataNotPresentInLabelsCache =
-        ImmutableList.of(createBillingData("name0"), createBillingData("name1"));
+  public void testGetLabelMapForGroup() {
+    mockGetWorkload();
+    final List<InstanceBillingData> instances = ImmutableList.of(createBillingData(NAME_0), createBillingData(NAME_1));
+    Map<K8SWorkloadService.CacheKey, Map<String, String>> labelMap = clusterDataToBigQueryTasklet.getLabelMapForGroup(
+        instances, ClusterDataToBigQueryTasklet.Key.getKeyFromInstanceData(instances.get(0)));
+    verify(workloadRepository, times(1));
+    assertEquals(labelMap,
+        Collections.singletonMap(new K8SWorkloadService.CacheKey(ACCOUNT_ID, CLUSTER_ID, NAMESPACE, NAME_0),
+            Collections.singletonMap(LABEL_KEY, LABEL_VALUE)));
+  }
 
-    when(k8SWorkloadService.getK8sWorkloadLabel(any(), any(), any(), any())).thenReturn(null);
+  @Test
+  @Owner(developers = TRUNAPUSHPA)
+  @Category(UnitTests.class)
+  public void testGetLabelMapForGroupEmptyWorkloads() {
+    final List<InstanceBillingData> instances = ImmutableList.of(createBillingData(NAME_0), createBillingData(NAME_1));
+    when(workloadRepository.getWorkload(any(), any(), any(), any())).thenReturn(Collections.emptyList());
+    Map<K8SWorkloadService.CacheKey, Map<String, String>> labelMap = clusterDataToBigQueryTasklet.getLabelMapForGroup(
+        instances, ClusterDataToBigQueryTasklet.Key.getKeyFromInstanceData(instances.get(0)));
+    verify(workloadRepository, times(1));
+    assertEquals(labelMap, Collections.emptyMap());
+  }
 
-    clusterDataToBigQueryTasklet.refreshLabelCache(ACCOUNT_ID, dataNotPresentInLabelsCache);
+  @Test
+  @Owner(developers = TRUNAPUSHPA)
+  @Category(UnitTests.class)
+  public void testGetClusterBillingDataForBatch() {
+    mockGetWorkload();
+    final List<InstanceBillingData> instances = ImmutableList.of(createBillingData(NAME_0), createBillingData(NAME_1));
+    List<ClusterBillingData> clusterBillingData = clusterDataToBigQueryTasklet.getClusterBillingDataForBatch(instances);
+    assertEquals(clusterBillingData.size(), instances.size());
+    assertEquals(clusterBillingData.get(0).getLabels(), Collections.singletonList(new Label(LABEL_KEY, LABEL_VALUE)));
+    assertEquals(clusterBillingData.get(1).getLabels(), Collections.emptyList());
+  }
 
-    ArgumentCaptor<Set<String>> listArgumentCaptor = ArgumentCaptor.forClass((Class<Set<String>>) (Class) Set.class);
-    ArgumentCaptor<K8SWorkloadService.CacheKey> keyArgumentCaptor =
-        ArgumentCaptor.forClass(K8SWorkloadService.CacheKey.class);
-
-    verify(k8SWorkloadService, times(1))
-        .updateK8sWorkloadLabelCache(keyArgumentCaptor.capture(), listArgumentCaptor.capture());
-
-    assertThat(listArgumentCaptor.getValue()).containsExactlyInAnyOrder("name0", "name1");
-    assertThat(keyArgumentCaptor.getValue())
-        .isEqualTo(new K8SWorkloadService.CacheKey(ACCOUNT_ID, CLUSTER_ID, NAMESPACE, null));
+  private void mockGetWorkload() {
+    K8sWorkload workload = K8sWorkload.builder()
+                               .accountId(ACCOUNT_ID)
+                               .clusterId(CLUSTER_ID)
+                               .settingId(SETTING_ID)
+                               .name(NAME_0)
+                               .namespace(NAMESPACE)
+                               .uid(UID)
+                               .kind(KIND)
+                               .labels(Collections.singletonMap(LABEL_KEY, LABEL_VALUE))
+                               .build();
+    when(workloadRepository.getWorkload(any(), any(), any(), any())).thenReturn(Collections.singletonList(workload));
   }
 
   private InstanceBillingData createBillingData(@NotNull String name) {
     return InstanceBillingData.builder()
+        .startTimestamp(START_TIME_MILLIS)
+        .endTimestamp(END_TIME_MILLIS)
         .accountId(ACCOUNT_ID)
+        .instanceId(INSTANCE_ID)
         .clusterId(CLUSTER_ID)
         .instanceType(InstanceType.K8S_POD.name())
+        .billingAmount(BigDecimal.ZERO)
+        .cpuBillingAmount(BigDecimal.ZERO)
+        .memoryBillingAmount(BigDecimal.ZERO)
+        .idleCost(BigDecimal.ZERO)
+        .cpuIdleCost(BigDecimal.ZERO)
+        .memoryIdleCost(BigDecimal.ZERO)
+        .systemCost(BigDecimal.ZERO)
+        .cpuSystemCost(BigDecimal.ZERO)
+        .memorySystemCost(BigDecimal.ZERO)
+        .actualIdleCost(BigDecimal.ZERO)
+        .cpuActualIdleCost(BigDecimal.ZERO)
+        .memoryActualIdleCost(BigDecimal.ZERO)
+        .unallocatedCost(BigDecimal.ZERO)
+        .cpuUnallocatedCost(BigDecimal.ZERO)
+        .memoryUnallocatedCost(BigDecimal.ZERO)
+        .storageBillingAmount(BigDecimal.ZERO)
+        .storageActualIdleCost(BigDecimal.ZERO)
+        .storageUnallocatedCost(BigDecimal.ZERO)
+        .storageUtilizationValue(0D)
+        .storageRequest(0D)
+        .maxStorageUtilizationValue(0D)
+        .maxStorageRequest(0D)
+        .orgIdentifier("orgIdentifier")
+        .projectIdentifier("projectIdentifier")
         .namespace(NAMESPACE)
         .workloadName(name)
         .build();

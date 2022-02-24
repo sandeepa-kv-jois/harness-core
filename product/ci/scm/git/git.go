@@ -11,8 +11,8 @@ import (
 	"time"
 
 	"github.com/drone/go-scm/scm"
-	"github.com/harness/harness-core/commons/go/lib/utils"
 	"github.com/harness/harness-core/product/ci/scm/converter"
+	"github.com/harness/harness-core/commons/go/lib/utils"
 	"github.com/harness/harness-core/product/ci/scm/gitclient"
 	pb "github.com/harness/harness-core/product/ci/scm/proto"
 	"go.uber.org/zap"
@@ -340,11 +340,13 @@ func ListCommits(ctx context.Context, request *pb.ListCommitsRequest, log *zap.S
 		return nil, err
 	}
 
-	commits, response, err := client.Git.ListCommits(ctx, request.GetSlug(), scm.CommitListOptions{Ref: ref, Page: int(request.GetPagination().GetPage())})
+	commits, response, err := client.Git.ListCommits(ctx, request.GetSlug(), scm.CommitListOptions{Ref: ref, Page: int(request.GetPagination().GetPage()), Path: request.FilePath})
+	
 	if err != nil {
 		log.Errorw("ListCommits failure", "provider", gitclient.GetProvider(*request.GetProvider()), "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
+	
 	log.Infow("ListCommits success", "slug", request.GetSlug(), "ref", ref, "elapsed_time_ms", utils.TimeSince(start))
 	var commitIDs []string
 	for _, v := range commits {
@@ -445,6 +447,27 @@ func GetUserRepos(ctx context.Context, request *pb.GetUserReposRequest, log *zap
 		},
 	}
 	return out, nil
+}
+
+func GetLatestCommitOnFile(ctx context.Context, request *pb.GetLatestCommitOnFileRequest, log *zap.SugaredLogger) (out *pb.GetLatestCommitOnFileResponse, err error) {
+	// For Bitbucket, we also get commits for a non-existent file if it had been created before (deleted now)
+	response, err := ListCommits(ctx, &pb.ListCommitsRequest{Provider: request.Provider, Slug: request.Slug, Type: &pb.ListCommitsRequest_Branch{Branch: request.Branch}, FilePath: request.FilePath}, log)
+	if err != nil {
+		return &pb.GetLatestCommitOnFileResponse {
+			CommitId: "",
+			Error: err.Error(),
+		}, err
+	}
+	
+	if (response.CommitIds != nil && len(response.CommitIds) !=0) {
+		return &pb.GetLatestCommitOnFileResponse {
+			CommitId: response.CommitIds[0],
+		}, nil
+	}
+	// TODO Return an error saying no commit found for the given file
+	return &pb.GetLatestCommitOnFileResponse {
+		CommitId: "",
+	}, nil
 }
 
 func convertChangesList(from []*scm.Change) (to []*pb.PRFile) {

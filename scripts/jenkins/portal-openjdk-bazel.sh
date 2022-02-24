@@ -310,5 +310,6 @@ if [ ! -z ${PURPOSE} ]
 then
     echo ${PURPOSE} > purpose.txt
 fi
+java -jar accesscontrol-service-capsule.jar scan-classpath-metadata
 
 cd ../..

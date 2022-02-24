@@ -26,7 +26,7 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 @OwnedBy(PIPELINE)
-@TargetModule(HarnessModule._878_PIPELINE_SERVICE_UTILITIES)
+@TargetModule(HarnessModule._878_NG_COMMON_UTILITIES)
 public class CommonPlanCreatorUtils {
   public PlanNode getSpecPlanNode(String nodeUuid, String childNodeId) {
     StepParameters stepParameters =

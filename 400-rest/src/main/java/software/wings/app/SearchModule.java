@@ -21,6 +21,7 @@ import software.wings.search.entities.application.ApplicationSearchEntity;
 import software.wings.search.entities.application.ApplicationTimeScaleEntity;
 import software.wings.search.entities.deployment.DeploymentSearchEntity;
 import software.wings.search.entities.environment.EnvironmentSearchEntity;
+import software.wings.search.entities.environment.EnvironmentTimeScaleEntity;
 import software.wings.search.entities.pipeline.PipelineSearchEntity;
 import software.wings.search.entities.pipeline.PipelineTimeScaleEntity;
 import software.wings.search.entities.service.ServiceSearchEntity;
@@ -100,6 +101,7 @@ public class SearchModule extends AbstractModule {
     timeScaleEntityMultibinder.addBinding().to(ServiceTimeScaleEntity.class);
     timeScaleEntityMultibinder.addBinding().to(WorkflowTimeScaleEntity.class);
     timeScaleEntityMultibinder.addBinding().to(PipelineTimeScaleEntity.class);
+    timeScaleEntityMultibinder.addBinding().to(EnvironmentTimeScaleEntity.class);
   }
 
   @Provides

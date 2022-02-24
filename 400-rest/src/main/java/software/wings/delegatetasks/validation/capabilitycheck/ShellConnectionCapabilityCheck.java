@@ -16,12 +16,12 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.executioncapability.CapabilityResponse;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.task.executioncapability.CapabilityCheck;
+import io.harness.delegate.task.winrm.WinRmSession;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.logging.NoopExecutionCallback;
 import io.harness.shell.SshSessionConfig;
 
 import software.wings.beans.delegation.ShellScriptParameters;
-import software.wings.core.winrm.executors.WinRmSession;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.delegatetasks.validation.capabilities.ShellConnectionCapability;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.security.SecretManagementDelegateService;

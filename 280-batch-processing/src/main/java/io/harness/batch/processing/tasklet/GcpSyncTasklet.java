@@ -17,6 +17,7 @@ import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.config.BillingDataPipelineConfig;
 import io.harness.batch.processing.dao.intfc.BatchJobScheduledDataDao;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.entities.batch.BatchJobScheduledData;
 import io.harness.ccm.config.GcpBillingAccount;
 import io.harness.ccm.config.GcpServiceAccount;
@@ -65,7 +66,6 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.Value;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -87,10 +87,10 @@ public class GcpSyncTasklet implements Tasklet {
   @Autowired private ConnectorResourceClient connectorResourceClient;
   @Autowired protected CloudToHarnessMappingService cloudToHarnessMappingService;
   @Autowired private BatchJobScheduledDataDao batchJobScheduledDataDao;
-  private JobParameters parameters;
   private static final String GOOGLE_CREDENTIALS_PATH = "CE_GCP_CREDENTIALS_PATH";
 
-  private Cache<CacheKey, Boolean> gcpSyncInfo = Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
+  private final Cache<CacheKey, Boolean> gcpSyncInfo =
+      Caffeine.newBuilder().expireAfterWrite(30, TimeUnit.MINUTES).build();
 
   @Value
   private static class CacheKey {
@@ -101,9 +101,10 @@ public class GcpSyncTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-    String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
-    Long endTime = Long.parseLong(parameters.getString(CCMJobConstants.JOB_END_DATE));
+    JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
+    String accountId = jobConstants.getAccountId();
+    Long endTime = jobConstants.getJobEndTime();
+
     BatchJobScheduledData batchJobScheduledData =
         batchJobScheduledDataDao.fetchLastBatchJobScheduledData(accountId, BatchJobType.SYNC_BILLING_REPORT_GCP);
     if (null != batchJobScheduledData) {

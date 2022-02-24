@@ -34,7 +34,7 @@ public class EndPlanAdviserResponseHandler implements AdviserResponseHandler {
   @Override
   public void handleAdvise(NodeExecution nodeExecution, AdviserResponse adviserResponse) {
     EndPlanAdvise endPlanAdvise = adviserResponse.getEndPlanAdvise();
-    if (endPlanAdvise != null && endPlanAdvise.getIsAbort()) {
+    if (endPlanAdvise.getIsAbort()) {
       InterruptPackage interruptPackage =
           InterruptPackage.builder()
               .planExecutionId(nodeExecution.getAmbiance().getPlanExecutionId())

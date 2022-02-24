@@ -124,6 +124,12 @@ public class AccountResourceNG {
   }
 
   @GET
+  @Path("/vanityUrl")
+  public RestResponse<String> getVanityUrl(@QueryParam("accountId") String accountId) {
+    return new RestResponse<>(subdomainUrlHelper.getVanityUrl(accountId));
+  }
+
+  @GET
   @Path("/gatewayBaseUrl")
   public RestResponse<String> getGatewayBaseUrl(@QueryParam("accountId") String accountId) {
     return new RestResponse<>(subdomainUrlHelper.getGatewayBaseUrl(accountId));

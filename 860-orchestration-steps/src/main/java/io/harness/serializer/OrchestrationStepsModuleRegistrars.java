@@ -18,6 +18,7 @@ import io.harness.morphia.MorphiaRegistrar;
 import io.harness.plancreator.pipeline.PipelineConfig;
 import io.harness.plancreator.steps.barrier.BarrierStepNode;
 import io.harness.plancreator.steps.http.HttpStepNode;
+import io.harness.plancreator.steps.internal.FlagConfigurationStepNode;
 import io.harness.plancreator.steps.internal.PMSStepInfo;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.serializer.kryo.CommonEntitiesKryoRegistrar;
@@ -240,6 +241,18 @@ public class OrchestrationStepsModuleRegistrars {
                                            .build())
                    .build())
           .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.FLAG_CONFIGURATION)
+                   .availableAtProjectLevel(true)
+                   .availableAtOrgLevel(false)
+                   .availableAtAccountLevel(false)
+                   .clazz(FlagConfigurationStepNode.class)
+                   .yamlSchemaMetadata(YamlSchemaMetadata.builder()
+                                           .namespace(SchemaNamespaceConstants.CF)
+                                           .modulesSupported(Arrays.asList(ModuleType.CF, ModuleType.PMS))
+                                           .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())
+                                           .build())
+                   .build())
+          .add(YamlSchemaRootClass.builder()
                    .entityType(EntityType.POLICY_STEP)
                    .availableAtProjectLevel(true)
                    .availableAtOrgLevel(false)
@@ -247,6 +260,7 @@ public class OrchestrationStepsModuleRegistrars {
                    .clazz(PolicyStepNode.class)
                    .yamlSchemaMetadata(
                        YamlSchemaMetadata.builder()
+                           .namespace(SchemaNamespaceConstants.PMS)
                            .modulesSupported(Arrays.asList(ModuleType.values()))
                            .featureFlags(Collections.singletonList(FeatureName.CUSTOM_POLICY_STEP.name()))
                            .yamlGroup(YamlGroup.builder().group(StepCategory.STEP.name()).build())

@@ -52,6 +52,7 @@ import io.harness.beans.SecretManagerConfig;
 import io.harness.beans.SecretText;
 import io.harness.beans.SecretUsageLog;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.task.winrm.AuthenticationScheme;
 import io.harness.encryptors.KmsEncryptor;
 import io.harness.encryptors.KmsEncryptorsRegistry;
 import io.harness.encryptors.VaultEncryptor;
@@ -1754,7 +1755,7 @@ public class VaultTest extends WingsBaseTest {
     return WinRmConnectionAttributes.builder()
         .accountId(accountId)
         .password(password.toCharArray())
-        .authenticationScheme(WinRmConnectionAttributes.AuthenticationScheme.NTLM)
+        .authenticationScheme(AuthenticationScheme.NTLM)
         .port(5164)
         .skipCertChecks(true)
         .useSSL(true)

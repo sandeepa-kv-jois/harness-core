@@ -149,7 +149,7 @@ public class InterruptServiceImpl implements InterruptService {
         interrupt.getNodeExecutionId(), NodeProjectionUtils.withAmbianceAndStatus);
     if (StatusUtils.isFinalStatus(interruptNodeExecution.getStatus())) {
       updatePlanStatus(interruptNodeExecution.getAmbiance().getPlanExecutionId(), nodeExecutionId);
-      updateInterruptState(interrupt.getUuid(), PROCESSED_SUCCESSFULLY);
+      updateInterruptState(interrupt.getUuid(), PROCESSED_SUCCESSFULLY, false);
       return false;
     }
 
@@ -169,18 +169,24 @@ public class InterruptServiceImpl implements InterruptService {
   }
 
   @Override
+  public Interrupt markProcessedForceful(String interruptId, State interruptState, boolean forceful) {
+    return updateInterruptState(interruptId, interruptState, forceful);
+  }
+
+  @Override
   public Interrupt markProcessed(String interruptId, State finalState) {
-    return updateInterruptState(interruptId, finalState);
+    return markProcessedForceful(interruptId, finalState, false);
   }
 
   @Override
   public Interrupt markProcessing(String interruptId) {
-    return updateInterruptState(interruptId, PROCESSING);
+    return updateInterruptState(interruptId, PROCESSING, false);
   }
 
-  private Interrupt updateInterruptState(String interruptId, State interruptState) {
+  private Interrupt updateInterruptState(String interruptId, State interruptState, boolean forceful) {
     Update updateOps = new Update()
                            .set(InterruptKeys.state, interruptState)
+                           .set(InterruptKeys.fromMonitor, forceful)
                            .set(InterruptKeys.lastUpdatedAt, System.currentTimeMillis());
     Query query = query(where(InterruptKeys.uuid).is(interruptId));
     Interrupt seizedInterrupt = mongoTemplate.findAndModify(

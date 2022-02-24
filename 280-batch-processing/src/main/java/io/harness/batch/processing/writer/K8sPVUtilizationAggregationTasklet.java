@@ -18,6 +18,7 @@ import io.harness.batch.processing.billing.timeseries.service.impl.K8sUtilizatio
 import io.harness.batch.processing.billing.timeseries.service.impl.UtilizationDataServiceImpl;
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.dao.intfc.InstanceDataDao;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
 import io.harness.ccm.commons.entities.batch.InstanceData;
 
@@ -42,7 +43,7 @@ public class K8sPVUtilizationAggregationTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    final CCMJobConstants jobConstants = new CCMJobConstants(chunkContext);
+    final JobConstants jobConstants = new CCMJobConstants(chunkContext);
 
     Map<String, InstanceUtilizationData> instanceUtilizationDataMap =
         k8sUtilizationGranularDataService.getAggregatedUtilizationDataOfType(

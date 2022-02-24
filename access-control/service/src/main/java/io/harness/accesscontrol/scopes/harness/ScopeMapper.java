@@ -41,6 +41,15 @@ public class ScopeMapper {
         .build();
   }
 
+  public static Scope fromDTO(@NotNull ScopeDTO scopeDTO) {
+    HarnessScopeParams harnessScopeParams = HarnessScopeParams.builder()
+                                                .accountIdentifier(scopeDTO.getAccountIdentifier())
+                                                .orgIdentifier(scopeDTO.getOrgIdentifier())
+                                                .projectIdentifier(scopeDTO.getProjectIdentifier())
+                                                .build();
+    return fromParams(harnessScopeParams);
+  }
+
   public static HarnessScopeParams toParams(@Valid Scope scope) {
     Map<String, String> params = new HashMap<>();
     Scope currentScope = scope;

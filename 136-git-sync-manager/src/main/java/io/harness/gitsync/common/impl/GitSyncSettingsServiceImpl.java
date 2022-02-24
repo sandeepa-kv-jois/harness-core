@@ -25,6 +25,7 @@ import java.util.Map;
 import java.util.Optional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Update;
 
@@ -46,7 +47,14 @@ public class GitSyncSettingsServiceImpl implements GitSyncSettingsService {
   @Override
   public GitSyncSettingsDTO save(GitSyncSettingsDTO request) {
     GitSyncSettings gitSyncSettings = GitSyncSettingsMapper.getGitSyncSettingsFromDTO(request);
-    final GitSyncSettings savedGitSyncSettings = gitSyncSettingsRepository.save(gitSyncSettings);
+    GitSyncSettings savedGitSyncSettings = null;
+    try {
+      savedGitSyncSettings = gitSyncSettingsRepository.save(gitSyncSettings);
+    } catch (DuplicateKeyException ex) {
+      throw new io.harness.exception.InvalidRequestException(
+          String.format("A git sync settings already exists in the project %s in the org %s",
+              request.getProjectIdentifier(), request.getOrgIdentifier()));
+    }
     return GitSyncSettingsMapper.getDTOFromGitSyncSettings(savedGitSyncSettings);
   }
 

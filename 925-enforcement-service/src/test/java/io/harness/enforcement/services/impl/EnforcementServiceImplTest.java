@@ -17,6 +17,7 @@ import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
 import io.harness.ModuleType;
+import io.harness.account.AccountClient;
 import io.harness.category.element.UnitTests;
 import io.harness.enforcement.bases.AvailabilityRestriction;
 import io.harness.enforcement.bases.FeatureRestriction;
@@ -31,8 +32,11 @@ import io.harness.enforcement.beans.metadata.FeatureRestrictionMetadataDTO;
 import io.harness.enforcement.constants.FeatureRestrictionName;
 import io.harness.enforcement.constants.RestrictionType;
 import io.harness.enforcement.exceptions.LimitExceededException;
+import io.harness.enforcement.handlers.ConversionHandlerFactory;
 import io.harness.enforcement.handlers.RestrictionHandlerFactory;
+import io.harness.enforcement.handlers.impl.AllAvailableConversionHandlerImpl;
 import io.harness.enforcement.handlers.impl.AvailabilityRestrictionHandler;
+import io.harness.enforcement.handlers.impl.ConversionHandlerImpl;
 import io.harness.enforcement.handlers.impl.CustomRestrictionHandler;
 import io.harness.enforcement.handlers.impl.DurationRestrictionHandler;
 import io.harness.enforcement.handlers.impl.LicenseRateLimitRestrictionHandler;
@@ -44,6 +48,7 @@ import io.harness.licensing.beans.summary.CDLicenseSummaryDTO;
 import io.harness.licensing.beans.summary.CILicenseSummaryDTO;
 import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableMap;
@@ -60,19 +65,28 @@ public class EnforcementServiceImplTest extends CategoryTest {
   EnforcementServiceImpl enforcementService;
   private LicenseService licenseService;
   private RestrictionHandlerFactory restrictionHandlerFactory;
+  private AccountClient accountClient;
+  private Call<RestResponse<Boolean>> featureFlagCall;
   FeatureRestriction featureRestriction;
   FeatureRestriction featureStaticLimit;
   FeatureRestriction featureRateLimit;
   FeatureRestriction ciFeatureRestriction;
+  FeatureRestriction cfFeatureRestriction;
   EnforcementSdkClient enforcementSdkClient;
   private static final FeatureRestrictionName FEATURE_NAME = FeatureRestrictionName.TEST1;
   private static final FeatureRestrictionName FEATURE_NAME_STATIC = FeatureRestrictionName.TEST2;
   private static final FeatureRestrictionName CI_FEATURE_NAME = FeatureRestrictionName.TEST3;
   private static final FeatureRestrictionName FEATURE_NAME_RATE = FeatureRestrictionName.TEST4;
+  private static final FeatureRestrictionName CF_FEATURE_NAME = FeatureRestrictionName.TEST5;
   private static final String ACCOUNT_ID = "1";
 
   @Before
   public void setup() throws IOException {
+    accountClient = mock(AccountClient.class);
+    featureFlagCall = mock(Call.class);
+    when(featureFlagCall.execute()).thenReturn(Response.success(new RestResponse<>(true)));
+    when(accountClient.isFeatureFlagEnabled(any(), any())).thenReturn(featureFlagCall);
+
     licenseService = mock(LicenseService.class);
     restrictionHandlerFactory = new RestrictionHandlerFactory(new AvailabilityRestrictionHandler(),
         new StaticLimitRestrictionHandler(), new RateLimitRestrictionHandler(), new CustomRestrictionHandler(),
@@ -85,7 +99,9 @@ public class EnforcementServiceImplTest extends CategoryTest {
         .thenReturn(Response.success(ResponseDTO.newResponse(FeatureRestrictionUsageDTO.builder().count(10).build())));
     when(enforcementSdkClient.getRestrictionUsage(any(), any(), any())).thenReturn(featureUsageCall);
 
-    enforcementService = new EnforcementServiceImpl(licenseService, restrictionHandlerFactory);
+    enforcementService = new EnforcementServiceImpl(licenseService, restrictionHandlerFactory, accountClient,
+        new ConversionHandlerFactory(new AllAvailableConversionHandlerImpl(restrictionHandlerFactory),
+            new ConversionHandlerImpl(restrictionHandlerFactory)));
     featureRestriction = new FeatureRestriction(FEATURE_NAME, "description", ModuleType.CD,
         ImmutableMap.<Edition, Restriction>builder()
             .put(Edition.FREE, new AvailabilityRestriction(RestrictionType.AVAILABILITY, true))
@@ -108,10 +124,15 @@ public class EnforcementServiceImplTest extends CategoryTest {
         ImmutableMap.<Edition, Restriction>builder()
             .put(Edition.FREE, new AvailabilityRestriction(RestrictionType.AVAILABILITY, false))
             .build());
+    cfFeatureRestriction = new FeatureRestriction(CF_FEATURE_NAME, "description", ModuleType.CF,
+        ImmutableMap.<Edition, Restriction>builder()
+            .put(Edition.FREE, new AvailabilityRestriction(RestrictionType.AVAILABILITY, true))
+            .build());
     enforcementService.registerFeature(FEATURE_NAME, featureRestriction);
     enforcementService.registerFeature(FEATURE_NAME_STATIC, featureStaticLimit);
     enforcementService.registerFeature(FEATURE_NAME_RATE, featureRateLimit);
     enforcementService.registerFeature(CI_FEATURE_NAME, ciFeatureRestriction);
+    enforcementService.registerFeature(CF_FEATURE_NAME, cfFeatureRestriction);
 
     when(licenseService.getLicenseSummary(any(), eq(ModuleType.CD)))
         .thenReturn(CDLicenseSummaryDTO.builder()
@@ -119,6 +140,7 @@ public class EnforcementServiceImplTest extends CategoryTest {
                         .edition(Edition.FREE)
                         .moduleType(ModuleType.CD)
                         .build());
+    when(licenseService.getLicenseSummary(any(), eq(ModuleType.CF))).thenReturn(null);
     when(licenseService.getLicenseSummary(any(), eq(ModuleType.CI)))
         .thenReturn(CILicenseSummaryDTO.builder()
                         .maxExpiryTime(Long.MAX_VALUE)
@@ -186,14 +208,47 @@ public class EnforcementServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetEnabledFeatures() {
     List<FeatureRestrictionDetailsDTO> result = enforcementService.getEnabledFeatureDetails(ACCOUNT_ID);
-    assertThat(result.size()).isEqualTo(1);
+    assertThat(result.size()).isEqualTo(2);
   }
 
   @Test
   @Owner(developers = ZHUO)
   @Category(UnitTests.class)
   public void testAllFeatureRestrictionMetadata() {
-    List<FeatureRestrictionMetadataDTO> result = enforcementService.getAllFeatureRestrictionMetadata();
-    assertThat(result.size()).isEqualTo(4);
+    List<FeatureRestrictionMetadataDTO> result = enforcementService.getAllFeatureRestrictionMetadata(ACCOUNT_ID);
+    assertThat(result.size()).isEqualTo(5);
+  }
+
+  @Test
+  @Owner(developers = ZHUO)
+  @Category(UnitTests.class)
+  public void testFallbackWithoutLicense() {
+    FeatureRestrictionDetailsDTO result = enforcementService.getFeatureDetail(CF_FEATURE_NAME, ACCOUNT_ID);
+    assertThat(result.getRestrictionType()).isEqualTo(RestrictionType.AVAILABILITY);
+  }
+
+  @Test
+  @Owner(developers = ZHUO)
+  @Category(UnitTests.class)
+  public void testGetEnabledFeaturesWithDisabledFF() throws IOException {
+    when(featureFlagCall.execute()).thenReturn(Response.success(new RestResponse<>(false)));
+
+    List<FeatureRestrictionDetailsDTO> result = enforcementService.getEnabledFeatureDetails(ACCOUNT_ID);
+    assertThat(result.size()).isEqualTo(5);
+
+    when(featureFlagCall.execute()).thenReturn(Response.success(new RestResponse<>(true)));
+  }
+
+  @Test
+  @Owner(developers = ZHUO)
+  @Category(UnitTests.class)
+  public void testGetFeatureDetailsWithDisabledFF() throws IOException {
+    when(featureFlagCall.execute()).thenReturn(Response.success(new RestResponse<>(false)));
+
+    FeatureRestrictionDetailsDTO featureDetail = enforcementService.getFeatureDetail(FEATURE_NAME_STATIC, ACCOUNT_ID);
+    assertThat(featureDetail.isAllowed()).isTrue();
+    assertThat(featureDetail.getRestrictionType()).isEqualTo(RestrictionType.AVAILABILITY);
+
+    when(featureFlagCall.execute()).thenReturn(Response.success(new RestResponse<>(true)));
   }
 }

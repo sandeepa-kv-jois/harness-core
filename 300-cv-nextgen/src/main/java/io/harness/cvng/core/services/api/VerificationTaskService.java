@@ -37,6 +37,7 @@ public interface VerificationTaskService {
 
   String getServiceGuardVerificationTaskId(String accountId, String cvConfigId);
   String getSLIVerificationTaskId(String accountId, String sliId);
+  VerificationTask getSLITask(String accountId, String sliId);
   List<String> getServiceGuardVerificationTaskIds(String accountId, List<String> cvConfigIds);
   List<String> getServiceGuardVerificationTaskIds(String accountId, String cvConfigId);
   boolean isServiceGuardId(String verificationTaskId);

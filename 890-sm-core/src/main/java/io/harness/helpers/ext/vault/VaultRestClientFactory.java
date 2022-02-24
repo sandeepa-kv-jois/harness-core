@@ -137,8 +137,7 @@ public class VaultRestClientFactory {
       valueMap.put(pathAndKey.keyName, value);
       Response<Void> response =
           vaultRestClient.writeSecret(authToken, namespace, secretEngine, pathAndKey.path, valueMap).execute();
-      logErrorIfRequestFailed(response, "V1Impl- writeSecret");
-      checkAndThrowHashicorpVaultRuntimeException(response);
+      logErrorIfRequestFailed(response, "V1Impl- writeSecret", true);
       return response.isSuccessful();
     }
 
@@ -148,8 +147,7 @@ public class VaultRestClientFactory {
       VaultPathAndKey pathAndKey = parseFullPath(fullPath);
       Response<Void> response =
           vaultRestClient.deleteSecret(authToken, namespace, secretEngine, pathAndKey.path).execute();
-      logErrorIfRequestFailed(response, "V1Impl-deleteSecret");
-      checkAndThrowHashicorpVaultRuntimeException(response);
+      logErrorIfRequestFailed(response, "V1Impl-deleteSecret", false);
       return response.isSuccessful();
     }
 
@@ -159,7 +157,7 @@ public class VaultRestClientFactory {
       VaultPathAndKey pathAndKey = parseFullPath(fullPath);
       Response<VaultReadResponse> result =
           vaultRestClient.readSecret(authToken, namespace, secretEngine, pathAndKey.path).execute();
-      logErrorIfRequestFailed(result, "V1Impl-readSecret");
+      logErrorIfRequestFailed(result, "V1Impl-readSecret", false);
       VaultReadResponse response = result.body();
       return response == null || response.getData() == null ? null : response.getData().get(pathAndKey.keyName);
     }
@@ -188,8 +186,7 @@ public class VaultRestClientFactory {
       VaultSecretValue vaultSecretValue = new VaultSecretValue(dataMap);
       Response<Void> response =
           vaultRestClient.writeSecret(authToken, namespace, secretEngine, pathAndKey.path, vaultSecretValue).execute();
-      logErrorIfRequestFailed(response, "V2Impl-writeSecret");
-      checkAndThrowHashicorpVaultRuntimeException(response);
+      logErrorIfRequestFailed(response, "V2Impl-writeSecret", true);
       return response.isSuccessful();
     }
 
@@ -199,8 +196,7 @@ public class VaultRestClientFactory {
       VaultPathAndKey pathAndKey = parseFullPath(fullPath);
       Response<Void> response =
           vaultRestClient.deleteSecret(authToken, namespace, secretEngine, pathAndKey.path).execute();
-      logErrorIfRequestFailed(response, "V2Impl-deleteSecret");
-      checkAndThrowHashicorpVaultRuntimeException(response);
+      logErrorIfRequestFailed(response, "V2Impl-deleteSecret", false);
       return response.isSuccessful();
     }
 
@@ -216,7 +212,7 @@ public class VaultRestClientFactory {
         return response == null || response.getData() == null ? null
                                                               : response.getData().getData().get(pathAndKey.keyName);
       }
-      logErrorIfRequestFailed(result, "V2Impl-readSecret");
+      logErrorIfRequestFailed(result, "V2Impl-readSecret", false);
       return null;
     }
 
@@ -226,33 +222,26 @@ public class VaultRestClientFactory {
       VaultPathAndKey pathAndKey = parseFullPath(fullPath);
       Response<VaultMetadataReadResponse> result =
           vaultRestClient.readSecretMetadata(authToken, namespace, secretEngine, pathAndKey.path).execute();
-      logErrorIfRequestFailed(result, "V2Impl-readSecretMetadata");
+      logErrorIfRequestFailed(result, "V2Impl-readSecretMetadata", false);
       VaultMetadataReadResponse response = result.body();
       return response == null ? null : response.getData();
     }
   }
 
-  private static void logErrorIfRequestFailed(Response response, String action) throws IOException {
+  private static void logErrorIfRequestFailed(Response response, String action, Boolean throwError) throws IOException {
     if (response == null) {
       return;
     }
     if (!response.isSuccessful()) {
+      String message;
       if (response.errorBody() != null) {
-        log.error(
-            "Could not {} secret in the vault due to the following error {}", action, response.errorBody().string());
+        message = response.errorBody().string();
       } else {
-        log.error("Could not {} secret in the vault due to the following error {}", action,
-            response.message() + response.body());
+        message = response.message() + response.body();
       }
-    }
-  }
-
-  private void checkAndThrowHashicorpVaultRuntimeException(Response<Void> response) {
-    if (response != null && !response.isSuccessful()) {
-      if (response.errorBody() != null) {
-        throw new HashiCorpVaultRuntimeException(response.errorBody().toString());
-      } else {
-        throw new HashiCorpVaultRuntimeException(response.message() + response.body());
+      log.error("Could not {} secret in the vault due to the following error {}", action, message);
+      if (throwError) {
+        throw new HashiCorpVaultRuntimeException(message);
       }
     }
   }

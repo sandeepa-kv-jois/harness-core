@@ -44,6 +44,7 @@ import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.FindAndModifyOptions;
+import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.Sort;
 import org.mongodb.morphia.query.UpdateOperations;
@@ -209,6 +210,15 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
         .filter(DataCollectionTaskKeys.verificationTaskId, verificationTaskId)
         .order(Sort.descending(DataCollectionTaskKeys.startTime))
         .get();
+  }
+
+  @Override
+  public List<DataCollectionTask> getLatestDataCollectionTasks(String accountId, String verificationTaskId, int count) {
+    return hPersistence.createQuery(DataCollectionTask.class)
+        .filter(DataCollectionTaskKeys.accountId, accountId)
+        .filter(DataCollectionTaskKeys.verificationTaskId, verificationTaskId)
+        .order(Sort.descending(DataCollectionTaskKeys.startTime))
+        .asList(new FindOptions().limit(count));
   }
 
   private void markDependentTasksFailed(DataCollectionTask task) {

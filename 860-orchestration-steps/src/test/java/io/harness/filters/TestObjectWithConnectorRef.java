@@ -26,10 +26,16 @@ import lombok.Data;
 @Builder
 @RecasterAlias("io.harness.filters.TestObjectWithConnectorRef")
 public class TestObjectWithConnectorRef implements PMSStepInfo, WithConnectorRef {
+  boolean returnRuntimeInput;
+
   @Override
   public Map<String, ParameterField<String>> extractConnectorRefs() {
     Map<String, ParameterField<String>> map = new HashMap<>();
-    map.put(YAMLFieldNameConstants.CONNECTOR_REF, ParameterField.createValueField("connectorRef"));
+    if (returnRuntimeInput) {
+      map.put(YAMLFieldNameConstants.CONNECTOR_REF, ParameterField.createExpressionField(true, "<+input>", null, true));
+    } else {
+      map.put(YAMLFieldNameConstants.CONNECTOR_REF, ParameterField.createValueField("connectorRef"));
+    }
     return map;
   }
 

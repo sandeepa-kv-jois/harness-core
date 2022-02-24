@@ -7,6 +7,8 @@
 
 package io.harness.secret;
 
+import static io.harness.delegate.task.winrm.AuthenticationScheme.NTLM;
+
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 
 import io.harness.generator.AccountGenerator;
@@ -53,17 +55,16 @@ public class WinRMCredentialHelper {
     final OwnerManager.Owners owners = ownerManager.create();
     Account account = accountGenerator.ensurePredefined(seed, owners, AccountGenerator.Accounts.GENERIC_TEST);
     accountId = account.getUuid();
-    WinRmConnectionAttributes settingValue =
-        WinRmConnectionAttributes.builder()
-            .username("userName")
-            .password("password".toCharArray())
-            .authenticationScheme(WinRmConnectionAttributes.AuthenticationScheme.NTLM)
-            .port(22)
-            .skipCertChecks(true)
-            .accountId(accountId)
-            .useSSL(true)
-            .domain("")
-            .build();
+    WinRmConnectionAttributes settingValue = WinRmConnectionAttributes.builder()
+                                                 .username("userName")
+                                                 .password("password".toCharArray())
+                                                 .authenticationScheme(NTLM)
+                                                 .port(22)
+                                                 .skipCertChecks(true)
+                                                 .accountId(accountId)
+                                                 .useSSL(true)
+                                                 .domain("")
+                                                 .build();
     settingValue.setSettingType(SettingVariableTypes.WINRM_CONNECTION_ATTRIBUTES);
     SettingAttribute settingAttribute = SettingAttribute.Builder.aSettingAttribute()
                                             .withName(name)

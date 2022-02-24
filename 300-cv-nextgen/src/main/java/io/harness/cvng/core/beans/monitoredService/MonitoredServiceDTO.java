@@ -7,6 +7,8 @@
 
 package io.harness.cvng.core.beans.monitoredService;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
 import io.harness.cvng.beans.MonitoredServiceType;
 import io.harness.cvng.core.beans.dependency.ServiceDependencyMetadata;
 import io.harness.data.validator.EntityIdentifier;
@@ -41,11 +43,27 @@ public class MonitoredServiceDTO implements YamlDTO {
   @ApiModelProperty(required = true) @NotNull MonitoredServiceType type;
   String description;
   @ApiModelProperty(required = true) @NotNull @EntityIdentifier String serviceRef;
-  @ApiModelProperty(required = true) @NotNull @EntityIdentifier String environmentRef;
+  @EntityIdentifier String environmentRef;
   List<String> environmentRefList;
   @ApiModelProperty(required = true) @NotNull @Size(max = 128) Map<String, String> tags;
   @Valid Sources sources;
   @Valid Set<ServiceDependencyDTO> dependencies;
+
+  public List<String> getEnvironmentRefList() {
+    // For migration. Remove once envRefList is populated from UI.
+    if (isEmpty(environmentRefList)) {
+      return Collections.singletonList(environmentRef);
+    }
+    return environmentRefList;
+  }
+
+  public String getEnvironmentRef() {
+    // For migration so that we populate both the fields.
+    if (isEmpty(environmentRef)) {
+      return environmentRefList.get(0);
+    }
+    return environmentRef;
+  }
 
   @Data
   @Builder

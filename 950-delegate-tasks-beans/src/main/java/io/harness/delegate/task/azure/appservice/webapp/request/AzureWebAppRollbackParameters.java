@@ -21,13 +21,15 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 public class AzureWebAppRollbackParameters extends AzureAppServiceTaskParameters {
   private AzureAppServicePreDeploymentData preDeploymentData;
+  private boolean blueGreen;
 
   @Builder
   public AzureWebAppRollbackParameters(String appId, String accountId, String activityId, String subscriptionId,
       String resourceGroupName, String appName, AzureAppServicePreDeploymentData preDeploymentData, String commandName,
-      Integer timeoutIntervalInMin) {
+      Integer timeoutIntervalInMin, boolean blueGreen) {
     super(appId, accountId, activityId, subscriptionId, resourceGroupName, appName, commandName, timeoutIntervalInMin,
         SLOT_ROLLBACK, WEB_APP);
     this.preDeploymentData = preDeploymentData;
+    this.blueGreen = blueGreen;
   }
 }

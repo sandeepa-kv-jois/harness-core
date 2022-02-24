@@ -23,12 +23,14 @@ import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
 import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.SortOrder;
 import io.harness.connector.accesscontrol.ResourceTypes;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.gitsync.common.dtos.TriggerFullSyncResponseDTO;
 import io.harness.gitsync.common.service.FullSyncTriggerService;
+import io.harness.gitsync.core.beans.GitFullSyncEntityInfo.GitFullSyncEntityInfoKeys;
 import io.harness.gitsync.core.fullsync.GitFullSyncConfigService;
 import io.harness.gitsync.core.fullsync.GitFullSyncEntityService;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigDTO;
@@ -44,6 +46,7 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.security.annotations.NextGenManagerAuth;
+import io.harness.utils.PaginationUtils;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -207,6 +210,7 @@ public class GitFullSyncResource {
           NGResourceFilterConstants.SEARCH_TERM_KEY) String searchTerm,
       @RequestBody(description = "Filters like entityType and syncStatus")
       @Body GitFullSyncEntityInfoFilterDTO gitFullSyncEntityInfoFilterDTO) {
+    PaginationUtils.setSortOrder(pageRequest, GitFullSyncEntityInfoKeys.createdAt, SortOrder.OrderType.DESC);
     return ResponseDTO.newResponse(gitFullSyncEntityService.list(
         accountIdentifier, orgIdentifier, projectIdentifier, pageRequest, searchTerm, gitFullSyncEntityInfoFilterDTO));
   }

@@ -7,6 +7,7 @@
 
 package software.wings.graphql.datafetcher.application;
 
+import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.FeatureName.WEBHOOK_TRIGGER_AUTHORIZATION;
 
 import static software.wings.security.PermissionAttribute.PermissionType.MANAGE_APPLICATIONS;
@@ -49,6 +50,7 @@ public class CreateApplicationDataFetcher
         .description(qlApplicationInput.getDescription())
         .accountId(accountId)
         .isManualTriggerAuthorized(qlApplicationInput.getIsManualTriggerAuthorized())
+        .areWebHookSecretsMandated(qlApplicationInput.getAreWebHookSecretsMandated())
         .build();
   }
   private QLApplication prepareQLApplication(Application savedApplication) {
@@ -62,6 +64,11 @@ public class CreateApplicationDataFetcher
     if (Boolean.TRUE.equals(parameter.getIsManualTriggerAuthorized())
         && !featureFlagService.isEnabled(WEBHOOK_TRIGGER_AUTHORIZATION, mutationContext.getAccountId())) {
       throw new InvalidRequestException("Please enable feature flag to authorize manual triggers");
+    }
+
+    if (Boolean.TRUE.equals(parameter.getAreWebHookSecretsMandated())
+        && !featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, mutationContext.getAccountId())) {
+      throw new InvalidRequestException("Please enable feature flag to mandate git webhooks secrets");
     }
     final Application savedApplication = appService.save(prepareApplication(parameter, mutationContext.getAccountId()));
     return QLCreateApplicationPayload.builder()

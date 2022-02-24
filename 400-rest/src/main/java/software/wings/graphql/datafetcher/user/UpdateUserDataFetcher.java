@@ -91,6 +91,10 @@ public class UpdateUserDataFetcher extends BaseMutatorDataFetcher<QLUpdateUserIn
       final List<String> userGroupIds = getValue(qlUpdateUserInput.getUserGroupIds()).orElse(null);
       userGroupController.addUserToUserGroups(existingUser, userGroupIds, accountId);
     }
+    if (isInitialized(qlUpdateUserInput.getExternalUserId())) {
+      final String externalUserId = getValue(qlUpdateUserInput.getExternalUserId()).orElse(null);
+      existingUser.setExternalUserId(externalUserId);
+    }
     return existingUser;
   }
 

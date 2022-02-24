@@ -25,7 +25,6 @@ import io.harness.exception.UnexpectedException;
 import io.harness.gitsync.BranchDetails;
 import io.harness.gitsync.ChangeType;
 import io.harness.gitsync.FileInfo;
-import io.harness.gitsync.Principal;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.PushInfo;
 import io.harness.gitsync.RepoDetails;
@@ -55,6 +54,7 @@ import io.harness.ng.core.entitydetail.EntityDetailProtoToRestMapper;
 import io.harness.product.ci.scm.proto.CreateFileResponse;
 import io.harness.product.ci.scm.proto.DeleteFileResponse;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
+import io.harness.security.Principal;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.tasks.DecryptGitApiAccessHelper;
 import io.harness.utils.IdentifierRefHelper;
@@ -130,7 +130,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     }
     final ConnectorResponseDTO connector = connectorResponseDTO.get();
     if (principal.hasUserPrincipal()) {
-      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfig, principal.getUserPrincipal(), connector);
+      userProfileHelper.setConnectorDetailsFromUserProfile(yamlGitConfig, connector);
     }
     setRepoUrlInConnector(yamlGitConfig, connector);
     return Optional.of(connector);

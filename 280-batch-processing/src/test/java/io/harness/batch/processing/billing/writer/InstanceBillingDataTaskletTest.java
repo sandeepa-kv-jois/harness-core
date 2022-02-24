@@ -34,7 +34,6 @@ import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.dao.intfc.InstanceDataDao;
 import io.harness.batch.processing.pricing.PricingSource;
-import io.harness.batch.processing.pricing.service.intfc.AwsCustomBillingService;
 import io.harness.batch.processing.service.intfc.CustomBillingMetaDataService;
 import io.harness.batch.processing.service.intfc.InstanceDataService;
 import io.harness.category.element.UnitTests;
@@ -65,7 +64,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepExecution;
@@ -107,13 +105,11 @@ public class InstanceBillingDataTaskletTest extends CategoryTest {
 
   @InjectMocks private InstanceBillingDataTasklet instanceBillingDataTasklet;
   @Mock private BillingDataServiceImpl billingDataService;
-  @Mock private JobParameters parameters;
   @Mock private BillingCalculationService billingCalculationService;
   @Mock private UtilizationDataServiceImpl utilizationDataService;
   @Mock private BillingDataGenerationValidator billingDataGenerationValidator;
   @Mock private InstanceDataService instanceDataService;
   @Mock private InstanceDataDao instanceDataDao;
-  @Mock private AwsCustomBillingService awsCustomBillingService;
   @Mock private CustomBillingMetaDataService customBillingMetaDataService;
   @Mock private BatchMainConfig config;
 
@@ -121,7 +117,6 @@ public class InstanceBillingDataTaskletTest extends CategoryTest {
 
   @Before
   public void setup() {
-    MockitoAnnotations.initMocks(this);
     when(config.getBatchQueryConfig()).thenReturn(BatchQueryConfig.builder().instanceDataBatchSize(50).build());
   }
 

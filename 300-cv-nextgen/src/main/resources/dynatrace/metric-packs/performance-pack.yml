@@ -2,16 +2,19 @@ identifier: Performance
 category: Performance
 metrics:
   - name: Method Response time
+    identifier: Method_Response_time
     type: RESP_TIME
     path: builtin:service.keyRequest.response.time
     validationPath: builtin:service.keyRequest.response.time
     included: true
   - name: Request Count total
+    identifier: Request_Count_total
     type: THROUGHPUT
     path: builtin:service.keyRequest.count.total
     validationPath: builtin:service.keyRequest.count.total
     included: true
   - name: Number of server side errors
+    identifier: Number_of_server_side_errors
     type: ERROR
     path: builtin:service.keyRequest.errors.server.count
     validationPath: builtin:service.keyRequest.errors.server.count

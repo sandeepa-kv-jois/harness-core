@@ -21,6 +21,7 @@ import io.harness.ccm.bigQuery.BigQueryService;
 import io.harness.ccm.commons.utils.BigQueryHelper;
 import io.harness.ccm.graphql.core.budget.BudgetCostService;
 import io.harness.ccm.graphql.core.budget.BudgetService;
+import io.harness.ccm.remote.resources.perspectives.PerspectiveResource;
 import io.harness.ccm.views.entities.CEView;
 import io.harness.ccm.views.entities.ViewState;
 import io.harness.ccm.views.entities.ViewType;

@@ -16,6 +16,8 @@ ceMetadataRecord {"name": "accountId", "unique": true} {"accountId": 1}
 ceReportSchedule {"name": "account_enabled_type", "background": true} {"accountId": 1, "enabled": 1, "name": 1, "viewsId": 1}
 clusterRecords {"name": "accountId_k8sBaseConnectorRefIdentifier", "unique": true} {"accountId": 1, "k8sBaseConnectorRefIdentifier": 1}
 delegateTokens {"name": "byAccountAndName", "unique": true} {"accountId": 1, "name": 1}
+delegateTokens {"name": "byAccountAndNgAndOwner", "background": true} {"accountId": 1, "isNg": 1, "owner": 1}
+delegateTokens {"name": "byAccountAndNgAndOwnerAndStatus", "background": true} {"accountId": 1, "isNg": 1, "owner": 1, "status": 1}
 delegateTokens {"name": "byAccountAndStatus", "background": true} {"accountId": 1, "status": 1}
 delegateTokens {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 delegateTokensNG {"name": "byAccountAndStatus", "background": true} {"accountId": 1, "owner": 1, "status": 1}

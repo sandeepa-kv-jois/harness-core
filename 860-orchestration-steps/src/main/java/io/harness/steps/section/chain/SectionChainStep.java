@@ -34,7 +34,7 @@ import java.util.Map;
 
 // TODO make this step abstact and let individual services create their own copies, Remove step type from here
 @OwnedBy(CDC)
-@TargetModule(HarnessModule._878_PIPELINE_SERVICE_UTILITIES)
+@TargetModule(HarnessModule._878_NG_COMMON_UTILITIES)
 public class SectionChainStep implements ChildChainExecutable<SectionChainStepParameters> {
   public static final StepType STEP_TYPE =
       StepType.newBuilder().setType(OrchestrationStepTypes.SECTION_CHAIN).setStepCategory(StepCategory.STEP).build();

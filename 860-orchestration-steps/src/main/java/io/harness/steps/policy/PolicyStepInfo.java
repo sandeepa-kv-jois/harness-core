@@ -54,7 +54,7 @@ public class PolicyStepInfo extends PolicyStepBase implements PMSStepInfo, Visit
   @Override
   @JsonIgnore
   public String getFacilitatorType() {
-    return OrchestrationFacilitatorType.TASK;
+    return OrchestrationFacilitatorType.SYNC;
   }
 
   @Override

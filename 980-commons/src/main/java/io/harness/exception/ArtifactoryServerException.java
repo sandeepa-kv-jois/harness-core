@@ -29,4 +29,9 @@ public class ArtifactoryServerException extends WingsException {
     super(message, null, code, Level.ERROR, null, null);
     super.param(MESSAGE_KEY, message);
   }
+
+  public ArtifactoryServerException(String message) {
+    super(message, null, null, Level.ERROR, null, null);
+    super.param(MESSAGE_KEY, message);
+  }
 }

@@ -96,6 +96,8 @@ import io.harness.cvng.core.jobs.ConnectorChangeEventMessageProcessor;
 import io.harness.cvng.core.jobs.ConsumerMessageProcessor;
 import io.harness.cvng.core.jobs.OrganizationChangeEventMessageProcessor;
 import io.harness.cvng.core.jobs.ProjectChangeEventMessageProcessor;
+import io.harness.cvng.core.jobs.StateMachineEventPublisherService;
+import io.harness.cvng.core.jobs.StateMachineEventPublisherServiceImpl;
 import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.cvng.core.services.api.AppDynamicsService;
 import io.harness.cvng.core.services.api.CVConfigService;
@@ -109,6 +111,7 @@ import io.harness.cvng.core.services.api.DataCollectionTaskManagementService;
 import io.harness.cvng.core.services.api.DataCollectionTaskService;
 import io.harness.cvng.core.services.api.DataSourceConnectivityChecker;
 import io.harness.cvng.core.services.api.DatadogService;
+import io.harness.cvng.core.services.api.DebugService;
 import io.harness.cvng.core.services.api.DeleteEntityByHandler;
 import io.harness.cvng.core.services.api.DeletedCVConfigService;
 import io.harness.cvng.core.services.api.DynatraceService;
@@ -129,6 +132,7 @@ import io.harness.cvng.core.services.api.SplunkService;
 import io.harness.cvng.core.services.api.StackdriverService;
 import io.harness.cvng.core.services.api.SumoLogicService;
 import io.harness.cvng.core.services.api.TimeSeriesRecordService;
+import io.harness.cvng.core.services.api.TimeSeriesThresholdService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.core.services.api.WebhookService;
 import io.harness.cvng.core.services.api.demo.CVNGDemoDataIndexService;
@@ -151,6 +155,7 @@ import io.harness.cvng.core.services.impl.CustomHealthServiceImpl;
 import io.harness.cvng.core.services.impl.DataCollectionTaskServiceImpl;
 import io.harness.cvng.core.services.impl.DatadogMetricDataCollectionInfoMapper;
 import io.harness.cvng.core.services.impl.DatadogServiceImpl;
+import io.harness.cvng.core.services.impl.DebugServiceImpl;
 import io.harness.cvng.core.services.impl.DefaultDeleteEntityByHandler;
 import io.harness.cvng.core.services.impl.DeletedCVConfigServiceImpl;
 import io.harness.cvng.core.services.impl.DynatraceDataCollectionInfoMapper;
@@ -181,6 +186,7 @@ import io.harness.cvng.core.services.impl.StackdriverLogDataCollectionInfoMapper
 import io.harness.cvng.core.services.impl.StackdriverServiceImpl;
 import io.harness.cvng.core.services.impl.SumoLogicServiceImpl;
 import io.harness.cvng.core.services.impl.TimeSeriesRecordServiceImpl;
+import io.harness.cvng.core.services.impl.TimeSeriesThresholdServiceImpl;
 import io.harness.cvng.core.services.impl.VerificationTaskServiceImpl;
 import io.harness.cvng.core.services.impl.WebhookServiceImpl;
 import io.harness.cvng.core.services.impl.demo.CVNGDemoDataIndexServiceImpl;
@@ -481,11 +487,20 @@ public class CVServiceModule extends AbstractModule {
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.APP_DYNAMICS)
         .to(AppDynamicsDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.NEW_RELIC)
+        .to(NewRelicDataCollectionInfoMapper.class)
+        .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.DATADOG_METRICS)
         .to(DatadogMetricDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.STACKDRIVER_LOG)
         .to(StackdriverDataCollectionInfoMapper.class)
+        .in(Scopes.SINGLETON);
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH)
+        .to(CustomHealthDataCollectionInfoMapper.class)
+        .in(Scopes.SINGLETON);
+    dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.DYNATRACE)
+        .to(DynatraceDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
 
     bind(MetricPackService.class).to(MetricPackServiceImpl.class);
@@ -530,6 +545,7 @@ public class CVServiceModule extends AbstractModule {
     bind(NewRelicService.class).to(NewRelicServiceImpl.class);
     bind(ParseSampleDataService.class).to(ParseSampleDataServiceImpl.class);
     bind(VerifyStepDemoService.class).to(VerifyStepDemoServiceImpl.class);
+    bind(StateMachineEventPublisherService.class).to(StateMachineEventPublisherServiceImpl.class);
     bind(String.class)
         .annotatedWith(Names.named("portalUrl"))
         .toInstance(verificationConfiguration.getPortalUrl().endsWith("/")
@@ -626,6 +642,7 @@ public class CVServiceModule extends AbstractModule {
     bind(SLODashboardService.class).to(SLODashboardServiceImpl.class);
     bind(SLIDataProcessorService.class).to(SLIDataProcessorServiceImpl.class);
     bind(SLOHealthIndicatorService.class).to(SLOHealthIndicatorServiceImpl.class);
+    bind(TimeSeriesThresholdService.class).to(TimeSeriesThresholdServiceImpl.class);
     MapBinder<ChangeSourceType, ChangeSourceSpecTransformer> changeSourceTypeChangeSourceSpecTransformerMapBinder =
         MapBinder.newMapBinder(binder(), ChangeSourceType.class, ChangeSourceSpecTransformer.class);
     changeSourceTypeChangeSourceSpecTransformerMapBinder.addBinding(ChangeSourceType.HARNESS_CD)
@@ -695,6 +712,7 @@ public class CVServiceModule extends AbstractModule {
     bind(ServiceLevelIndicatorService.class).to(ServiceLevelIndicatorServiceImpl.class).in(Singleton.class);
     bind(SLIDataProcessorService.class).to(SLIDataProcessorServiceImpl.class);
     bind(ServiceLevelIndicatorEntityAndDTOTransformer.class);
+    bind(DebugService.class).to(DebugServiceImpl.class).in(Singleton.class);
     MapBinder<SLIMetricType, ServiceLevelIndicatorTransformer> serviceLevelIndicatorTransformerMapBinder =
         MapBinder.newMapBinder(binder(), SLIMetricType.class, ServiceLevelIndicatorTransformer.class);
     serviceLevelIndicatorTransformerMapBinder.addBinding(SLIMetricType.RATIO)

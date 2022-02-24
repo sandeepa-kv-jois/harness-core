@@ -13,6 +13,8 @@ import io.harness.ccm.views.entities.ViewState;
 import io.harness.ccm.views.entities.ViewTimeRangeType;
 import io.harness.ccm.views.entities.ViewType;
 
+import io.swagger.v3.oas.annotations.Hidden;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -22,19 +24,20 @@ import lombok.experimental.FieldDefaults;
 @Value
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
+@Schema(name = "Perspective", description = "Perspective ID to name mapping")
 public class QLCEView {
   String id;
   String name;
-  double totalCost;
-  String createdBy;
-  Long createdAt;
-  Long lastUpdatedAt;
-  ViewChartType chartType;
-  ViewType viewType;
-  ViewState viewState;
+  @Hidden double totalCost;
+  @Hidden String createdBy;
+  @Hidden Long createdAt;
+  @Hidden Long lastUpdatedAt;
+  @Hidden ViewChartType chartType;
+  @Hidden ViewType viewType;
+  @Hidden ViewState viewState;
 
-  QLCEViewField groupBy;
-  ViewTimeRangeType timeRange;
-  List<ViewFieldIdentifier> dataSources;
-  boolean isReportScheduledConfigured;
+  @Hidden QLCEViewField groupBy;
+  @Hidden ViewTimeRangeType timeRange;
+  @Hidden List<ViewFieldIdentifier> dataSources;
+  @Hidden boolean isReportScheduledConfigured;
 }

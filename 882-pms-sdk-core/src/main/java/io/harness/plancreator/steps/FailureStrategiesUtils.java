@@ -54,6 +54,7 @@ public class FailureStrategiesUtils {
 
     if (isNotEmpty(failureStrategyConfigList)) {
       int allErrorsCount = 0;
+      FailureStrategyActionConfig allErrorFailureStrategyAction = null;
       for (FailureStrategyConfig failureStrategyConfig : failureStrategyConfigList) {
         for (NGFailureType ngFailureType : failureStrategyConfig.getOnFailure().getErrors()) {
           if (map.containsKey(ngFailureType)
@@ -65,6 +66,7 @@ public class FailureStrategiesUtils {
           // Add to put checking if its AllErrors or normal one.
           if (ngFailureType == NGFailureType.ALL_ERRORS) {
             allErrorsCount += 1;
+            allErrorFailureStrategyAction = failureStrategyConfig.getOnFailure().getAction();
             if (failureStrategyConfig.getOnFailure().getErrors().size() != 1) {
               throw new InvalidRequestException(
                   "With AllErrors there cannot be other specified errors defined in same list.");
@@ -73,13 +75,16 @@ public class FailureStrategiesUtils {
               throw new InvalidRequestException(
                   "AllErrors are defined multiple times either in stage, stepGroup or step failure strategies.");
             }
-            for (NGFailureType internalFailureType : NGFailureType.values()) {
-              if (internalFailureType != NGFailureType.ALL_ERRORS) {
-                map.put(internalFailureType, failureStrategyConfig.getOnFailure().getAction());
-              }
-            }
           } else {
             map.put(ngFailureType, failureStrategyConfig.getOnFailure().getAction());
+          }
+        }
+      }
+
+      if (allErrorsCount > 0) {
+        for (NGFailureType internalFailureType : NGFailureType.values()) {
+          if (internalFailureType != NGFailureType.ALL_ERRORS && !map.containsKey(internalFailureType)) {
+            map.put(internalFailureType, allErrorFailureStrategyAction);
           }
         }
       }

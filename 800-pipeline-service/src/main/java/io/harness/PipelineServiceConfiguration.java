@@ -119,6 +119,7 @@ public class PipelineServiceConfiguration extends Configuration {
   @JsonProperty("pipelineRedisEventsConfig") private PipelineRedisEventsConfig pipelineRedisEventsConfig;
   @JsonProperty("pipelineSdkRedisEventsConfig") private PipelineSdkRedisEventsConfig pipelineSdkRedisEventsConfig;
   @JsonProperty("orchestrationRedisEventsConfig") private OrchestrationRedisEventsConfig orchestrationRedisEventsConfig;
+  @JsonProperty("allowedParallelStages") private int allowedParallelStages;
 
   private String managerServiceSecret;
   private String managerTarget;

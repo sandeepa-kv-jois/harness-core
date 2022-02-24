@@ -631,4 +631,11 @@ public class PipelineServiceModule extends AbstractModule {
         CreatedExpiryPolicy.factoryOf(new Duration(TimeUnit.HOURS, 1)),
         versionInfoManager.getVersionInfo().getBuildNo());
   }
+
+  @Provides
+  @Singleton
+  @Named("allowedParallelStages")
+  public Integer getAllowedParallelStages() {
+    return configuration.getAllowedParallelStages();
+  }
 }

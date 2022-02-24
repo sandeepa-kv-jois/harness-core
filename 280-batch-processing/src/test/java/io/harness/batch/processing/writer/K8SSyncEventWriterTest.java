@@ -32,7 +32,6 @@ import io.harness.event.payloads.Lifecycle;
 import io.harness.ff.FeatureFlagService;
 import io.harness.grpc.utils.HTimestamps;
 import io.harness.perpetualtask.k8s.watch.K8SClusterSyncEvent;
-import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
 import software.wings.security.authentication.BatchQueryConfig;
@@ -51,7 +50,6 @@ import org.junit.runner.RunWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepExecution;
@@ -71,7 +69,6 @@ public class K8SSyncEventWriterTest extends CategoryTest {
 
   @Mock private FeatureFlagService featureFlagService;
   @Mock private BatchMainConfig config;
-  @Mock private HPersistence hPersistence;
   @Mock private PublishedMessageDao publishedMessageDao;
   @Mock private InstanceDataService instanceDataService;
   @Mock private InstanceDataBulkWriteService instanceDataBulkWriteService;
@@ -86,7 +83,6 @@ public class K8SSyncEventWriterTest extends CategoryTest {
 
   @Before
   public void setUpData() {
-    MockitoAnnotations.initMocks(this);
     when(featureFlagService.isEnabled(eq(FeatureName.NODE_RECOMMENDATION_1), eq(ACCOUNT_ID))).thenReturn(false);
     when(config.getBatchQueryConfig())
         .thenReturn(BatchQueryConfig.builder().queryBatchSize(50).syncJobDisabled(false).build());
@@ -116,14 +112,14 @@ public class K8SSyncEventWriterTest extends CategoryTest {
 
     k8SSyncEventTasklet.execute(null, chunkContext);
 
-    ArgumentCaptor<ArrayList<?>> lifecycleArgumentCaptor =
-        ArgumentCaptor.forClass((Class<ArrayList<?>>) (Class) ArrayList.class);
-    verify(instanceDataBulkWriteService).updateList(lifecycleArgumentCaptor.capture());
+    ArgumentCaptor<ArrayList<Lifecycle>> lifecycleArgumentCaptor =
+        ArgumentCaptor.forClass((Class<ArrayList<Lifecycle>>) (Class) ArrayList.class);
+    verify(instanceDataBulkWriteService).updateLifecycle(lifecycleArgumentCaptor.capture());
 
-    List<?> lifecycleList = lifecycleArgumentCaptor.getValue();
+    List<Lifecycle> lifecycleList = lifecycleArgumentCaptor.getValue();
     assertThat(lifecycleList).isNotEmpty();
     assertThat(lifecycleList.get(0)).isInstanceOf(Lifecycle.class);
-    Lifecycle lifecycle = (Lifecycle) lifecycleList.get(0);
+    Lifecycle lifecycle = lifecycleList.get(0);
     assertThat(lifecycle.getInstanceId()).isEqualTo(TEST_INSTANCE_ID_NODE_RUNNING);
     assertThat(lifecycle.getType()).isEqualTo(Lifecycle.EventType.EVENT_TYPE_STOP);
   }

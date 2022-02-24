@@ -11,6 +11,7 @@ import io.harness.batch.processing.billing.tasklet.dao.intfc.DataGeneratedNotifi
 import io.harness.batch.processing.ccm.CCMJobConstants;
 import io.harness.batch.processing.mail.CEMailNotificationService;
 import io.harness.ccm.cluster.entities.CEUserInfo;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.dao.CEMetadataRecordDao;
 import io.harness.ccm.commons.entities.batch.CEMetadataRecord;
 import io.harness.ccm.commons.entities.batch.DataGeneratedNotification;
@@ -50,7 +51,6 @@ import java.util.StringJoiner;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.batch.core.JobParameters;
 import org.springframework.batch.core.StepContribution;
 import org.springframework.batch.core.scope.context.ChunkContext;
 import org.springframework.batch.core.step.tasklet.Tasklet;
@@ -68,8 +68,6 @@ public class BillingDataGeneratedMailTasklet implements Tasklet {
   @Autowired private CEMetadataRecordDao metadataRecordDao;
   @Autowired private CEViewService ceViewService;
 
-  private JobParameters parameters;
-
   private static final int MAX_RETRY_COUNT = 3;
   private static final long ONE_DAY_MILLIS = 86400000;
   private static final String CE_EXPLORER_URL = "/account/%s/continuous-efficiency/overview";
@@ -84,8 +82,9 @@ public class BillingDataGeneratedMailTasklet implements Tasklet {
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
     try {
-      parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
-      String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
+      final JobConstants jobConstants = CCMJobConstants.fromContext(chunkContext);
+      String accountId = jobConstants.getAccountId();
+
       createDefaultPerspective(accountId);
       CEMetadataRecord ceMetadataRecord = metadataRecordDao.getByAccountId(accountId);
       boolean isApplicationDataPresent = false;

@@ -37,7 +37,6 @@ import io.harness.cvng.analysis.entities.TimeSeriesAnomalousPatterns;
 import io.harness.cvng.analysis.entities.TimeSeriesCumulativeSums;
 import io.harness.cvng.analysis.entities.TimeSeriesLearningEngineTask;
 import io.harness.cvng.analysis.entities.TimeSeriesShortTermHistory;
-import io.harness.cvng.analysis.services.api.DeploymentLogAnalysisService;
 import io.harness.cvng.analysis.services.api.LearningEngineTaskService;
 import io.harness.cvng.analysis.services.api.TrendAnalysisService;
 import io.harness.cvng.beans.CVMonitoringCategory;
@@ -83,7 +82,6 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
   @Inject private TrendAnalysisService trendAnalysisService;
   @Inject private CVConfigService cvConfigService;
   @Inject private VerificationTaskService verificationTaskService;
-  @Inject private DeploymentLogAnalysisService deploymentLogAnalysisService;
   @Inject private HeatMapService heatMapService;
   @Mock private NextGenService nextGenService;
   private BuilderFactory builderFactory;
@@ -98,7 +96,6 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
     verificationTaskId = verificationTaskService.getServiceGuardVerificationTaskId(cvConfig.getAccountId(), cvConfigId);
 
     FieldUtils.writeField(cvConfigService, "nextGenService", nextGenService, true);
-    FieldUtils.writeField(heatMapService, "cvConfigService", cvConfigService, true);
     FieldUtils.writeField(trendAnalysisService, "heatMapService", heatMapService, true);
   }
 

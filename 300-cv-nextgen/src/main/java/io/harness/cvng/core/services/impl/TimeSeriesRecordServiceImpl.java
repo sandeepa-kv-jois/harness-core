@@ -318,15 +318,16 @@ public class TimeSeriesRecordServiceImpl implements TimeSeriesRecordService {
                                       .getMetrics()
                                       .stream()
                                       .filter(MetricDefinition::isIncluded)
-                                      .map(MetricPack.MetricDefinition::getName)
+                                      .map(MetricPack.MetricDefinition::getIdentifier)
                                       .collect(Collectors.toSet());
 
     metricPackThresholds.stream()
-        .filter(mpt -> includedMetrics.contains(mpt.getMetricName()))
+        .filter(mpt -> includedMetrics.contains(mpt.getMetricIdentifier()))
         .forEach(timeSeriesThreshold
             -> timeSeriesMetricDefinitions.add(
                 TimeSeriesMetricDefinition.builder()
                     .metricName(timeSeriesThreshold.getMetricName())
+                    .metricIdentifier(timeSeriesThreshold.getMetricIdentifier())
                     .metricType(timeSeriesThreshold.getMetricType())
                     .metricGroupName(timeSeriesThreshold.getMetricGroupName())
                     .actionType(timeSeriesThreshold.getAction())
@@ -348,6 +349,7 @@ public class TimeSeriesRecordServiceImpl implements TimeSeriesRecordService {
                 -> timeSeriesMetricDefinitions.add(
                     TimeSeriesMetricDefinition.builder()
                         .metricName(metricDefinition.getName())
+                        .metricIdentifier(metricDefinition.getIdentifier())
                         .metricType(metricDefinition.getType())
                         .metricGroupName(timeSeriesThreshold.getMetricGroupName())
                         .actionType(timeSeriesThreshold.getAction())

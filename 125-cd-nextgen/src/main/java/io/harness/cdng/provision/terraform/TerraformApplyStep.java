@@ -125,8 +125,8 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
 
   private TaskRequest obtainInlineTask(
       Ambiance ambiance, TerraformApplyStepParameters stepParameters, StepElementParameters stepElementParameters) {
-    helper.validateApplyStepConfigFilesInline(stepParameters);
     log.info("Obtaining Inline Task for the Apply Step");
+    helper.validateApplyStepConfigFilesInline(stepParameters);
     TerraformStepConfigurationParameters configuration = stepParameters.getConfiguration();
     TerraformExecutionDataParameters spec = configuration.getSpec();
     TerraformTaskNGParametersBuilder builder = TerraformTaskNGParameters.builder();
@@ -142,6 +142,8 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
         .entityId(entityId)
         .workspace(ParameterFieldHelper.getParameterFieldValue(spec.getWorkspace()))
         .configFile(helper.getGitFetchFilesConfig(
+            spec.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
+        .fileStoreConfigFiles(helper.getFileStoreFetchFilesConfig(
             spec.getConfigFiles().getStore().getSpec(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
         .varFileInfos(helper.toTerraformVarFileInfo(spec.getVarFiles(), ambiance))
         .backendConfig(helper.getBackendConfig(spec.getBackendConfig()))
@@ -180,6 +182,8 @@ public class TerraformApplyStep extends TaskExecutableWithRollbackAndRbac<Terraf
     builder.workspace(inheritOutput.getWorkspace())
         .configFile(helper.getGitFetchFilesConfig(
             inheritOutput.getConfigFiles(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
+        .fileStoreConfigFiles(helper.getFileStoreFetchFilesConfig(
+            inheritOutput.getFileStoreConfig(), ambiance, TerraformStepHelper.TF_CONFIG_FILES))
         .varFileInfos(helper.prepareTerraformVarFileInfo(inheritOutput.getVarFileConfigs(), ambiance))
         .backendConfig(inheritOutput.getBackendConfig())
         .targets(inheritOutput.getTargets())

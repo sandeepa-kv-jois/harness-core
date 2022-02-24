@@ -9,6 +9,7 @@ package software.wings.service.impl.yaml.handler.app;
 
 import static io.harness.annotations.dev.HarnessModule._955_CG_YAML;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.GITHUB_WEBHOOK_AUTHENTICATION;
 import static io.harness.beans.FeatureName.WEBHOOK_TRIGGER_AUTHORIZATION;
 
 import static software.wings.beans.Application.Builder.anApplication;
@@ -35,7 +36,6 @@ import software.wings.yaml.gitSync.YamlGitConfig.SyncMode;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
-
 /**
  * @author rktummala on 10/22/17
  */
@@ -85,6 +85,10 @@ public class ApplicationYamlHandler extends BaseYamlHandler<Application.Yaml, Ap
                     .repoName(repoName)
                     .build();
 
+    if (featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, application.getAccountId())) {
+      yaml.setAreWebHookSecretsMandated(application.getAreWebHookSecretsMandated());
+    }
+
     if (featureFlagService.isEnabled(WEBHOOK_TRIGGER_AUTHORIZATION, application.getAccountId())) {
       yaml.setIsManualTriggerAuthorized(application.getIsManualTriggerAuthorized());
     }
@@ -108,6 +112,15 @@ public class ApplicationYamlHandler extends BaseYamlHandler<Application.Yaml, Ap
         current.setIsManualTriggerAuthorized(false);
       } else {
         current.setIsManualTriggerAuthorized(yaml.getIsManualTriggerAuthorized());
+      }
+    }
+
+    if (featureFlagService.isEnabled(GITHUB_WEBHOOK_AUTHENTICATION, accountId)) {
+      if (yaml.getAreWebHookSecretsMandated() == null && previous != null
+          && previous.getAreWebHookSecretsMandated() != null) {
+        current.setAreWebHookSecretsMandated(false);
+      } else {
+        current.setAreWebHookSecretsMandated(yaml.getAreWebHookSecretsMandated());
       }
     }
 

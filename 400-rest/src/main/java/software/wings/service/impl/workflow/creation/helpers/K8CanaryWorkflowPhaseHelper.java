@@ -51,7 +51,7 @@ public class K8CanaryWorkflowPhaseHelper extends K8AbstractWorkflowHelper {
   }
 
   // Steps for Canary
-  private PhaseStep getCanaryDeployPhaseStep() {
+  protected PhaseStep getCanaryDeployPhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.DEPLOY)
         .addStep(GraphNode.builder()
                      .id(generateUuid())
@@ -69,7 +69,7 @@ public class K8CanaryWorkflowPhaseHelper extends K8AbstractWorkflowHelper {
     return aPhaseStep(K8S_PHASE_STEP, "Verify").build();
   }
 
-  private PhaseStep getCanaryWrapUpPhaseStep() {
+  protected PhaseStep getCanaryWrapUpPhaseStep() {
     return aPhaseStep(K8S_PHASE_STEP, WorkflowServiceHelper.WRAP_UP)
         .addStep(GraphNode.builder()
                      .id(generateUuid())

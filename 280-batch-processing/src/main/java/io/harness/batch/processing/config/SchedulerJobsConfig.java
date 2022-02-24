@@ -17,4 +17,7 @@ import lombok.Data;
 public class SchedulerJobsConfig {
   private String budgetAlertsJobCron;
   private String weeklyReportsJobCron;
+  private String budgetCostUpdateJobCron;
+  private String connectorHealthUpdateJobCron;
+  private String awsAccountTagsCollectionJobCron;
 }

@@ -32,12 +32,6 @@ public interface MetricPackService {
   List<TimeSeriesThreshold> getMetricPackThresholds(String accountId, String orgIdentifier, String projectIdentifier,
       String metricPackIdentifier, DataSourceType dataSourceType);
 
-  List<String> saveMetricPackThreshold(String accountId, String orgIdentifier, String projectIdentifier,
-      DataSourceType dataSourceType, List<TimeSeriesThreshold> timeSeriesThreshold);
-
-  boolean deleteMetricPackThresholds(
-      String accountId, String orgIdentifier, String projectIdentifier, String thresholdId);
-
   void populatePaths(String accountId, String orgIdentifier, String projectIdentifier, DataSourceType dataSourceType,
       MetricPack metricPack);
 

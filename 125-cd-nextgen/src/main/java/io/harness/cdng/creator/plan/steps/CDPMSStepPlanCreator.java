@@ -13,7 +13,6 @@ import io.harness.advisers.retry.RetryAdviserRollbackParameters;
 import io.harness.advisers.retry.RetryAdviserWithRollback;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.executions.steps.StepSpecTypeConstants;
 import io.harness.plancreator.steps.GenericStepPMSPlanCreator;
 import io.harness.pms.contracts.advisers.AdviserObtainment;
 import io.harness.pms.contracts.execution.failure.FailureType;
@@ -24,8 +23,8 @@ import io.harness.yaml.core.failurestrategy.FailureStrategyActionConfig;
 import io.harness.yaml.core.failurestrategy.manualintervention.ManualInterventionFailureActionConfig;
 import io.harness.yaml.core.failurestrategy.retry.RetryFailureActionConfig;
 
-import com.google.common.collect.Sets;
 import com.google.protobuf.ByteString;
+import java.util.Collections;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -33,8 +32,7 @@ import java.util.stream.Collectors;
 public class CDPMSStepPlanCreator extends GenericStepPMSPlanCreator {
   @Override
   public Set<String> getSupportedStepTypes() {
-    return Sets.newHashSet("K8sScale", "K8sBlueGreenDeploy", "K8sDelete", "K8sApply", "TerraformApply", "TerraformPlan",
-        "TerraformDestroy", StepSpecTypeConstants.TERRAFORM_ROLLBACK, StepSpecTypeConstants.HELM_DEPLOY);
+    return Collections.emptySet();
   }
 
   @Override

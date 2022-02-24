@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.gitsync.common.remote.YamlGitConfigMapper.toSetupGitSyncDTO;
 import static io.harness.gitsync.common.remote.YamlGitConfigMapper.toYamlGitConfigDTO;
 import static io.harness.rule.OwnerRule.ABHINAV;
+import static io.harness.rule.OwnerRule.BHAVYA;
 import static io.harness.rule.OwnerRule.DEEPAK;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -28,9 +29,11 @@ import io.harness.connector.services.ConnectorService;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
+import io.harness.eraro.ErrorCode;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
 import io.harness.eventsframework.schemas.entity.EntityScopeInfo;
+import io.harness.exception.DuplicateEntityException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.GitSyncTestBase;
 import io.harness.gitsync.common.dtos.GitSyncConfigDTO;
@@ -38,6 +41,7 @@ import io.harness.gitsync.common.dtos.GitSyncFolderConfigDTO;
 import io.harness.gitsync.common.events.GitSyncConfigChangeEventConstants;
 import io.harness.gitsync.common.events.GitSyncConfigChangeEventType;
 import io.harness.gitsync.common.events.GitSyncConfigSwitchType;
+import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -60,6 +64,7 @@ public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
   @Mock ConnectorService defaultConnectorService;
   @Inject YamlGitConfigServiceImpl yamlGitConfigService;
   @Mock Producer gitSyncConfigEventProducer;
+  @Mock UserProfileHelper userProfileHelper;
   private final String ACCOUNT_ID = "ACCOUNT_ID";
   private final String ORG_ID = "ORG_ID";
   private final String PROJECT_ID = "PROJECT_ID";
@@ -82,8 +87,11 @@ public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
     ConnectorInfoDTO connectorInfo = ConnectorInfoDTO.builder().connectorConfig(githubConnector).build();
     when(defaultConnectorService.get(any(), any(), any(), any()))
         .thenReturn(Optional.of(ConnectorResponseDTO.builder().connector(connectorInfo).build()));
+    when(userProfileHelper.validateIfScmUserProfileIsSet(ACCOUNT_ID)).thenReturn(true);
+
     FieldUtils.writeField(yamlGitConfigService, "connectorService", defaultConnectorService, true);
     FieldUtils.writeField(yamlGitConfigService, "gitSyncConfigEventProducer", gitSyncConfigEventProducer, true);
+    FieldUtils.writeField(yamlGitConfigService, "userProfileHelper", userProfileHelper, true);
   }
 
   @Test
@@ -196,6 +204,22 @@ public class YamlGitConfigServiceImplTest extends GitSyncTestBase {
           () -> yamlGitConfigService.validateThatHarnessStringShouldNotComeMoreThanOnce(yamlGitConfigDTO))
           .isInstanceOf(InvalidRequestException.class);
     });
+  }
+
+  @Test
+  @Owner(developers = BHAVYA)
+  @Category(UnitTests.class)
+  public void test_DuplicateSave() {
+    GitSyncFolderConfigDTO rootFolder =
+        GitSyncFolderConfigDTO.builder().isDefault(true).rootFolder(ROOT_FOLDER).build();
+    GitSyncConfigDTO gitSyncConfigDTO =
+        buildGitSyncDTO(Collections.singletonList(rootFolder), CONNECTOR_ID, REPO, BRANCH, IDENTIFIER);
+    yamlGitConfigService.save(toYamlGitConfigDTO(gitSyncConfigDTO, ACCOUNT_ID));
+    try {
+      yamlGitConfigService.save(toYamlGitConfigDTO(gitSyncConfigDTO, ACCOUNT_ID));
+    } catch (DuplicateEntityException ex) {
+      assertThat(ex.getCode()).isEqualTo(ErrorCode.RESOURCE_ALREADY_EXISTS);
+    }
   }
 
   private YamlGitConfigDTO.RootFolder getRootFolder(String folderPath) {

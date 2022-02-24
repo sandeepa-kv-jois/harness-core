@@ -41,5 +41,6 @@ public interface GitFullSyncEntityService {
   void updateStatus(String accountIdentifier, String orgIdentifier, String projectIdentifier, String filePath,
       List<GitFullSyncEntityInfo.SyncStatus> oldStatus, GitFullSyncEntityInfo.SyncStatus newStatus);
 
-  void updateStatus(String accountIdentifier, String uuid, GitFullSyncEntityInfo.SyncStatus status);
+  void updateStatus(
+      String accountIdentifier, String uuid, GitFullSyncEntityInfo.SyncStatus status, String errorMessage);
 }

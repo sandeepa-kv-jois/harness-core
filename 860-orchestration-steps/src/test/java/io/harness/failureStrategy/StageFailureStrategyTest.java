@@ -32,6 +32,7 @@ import io.harness.yaml.core.failurestrategy.NGFailureType;
 import io.harness.yaml.core.failurestrategy.OnFailureConfig;
 import io.harness.yaml.core.failurestrategy.abort.AbortFailureActionConfig;
 import io.harness.yaml.core.failurestrategy.ignore.IgnoreFailureActionConfig;
+import io.harness.yaml.core.failurestrategy.marksuccess.MarkAsSuccessFailureActionConfig;
 import io.harness.yaml.core.failurestrategy.retry.RetryFailureActionConfig;
 import io.harness.yaml.core.failurestrategy.retry.RetryFailureSpecConfig;
 import io.harness.yaml.core.timeout.Timeout;
@@ -192,5 +193,38 @@ public class StageFailureStrategyTest extends CategoryTest {
 
     assertThat(actionMapExpected.keySet().equals(actionMapResult.keySet())).isEqualTo(true);
     assertThat(actionMapExpected.get(testAction).equals(actionMapResult.get(testAction))).isEqualTo(true);
+  }
+
+  @Test
+  @Owner(developers = PRASHANTSHARMA)
+  @Category(UnitTests.class)
+  public void testAllErrorsWithOtherErrors() {
+    List<FailureStrategyConfig> stageFailureStrategies1 = new ArrayList<>();
+    stageFailureStrategies1.add(FailureStrategyConfig.builder()
+                                    .onFailure(OnFailureConfig.builder()
+                                                   .errors(Collections.singletonList(AUTHORIZATION_ERROR))
+                                                   .action(IgnoreFailureActionConfig.builder().build())
+                                                   .build())
+                                    .build());
+    stageFailureStrategies1.add(FailureStrategyConfig.builder()
+                                    .onFailure(OnFailureConfig.builder()
+                                                   .errors(Collections.singletonList(ALL_ERRORS))
+                                                   .action(MarkAsSuccessFailureActionConfig.builder().build())
+                                                   .build())
+                                    .build());
+    stageFailureStrategies1.add(FailureStrategyConfig.builder()
+                                    .onFailure(OnFailureConfig.builder()
+                                                   .errors(Collections.singletonList(TIMEOUT_ERROR))
+                                                   .action(IgnoreFailureActionConfig.builder().build())
+                                                   .build())
+                                    .build());
+
+    Map<FailureStrategyActionConfig, Collection<FailureType>> actionMapExpected =
+        FailureStrategiesUtils.priorityMergeFailureStrategies(null, null, stageFailureStrategies1);
+
+    assertThat(actionMapExpected.get(IgnoreFailureActionConfig.builder().build()))
+        .contains(FailureType.AUTHORIZATION_FAILURE);
+    assertThat(actionMapExpected.get(IgnoreFailureActionConfig.builder().build()))
+        .contains(FailureType.TIMEOUT_FAILURE);
   }
 }

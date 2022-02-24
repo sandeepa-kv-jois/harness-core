@@ -477,7 +477,7 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    *
    * @return the states
    */
-  public List<State> getStates() {
+  public synchronized List<State> getStates() {
     return states;
   }
 
@@ -486,7 +486,7 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    *
    * @param states the states
    */
-  public void setStates(List<State> states) {
+  public synchronized void setStates(List<State> states) {
     this.states = states;
   }
 
@@ -496,7 +496,7 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    * @param state state to be added.
    * @return state after saving.
    */
-  public State addState(State state) {
+  public synchronized State addState(State state) {
     if (states == null) {
       states = new ArrayList<>();
     }
@@ -553,7 +553,7 @@ public class StateMachine implements PersistentEntity, UuidAware, CreatedAtAware
    *
    * @return map to state to stateNames.
    */
-  public Map<String, State> getStatesMap() {
+  public synchronized Map<String, State> getStatesMap() {
     if (isNotEmpty(cachedStatesMap)) {
       return cachedStatesMap;
     }

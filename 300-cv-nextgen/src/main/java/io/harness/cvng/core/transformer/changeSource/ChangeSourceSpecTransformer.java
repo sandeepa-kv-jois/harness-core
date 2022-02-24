@@ -9,11 +9,11 @@ package io.harness.cvng.core.transformer.changeSource;
 
 import io.harness.cvng.core.beans.monitoredService.ChangeSourceDTO;
 import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.ChangeSourceSpec;
-import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.entities.changeSource.ChangeSource;
 
 public abstract class ChangeSourceSpecTransformer<E extends ChangeSource, S extends ChangeSourceSpec> {
-  public abstract E getEntity(ServiceEnvironmentParams environmentParams, ChangeSourceDTO changeSourceDTO);
+  public abstract E getEntity(MonitoredServiceParams monitoredServiceParams, ChangeSourceDTO changeSourceDTO);
 
   public final ChangeSourceDTO getDTO(E changeSource) {
     return ChangeSourceDTO.builder()

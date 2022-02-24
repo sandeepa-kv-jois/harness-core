@@ -63,7 +63,6 @@ import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.mapping.Mapper;
 import org.mongodb.morphia.query.FindOptions;
 import org.mongodb.morphia.query.Query;
-import org.mongodb.morphia.query.Sort;
 import org.mongodb.morphia.query.UpdateOperations;
 
 /**
@@ -152,6 +151,7 @@ public class ActivityServiceImpl implements ActivityService {
     if (activity.getCommandUnitType() != null) {
       switch (activity.getCommandUnitType()) {
         case KUBERNETES:
+        case RANCHER:
         case PCF_SETUP:
         case PCF_RESIZE:
         case PCF_PLUGIN:
@@ -237,18 +237,16 @@ public class ActivityServiceImpl implements ActivityService {
   }
 
   @Override
-  public List<Activity> getRollbackActivitiesForService(
+  public List<Activity> listWorkflowExecutionActivitiesArtifactIdExists(
       String appId, String serviceId, String workflowId, String workflowExecutionId) {
     FindOptions findOptions = new FindOptions();
     return wingsPersistence.createQuery(Activity.class)
         .filter(ActivityKeys.appId, appId)
         .filter(ActivityKeys.serviceId, serviceId)
         .filter(ActivityKeys.workflowId, workflowId)
-        .field(ActivityKeys.workflowExecutionId)
-        .notEqual(workflowExecutionId)
+        .filter(ActivityKeys.workflowExecutionId, workflowExecutionId)
         .field(ActivityKeys.artifactId)
         .exists()
-        .order(Sort.descending(ActivityKeys.createdAt))
         .asList(findOptions);
   }
 

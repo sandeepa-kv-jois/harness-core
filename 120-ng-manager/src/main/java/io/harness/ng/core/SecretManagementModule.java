@@ -14,6 +14,8 @@ import io.harness.connector.impl.NGConnectorSecretManagerServiceImpl;
 import io.harness.connector.impl.NGVaultServiceImpl;
 import io.harness.connector.services.NGConnectorSecretManagerService;
 import io.harness.connector.services.NGVaultService;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingServiceImpl;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.ng.core.api.NGSecretActivityService;
 import io.harness.ng.core.api.NGSecretManagerService;
@@ -50,6 +52,7 @@ public class SecretManagementModule extends AbstractModule {
     bind(NGSecretActivityService.class).to(NGSecretActivityServiceImpl.class);
     bind(NGEncryptorService.class).to(NGEncryptorServiceImpl.class);
     bind(NGVaultService.class).to(NGVaultServiceImpl.class);
+    bind(NGAccountSettingService.class).to(NGAccountSettingServiceImpl.class);
   }
 
   private void registerRequiredBindings() {

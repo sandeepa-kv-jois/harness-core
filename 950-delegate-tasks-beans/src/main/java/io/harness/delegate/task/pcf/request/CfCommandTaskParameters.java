@@ -48,7 +48,7 @@ public class CfCommandTaskParameters
     if (pcfCommandRequest.isUseCfCLI() || needToCheckAppAutoscalarPluginInstall()) {
       CfCliVersion cfCliVersion = pcfCommandRequest.getCfCliVersion();
       capabilities.add(PcfInstallationCapability.builder()
-                           .criteria(format("CF CLI version: %s is installed", cfCliVersion))
+                           .criteria(format("Checking that CF CLI version: %s is installed", cfCliVersion))
                            .version(cfCliVersion)
                            .build());
     }
@@ -57,7 +57,7 @@ public class CfCommandTaskParameters
       CfCliVersion cfCliVersion = pcfCommandRequest.getCfCliVersion();
       capabilities.add(PcfAutoScalarCapability.builder()
                            .version(cfCliVersion)
-                           .criteria("App Autoscaler plugin is installed")
+                           .criteria("Checking that App Autoscaler plugin is installed")
                            .build());
     }
     return capabilities;

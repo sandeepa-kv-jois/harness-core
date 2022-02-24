@@ -130,6 +130,7 @@ public abstract class BaseChangeHandler<ApiType extends KubernetesObject> implem
         .accountId(accountId)
         .type(ChangeSourceType.KUBERNETES)
         .changeSourceIdentifier(dataCollectionInfo.getChangeSourceIdentifier())
+        .monitoredServiceIdentifier(dataCollectionInfo.getMonitoredServiceIdentifier())
         .serviceIdentifier(dataCollectionInfo.getServiceIdentifier())
         .envIdentifier(dataCollectionInfo.getEnvIdentifier())
         .projectIdentifier(dataCollectionInfo.getProjectIdentifier())

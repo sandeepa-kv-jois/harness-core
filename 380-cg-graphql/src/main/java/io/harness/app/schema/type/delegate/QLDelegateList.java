@@ -24,7 +24,7 @@ import lombok.Value;
 @OwnedBy(DEL)
 @Value
 @Builder
-@Scope(PermissionAttribute.ResourceType.APPLICATION)
+@Scope(PermissionAttribute.ResourceType.DELEGATE)
 public class QLDelegateList implements QLObject {
   private QLPageInfo pageInfo;
   @Singular private List<QLDelegate> nodes;

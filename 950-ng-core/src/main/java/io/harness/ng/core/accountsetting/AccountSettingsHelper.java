@@ -9,6 +9,7 @@ package io.harness.ng.core.accountsetting;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.accountsetting.dto.AccountSettingResponseDTO;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.dto.ConnectorSettings;
@@ -68,7 +69,7 @@ public class AccountSettingsHelper {
       }
       mongoTemplate.insertAll(accountSettings);
     } catch (Exception ex) {
-      log.error(String.format("Failed to create default account settings"), ex);
+      throw new InvalidRequestException(String.format("Failed to create default account settings"), ex);
     }
   }
 }

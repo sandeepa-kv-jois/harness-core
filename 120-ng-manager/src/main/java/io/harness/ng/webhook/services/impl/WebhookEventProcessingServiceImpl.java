@@ -75,6 +75,7 @@ public class WebhookEventProcessingServiceImpl
 
   @Override
   public void handle(WebhookEvent event) {
+    log.info("Processing the webhook event with uuid = [{}]", event.getUuid());
     ParseWebhookResponse parseWebhookResponse = null;
     SourceRepoType sourceRepoType = webhookHelper.getSourceRepoType(event);
     if (sourceRepoType != SourceRepoType.UNRECOGNIZED) {

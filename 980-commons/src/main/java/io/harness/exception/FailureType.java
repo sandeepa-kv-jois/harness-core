@@ -21,7 +21,8 @@ public enum FailureType {
   VERIFICATION_FAILURE(""),
   APPLICATION_ERROR(""),
   AUTHORIZATION_ERROR(""),
-  TIMEOUT_ERROR("");
+  TIMEOUT_ERROR(""),
+  POLICY_EVALUATION_FAILURE("");
 
   String errorMessage;
 

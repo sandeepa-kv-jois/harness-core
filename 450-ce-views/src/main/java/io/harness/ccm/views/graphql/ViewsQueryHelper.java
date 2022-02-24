@@ -304,9 +304,8 @@ public class ViewsQueryHelper {
   }
 
   public Boolean isGroupByNonePresent(List<QLCEViewGroupBy> groupByList) {
-    String noneFieldName = NONE_FIELD;
-    return groupByList.stream().anyMatch(groupBy
-        -> groupBy.getEntityGroupBy() != null && groupBy.getEntityGroupBy().getFieldName().equals(noneFieldName));
+    return groupByList.stream().anyMatch(
+        groupBy -> groupBy.getEntityGroupBy() != null && groupBy.getEntityGroupBy().getFieldName().equals(NONE_FIELD));
   }
 
   public Boolean isGroupByFieldPresent(List<QLCEViewGroupBy> groupByList, String fieldName) {
@@ -317,7 +316,7 @@ public class ViewsQueryHelper {
   public List<QLCEViewGroupBy> removeGroupByNone(List<QLCEViewGroupBy> groupByList) {
     return groupByList.stream()
         .filter(groupBy
-            -> groupBy.getEntityGroupBy() != null && !groupBy.getEntityGroupBy().getFieldName().equals(NONE_FIELD))
+            -> groupBy.getEntityGroupBy() == null || !groupBy.getEntityGroupBy().getFieldName().equals(NONE_FIELD))
         .collect(Collectors.toList());
   }
 }

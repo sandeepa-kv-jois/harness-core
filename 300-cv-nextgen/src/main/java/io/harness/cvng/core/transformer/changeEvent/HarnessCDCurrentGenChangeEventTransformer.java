@@ -30,6 +30,7 @@ public class HarnessCDCurrentGenChangeEventTransformer
         .activityStartTime(Instant.ofEpochMilli(metaData.getWorkflowStartTime()))
         .workflowEndTime(Instant.ofEpochMilli(metaData.getWorkflowEndTime()))
         .changeSourceIdentifier(changeEventDTO.getChangeSourceIdentifier())
+        .monitoredServiceIdentifier(changeEventDTO.getMonitoredServiceIdentifier())
         .type(changeEventDTO.getType().getActivityType())
         .serviceId(metaData.getServiceId())
         .appId(metaData.getAppId())

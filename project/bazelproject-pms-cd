@@ -31,7 +31,7 @@ directories:
   870-orchestration
   874-orchestration-delay
   876-orchestration-beans
-  878-pipeline-service-utilities
+  878-ng-common-utilities
   879-pms-sdk
   882-pms-sdk-core
   884-pms-commons

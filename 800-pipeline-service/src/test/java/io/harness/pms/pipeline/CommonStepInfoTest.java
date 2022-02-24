@@ -40,7 +40,7 @@ public class CommonStepInfoTest extends CategoryTest {
           .build();
   StepInfo httpStepInfo =
       StepInfo.newBuilder()
-          .setName("Http")
+          .setName("HTTP")
           .setType("Http")
           .setStepMetaData(StepMetaData.newBuilder().addFolderPaths("Utilities/Non-Scripted").build())
           .build();

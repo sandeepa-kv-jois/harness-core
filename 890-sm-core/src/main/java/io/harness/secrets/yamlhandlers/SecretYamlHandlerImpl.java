@@ -9,6 +9,7 @@ package io.harness.secrets.yamlhandlers;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.eraro.ErrorCode.ENCRYPT_DECRYPT_ERROR;
+import static io.harness.eraro.ErrorCode.INVALID_FORMAT;
 import static io.harness.eraro.ErrorCode.RESOURCE_NOT_FOUND;
 import static io.harness.eraro.ErrorCode.SECRET_MANAGEMENT_ERROR;
 import static io.harness.exception.WingsException.USER;
@@ -59,7 +60,7 @@ public class SecretYamlHandlerImpl implements SecretYamlHandler {
     } else {
       encryptedData = secretsDao.getSecretByName(accountId, secretId).<SecretManagementException>orElseThrow(() -> {
         throw new SecretManagementException(
-            SECRET_MANAGEMENT_ERROR, "The secret does not exist or you are unauthorized to view the secret", USER);
+            SECRET_MANAGEMENT_ERROR, "The secret does not exist or you are unauthorized to view the secret.", USER);
       });
     }
     return toYaml(encryptedData);
@@ -90,7 +91,12 @@ public class SecretYamlHandlerImpl implements SecretYamlHandler {
   public EncryptedData fromYaml(String accountId, String yamlRef) {
     String[] tags = yamlRef.split(":");
     String encryptionTypeYamlName = tags[0];
-    String encryptedDataRef = tags[1];
+    String encryptedDataRef;
+    try {
+      encryptedDataRef = tags[1];
+    } catch (ArrayIndexOutOfBoundsException e) {
+      throw new SecretManagementException(INVALID_FORMAT, "SecretReference format is not valid", USER);
+    }
 
     if (VAULT.getYamlName().equals(encryptionTypeYamlName) && encryptedDataRef.startsWith(URL_ROOT_PREFIX)) {
       if (!encryptedDataRef.contains(VaultConfig.KEY_SPEARATOR)) {

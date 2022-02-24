@@ -114,7 +114,7 @@ public class AuditServiceImplTest extends CategoryTest {
     assertNotNull(criteria);
     BasicDBList andList = (BasicDBList) criteria.getCriteriaObject().get("$and");
     assertNotNull(andList);
-    assertEquals(5, andList.size());
+    assertEquals(4, andList.size());
     Document accountDocument = (Document) andList.get(0);
     assertEquals(accountIdentifier, accountDocument.getString(AuditEventKeys.ACCOUNT_IDENTIFIER_KEY));
 
@@ -147,7 +147,7 @@ public class AuditServiceImplTest extends CategoryTest {
     assertNotNull(criteria);
     BasicDBList andList = (BasicDBList) criteria.getCriteriaObject().get("$and");
     assertNotNull(andList);
-    assertEquals(5, andList.size());
+    assertEquals(4, andList.size());
     Document accountDocument = (Document) andList.get(0);
     assertEquals(accountIdentifier, accountDocument.getString(AuditEventKeys.ACCOUNT_IDENTIFIER_KEY));
 
@@ -180,7 +180,7 @@ public class AuditServiceImplTest extends CategoryTest {
     assertNotNull(criteria);
     BasicDBList andList = (BasicDBList) criteria.getCriteriaObject().get("$and");
     assertNotNull(andList);
-    assertEquals(5, andList.size());
+    assertEquals(4, andList.size());
     Document accountDocument = (Document) andList.get(0);
     assertEquals(accountIdentifier, accountDocument.getString(AuditEventKeys.ACCOUNT_IDENTIFIER_KEY));
 
@@ -208,17 +208,17 @@ public class AuditServiceImplTest extends CategoryTest {
     assertNotNull(criteria);
     BasicDBList andList = (BasicDBList) criteria.getCriteriaObject().get("$and");
     assertNotNull(andList);
-    assertEquals(4, andList.size());
+    assertEquals(3, andList.size());
     Document accountDocument = (Document) andList.get(0);
     assertEquals(accountIdentifier, accountDocument.getString(AuditEventKeys.ACCOUNT_IDENTIFIER_KEY));
 
-    Document startTimeDocument = (Document) andList.get(2);
+    Document startTimeDocument = (Document) andList.get(1);
     assertNotNull(startTimeDocument);
     Document startTimestampDocument = (Document) startTimeDocument.get(AuditEventKeys.timestamp);
     assertNotNull(startTimestampDocument);
     assertEquals(Instant.ofEpochMilli(17L), startTimestampDocument.get("$gte"));
 
-    Document endTimeDocument = (Document) andList.get(3);
+    Document endTimeDocument = (Document) andList.get(2);
     assertNotNull(endTimeDocument);
     Document endTimestampDocument = (Document) endTimeDocument.get(AuditEventKeys.timestamp);
     assertEquals(Instant.ofEpochMilli(18L), endTimestampDocument.get("$lte"));
@@ -247,7 +247,7 @@ public class AuditServiceImplTest extends CategoryTest {
     assertNotNull(criteria);
     BasicDBList andList = (BasicDBList) criteria.getCriteriaObject().get("$and");
     assertNotNull(andList);
-    assertEquals(7, andList.size());
+    assertEquals(6, andList.size());
     Document accountDocument = (Document) andList.get(0);
     assertEquals(accountIdentifier, accountDocument.getString(AuditEventKeys.ACCOUNT_IDENTIFIER_KEY));
 

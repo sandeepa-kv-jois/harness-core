@@ -29,6 +29,8 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.expression.PmsEngineExpressionService;
+import io.harness.pms.pipeline.PipelineEntity;
+import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
@@ -36,6 +38,7 @@ import io.harness.pms.yaml.YamlUtils;
 
 import com.google.inject.Inject;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +55,7 @@ public class NotificationHelper {
   @Inject PipelineServiceConfiguration pipelineServiceConfiguration;
   @Inject PlanExecutionMetadataService planExecutionMetadataService;
   @Inject PmsEngineExpressionService pmsEngineExpressionService;
+  @Inject PMSPipelineService pmsPipelineService;
 
   public Optional<PipelineEventType> getEventTypeForStage(NodeExecution nodeExecution) {
     if (!OrchestrationUtils.isStageNode(nodeExecution)) {
@@ -157,10 +161,27 @@ public class NotificationHelper {
   }
 
   public String generateUrl(Ambiance ambiance) {
+    String accountId = AmbianceUtils.getAccountId(ambiance);
+    String orgId = AmbianceUtils.getOrgIdentifier(ambiance);
+    String projectId = AmbianceUtils.getProjectIdentifier(ambiance);
+    String moduleName = "cd";
+    Optional<PipelineEntity> pipelineEntity =
+        pmsPipelineService.get(accountId, orgId, projectId, ambiance.getMetadata().getPipelineIdentifier(), false);
+
+    if (!EmptyPredicate.isEmpty(ambiance.getMetadata().getModuleType())) {
+      moduleName = ambiance.getMetadata().getModuleType();
+    } else if (pipelineEntity.isPresent()) {
+      List<String> modules = new ArrayList<>(pipelineEntity.get().getFilters().keySet());
+      if (!EmptyPredicate.isEmpty(modules)) {
+        if (!modules.get(0).equals("pms")) {
+          moduleName = modules.get(0);
+        } else if (modules.size() > 1) {
+          moduleName = modules.get(1);
+        }
+      }
+    }
     return String.format("%s/account/%s/%s/orgs/%s/projects/%s/pipelines/%s/executions/%s/pipeline",
-        pipelineServiceConfiguration.getPipelineServiceBaseUrl(), AmbianceUtils.getAccountId(ambiance),
-        EmptyPredicate.isEmpty(ambiance.getMetadata().getModuleType()) ? "cd" : ambiance.getMetadata().getModuleType(),
-        AmbianceUtils.getOrgIdentifier(ambiance), AmbianceUtils.getProjectIdentifier(ambiance),
+        pipelineServiceConfiguration.getPipelineServiceBaseUrl(), accountId, moduleName, orgId, projectId,
         ambiance.getMetadata().getPipelineIdentifier(), ambiance.getPlanExecutionId());
   }
 

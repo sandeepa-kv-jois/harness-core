@@ -22,6 +22,7 @@ import io.harness.batch.processing.writer.constants.EventTypeConstants;
 import io.harness.batch.processing.writer.constants.K8sCCMConstants;
 import io.harness.ccm.commons.beans.InstanceState;
 import io.harness.ccm.commons.beans.InstanceType;
+import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.beans.StorageResource;
 import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
 import io.harness.ccm.commons.entities.events.PublishedMessage;
@@ -49,7 +50,7 @@ public class K8sPVInfoTasklet implements Tasklet {
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) {
-    final CCMJobConstants jobConstants = new CCMJobConstants(chunkContext);
+    final JobConstants jobConstants = new CCMJobConstants(chunkContext);
     int batchSize = config.getBatchQueryConfig().getQueryBatchSize();
 
     String messageType = EventTypeConstants.K8S_PV_INFO;
@@ -65,7 +66,7 @@ public class K8sPVInfoTasklet implements Tasklet {
                                                 .filter(instanceInfo -> instanceInfo.getAccountId() != null)
                                                 .collect(Collectors.toList());
 
-      instanceDataBulkWriteService.updateList(instanceInfoList);
+      instanceDataBulkWriteService.upsertInstanceInfo(instanceInfoList);
     } while (publishedMessageList.size() == batchSize);
     return null;
   }

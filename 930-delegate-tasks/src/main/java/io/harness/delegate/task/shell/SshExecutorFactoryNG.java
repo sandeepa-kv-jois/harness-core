@@ -25,7 +25,14 @@ public class SshExecutorFactoryNG {
         sshSessionConfig);
   }
 
-  private LogCallback getExecutionLogCallback(SshSessionConfig sshSessionConfig,
+  public FileBasedScriptExecutorNG getFileBasedExecutor(SshSessionConfig sshSessionConfig,
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+    return new FileBasedSshScriptExecutorNG(
+        getExecutionLogCallback(sshSessionConfig, logStreamingTaskClient, commandUnitsProgress), true,
+        sshSessionConfig);
+  }
+
+  private static LogCallback getExecutionLogCallback(SshSessionConfig sshSessionConfig,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
     return new NGDelegateLogCallback(
         logStreamingTaskClient, sshSessionConfig.getCommandUnitName(), true, commandUnitsProgress);

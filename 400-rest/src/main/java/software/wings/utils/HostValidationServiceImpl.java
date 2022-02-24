@@ -19,6 +19,8 @@ import static software.wings.utils.SshHelperUtils.createSshSessionConfig;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionStatus;
 import io.harness.concurrent.HTimeLimiter;
+import io.harness.delegate.task.winrm.WinRmSession;
+import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.ResponseMessage;
 import io.harness.logging.NoopExecutionCallback;
@@ -35,8 +37,6 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.command.CommandExecutionContext;
 import software.wings.beans.infrastructure.Host;
-import software.wings.core.winrm.executors.WinRmSession;
-import software.wings.core.winrm.executors.WinRmSessionConfig;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.security.SecretManagementDelegateService;
 
