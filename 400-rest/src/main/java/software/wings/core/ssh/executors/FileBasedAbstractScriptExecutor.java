@@ -14,6 +14,7 @@ import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import io.harness.delegate.beans.DelegateFile;
 import io.harness.delegate.beans.FileBucket;
+import io.harness.delegate.task.shell.ConfigFileMetaData;
 import io.harness.exception.WingsException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -22,7 +23,6 @@ import io.harness.shell.SshHelperUtils;
 
 import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStreamAttributes;
-import software.wings.beans.command.CopyConfigCommandUnit.ConfigFileMetaData;
 import software.wings.delegatetasks.DelegateFileManager;
 
 import com.google.inject.Inject;

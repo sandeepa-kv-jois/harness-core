@@ -29,6 +29,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.task.shell.ConfigFileMetaData;
 import io.harness.delegate.task.winrm.WinRmSession;
 import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.logging.CommandExecutionStatus;
@@ -38,7 +39,6 @@ import io.harness.rule.OwnerRule;
 import io.harness.ssh.SshHelperUtils;
 
 import software.wings.beans.ConfigFile;
-import software.wings.beans.command.CopyConfigCommandUnit.ConfigFileMetaData;
 import software.wings.delegatetasks.DelegateFileManager;
 import software.wings.utils.ExecutionLogWriter;
 

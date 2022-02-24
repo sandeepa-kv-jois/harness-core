@@ -13,10 +13,10 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.FileBucket;
+import io.harness.delegate.task.shell.ConfigFileMetaData;
 import io.harness.logging.CommandExecutionStatus;
 
 import software.wings.beans.artifact.ArtifactStreamAttributes;
-import software.wings.beans.command.CopyConfigCommandUnit;
 
 import java.util.List;
 import org.apache.commons.lang3.tuple.Pair;
@@ -24,7 +24,7 @@ import org.apache.commons.lang3.tuple.Pair;
 @OwnedBy(CDP)
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 public interface FileBasedScriptExecutor {
-  CommandExecutionStatus copyConfigFiles(CopyConfigCommandUnit.ConfigFileMetaData configFileMetaData);
+  CommandExecutionStatus copyConfigFiles(ConfigFileMetaData configFileMetaData);
 
   CommandExecutionStatus copyFiles(String destinationDirectoryPath, List<String> files);
 

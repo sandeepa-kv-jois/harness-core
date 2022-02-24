@@ -27,6 +27,12 @@ public class WinRmExecutorFactoryNG {
         config, disableCommandEncoding);
   }
 
+  public FileBasedWinRmExecutorNG getFiledBasedWinRmExecutor(WinRmSessionConfig config, boolean disableCommandEncoding,
+      ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
+    return new FileBasedWinRmExecutorNG(getExecutionLogCallback(config, logStreamingTaskClient, commandUnitsProgress),
+        true, config, disableCommandEncoding);
+  }
+
   private static LogCallback getExecutionLogCallback(WinRmSessionConfig sessionConfig,
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) {
     return new NGDelegateLogCallback(

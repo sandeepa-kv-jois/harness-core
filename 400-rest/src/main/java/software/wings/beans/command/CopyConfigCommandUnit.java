@@ -21,6 +21,7 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.FileBucket;
+import io.harness.delegate.task.shell.ConfigFileMetaData;
 import io.harness.expression.Expression;
 import io.harness.expression.ExpressionReflectionUtils.NestedAnnotationResolver;
 import io.harness.logging.CommandExecutionStatus;
@@ -40,11 +41,9 @@ import java.io.File;
 import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.annotations.Transient;
 
@@ -139,20 +138,6 @@ public class CopyConfigCommandUnit extends SshCommandUnit implements NestedAnnot
       }
     }
     return result;
-  }
-
-  @Data
-  @Builder
-  @NoArgsConstructor
-  @AllArgsConstructor
-  public static class ConfigFileMetaData {
-    private String fileId;
-    private Long length;
-    private String filename;
-    private String destinationDirectoryPath;
-    private FileBucket fileBucket;
-    private boolean encrypted;
-    private String activityId;
   }
 
   /**

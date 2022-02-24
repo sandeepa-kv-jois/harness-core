@@ -13,11 +13,11 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.beans.FileBucket;
+import io.harness.delegate.task.shell.ConfigFileMetaData;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.shell.BaseScriptExecutor;
 
 import software.wings.beans.artifact.ArtifactStreamAttributes;
-import software.wings.beans.command.CopyConfigCommandUnit.ConfigFileMetaData;
 import software.wings.core.ssh.executors.FileBasedScriptExecutor;
 
 import java.util.List;
