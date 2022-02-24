@@ -12,8 +12,13 @@ import static io.harness.ccm.commons.entities.CCMAggregationOperation.SUM;
 import static io.harness.ccm.commons.entities.CCMField.ACTUAL_COST;
 import static io.harness.ccm.commons.entities.CCMField.ALL;
 import static io.harness.ccm.commons.entities.CCMField.CLOUD_PROVIDER;
+import static io.harness.ccm.commons.entities.CCMField.CLUSTER_NAME;
 import static io.harness.ccm.commons.entities.CCMField.COST_IMPACT;
+import static io.harness.ccm.commons.entities.CCMField.GCP_PRODUCT;
+import static io.harness.ccm.commons.entities.CCMField.GCP_SKU_ID;
+import static io.harness.ccm.commons.entities.CCMField.NAMESPACE;
 import static io.harness.ccm.commons.entities.CCMField.STATUS;
+import static io.harness.ccm.commons.entities.CCMField.WORKLOAD;
 import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.ANOMALIES_BY_CLOUD_PROVIDERS;
 import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.ANOMALIES_BY_STATUS;
 import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.TOP_N_ANOMALIES;
@@ -257,6 +262,7 @@ public class AnomalyServiceImpl implements AnomalyService {
 
   private EntityInfo getEntityInfo(Anomalies anomaly) {
     return EntityInfo.builder()
+        .field(getGroupByField(anomaly))
         .clusterId(anomaly.getClusterid())
         .clusterName(anomaly.getClustername())
         .namespace(anomaly.getNamespace())
@@ -271,6 +277,26 @@ public class AnomalyServiceImpl implements AnomalyService {
         .awsUsageType(anomaly.getAwsusagetype())
         .awsInstancetype(anomaly.getAwsinstancetype())
         .build();
+  }
+
+  private CCMField getGroupByField(Anomalies anomaly) {
+    if (anomaly.getClustername() != null) {
+      if (anomaly.getWorkloadname() != null) {
+        return WORKLOAD;
+      }
+      if (anomaly.getNamespace() != null) {
+        return NAMESPACE;
+      }
+      return CLUSTER_NAME;
+    } else if (anomaly.getGcpproject() != null) {
+      if (anomaly.getGcpskuid() != null) {
+        return GCP_SKU_ID;
+      }
+      if (anomaly.getGcpproduct() != null) {
+        return GCP_PRODUCT;
+      }
+    }
+    return null;
   }
 
   private String getCloudProvider(Anomalies anomaly) {
