@@ -40,6 +40,8 @@ shared_dependencies = [
     "@maven//:com_azure_azure_identity",
     "@maven//:com_azure_azure_storage_blob",
     "@maven//:com_azure_azure_storage_common",
+    "@maven//:com_azure_azure_core",
+    "@maven//:com_azure_resourcemanager_azure_resourcemanager",
     "@maven//:com_google_cloud_google_cloud_bigquery",
     "@maven//:com_google_cloud_google_cloud_bigquerydatatransfer",
     "@maven//:com_google_cloud_google_cloud_storage",

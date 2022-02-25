@@ -52,5 +52,7 @@ public class BatchMainConfig {
   @JsonProperty("connectorHealthUpdateJobConfig") private ConnectorHealthUpdateJobConfig connectorHealthUpdateJobConfig;
   @JsonProperty("awsAccountTagsCollectionJobConfig")
   private AwsAccountTagsCollectionJobConfig awsAccountTagsCollectionJobConfig;
+  @JsonProperty("azureAccountTagsCollectionJobConfig")
+  private AzureAccountTagsCollectionJobConfig azureAccountTagsCollectionJobConfig;
   @JsonProperty("gcpConfig") private GcpConfig gcpConfig;
 }
