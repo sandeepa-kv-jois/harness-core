@@ -31,8 +31,7 @@ import lombok.experimental.FieldDefaults;
 @Schema(name = "MergeInputSetResponse", description = "View of the Response of Merging of Input Sets of a Pipeline")
 public class MergeInputSetResponseDTOPMS {
   @Schema(description = "Merged YAML of all the Input Sets") String pipelineYaml;
-  @Schema(description = "Merged YAML of all the Input Sets, merged into the full Pipeline YAML")
-  String completePipelineYaml;
+  @Schema(description = "Pipeline YAML after merging with the Input Sets") String completePipelineYaml;
 
   @Schema(description = "This field is true if the merging is not possible")
   @ApiModelProperty(name = "isErrorResponse")
