@@ -187,3 +187,10 @@ spec:
             envFrom:
             - secretRef:
                 name: harness-delegate-account-token
+            volumeMounts:
+              - name: config-volume
+                mountPath: /etc/config
+          volumes:
+            - name: config-volume
+              configMap:
+                name: harness-delegate-accoun-upgrader-config

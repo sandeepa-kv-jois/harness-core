@@ -47,4 +47,11 @@ spec:
             envFrom:
             - secretRef:
                 name: ${accountTokenName}
+            volumeMounts:
+              - name: config-volume
+                mountPath: /etc/config
+          volumes:
+            - name: config-volume
+              configMap:
+                name: ${fullDelegateName}-upgrader-config
 </#macro>
