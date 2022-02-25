@@ -9,9 +9,9 @@ package io.harness.delegate.beans.connector.awssecretmanager;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.MANUAL_CONFIG;
 import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.ASSUME_IAM_ROLE;
 import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.ASSUME_STS_ROLE;
+import static io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerCredentialType.MANUAL_CONFIG;
 import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
 import static io.harness.exception.WingsException.USER;
 
