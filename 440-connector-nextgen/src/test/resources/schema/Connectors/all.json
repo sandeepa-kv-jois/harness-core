@@ -485,7 +485,9 @@
         {
           "type": "object",
           "required": [
-            "kmsArn"
+            "credential",
+            "kmsArn",
+            "region"
           ],
           "properties": {
             "credential": {
@@ -779,7 +781,8 @@
           "type": "object",
           "required": [
             "credential",
-            "region"
+            "region",
+            "secretNamePrefix"
           ],
           "properties": {
             "credential": {
@@ -2325,7 +2328,11 @@
         {
           "type": "object",
           "required": [
-            "credentials"
+            "credentials",
+            "keyName",
+            "keyRing",
+            "projectId",
+            "region"
           ],
           "properties": {
             "credentials": {
@@ -4047,6 +4054,10 @@
         },
         {
           "type": "object",
+          "required": [
+            "namespace",
+            "vaultUrl"
+          ],
           "properties": {
             "accessType": {
               "type": "string",

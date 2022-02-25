@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.rule.OwnerRule.PHOENIKX;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
+import static org.apache.commons.lang3.RandomStringUtils.randomAlphabetic;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.Matchers.any;
@@ -29,6 +30,7 @@ import io.harness.connector.services.ConnectorService;
 import io.harness.connector.services.NGVaultService;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.vaultconnector.VaultConnectorDTO;
+import io.harness.encryption.SecretRefData;
 import io.harness.enforcement.client.services.EnforcementClientService;
 import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
@@ -70,11 +72,14 @@ public class SecretManagerConnectorServiceImplTest extends CategoryTest {
   }
 
   private ConnectorDTO getRequestDTO() {
+    SecretRefData secretRefData = new SecretRefData(randomAlphabetic(10));
+    secretRefData.setDecryptedValue(randomAlphabetic(5).toCharArray());
     ConnectorInfoDTO connectorInfo = ConnectorInfoDTO.builder().build();
     connectorInfo.setConnectorType(ConnectorType.VAULT);
     connectorInfo.setConnectorConfig(VaultConnectorDTO.builder()
                                          .vaultUrl("http://abc.com:8200")
                                          .secretEngineVersion(1)
+                                         .authToken(secretRefData)
                                          .renewalIntervalMinutes(10)
                                          .build());
     connectorInfo.setName("name");
@@ -134,18 +139,24 @@ public class SecretManagerConnectorServiceImplTest extends CategoryTest {
   @Owner(developers = PHOENIKX)
   @Category(UnitTests.class)
   public void updateSecretManager() {
+    SecretRefData secretRefData = new SecretRefData(randomAlphabetic(10));
+    secretRefData.setDecryptedValue(randomAlphabetic(5).toCharArray());
     when(ngSecretManagerService.updateSecretManager(any(), any(), any(), any(), any()))
         .thenReturn(random(VaultConfigDTO.class));
     when(defaultConnectorService.update(any(), any())).thenReturn(null);
     when(connectorRepository.updateMultiple(any(), any())).thenReturn(null);
     when(defaultConnectorService.get(any(), any(), any(), any()))
-        .thenReturn(
-            Optional.of(ConnectorResponseDTO.builder()
-                            .connector(ConnectorInfoDTO.builder()
-                                           .connectorType(ConnectorType.VAULT)
-                                           .connectorConfig(VaultConnectorDTO.builder().isDefault(false).build())
-                                           .build())
-                            .build()));
+        .thenReturn(Optional.of(ConnectorResponseDTO.builder()
+                                    .connector(ConnectorInfoDTO.builder()
+                                                   .connectorType(ConnectorType.VAULT)
+                                                   .connectorConfig(VaultConnectorDTO.builder()
+                                                                        .isDefault(false)
+                                                                        .authToken(secretRefData)
+                                                                        .vaultUrl(randomAlphabetic(10))
+                                                                        .namespace(randomAlphabetic(5))
+                                                                        .build())
+                                                   .build())
+                                    .build()));
     ConnectorResponseDTO connectorDTO = secretManagerConnectorService.update(getRequestDTO(), ACCOUNT);
     assertThat(connectorDTO).isEqualTo(null);
   }

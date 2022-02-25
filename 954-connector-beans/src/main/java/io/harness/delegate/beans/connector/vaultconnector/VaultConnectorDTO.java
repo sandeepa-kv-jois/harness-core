@@ -90,7 +90,6 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @JsonProperty(value = "xvaultAwsIamServerId")
   private SecretRefData headerAwsIam;
 
-  @NotNull
   public AccessType getAccessType() {
     if (useVaultAgent) {
       return AccessType.VAULT_AGENT;
@@ -130,7 +129,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
     }
 
     if (getAccessType() == AccessType.TOKEN) {
-      if (authToken.isNull()) {
+      if (authToken == null) {
         throw new InvalidRequestException(
             "You must provide a Auth Token if you are using Token Authentication for Vault", INVALID_REQUEST, USER);
       }
