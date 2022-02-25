@@ -5,6 +5,24 @@
 
 ---
 
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ${fullDelegateName}-upgrader-config
+  namespace: ${delegateNamespace}
+data:
+  config.yaml: |
+    mode: Delegate
+    dryRun: false
+    workloadName: ${fullDelegateName}
+    namespace: ${delegateNamespace}
+    containerName: delegate
+    delegateConfig:
+      accountId: ${accountId}
+      managerHost: ${managerHostAndPort}
+
+---
+
 apiVersion: batch/v1beta1
 kind: CronJob
 metadata:
@@ -29,15 +47,4 @@ spec:
             envFrom:
             - secretRef:
                 name: ${accountTokenName}
-            env:
-            - name: POD_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
-            - name: ACCOUNT_ID
-              value: ${accountId}
-            - name: MANAGER_HOST_AND_PORT
-              value: ${managerHostAndPort}
-            - name: DELEGATE_NAME
-              value: ${fullDelegateName}
 </#macro>
