@@ -144,7 +144,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
     }
     if (isUseVaultAgent() && isUseAwsIam()) {
       throw new InvalidRequestException(
-          "You must use either Vault Agent or Aws Iam Auth method to authenticate. Both can not be used together",
+          "You must use either Vault Agent or Aws Iam Auth method to authenticate. Both can not be used together.",
           INVALID_REQUEST, USER);
     }
     if (isUseVaultAgent()) {
