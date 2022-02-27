@@ -25,7 +25,6 @@ import io.harness.engine.interrupts.InterruptManager;
 import io.harness.engine.interrupts.InterruptPackage;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
-import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.advisers.AdviseType;
 import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.EndPlanAdvise;
@@ -74,20 +73,17 @@ public class EndPlanAdviserResponseHandlerTest extends OrchestrationTestBase {
 
     planExecutionService.save(PlanExecution.builder().uuid(PLAN_EXECUTION_ID).status(Status.RUNNING).build());
 
-    nodeExecution =
-        NodeExecution.builder()
-            .uuid(NODE_EXECUTION_ID)
-            .ambiance(ambiance)
-            .planNode(PlanNode.builder()
-                          .uuid(NODE_SETUP_ID)
-                          .name("DUMMY")
-                          .identifier("dummy")
-                          .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                          .serviceName("CD")
-                          .build())
-            .startTs(System.currentTimeMillis())
-            .status(Status.FAILED)
-            .build();
+    nodeExecution = NodeExecution.builder()
+                        .uuid(NODE_EXECUTION_ID)
+                        .ambiance(ambiance)
+                        .nodeId(NODE_SETUP_ID)
+                        .name("DUMMY")
+                        .identifier("dummy")
+                        .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                        .module("CD")
+                        .startTs(System.currentTimeMillis())
+                        .status(Status.FAILED)
+                        .build();
     nodeExecutionService.save(nodeExecution);
     advise = EndPlanAdvise.newBuilder().build();
   }

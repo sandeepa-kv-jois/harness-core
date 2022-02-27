@@ -39,7 +39,7 @@ public class ResumeMetadata {
         .mode(nodeExecution.getMode())
         .resolvedStepParameters(nodeExecution.getResolvedStepParametersBytes())
         .latestExecutableResponse(nodeExecution.obtainLatestExecutableResponse())
-        .module(nodeExecution.module())
+        .module(nodeExecution.getModule())
         .build();
   }
 }

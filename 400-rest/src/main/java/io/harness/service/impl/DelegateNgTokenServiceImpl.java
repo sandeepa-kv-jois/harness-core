@@ -10,6 +10,8 @@ package io.harness.service.impl;
 import static io.harness.data.encoding.EncodingUtils.decodeBase64ToString;
 import static io.harness.data.encoding.EncodingUtils.encodeBase64;
 
+import static java.lang.String.format;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.UUIDGenerator;
@@ -27,6 +29,7 @@ import io.harness.delegate.utils.DelegateEntityOwnerHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
+import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.utils.Misc;
 
 import software.wings.beans.Account;
@@ -34,6 +37,7 @@ import software.wings.service.intfc.account.AccountCrudObserver;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import com.mongodb.DuplicateKeyException;
 import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
@@ -63,20 +67,22 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
 
   @Override
   public DelegateTokenDetails createToken(String accountId, DelegateEntityOwner owner, String name) {
-    if (!matchNameTokenQuery(accountId, name).asList().isEmpty()) {
-      throw new InvalidRequestException("Token with given name already exists for given account.");
-    }
-
     DelegateToken delegateToken = DelegateToken.builder()
                                       .accountId(accountId)
                                       .owner(owner)
-                                      .name(name)
+                                      .name(name.trim())
                                       .isNg(true)
                                       .status(DelegateTokenStatus.ACTIVE)
                                       .value(encodeBase64(Misc.generateSecretKey()))
+                                      .createdByNgUser(SourcePrincipalContextBuilder.getSourcePrincipal())
                                       .build();
 
-    persistence.save(delegateToken);
+    try {
+      persistence.save(delegateToken);
+    } catch (DuplicateKeyException e) {
+      throw new InvalidRequestException(format("Token with given name %s already exists for given account.", name));
+    }
+
     publishCreateTokenAuditEvent(delegateToken);
     return getDelegateTokenDetails(delegateToken, true);
   }
@@ -111,12 +117,11 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
 
   @Override
   public DelegateTokenDetails getDelegateToken(String accountId, String name) {
-    return matchNameTokenQuery(accountId, name)
-        .asList()
-        .stream()
-        .map(token -> getDelegateTokenDetails(token, false))
-        .findFirst()
-        .orElse(null);
+    DelegateToken delegateToken = matchNameTokenQuery(accountId, name).get();
+    if (delegateToken != null) {
+      return getDelegateTokenDetails(delegateToken, false);
+    }
+    return null;
   }
 
   @Override
@@ -214,7 +219,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
                                                                   .accountId(delegateToken.getAccountId())
                                                                   .name(delegateToken.getName())
                                                                   .createdAt(delegateToken.getCreatedAt())
-                                                                  .createdBy(delegateToken.getCreatedBy())
+                                                                  .createdByNgUser(delegateToken.getCreatedByNgUser())
                                                                   .status(delegateToken.getStatus());
 
     if (includeTokenValue) {

@@ -184,7 +184,6 @@ import io.kubernetes.client.openapi.models.V1Service;
 import io.kubernetes.client.openapi.models.V1ServicePort;
 import io.kubernetes.client.openapi.models.V1Status;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
-import io.kubernetes.client.openapi.models.VersionInfo;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -2572,8 +2571,7 @@ public class K8sTaskHelperBase {
   public ConnectorValidationResult validate(
       ConnectorConfigDTO connector, List<EncryptedDataDetail> encryptionDetailList) {
     KubernetesConfig kubernetesConfig = getKubernetesConfig(connector, encryptionDetailList);
-    VersionInfo versionInfo = kubernetesContainerService.getVersion(kubernetesConfig);
-    log.debug(versionInfo.toString());
+    kubernetesContainerService.validateCredentials(kubernetesConfig);
     return ConnectorValidationResult.builder().status(ConnectivityStatus.SUCCESS).build();
   }
 

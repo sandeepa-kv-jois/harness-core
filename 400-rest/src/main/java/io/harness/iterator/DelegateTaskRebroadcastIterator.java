@@ -9,7 +9,6 @@ package io.harness.iterator;
 
 import static io.harness.beans.DelegateTask.Status.QUEUED;
 import static io.harness.beans.FeatureName.DELEGATE_TASK_REBROADCAST_ITERATOR;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_TASK_REBROADCAST;
 import static io.harness.persistence.HQuery.excludeAuthority;
@@ -30,7 +29,6 @@ import io.harness.mongo.iterator.filter.MorphiaFilterExpander;
 import io.harness.mongo.iterator.provider.MorphiaPersistenceProvider;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.service.intfc.DelegateTaskService;
 import io.harness.workers.background.AccountLevelEntityProcessController;
 
@@ -170,12 +168,7 @@ public class DelegateTaskRebroadcastIterator implements MongoPersistenceIterator
         persistence.update(query, updateOperations);
 
         delegateTask.setBroadcastToDelegateIds(broadcastToDelegates);
-        BatchDelegateSelectionLog batch = delegateSelectionLogsService.createBatch(delegateTask);
-        if (isNotEmpty(broadcastToDelegates)) {
-          delegateSelectionLogsService.logBroadcastToDelegate(
-              batch, Sets.newHashSet(broadcastToDelegates), delegateTask.getAccountId());
-        }
-        delegateSelectionLogsService.save(batch);
+        delegateSelectionLogsService.logBroadcastToDelegate(Sets.newHashSet(broadcastToDelegates), delegateTask);
         try (AutoLogContext ignore1 = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
                  TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR);
              AutoLogContext ignore2 = new AccountLogContext(delegateTask.getAccountId(), OVERRIDE_ERROR)) {

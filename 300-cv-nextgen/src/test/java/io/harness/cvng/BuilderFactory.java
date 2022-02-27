@@ -597,6 +597,7 @@ public class BuilderFactory {
         .relatedAppServices(Arrays.asList(ServiceEnvironment.builder()
                                               .environmentIdentifier(context.getEnvIdentifier())
                                               .serviceIdentifier(context.getServiceIdentifier())
+                                              .monitoredServiceIdentifier(context.getMonitoredServiceIdentifier())
                                               .build()));
   }
 

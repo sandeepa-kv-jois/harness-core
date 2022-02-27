@@ -81,9 +81,6 @@ public interface ActivityService {
 
   String upsert(Activity activity);
 
-  List<Activity> get(ServiceEnvironmentParams serviceEnvironmentParams, List<String> changeSourceIdentifiers,
-      Instant startTime, Instant endTime, List<ActivityType> activityTypes);
-
   Long getCount(ServiceEnvironmentParams serviceEnvironmentParams, List<String> changeSourceIdentifiers,
       Instant startTime, Instant endTime, List<ActivityType> activityTypes);
 

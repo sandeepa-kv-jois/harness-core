@@ -16,6 +16,7 @@ import io.harness.data.validator.Trimmed;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
+import io.harness.mongo.index.SortCompoundMongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAccess;
@@ -27,12 +28,10 @@ import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import lombok.Builder;
-import lombok.NonNull;
 import lombok.Value;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.UtilityClass;
 import lombok.experimental.Wither;
-import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
 import org.springframework.data.annotation.CreatedDate;
 import org.springframework.data.annotation.Id;
@@ -57,8 +56,8 @@ public class OutcomeInstance implements PersistentEntity, UuidAccess {
                  .name("unique_producedBySetupIdRuntimeIdIdx")
                  .unique(true)
                  .field(OutcomeInstanceKeys.planExecutionId)
-                 .field("producedBy.setupId")
-                 .field("producedBy.runtimeId")
+                 .field(OutcomeInstanceKeys.producedBySetupId)
+                 .field(OutcomeInstanceKeys.producedByRuntimeId)
                  .field(OutcomeInstanceKeys.name)
                  .build())
         .add(CompoundMongoIndex.builder()
@@ -72,14 +71,21 @@ public class OutcomeInstance implements PersistentEntity, UuidAccess {
                  .name("producedByRuntimeIdIdx")
                  .field(OutcomeInstanceKeys.producedByRuntimeId)
                  .build())
+        .add(SortCompoundMongoIndex.builder()
+                 .name("planExecutionIdProducedByRuntimeIdCreatedAtIdx")
+                 .field(OutcomeInstanceKeys.planExecutionId)
+                 .field(OutcomeInstanceKeys.producedByRuntimeId)
+                 .descRangeField(OutcomeInstanceKeys.createdAt)
+                 .build())
         .build();
   }
 
   @Wither @Id @org.mongodb.morphia.annotations.Id String uuid;
-  @NonNull String planExecutionId;
+
+  String planExecutionId;
   String stageExecutionId;
   Level producedBy;
-  @NotEmpty @Trimmed String name;
+  @Trimmed String name;
   String levelRuntimeIdIdx;
   @Deprecated org.bson.Document outcome;
   PmsOutcome outcomeValue;

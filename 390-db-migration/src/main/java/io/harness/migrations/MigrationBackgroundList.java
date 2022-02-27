@@ -54,7 +54,6 @@ import io.harness.migrations.all.AddInfraMappingNameToInstanceData;
 import io.harness.migrations.all.AddIsDefaultFlagToUserGroup;
 import io.harness.migrations.all.AddOrchestrationToWorkflows;
 import io.harness.migrations.all.AddPipelinesReferenceToUserGroups;
-import io.harness.migrations.all.AddRingDetailsToDelegateRing;
 import io.harness.migrations.all.AddRingsToAccountMigration;
 import io.harness.migrations.all.AddStateMachineToWorkflowExecutions;
 import io.harness.migrations.all.AddValidUntilToSecretUsageLogs;
@@ -366,7 +365,7 @@ public class MigrationBackgroundList {
         .add(Pair.of(209, NullAppFilterPermissionMigration.class))
         .add(Pair.of(210, BaseMigration.class))
         .add(Pair.of(211, AddRingsToAccountMigration.class))
-        .add(Pair.of(212, AddRingDetailsToDelegateRing.class))
+        .add(Pair.of(212, BaseMigration.class))
         .add(Pair.of(213, RemoveUsageRestrictionForApplicationDefaultsMigration.class))
         .add(Pair.of(214, CreateDefaultNgDelegateTokenMigration.class))
         .add(Pair.of(215, AddPipelinesReferenceToUserGroups.class))

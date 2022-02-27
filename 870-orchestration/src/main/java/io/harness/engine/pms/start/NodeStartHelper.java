@@ -92,7 +92,7 @@ public class NodeStartHelper {
                                         .setMode(nodeExecution.getMode())
                                         .build();
     eventSender.sendEvent(nodeExecution.getAmbiance(), nodeStartEvent.toByteString(), PmsEventCategory.NODE_START,
-        nodeExecution.module(), true);
+        nodeExecution.getModule(), true);
   }
 
   private NodeExecution prepareNodeExecutionForInvocation(Ambiance ambiance, Status targetStatus, PlanNode planNode) {

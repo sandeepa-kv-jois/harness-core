@@ -119,6 +119,8 @@ auditServiceConfig:
     transactionsEnabled: false
 
   enableAuditService: true
+  hostname: ${HOSTNAME:-localhost}
+  basePathPrefix: ${BASE_PATH_PREFIX:-""}
 
 secretsConfiguration:
   secretResolutionEnabled: false

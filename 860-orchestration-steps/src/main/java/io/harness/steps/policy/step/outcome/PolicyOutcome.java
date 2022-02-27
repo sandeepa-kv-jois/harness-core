@@ -5,24 +5,23 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.pms.plan.execution.beans;
+package io.harness.steps.policy.step.outcome;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.pms.contracts.plan.TriggerType;
-import io.harness.pms.contracts.plan.TriggeredBy;
-import io.harness.pms.contracts.triggers.TriggerPayload;
 
+import java.util.List;
 import lombok.Builder;
-import lombok.Value;
+import lombok.Data;
 
-@OwnedBy(PIPELINE)
-@Value
+@Data
 @Builder
-public class TriggerFlowPlanDetails {
-  TriggerPayload triggerPayload;
-  String payload;
-  TriggerType triggerType;
-  TriggeredBy triggeredBy;
+@OwnedBy(PIPELINE)
+public class PolicyOutcome {
+  String identifier;
+  String name;
+  String status;
+  List<String> denyMessages;
+  String error;
 }

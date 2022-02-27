@@ -123,6 +123,8 @@ auditServiceConfig:
     transactionsEnabled: false
 
   enableAuditService: true
+  hostname: ${HOSTNAME:-localhost}
+  basePathPrefix: ${BASE_PATH_PREFIX:-""}
 
 resourceGroupServiceConfig:
   enableResourceGroup: true
@@ -205,6 +207,8 @@ resourceGroupServiceConfig:
   exportMetricsToStackDriver: false
 
   distributedLockImplementation: REDIS
+  hostname: ${HOSTNAME:-localhost}
+  basePathPrefix: ${BASE_PATH_PREFIX:-""}
 
 hostname: ${HOSTNAME:-localhost}
 

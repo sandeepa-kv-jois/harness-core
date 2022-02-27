@@ -18,12 +18,12 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class KubernetesExceptionHints {
   public final String K8S_API_GENERIC_NETWORK_EXCEPTION =
-      "Verify network connection between Kubernetes cluster and Harness delegate";
+      "Please connect remotely to Harness delegate and verify network connection between Kubernetes cluster and Harness delegate.";
   public final String K8S_API_SOCKET_TIMEOUT_EXCEPTION =
-      "Verify if Harness delegate is whitelisted to access Kubernetes API";
+      "Please connect remotely to Harness delegate and verify if Harness delegate is whitelisted to access Kubernetes API.";
   public final String K8S_API_FORBIDDEN_EXCEPTION =
       "Check configured Kubernetes user permissions and authorization policies. \nTo know more about Roles, ClusterRoles and ClusterRoleBindings, refer: https://kubernetes.io/docs/reference/access-authn-authz/rbac/";
-  public final String K8S_API_UNAUTHORIZED_EXCEPTION = "Check Kubernetes connector credentials";
+  public final String K8S_API_UNAUTHORIZED_EXCEPTION = "Check Kubernetes connector credentials.";
   public final String K8S_API_VALIDATION_ERROR = "Validate Kubernetes infrastructure configuration";
   public final String K8S_API_SSL_VALIDATOR = "Check if provided CA certificate is valid for this kubernetes cluster";
 

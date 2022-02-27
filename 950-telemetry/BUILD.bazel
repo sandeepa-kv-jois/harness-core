@@ -10,6 +10,7 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
+        "//960-ng-core-beans:module",
         "//970-ng-commons:module",
         "//970-telemetry-beans:module",
         "//980-commons:module",

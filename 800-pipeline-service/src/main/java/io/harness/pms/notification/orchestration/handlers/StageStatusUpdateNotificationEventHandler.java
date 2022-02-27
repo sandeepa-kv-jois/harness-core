@@ -21,18 +21,20 @@ import io.harness.pms.contracts.steps.SkipType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.notification.NotificationHelper;
-import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
+import io.harness.pms.sdk.SdkStepHelper;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.ExecutorService;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class StageStatusUpdateNotificationEventHandler implements AsyncInformObserver, NodeStatusUpdateObserver {
   @Inject @Named("PipelineExecutorService") ExecutorService executorService;
   @Inject NotificationHelper notificationHelper;
+  @Inject SdkStepHelper sdkStepHelper;
 
   @Override
   public void onNodeStatusUpdate(NodeUpdateInfo nodeUpdateInfo) {
@@ -45,16 +47,14 @@ public class StageStatusUpdateNotificationEventHandler implements AsyncInformObs
       return;
     }
 
+    Set<String> nodesVisibleInUI = sdkStepHelper.getAllStepVisibleInUI();
     Level currentLevel = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance()));
-    String group = currentLevel.getGroup();
     String identifier = currentLevel.getIdentifier();
-    if (Objects.equals(group, StepOutcomeGroup.STAGES.name()) || Objects.equals(group, StepOutcomeGroup.PIPELINE.name())
-        || Objects.equals(group, StepOutcomeGroup.EXECUTION.name())
-        || Objects.equals(group, StepOutcomeGroup.STEP_GROUP.name())
+    if (!nodesVisibleInUI.contains(currentLevel.getStepType().getType())
         || identifier.endsWith(OrchestrationConstants.ROLLBACK_NODE_NAME)) {
       return;
     }
-    if (!Objects.equals(nodeExecution.skipGraphType(), SkipType.SKIP_NODE)
+    if (!Objects.equals(nodeExecution.getSkipGraphType(), SkipType.SKIP_NODE)
         && StatusUtils.brokeStatuses().contains(nodeExecution.getStatus())) {
       notificationHelper.sendNotification(
           nodeExecution.getAmbiance(), PipelineEventType.STEP_FAILED, nodeExecution, nodeUpdateInfo.getUpdatedTs());

@@ -61,7 +61,7 @@ public class PlanExecutionStrategyTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNode() {
+  public void shouldTestRunNode() {
     String planExecutionId = generateUuid();
     Ambiance ambiance = Ambiance.newBuilder()
                             .setPlanExecutionId(planExecutionId)
@@ -93,7 +93,7 @@ public class PlanExecutionStrategyTest extends OrchestrationTestBase {
                     .startingNodeId(DUMMY_NODE_1_ID)
                     .build();
 
-    PlanExecution planExecution = executionStrategy.triggerNode(
+    PlanExecution planExecution = executionStrategy.runNode(
         ambiance, plan, PlanExecutionMetadata.builder().planExecutionId(planExecutionId).build());
     // TODO: make this better
     assertThat(planExecution.getUuid()).isEqualTo(planExecutionId);

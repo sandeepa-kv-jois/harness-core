@@ -489,6 +489,18 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
   @Owner(developers = TMACARI)
   @Category(UnitTests.class)
   public void testHandAsyncResponseForGitFetchFiles() {
+    CloudFormationInfrastructureProvisioner cloudFormationInfrastructureProvisioner =
+        CloudFormationInfrastructureProvisioner.builder()
+            .sourceType(GIT.name())
+            .gitFileConfig(GitFileConfig.builder().connectorId("sourceRepoSettingId").commitId("commitId").build())
+            .build();
+
+    GitConfig gitConfig = GitConfig.builder().urlType(GitConfig.UrlType.REPO).repoUrl(repoUrl).build();
+    when(gitUtilsManager.getGitConfig("sourceRepoSettingId")).thenReturn(gitConfig);
+
+    when(mockInfrastructureProvisionerService.get(anyString(), anyString()))
+        .thenReturn(cloudFormationInfrastructureProvisioner);
+
     state.setUseParametersFile(true);
     state.setParametersFilePaths(Collections.singletonList("filePath"));
     WorkflowStandardParams workflowStandardParams = new WorkflowStandardParams();

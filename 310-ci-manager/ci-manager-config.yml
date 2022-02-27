@@ -106,7 +106,7 @@ ciExecutionServiceConfig:
   defaultInternalImageConnector: ''
   pvcDefaultStorageSize: 25600
   delegateServiceEndpointVariableValue: "delegate-service:8080"
-  addonImage: harness/ci-addon:release-84
+  addonImage: harness/ci-addon:release-97
   liteEngineImage: harness/ci-lite-engine:release-38
   isLocal: false
   stepConfig:

@@ -52,7 +52,7 @@ public class RetryInterruptHandler implements InterruptHandler {
       throw new InvalidRequestException(
           "NodeExecution is not in a retryable status. Current Status: " + nodeExecution.getStatus());
     }
-    if (nodeExecution.isOldRetry()) {
+    if (nodeExecution.getOldRetry()) {
       throw new InvalidRequestException("This Node is already Retried");
     }
 

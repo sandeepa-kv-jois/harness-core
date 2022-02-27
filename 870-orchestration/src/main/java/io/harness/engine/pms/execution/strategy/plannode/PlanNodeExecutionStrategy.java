@@ -114,6 +114,8 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
                                       .identifier(node.getIdentifier())
                                       .stepType(node.getStepType())
                                       .nodeId(node.getUuid())
+                                      .stageFqn(node.getStageFqn())
+                                      .group(node.getGroup())
                                       .build();
     return nodeExecutionService.save(nodeExecution);
   }
@@ -273,7 +275,6 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
                                                 .stepOutcomeRefs(outcomeService.fetchOutcomeRefs(nodeExecutionId))
                                                 .failureInfo(nodeExecution.getFailureInfo())
                                                 .identifier(level.getIdentifier())
-                                                .group(level.getGroup())
                                                 .status(nodeExecution.getStatus())
                                                 .adviserResponse(nodeExecution.getAdviserResponse())
                                                 .build();

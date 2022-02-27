@@ -22,6 +22,7 @@ import io.harness.persistence.CreatedByAware;
 import io.harness.persistence.NameAndValueAccess;
 import io.harness.persistence.PersistentEntity;
 import io.harness.persistence.UuidAware;
+import io.harness.security.dto.Principal;
 
 import com.google.common.collect.ImmutableList;
 import java.time.Duration;
@@ -57,6 +58,19 @@ public class DelegateToken implements PersistentEntity, UuidAware, CreatedAtAwar
                  .field(DelegateTokenKeys.status)
                  .name("byAccountAndStatus")
                  .build())
+        .add(CompoundMongoIndex.builder()
+                 .field(DelegateTokenKeys.accountId)
+                 .field(DelegateTokenKeys.isNg)
+                 .field(DelegateTokenKeys.owner)
+                 .name("byAccountAndNgAndOwner")
+                 .build())
+        .add(CompoundMongoIndex.builder()
+                 .field(DelegateTokenKeys.accountId)
+                 .field(DelegateTokenKeys.isNg)
+                 .field(DelegateTokenKeys.owner)
+                 .field(DelegateTokenKeys.status)
+                 .name("byAccountAndNgAndOwnerAndStatus")
+                 .build())
         .build();
   }
 
@@ -69,6 +83,9 @@ public class DelegateToken implements PersistentEntity, UuidAware, CreatedAtAwar
   private String value;
   private boolean isNg;
   private DelegateEntityOwner owner;
+
+  // this is for ng, ng doesn't have embeddedUser concept.
+  private Principal createdByNgUser;
 
   @FdTtlIndex private Date validUntil;
 }

@@ -78,6 +78,7 @@ public class KubernetesClusterActivityUpdateHandler extends ActivityUpdateHandle
                   ServiceEnvironment.builder()
                       .environmentIdentifier(response.getMonitoredServiceDTO().getEnvironmentRef())
                       .serviceIdentifier(response.getMonitoredServiceDTO().getServiceRef())
+                      .monitoredServiceIdentifier(response.getMonitoredServiceDTO().getIdentifier())
                       .build());
             }
           }

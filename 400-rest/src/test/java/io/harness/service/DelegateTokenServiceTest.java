@@ -21,6 +21,7 @@ import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
 import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.delegate.beans.DelegateTokenStatus;
+import io.harness.exception.InvalidRequestException;
 import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 import io.harness.service.intfc.DelegateTokenService;
@@ -28,7 +29,6 @@ import io.harness.service.intfc.DelegateTokenService;
 import software.wings.WingsBaseTest;
 
 import com.google.inject.Inject;
-import com.mongodb.DuplicateKeyException;
 import java.util.List;
 import org.junit.Before;
 import org.junit.Test;
@@ -89,7 +89,7 @@ public class DelegateTokenServiceTest extends WingsBaseTest {
     assertThat(storedTokenValue).isEqualTo(TEST_TOKEN_VALUE);
   }
 
-  @Test(expected = DuplicateKeyException.class)
+  @Test(expected = InvalidRequestException.class)
   @Owner(developers = NICOLAS)
   @Category(UnitTests.class)
   public void testDelegateTokenServiceCreateTokenInvalidDuplicate() {

@@ -7,16 +7,12 @@
 
 package io.harness.batch.processing.budgets.service.impl;
 
-import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
-
 import io.harness.batch.processing.config.BatchMainConfig;
 import io.harness.batch.processing.shard.AccountShardService;
 import io.harness.ccm.budget.dao.BudgetDao;
 import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.entities.billing.Budget;
 import io.harness.ccm.graphql.core.budget.BudgetService;
-import io.harness.logging.AccountLogContext;
-import io.harness.logging.AutoLogContext;
 
 import software.wings.beans.Account;
 import software.wings.graphql.datafetcher.billing.CloudBillingHelper;
@@ -44,14 +40,12 @@ public class BudgetCostUpdateService {
     log.info("ceEnabledAccounts ids list {}", accountIds);
 
     accountIds.forEach(accountId -> {
-      AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR);
       List<Budget> budgets = budgetDao.list(accountId);
       budgets.forEach(budget -> {
         updateBudgetAmount(budget);
         budgetService.updateBudgetCosts(budget);
         budgetDao.update(budget.getUuid(), budget);
       });
-      ignore.close();
     });
   }
 

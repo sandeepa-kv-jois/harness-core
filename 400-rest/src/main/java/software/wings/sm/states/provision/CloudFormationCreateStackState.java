@@ -122,7 +122,7 @@ public class CloudFormationCreateStackState extends CloudFormationState {
   @Attributes(title = "Parameters file path") @Getter @Setter protected List<String> parametersFilePaths;
   @Attributes(title = "Use parameters file") @Getter @Setter protected boolean useParametersFile;
   @Attributes(title = "Git Template Body") @Getter @Setter protected String gitTemplateBody;
-  @Attributes(title = "Git Template File Path") @Getter @Setter protected static String gitTemplateFilePath;
+  @Attributes(title = "Git Template File Path") @Getter @Setter protected String gitTemplateFilePath;
   @Attributes(title = "Should skip on reaching given stack statuses")
   @Getter
   @Setter
@@ -554,6 +554,12 @@ public class CloudFormationCreateStackState extends CloudFormationState {
         (GitFetchFilesFromMultipleRepoResult) executionResponse.getGitCommandResult();
 
     List<GitFile> files = gitCommandResult.getFilesFromMultipleRepo().get(CF_PARAMETERS).getFiles();
+
+    CloudFormationInfrastructureProvisioner provisioner = getProvisioner(context);
+    GitFileConfig renderedGitFileConfig =
+        gitFileConfigHelperService.renderGitFileConfig(context, provisioner.getGitFileConfig());
+    gitTemplateFilePath = context.renderExpression(renderedGitFileConfig.getFilePath());
+
     for (GitFile file : files) {
       if (gitTemplateFilePath != null && !gitTemplateFilePath.equals("")
           && Paths.get(CURRENT_DIR_PREFIX, gitTemplateFilePath)

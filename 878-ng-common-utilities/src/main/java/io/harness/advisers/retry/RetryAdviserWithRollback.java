@@ -28,6 +28,7 @@ import io.harness.pms.contracts.advisers.NextStepAdvise;
 import io.harness.pms.contracts.advisers.RetryAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.failure.FailureType;
+import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
 import io.harness.pms.sdk.core.adviser.AdvisingEvent;
@@ -42,7 +43,9 @@ import com.google.protobuf.Duration;
 import java.util.Collections;
 import java.util.List;
 import javax.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @OwnedBy(PIPELINE)
 public class RetryAdviserWithRollback implements Adviser {
   @Inject private KryoSerializer kryoSerializer;
@@ -108,6 +111,12 @@ public class RetryAdviserWithRollback implements Adviser {
             RollbackStrategy.fromRepairActionCode(parameters.getRepairActionCodeAfterRetry()));
         executionSweepingOutputService.consume(ambiance, YAMLFieldNameConstants.USE_ROLLBACK_STRATEGY,
             OnFailRollbackOutput.builder().nextNodeId(nextNodeId).build(), StepOutcomeGroup.STEP.name());
+        try {
+          executionSweepingOutputService.consume(ambiance, YAMLFieldNameConstants.STOP_STEPS_SEQUENCE,
+              OnFailRollbackOutput.builder().nextNodeId(nextNodeId).build(), StepCategory.STAGE.name());
+        } catch (Exception e) {
+          log.warn("Ignoring duplicate sweeping output of - " + YAMLFieldNameConstants.STOP_STEPS_SEQUENCE);
+        }
         NextStepAdvise.Builder nextStepAdvise = NextStepAdvise.newBuilder();
         return adviserResponseBuilder.setNextStepAdvise(nextStepAdvise.build()).setType(AdviseType.NEXT_STEP).build();
       case ON_FAIL:

@@ -11,6 +11,7 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.plan.NodeType.PLAN_NODE;
 import static io.harness.rule.OwnerRule.PRASHANT;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doReturn;
@@ -19,6 +20,7 @@ import static org.mockito.Mockito.when;
 
 import io.harness.OrchestrationTestBase;
 import io.harness.category.element.UnitTests;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategyFactory;
 import io.harness.engine.pms.execution.strategy.plan.PlanExecutionStrategy;
 import io.harness.engine.pms.execution.strategy.plannode.PlanNodeExecutionStrategy;
@@ -36,8 +38,13 @@ import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.execution.events.SdkResponseEventType;
+import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
+import io.harness.pms.contracts.facilitators.FacilitatorType;
+import io.harness.pms.contracts.steps.StepCategory;
+import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
+import io.harness.pms.execution.OrchestrationFacilitatorType;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
@@ -48,6 +55,7 @@ import java.util.Map;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -55,6 +63,7 @@ public class OrchestrationEngineTest extends OrchestrationTestBase {
   @Mock PlanNodeExecutionStrategy planNodeExecutionStrategy;
   @Mock PlanExecutionStrategy planExecutionStrategy;
   @Mock NodeExecutionStrategyFactory factory;
+  @Mock PlanService planService;
   @Inject @InjectMocks private OrchestrationEngine orchestrationEngine;
 
   @Before
@@ -66,25 +75,25 @@ public class OrchestrationEngineTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNode() {
+  public void shouldTestRunNode() {
     Ambiance ambiance = Ambiance.newBuilder().build();
     Plan plan = Plan.builder().build();
-    when(planExecutionStrategy.triggerNode(ambiance, plan, null)).thenReturn(PlanExecution.builder().build());
-    orchestrationEngine.triggerNode(ambiance, plan, null);
-    verify(planExecutionStrategy).triggerNode(ambiance, plan, null);
+    when(planExecutionStrategy.runNode(ambiance, plan, null)).thenReturn(PlanExecution.builder().build());
+    orchestrationEngine.runNode(ambiance, plan, null);
+    verify(planExecutionStrategy).runNode(ambiance, plan, null);
   }
 
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNextNode() {
+  public void shouldTestRunNextNode() {
     Ambiance ambiance = Ambiance.newBuilder().build();
     PlanNode node = PlanNode.builder().build();
     NodeExecution nodeExecution = NodeExecution.builder().build();
-    when(planNodeExecutionStrategy.triggerNextNode(ambiance, node, nodeExecution, null))
+    when(planNodeExecutionStrategy.runNextNode(ambiance, node, nodeExecution, null))
         .thenReturn(NodeExecution.builder().build());
-    orchestrationEngine.triggerNextNode(ambiance, node, nodeExecution, null);
-    verify(planNodeExecutionStrategy).triggerNextNode(ambiance, node, nodeExecution, null);
+    orchestrationEngine.runNextNode(ambiance, node, nodeExecution, null);
+    verify(planNodeExecutionStrategy).runNextNode(ambiance, node, nodeExecution, null);
   }
 
   @Test
@@ -224,5 +233,41 @@ public class OrchestrationEngineTest extends OrchestrationTestBase {
     Map<String, ByteString> response = new HashMap<>();
     orchestrationEngine.resumeNodeExecution(ambiance, response, false);
     verify(planNodeExecutionStrategy).resumeNodeExecution(eq(ambiance), eq(response), eq(false));
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void shouldTestInitiateNode() {
+    String planExecutionId = generateUuid();
+    String planId = generateUuid();
+    String planNodeId = generateUuid();
+    String runtimeId = generateUuid();
+
+    Ambiance ambiance = Ambiance.newBuilder().setPlanExecutionId(planExecutionId).setPlanId(planId).build();
+    PlanNode planNode =
+        PlanNode.builder()
+            .name("Test Node")
+            .uuid(planNodeId)
+            .identifier("test")
+            .stepType(StepType.newBuilder().setType("TEST").setStepCategory(StepCategory.STEP).build())
+            .serviceName("CD")
+            .facilitatorObtainment(
+                FacilitatorObtainment.newBuilder()
+                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
+                    .build())
+            .build();
+
+    when(planService.fetchNode(eq(planId), eq(planNodeId))).thenReturn(planNode);
+
+    orchestrationEngine.initiateNode(ambiance, planNode.getUuid(), runtimeId, null);
+
+    ArgumentCaptor<Ambiance> ambianceCaptor = ArgumentCaptor.forClass(Ambiance.class);
+    verify(planNodeExecutionStrategy).runNode(ambianceCaptor.capture(), eq(planNode), eq(null));
+    Ambiance captured = ambianceCaptor.getValue();
+
+    assertThat(captured.getLevelsCount()).isEqualTo(1);
+    assertThat(captured.getLevels(0).getSetupId()).isEqualTo(planNode.getUuid());
+    assertThat(captured.getLevels(0).getRuntimeId()).isEqualTo(runtimeId);
   }
 }

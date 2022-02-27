@@ -64,7 +64,7 @@ public class OrchestrationServiceImpl implements OrchestrationService {
                             .setStartTs(System.currentTimeMillis())
                             .build();
 
-    return orchestrationEngine.triggerNode(ambiance, plan, planExecutionMetadata);
+    return orchestrationEngine.runNode(ambiance, plan, planExecutionMetadata);
   }
 
   @Override

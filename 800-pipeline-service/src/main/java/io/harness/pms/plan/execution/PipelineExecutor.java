@@ -22,7 +22,6 @@ import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineTemplateHelper;
 import io.harness.pms.plan.execution.beans.ExecArgs;
-import io.harness.pms.plan.execution.beans.TriggerFlowPlanDetails;
 import io.harness.pms.plan.execution.beans.dto.RunStageRequestDTO;
 
 import com.google.inject.Inject;
@@ -96,30 +95,22 @@ public class PipelineExecutor {
         moduleType, mergedRuntimeInputYaml, Collections.emptyList(), Collections.emptyMap(), false);
   }
 
-  public PlanExecutionResponseDto startPlanExecution(String accountId, String orgIdentifier, String projectIdentifier,
+  private PlanExecutionResponseDto startPlanExecution(String accountId, String orgIdentifier, String projectIdentifier,
       String pipelineIdentifier, String originalExecutionId, String moduleType, String runtimeInputYaml,
       List<String> stagesToRun, Map<String, String> expressionValues, boolean useV2) {
-    return startPlanExecution(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, originalExecutionId,
-        moduleType, runtimeInputYaml, stagesToRun, expressionValues, useV2, null);
-  }
-
-  public PlanExecutionResponseDto startPlanExecution(String accountId, String orgIdentifier, String projectIdentifier,
-      String pipelineIdentifier, String originalExecutionId, String moduleType, String runtimeInputYaml,
-      List<String> stagesToRun, Map<String, String> expressionValues, boolean useV2,
-      TriggerFlowPlanDetails triggerFlowPlanDetails) {
     PipelineEntity pipelineEntity =
         executionHelper.fetchPipelineEntity(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier);
     if (EmptyPredicate.isNotEmpty(stagesToRun) && !pipelineEntity.shouldAllowStageExecutions()) {
       throw new InvalidRequestException(
           String.format("Stage executions are not allowed for pipeline [%s]", pipelineIdentifier));
     }
-    ExecutionTriggerInfo triggerInfo = executionHelper.buildTriggerInfo(triggerFlowPlanDetails, originalExecutionId);
+    ExecutionTriggerInfo triggerInfo = executionHelper.buildTriggerInfo(originalExecutionId);
 
     // RetryExecutionParameters
     RetryExecutionParameters retryExecutionParameters = buildRetryExecutionParameters(false, null, null, null);
 
     ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntity, moduleType, runtimeInputYaml, stagesToRun,
-        expressionValues, triggerInfo, originalExecutionId, retryExecutionParameters, triggerFlowPlanDetails);
+        expressionValues, triggerInfo, originalExecutionId, retryExecutionParameters);
     PlanExecution planExecution;
     if (useV2) {
       planExecution = executionHelper.startExecutionV2(accountId, orgIdentifier, projectIdentifier,
@@ -146,7 +137,7 @@ public class PipelineExecutor {
       retryStagesIdentifier = retryExecutionHelper.fetchOnlyFailedStages(previousExecutionId, retryStagesIdentifier);
     }
 
-    ExecutionTriggerInfo triggerInfo = executionHelper.buildTriggerInfoForManualFlow(null);
+    ExecutionTriggerInfo triggerInfo = executionHelper.buildTriggerInfo(null);
     Optional<PlanExecutionMetadata> optionalPlanExecutionMetadata =
         planExecutionMetadataService.findByPlanExecutionId(previousExecutionId);
 
@@ -161,7 +152,7 @@ public class PipelineExecutor {
         buildRetryExecutionParameters(true, previousProcessedYaml, retryStagesIdentifier, identifierOfSkipStages);
 
     ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntity, moduleType, inputSetPipelineYaml, null, null,
-        triggerInfo, previousExecutionId, retryExecutionParameters, null);
+        triggerInfo, previousExecutionId, retryExecutionParameters);
     PlanExecution planExecution;
     if (useV2) {
       planExecution =

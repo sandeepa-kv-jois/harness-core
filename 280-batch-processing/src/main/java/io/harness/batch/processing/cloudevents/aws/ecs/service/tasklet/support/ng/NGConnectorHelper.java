@@ -45,14 +45,18 @@ public class NGConnectorHelper {
     connectorFilterPropertiesDTO.setFilterType(FilterType.CONNECTOR);
     int page = 0;
     int size = 100;
-    do {
-      response = getConnectors(accountId, page, size, connectorFilterPropertiesDTO);
-      if (response != null && isNotEmpty(response.getContent())) {
-        nextGenConnectorResponses.addAll(response.getContent());
-      }
-      page++;
-    } while (response != null && isNotEmpty(response.getContent()));
-    log.info("Processing batch size of {} in NG connector (From NG)", nextGenConnectorResponses.size());
+    try {
+      do {
+        response = getConnectors(accountId, page, size, connectorFilterPropertiesDTO);
+        if (response != null && isNotEmpty(response.getContent())) {
+          nextGenConnectorResponses.addAll(response.getContent());
+        }
+        page++;
+      } while (response != null && isNotEmpty(response.getContent()));
+      log.info("Processing batch size of {} in NG connector (From NG)", nextGenConnectorResponses.size());
+    } catch (Exception ex) {
+      log.error("Exception while getting NG connectors", ex);
+    }
     return nextGenConnectorResponses;
   }
 

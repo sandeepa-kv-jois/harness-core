@@ -96,8 +96,7 @@ public class PlatformConfiguration extends Configuration {
 
   private static Collection<Class<?>> getAuditServiceResourceClasses() {
     return ALL_HARNESS_RESOURCES.stream()
-        .filter(clazz
-            -> StringUtils.startsWithAny(clazz.getPackage().getName(), AUDIT_RESOURCE_PACKAGE, FILTER_RESOURCE_PACKAGE))
+        .filter(clazz -> StringUtils.startsWithAny(clazz.getPackage().getName(), AUDIT_RESOURCE_PACKAGE))
         .collect(Collectors.toSet());
   }
 

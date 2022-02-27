@@ -38,6 +38,7 @@ import io.harness.rule.Owner;
 import io.harness.utils.steps.TestStepParameters;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import java.util.Collections;
 import java.util.Map;
 import org.apache.commons.jexl3.JexlBuilder;
@@ -94,8 +95,13 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
     nodeExecution1 = NodeExecution.builder()
                          .uuid(nodeExecution1Id)
                          .ambiance(ambianceBuilder.build())
-                         .planNode(node1)
                          .resolvedStepParameters(prepareStepParameters("ao"))
+                         .nodeId(node1.getUuid())
+                         .name(node1.getName())
+                         .stepType(node1.getStepType())
+                         .identifier(node1.getIdentifier())
+                         .module(node1.getServiceName())
+                         .skipGraphType(node1.getSkipGraphType())
                          .build();
 
     PlanNode node2 = preparePlanNode(false, "b");
@@ -104,7 +110,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(nodeExecution2Id)
             .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution2Id, node2)).build())
-            .planNode(node2)
+            .nodeId(node2.getUuid())
+            .name(node2.getName())
+            .stepType(node2.getStepType())
+            .identifier(node2.getIdentifier())
+            .module(node2.getServiceName())
+            .skipGraphType(node2.getSkipGraphType())
             .resolvedStepParameters(prepareStepParameters("bo"))
             .parentId(nodeExecution1Id)
             .nextId(nodeExecution1Id)
@@ -116,7 +127,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
         NodeExecution.builder()
             .uuid(nodeExecution3Id)
             .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3)).build())
-            .planNode(node3)
+            .nodeId(node3.getUuid())
+            .name(node3.getName())
+            .stepType(node3.getStepType())
+            .identifier(node3.getIdentifier())
+            .module(node3.getServiceName())
+            .skipGraphType(node3.getSkipGraphType())
             .resolvedStepParameters(prepareStepParameters("co"))
             .parentId(nodeExecution1Id)
             .previousId(nodeExecution2Id)
@@ -129,7 +145,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                          .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution4Id, node4))
                                        .build())
-                         .planNode(node4)
+                         .nodeId(node4.getUuid())
+                         .name(node4.getName())
+                         .stepType(node4.getStepType())
+                         .identifier(node4.getIdentifier())
+                         .module(node4.getServiceName())
+                         .skipGraphType(node4.getSkipGraphType())
                          .parentId(nodeExecution3Id)
                          .nextId(nodeExecution5Id)
                          .build();
@@ -141,7 +162,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                          .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution3Id, node3))
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution5Id, node5))
                                        .build())
-                         .planNode(node5)
+                         .nodeId(node5.getUuid())
+                         .name(node5.getName())
+                         .stepType(node5.getStepType())
+                         .identifier(node5.getIdentifier())
+                         .module(node5.getServiceName())
+                         .skipGraphType(node5.getSkipGraphType())
                          .resolvedStepParameters(prepareStepParameters("do2"))
                          .parentId(nodeExecution3Id)
                          .previousId(nodeExecution4Id)
@@ -155,7 +181,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution4Id, node4))
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution6Id, node6))
                                        .build())
-                         .planNode(node6)
+                         .nodeId(node6.getUuid())
+                         .name(node6.getName())
+                         .stepType(node6.getStepType())
+                         .identifier(node6.getIdentifier())
+                         .module(node6.getServiceName())
+                         .skipGraphType(node6.getSkipGraphType())
                          .resolvedStepParameters(prepareStepParameters("eo"))
                          .parentId(nodeExecution4Id)
                          .build();
@@ -169,7 +200,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution6Id, node6))
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution7Id, node7))
                                        .build())
-                         .planNode(node7)
+                         .nodeId(node7.getUuid())
+                         .name(node7.getName())
+                         .stepType(node7.getStepType())
+                         .identifier(node7.getIdentifier())
+                         .module(node7.getServiceName())
+                         .skipGraphType(node7.getSkipGraphType())
                          .resolvedStepParameters(prepareStepParameters("eo"))
                          .parentId(nodeExecution6Id)
                          .nextId(nodeExecution8Id)
@@ -184,7 +220,12 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution6Id, node6))
                                        .addLevels(PmsLevelUtils.buildLevelFromNode(nodeExecution8Id, node8))
                                        .build())
-                         .planNode(node8)
+                         .nodeId(node8.getUuid())
+                         .name(node8.getName())
+                         .stepType(node8.getStepType())
+                         .identifier(node8.getIdentifier())
+                         .module(node8.getServiceName())
+                         .skipGraphType(node8.getSkipGraphType())
                          .resolvedStepParameters(prepareStepParameters("eo"))
                          .parentId(nodeExecution6Id)
                          .previousId(nodeExecution7Id)
@@ -287,8 +328,8 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
             .groupAliases(ImmutableMap.of("stage", "STAGE"))
             .build();
 
-    when(nodeExecutionService.findAllChildren(
-             planExecutionId, nodeExecution4.getUuid(), false, NodeProjectionUtils.fieldsForExpressionEngine))
+    when(nodeExecutionService.findAllChildren(planExecutionId, nodeExecution4.getUuid(), false,
+             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
         .thenReturn(asList(nodeExecution8, nodeExecution7, nodeExecution6));
 
     Reflect.on(nodeExecution4).set(NodeExecutionKeys.status, Status.RUNNING);

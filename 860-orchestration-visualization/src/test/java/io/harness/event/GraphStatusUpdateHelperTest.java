@@ -186,7 +186,12 @@ public class GraphStatusUpdateHelperTest extends OrchestrationVisualizationTestB
                           .build())
             .mode(ExecutionMode.SYNC)
             .status(SUCCEEDED)
-            .planNode(planNode)
+            .nodeId(planNode.getUuid())
+            .name(planNode.getName())
+            .stepType(planNode.getStepType())
+            .identifier(planNode.getIdentifier())
+            .module(planNode.getServiceName())
+            .skipGraphType(planNode.getSkipGraphType())
             .build();
     nodeExecutionService.save(dummyStart);
 
@@ -245,7 +250,7 @@ public class GraphStatusUpdateHelperTest extends OrchestrationVisualizationTestB
     return GraphVertex.builder()
         .uuid(nodeExecution.getUuid())
         .planNodeId(level.getSetupId())
-        .name(nodeExecution.name())
+        .name(nodeExecution.getName())
         .startTs(nodeExecution.getStartTs())
         .endTs(nodeExecution.getEndTs())
         .initialWaitDuration(nodeExecution.getInitialWaitDuration())

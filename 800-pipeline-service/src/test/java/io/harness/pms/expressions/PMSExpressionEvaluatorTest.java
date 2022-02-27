@@ -34,6 +34,7 @@ import io.harness.engine.expressions.OrchestrationConstants;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
+import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.execution.PlanExecution;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.expression.EngineJexlContext;
@@ -54,6 +55,7 @@ import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.Sets;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
@@ -196,13 +198,13 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
     when(planExecutionService.get(planExecutionId)).thenReturn(PlanExecution.builder().build());
 
     // pipeline children
-    when(nodeExecutionService.findAllChildren(
-             planExecutionId, nodeExecution1.getUuid(), false, NodeProjectionUtils.fieldsForExpressionEngine))
+    when(nodeExecutionService.findAllChildren(planExecutionId, nodeExecution1.getUuid(), false,
+             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
         .thenReturn(Arrays.asList(nodeExecution2, nodeExecution3, nodeExecution4, nodeExecution5));
 
     // stage children
-    when(nodeExecutionService.findAllChildren(
-             planExecutionId, nodeExecution3.getUuid(), false, NodeProjectionUtils.fieldsForExpressionEngine))
+    when(nodeExecutionService.findAllChildren(planExecutionId, nodeExecution3.getUuid(), false,
+             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
         .thenReturn(Arrays.asList(nodeExecution4, nodeExecution5));
   }
 

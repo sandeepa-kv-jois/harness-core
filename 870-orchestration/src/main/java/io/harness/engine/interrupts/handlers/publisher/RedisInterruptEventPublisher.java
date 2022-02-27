@@ -42,7 +42,7 @@ public class RedisInterruptEventPublisher implements InterruptEventPublisher {
     InterruptEvent event = populateResponse(nodeExecution, builder);
 
     eventSender.sendEvent(nodeExecution.getAmbiance(), event.toByteString(), PmsEventCategory.INTERRUPT_EVENT,
-        nodeExecution.module(), false);
+        nodeExecution.getModule(), false);
     log.info("Interrupt Event ");
     return event.getNotifyId();
   }

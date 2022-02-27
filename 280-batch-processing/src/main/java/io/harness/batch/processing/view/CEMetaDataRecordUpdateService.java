@@ -8,7 +8,6 @@
 package io.harness.batch.processing.view;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.utils.RestCallToNGManagerClientUtils.execute;
 
 import io.harness.batch.processing.pricing.gcp.bigquery.BigQueryHelperService;
@@ -26,8 +25,6 @@ import io.harness.delegate.beans.connector.CcmConnectorFilter;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.ff.FeatureFlagService;
 import io.harness.filter.FilterType;
-import io.harness.logging.AccountLogContext;
-import io.harness.logging.AutoLogContext;
 import io.harness.ng.beans.PageResponse;
 
 import software.wings.beans.Account;
@@ -63,7 +60,6 @@ public class CEMetaDataRecordUpdateService {
 
   private void updateCloudProviderMetadata(String accountId) {
     try {
-      AutoLogContext ignore = new AccountLogContext(accountId, OVERRIDE_ERROR);
       List<SettingAttribute> ceConnectors = cloudToHarnessMappingService.getCEConnectors(accountId);
       boolean isAwsConnectorPresent = ceConnectors.stream().anyMatch(
           connector -> connector.getValue().getType().equals(SettingVariableTypes.CE_AWS.toString()));
@@ -116,7 +112,7 @@ public class CEMetaDataRecordUpdateService {
 
       createDefaultPerspective(
           accountId, isAwsConnectorPresent, isAzureConnectorPresent, isGCPConnectorPresent, ceMetadataRecord);
-      ignore.close();
+
     } catch (Exception ex) {
       log.error("Exception while updateCloudProviderMetadata for accountId: {}", accountId, ex);
     }

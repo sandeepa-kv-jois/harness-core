@@ -164,9 +164,9 @@ public class ConnectorServiceImpl implements ConnectorService {
       if (connectorHeartbeatTaskId != null || isHarnessManagedSecretManager || !isDefaultBranchConnector
           || !executeOnDelegate) {
         ConnectorResponseDTO connectorResponse;
-        if (GitContextHelper.isUpdateToNewBranch()) {
-          connectorResponse = getConnectorService(connectorInfo.getConnectorType())
-                                  .create(connector, accountIdentifier, ChangeType.MODIFY);
+        if (gitChangeType != null) {
+          connectorResponse =
+              getConnectorService(connectorInfo.getConnectorType()).create(connector, accountIdentifier, gitChangeType);
         } else {
           connectorResponse =
               getConnectorService(connectorInfo.getConnectorType()).create(connector, accountIdentifier);

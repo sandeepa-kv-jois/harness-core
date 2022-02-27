@@ -178,6 +178,7 @@ public class GitEntityServiceImpl implements GitEntityService {
         .entityGitPath(entity.getEntityGitPath())
         .accountId(entity.getAccountId())
         .entityReference(entity.getEntityReference())
+        .lastCommitId(entity.getLastCommitId())
         .build();
   }
 

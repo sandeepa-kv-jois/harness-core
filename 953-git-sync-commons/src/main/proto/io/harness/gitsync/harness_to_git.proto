@@ -55,6 +55,7 @@ message FileInfo {
   google.protobuf.StringValue commit_msg = 13;
   google.protobuf.StringValue old_file_sha = 14;
   bool is_full_sync_flow = 15;
+  string commit_id = 16;
 }
 
 message PushFileResponse {

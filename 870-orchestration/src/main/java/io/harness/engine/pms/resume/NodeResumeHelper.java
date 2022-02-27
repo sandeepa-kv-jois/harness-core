@@ -14,10 +14,9 @@ import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.resume.publisher.NodeResumeEventPublisher;
 import io.harness.engine.pms.resume.publisher.ResumeMetadata;
 import io.harness.execution.NodeExecution;
-import io.harness.pms.contracts.ambiance.Level;
+import io.harness.pms.contracts.data.StepOutcomeRef;
 import io.harness.pms.contracts.execution.ChildChainExecutableResponse;
 import io.harness.pms.contracts.execution.ExecutionMode;
-import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
 import io.harness.serializer.KryoSerializer;
 
@@ -29,6 +28,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public class NodeResumeHelper {
@@ -48,19 +48,18 @@ public class NodeResumeHelper {
     if (accumulationRequired(resumeMetadata)) {
       List<NodeExecution> childExecutions =
           nodeExecutionService.fetchNodeExecutionsByParentId(resumeMetadata.getNodeExecutionUuid(), false);
-      for (NodeExecution childExecution : childExecutions) {
-        Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(childExecution.getAmbiance()));
-        StepResponseNotifyData notifyData =
-            StepResponseNotifyData.builder()
-                .nodeUuid(level.getSetupId())
-                .identifier(level.getIdentifier())
-                .group(level.getGroup())
-                .status(childExecution.getStatus())
-                .failureInfo(childExecution.getFailureInfo())
-                .stepOutcomeRefs(pmsOutcomeService.fetchOutcomeRefs(childExecution.getUuid()))
-                .adviserResponse(childExecution.getAdviserResponse())
-                .build();
-        byteResponseMap.put(level.getSetupId(), ByteString.copyFrom(kryoSerializer.asDeflatedBytes(notifyData)));
+      Map<String, List<StepOutcomeRef>> refMap = pmsOutcomeService.fetchOutcomeRefs(
+          childExecutions.stream().map(NodeExecution::getUuid).collect(Collectors.toList()));
+      for (NodeExecution ce : childExecutions) {
+        StepResponseNotifyData notifyData = StepResponseNotifyData.builder()
+                                                .nodeUuid(ce.getNodeId())
+                                                .identifier(ce.getIdentifier())
+                                                .status(ce.getStatus())
+                                                .failureInfo(ce.getFailureInfo())
+                                                .stepOutcomeRefs(refMap.get(ce.getUuid()))
+                                                .adviserResponse(ce.getAdviserResponse())
+                                                .build();
+        byteResponseMap.put(ce.getNodeId(), ByteString.copyFrom(kryoSerializer.asDeflatedBytes(notifyData)));
       }
       return byteResponseMap;
     }

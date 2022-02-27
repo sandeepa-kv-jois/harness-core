@@ -104,6 +104,6 @@ public class RedisNodeResumeEventPublisherTest extends OrchestrationTestBase {
 
     verify(eventSender)
         .sendEvent(nodeExecution.getAmbiance(), nodeResumeEvent.toByteString(), PmsEventCategory.NODE_RESUME,
-            nodeExecution.module(), true);
+            nodeExecution.getModule(), true);
   }
 }

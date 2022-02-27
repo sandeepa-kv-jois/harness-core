@@ -11,7 +11,6 @@ import static io.harness.cvng.core.utils.FeatureFlagNames.CVNG_MONITORED_SERVICE
 
 import io.harness.cvng.beans.DataCollectionConnectorBundle;
 import io.harness.cvng.beans.DataCollectionType;
-import io.harness.cvng.beans.change.ChangeCategory;
 import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.beans.change.ChangeSourceType;
 import io.harness.cvng.beans.change.HarnessCDCurrentGenEventMetadata;
@@ -65,7 +64,7 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
   public void create(
       @NonNull MonitoredServiceParams monitoredServiceParams, @NonNull Set<ChangeSourceDTO> changeSourceDTOs) {
     validate(changeSourceDTOs);
-    validateChangeSourcesDoesntExist(monitoredServiceParams, changeSourceDTOs);
+    validateChangeSourcesDoesntExist(monitoredServiceParams.getServiceEnvironmentParams(), changeSourceDTOs);
     List<ChangeSource> changeSources = changeSourceDTOs.stream()
                                            .map(dto -> changeSourceTransformer.getEntity(monitoredServiceParams, dto))
                                            .collect(Collectors.toList());
@@ -135,7 +134,7 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
             .collect(Collectors.toMap(cs -> cs.getIdentifier(), Function.identity()));
 
     Map<String, ChangeSource> existingChangeSourceMap =
-        createQuery(monitoredServiceParams)
+        createQuery(monitoredServiceParams.getServiceEnvironmentParams())
             .asList()
             .stream()
             .collect(Collectors.toMap(sc -> sc.getIdentifier(), Function.identity()));
@@ -192,13 +191,6 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
     Query<ChangeSource> query =
         hPersistence.createQuery(ChangeSource.class).filter(ChangeSourceKeys.uuid, changeSource.getUuid());
     hPersistence.update(query, updateOperations);
-  }
-
-  @Override
-  public List<ChangeEventDTO> getChangeEvents(ServiceEnvironmentParams serviceEnvironmentParams,
-      List<String> changeSourceIdentifiers, Instant startTime, Instant endTime, List<ChangeCategory> changeCategories) {
-    return changeEventService.get(
-        serviceEnvironmentParams, changeSourceIdentifiers, startTime, endTime, changeCategories);
   }
 
   @Override

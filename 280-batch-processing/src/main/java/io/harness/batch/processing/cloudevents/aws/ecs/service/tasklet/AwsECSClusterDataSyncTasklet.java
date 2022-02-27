@@ -47,6 +47,7 @@ import io.harness.connector.ConnectorInfoDTO;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
 import io.harness.exception.InvalidRequestException;
+import io.harness.manage.ManagedExecutorService;
 
 import software.wings.api.ContainerDeploymentInfoWithNames;
 import software.wings.api.DeploymentSummary;
@@ -82,6 +83,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -108,24 +113,48 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
   @Autowired private InstanceResourceService instanceResourceService;
   @Autowired private CloudToHarnessMappingService cloudToHarnessMappingService;
   @Autowired private LastReceivedPublishedMessageDao lastReceivedPublishedMessageDao;
-  private JobParameters parameters;
+  private final ExecutorService ecsSyncClusterExecutor = new ManagedExecutorService(Executors.newWorkStealingPool(2));
 
   private static final String ECS_OS_TYPE = "ecs.os-type";
 
   @Override
   public RepeatStatus execute(StepContribution stepContribution, ChunkContext chunkContext) throws Exception {
-    parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
+    JobParameters parameters = chunkContext.getStepContext().getStepExecution().getJobParameters();
     String accountId = parameters.getString(CCMJobConstants.ACCOUNT_ID);
     List<CECluster> ceClusters = ceClusterDao.getCECluster(accountId);
-    Map<String, AwsCrossAccountAttributes> crossAccountAttributes = getCrossAccountAttributes(accountId);
-    ceClusters.forEach(ceCluster -> {
-      AwsCrossAccountAttributes awsCrossAccountAttributes = crossAccountAttributes.get(ceCluster.getInfraAccountId());
-      if (null != awsCrossAccountAttributes) {
-        log.info("Sync for cluster {}", ceCluster.getUuid());
-        syncECSClusterData(accountId, awsCrossAccountAttributes, ceCluster);
-        lastReceivedPublishedMessageDao.upsert(accountId, ceCluster.getUuid());
+    if (CollectionUtils.isEmpty(ceClusters)) {
+      return null;
+    }
+    Map<String, AwsCrossAccountAttributes> infraAccCrossArnMap = getCrossAccountAttributes(accountId);
+
+    List<Callable<Void>> tasks = new ArrayList<>();
+
+    for (CECluster ceCluster : ceClusters) {
+      tasks.add(() -> {
+        Thread.currentThread().setName("sync-cluster-" + ceCluster.getUuid());
+
+        if (infraAccCrossArnMap.containsKey(ceCluster.getInfraAccountId())) {
+          AwsCrossAccountAttributes awsCrossArn = infraAccCrossArnMap.get(ceCluster.getInfraAccountId());
+
+          log.info("Sync for cluster {}", ceCluster.getUuid());
+          syncECSClusterData(accountId, awsCrossArn, ceCluster);
+          lastReceivedPublishedMessageDao.upsert(accountId, ceCluster.getUuid());
+        }
+
+        return null;
+      });
+    }
+
+    final List<Future<Void>> futures = ecsSyncClusterExecutor.invokeAll(tasks);
+
+    // wait for tasks to finish before exiting the tasklet execution
+    for (Future<Void> f : futures) {
+      try {
+        f.get();
+      } catch (InterruptedException e) {
+        throw new Exception("failed to sync ecs clusters", e);
       }
-    });
+    }
     return null;
   }
 

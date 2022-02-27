@@ -10,6 +10,8 @@ package io.harness.platform.resourcegroup;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.platform.PlatformConfiguration.RESOURCE_GROUP_RESOURCES;
 
+import static java.util.stream.Collectors.toSet;
+
 import io.harness.Microservice;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.controller.PrimaryVersionChangeScheduler;
@@ -28,6 +30,7 @@ import io.harness.migration.beans.NGMigrationConfiguration;
 import io.harness.ng.core.CorrelationFilter;
 import io.harness.outbox.OutboxEventPollService;
 import io.harness.persistence.HPersistence;
+import io.harness.platform.remote.ResourceGroupOpenApiResource;
 import io.harness.remote.CharsetResponseFilter;
 import io.harness.resource.VersionInfoResource;
 import io.harness.resourcegroup.ResourceGroupServiceConfig;
@@ -39,8 +42,19 @@ import io.harness.resourcegroup.reconciliation.ResourceGroupSyncConciliationServ
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Injector;
 import io.dropwizard.setup.Environment;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.integration.SwaggerConfiguration;
+import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
+import io.swagger.v3.oas.models.OpenAPI;
+import io.swagger.v3.oas.models.info.Contact;
+import io.swagger.v3.oas.models.info.Info;
+import io.swagger.v3.oas.models.servers.Server;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.glassfish.jersey.server.model.Resource;
 
@@ -68,6 +82,7 @@ public class ResourceGroupServiceSetup {
     initializeEnforcementFramework(injector);
     ResourceGroupsManagementJob resourceGroupsManagementJob = injector.getInstance(ResourceGroupsManagementJob.class);
     resourceGroupsManagementJob.run();
+    registerOasResource(appConfig, environment, injector);
   }
 
   private void registerHealthCheck(Environment environment, Injector injector) {
@@ -141,5 +156,46 @@ public class ResourceGroupServiceSetup {
             .build();
     injector.getInstance(EnforcementSdkRegisterService.class)
         .initialize(restrictionUsageRegisterConfiguration, customConfig);
+  }
+
+  private void registerOasResource(ResourceGroupServiceConfig appConfig, Environment environment, Injector injector) {
+    ResourceGroupOpenApiResource resourceGroupOpenApiResource =
+        injector.getInstance(ResourceGroupOpenApiResource.class);
+    resourceGroupOpenApiResource.setOpenApiConfiguration(getOasConfig(appConfig));
+    resourceGroupOpenApiResource.setModule(RESOURCE_GROUP_SERVICE);
+    environment.jersey().register(resourceGroupOpenApiResource);
+  }
+
+  private OpenAPIConfiguration getOasConfig(ResourceGroupServiceConfig appConfig) {
+    OpenAPI oas = new OpenAPI();
+    Info info =
+        new Info()
+            .title("Resource Group Service API Reference")
+            .description(
+                "This is the Open Api Spec 3 for the Resource Group Service. This is under active development. Beware of the breaking change with respect to the generated code stub")
+            .termsOfService("https://harness.io/terms-of-use/")
+            .version("3.0")
+            .contact(new Contact().email("contact@harness.io"));
+    oas.info(info);
+    URL baseurl = null;
+    try {
+      baseurl = new URL("https", appConfig.getHostname(), appConfig.getBasePathPrefix());
+      Server server = new Server();
+      server.setUrl(baseurl.toString());
+      oas.servers(Collections.singletonList(server));
+    } catch (MalformedURLException e) {
+      log.error(
+          "The base URL of the server could not be set. {}/{}", appConfig.getHostname(), appConfig.getBasePathPrefix());
+    }
+    final Set<String> resourceClasses = RESOURCE_GROUP_RESOURCES.stream()
+                                            .filter(x -> x.isAnnotationPresent(Tag.class))
+                                            .map(Class::getCanonicalName)
+                                            .collect(toSet());
+    return new SwaggerConfiguration()
+        .openAPI(oas)
+        .prettyPrint(true)
+        .resourceClasses(resourceClasses)
+        .cacheTTL(0L)
+        .scannerClass("io.swagger.v3.jaxrs2.integration.JaxrsAnnotationScanner");
   }
 }

@@ -40,4 +40,6 @@ public class ResourceGroupServiceConfig {
   @JsonProperty(value = "enableAudit") boolean enableAudit;
   @JsonProperty("distributedLockImplementation") DistributedLockImplementation distributedLockImplementation;
   @JsonProperty("exportMetricsToStackDriver") boolean exportMetricsToStackDriver;
+  @JsonProperty("hostname") String hostname;
+  @JsonProperty("basePathPrefix") String basePathPrefix;
 }

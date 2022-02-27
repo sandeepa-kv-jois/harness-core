@@ -145,6 +145,7 @@ public abstract class RedisAbstractConsumer extends AbstractConsumer {
       Map<StreamMessageId, Map<String, String>> messages = executeClaimCommand(pendingEntries);
       for (PendingEntry entry : pendingEntries) {
         StreamMessageId messageId = entry.getId();
+        // If the message has been delivered breach our redelivery threshold then move this to deadLetterQueue
         if (entry.getLastTimeDelivered() >= RedisUtils.UNACKED_RETRY_COUNT) {
           moveMessageToDeadLetterQueue(messageId, groupName, messages);
         }
@@ -157,6 +158,7 @@ public abstract class RedisAbstractConsumer extends AbstractConsumer {
     StreamMessageId[] messageIds = pendingEntries.stream().map(PendingEntry::getId).toArray(StreamMessageId[] ::new);
     Map<StreamMessageId, Map<String, String>> messages = Collections.emptyMap();
     try {
+      // Try to claim the pending messages from the group that are pending over max max processing time
       messages =
           stream.claim(getGroupName(), getName(), maxProcessingTime.toMillis(), TimeUnit.MILLISECONDS, messageIds);
     } catch (RedisException e) {
@@ -201,11 +203,15 @@ public abstract class RedisAbstractConsumer extends AbstractConsumer {
   }
 
   protected List<Message> getMessages(boolean processUnackedMessagesBeforeNewMessages, Duration maxWaitTime) {
+    // Find all the pending entries on the consumer group
     List<PendingEntry> pendingEntries = getPendingEntries();
+
+    // If no entry is pending then we request for new messages
     if (pendingEntries.isEmpty()) {
       return getNewMessages(maxWaitTime);
     }
 
+    // If pending entries are not empty then claim the pending entries
     List<Message> claimedMessages = claimEntries(pendingEntries);
     if (!claimedMessages.isEmpty()) {
       return claimedMessages;

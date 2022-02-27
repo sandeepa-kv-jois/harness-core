@@ -30,6 +30,7 @@ import io.harness.pms.yaml.DependenciesUtils;
 import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.pms.yaml.YamlUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.steps.fork.ForkStepParameters;
 import io.harness.steps.fork.NGForkStep;
@@ -141,12 +142,24 @@ public class ParallelPlanCreator extends ChildrenPlanCreator<YamlField> {
           Arrays.asList(YAMLFieldNameConstants.STAGE, YAMLFieldNameConstants.STEP, YAMLFieldNameConstants.STEP_GROUP,
               YAMLFieldNameConstants.PARALLEL));
       if (siblingField != null && siblingField.getNode().getUuid() != null) {
-        adviserObtainments.add(
-            AdviserObtainment.newBuilder()
-                .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.NEXT_STEP.name()).build())
-                .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
-                    NextStepAdviserParameters.builder().nextNodeId(siblingField.getNode().getUuid()).build())))
-                .build());
+        AdviserObtainment adviserObtainment;
+        YamlNode parallelNodeInStage = YamlUtils.findParentNode(currentField.getNode(), YAMLFieldNameConstants.STAGE);
+        if (parallelNodeInStage != null) {
+          adviserObtainment =
+              AdviserObtainment.newBuilder()
+                  .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.NEXT_STEP.name()).build())
+                  .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
+                      NextStepAdviserParameters.builder().nextNodeId(siblingField.getNode().getUuid()).build())))
+                  .build();
+        } else {
+          adviserObtainment =
+              AdviserObtainment.newBuilder()
+                  .setType(AdviserType.newBuilder().setType(OrchestrationAdviserTypes.NEXT_STAGE.name()).build())
+                  .setParameters(ByteString.copyFrom(kryoSerializer.asBytes(
+                      NextStepAdviserParameters.builder().nextNodeId(siblingField.getNode().getUuid()).build())))
+                  .build();
+        }
+        adviserObtainments.add(adviserObtainment);
       }
     }
     return adviserObtainments;

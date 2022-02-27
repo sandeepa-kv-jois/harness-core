@@ -11,8 +11,6 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.data.structure.EmptyPredicate;
-import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.interceptor.GitSyncBranchContext;
 import io.harness.gitsync.persistance.GitSyncableEntity;
 import io.harness.gitsync.sdk.EntityGitDetails;
@@ -42,14 +40,6 @@ public class PmsGitSyncHelper {
     if (gitSyncBranchContext != null && gitSyncBranchContext.getGitBranchInfo() != null) {
       gitSyncBranchContext.getGitBranchInfo().setFilePath(gitSyncableEntity.getFilePath());
       gitSyncBranchContext.getGitBranchInfo().setFolderPath(gitSyncableEntity.getRootFolder());
-    } else if (EmptyPredicate.isNotEmpty(gitSyncableEntity.getYamlGitConfigRef())) {
-      GitEntityInfo branchInfo = GitEntityInfo.builder()
-                                     .branch(gitSyncableEntity.getBranch())
-                                     .yamlGitConfigId(gitSyncableEntity.getYamlGitConfigRef())
-                                     .filePath(gitSyncableEntity.getFilePath())
-                                     .folderPath(gitSyncableEntity.getRootFolder())
-                                     .build();
-      gitSyncBranchContext = GitSyncBranchContext.builder().gitBranchInfo(branchInfo).build();
     }
     return serializeGitSyncBranchContext(gitSyncBranchContext);
   }

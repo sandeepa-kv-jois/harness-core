@@ -10,6 +10,7 @@ package io.harness.delegate.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EmbeddedUser;
+import io.harness.security.dto.Principal;
 
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +23,7 @@ public class DelegateTokenDetails {
   private String accountId;
   private String name;
   private EmbeddedUser createdBy;
+  private Principal createdByNgUser;
   private long createdAt;
   private DelegateTokenStatus status;
   private String value;

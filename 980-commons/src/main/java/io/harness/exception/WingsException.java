@@ -28,6 +28,7 @@ import java.util.Map;
 import java.util.Set;
 import lombok.Builder;
 import lombok.Getter;
+import lombok.Setter;
 import org.slf4j.MDC;
 
 /**
@@ -82,7 +83,7 @@ public class WingsException extends RuntimeException {
 
   private EnumSet<FailureType> failureTypes = EnumSet.noneOf(FailureType.class);
 
-  private ErrorMetadataDTO metadata;
+  @Setter private ErrorMetadataDTO metadata;
 
   @Builder
   protected WingsException(String message, Throwable cause, ErrorCode code, Level level,

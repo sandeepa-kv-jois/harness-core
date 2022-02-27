@@ -9,8 +9,8 @@ package io.harness.cvng.dashboard.services.api;
 
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.PageParams;
-import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.filterParams.TimeSeriesAnalysisFilter;
 import io.harness.cvng.dashboard.beans.TimeSeriesMetricDataDTO;
@@ -29,6 +29,6 @@ public interface TimeSeriesDashboardService {
       String projectIdentifier, String orgIdentifier, String environmentIdentifier, String serviceIdentifier,
       Long startTimeMillis, Long endTimeMillis, boolean anomalousOnly, int page, int size);
 
-  PageResponse<TimeSeriesMetricDataDTO> getTimeSeriesMetricData(ServiceEnvironmentParams serviceEnvironmentParams,
+  PageResponse<TimeSeriesMetricDataDTO> getTimeSeriesMetricData(MonitoredServiceParams monitoredServiceParams,
       TimeRangeParams timeRangeParams, TimeSeriesAnalysisFilter timeSeriesAnalysisFilter, PageParams pageParams);
 }

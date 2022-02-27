@@ -13,6 +13,7 @@ import io.harness.delegate.beans.DelegateRing;
 import io.harness.delegate.beans.DelegateRing.DelegateRingKeys;
 import io.harness.delegate.utils.DelegateRingConstants;
 import io.harness.migrations.Migration;
+import io.harness.migrations.SeedDataMigration;
 import io.harness.persistence.HPersistence;
 
 import com.google.inject.Inject;
@@ -21,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @OwnedBy(HarnessTeam.DEL)
-public class AddRingDetailsToDelegateRing implements Migration {
+public class AddRingDetailsToDelegateRing implements Migration, SeedDataMigration {
   @Inject private HPersistence persistence;
   private static final String DELEGATE_IMAGE_TAG = "harness/delegate:latest";
   private static final String UPGRADER_IMAGE_TAG = "harness/upgrader:latest";

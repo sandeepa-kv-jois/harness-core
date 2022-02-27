@@ -56,15 +56,6 @@ public class DelegateNgTokenServiceTest extends WingsBaseTest {
     assertThat(token.getName()).isEqualTo(tokenName);
   }
 
-  @Test(expected = InvalidRequestException.class)
-  @Owner(developers = VLAD)
-  @Category(UnitTests.class)
-  public void shouldNotCreateWhenDuplicatedName() {
-    String tokenName = "token1";
-    delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName);
-    delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName);
-  }
-
   @Test
   @Owner(developers = VLAD)
   @Category(UnitTests.class)
@@ -87,18 +78,6 @@ public class DelegateNgTokenServiceTest extends WingsBaseTest {
     delegateNgTokenService.revokeDelegateToken(TEST_ACCOUNT_ID, null, tokenName);
     assertThat(delegateNgTokenService.getDelegateTokens(TEST_ACCOUNT_ID, null, DelegateTokenStatus.ACTIVE)).isEmpty();
     delegateNgTokenService.revokeDelegateToken(TEST_ACCOUNT_ID, null, tokenName);
-  }
-
-  @Test(expected = InvalidRequestException.class)
-  @Owner(developers = VLAD)
-  @Category(UnitTests.class)
-  public void shouldNotCreateTokenWithTheSameNameAsRevokedToken() {
-    String tokenName = "token1";
-    delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName);
-    assertThat(delegateNgTokenService.getDelegateTokens(TEST_ACCOUNT_ID, null, DelegateTokenStatus.ACTIVE)).hasSize(1);
-    delegateNgTokenService.revokeDelegateToken(TEST_ACCOUNT_ID, null, tokenName);
-    assertThat(delegateNgTokenService.getDelegateTokens(TEST_ACCOUNT_ID, null, DelegateTokenStatus.ACTIVE)).isEmpty();
-    delegateNgTokenService.createToken(TEST_ACCOUNT_ID, null, tokenName);
   }
 
   @Test

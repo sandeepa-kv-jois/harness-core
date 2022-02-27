@@ -23,6 +23,6 @@ import io.harness.plan.NodeType;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public interface PmsNodeExecution {
-  String nodeId();
+  String getNodeId();
   NodeType getNodeType();
 }

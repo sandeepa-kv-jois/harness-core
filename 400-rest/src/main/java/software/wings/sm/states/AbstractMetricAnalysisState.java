@@ -212,6 +212,13 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
         if (analysisContext.isSkipVerification()) {
           getLogger().warn(
               "id: {}, Could not find test nodes to compare the data", context.getStateExecutionInstanceId());
+
+          if (shouldFailOnEmptyNodes(analysisContext.getAccountId())) {
+            getLogger().info("Could not find newly deployed instances. failOnEmptyNodes is true. Failing execution");
+            return generateAnalysisResponse(analysisContext, ExecutionStatus.FAILED, false,
+                "Could not find newly deployed instances. Marking execution as failed.");
+          }
+
           return generateAnalysisResponse(analysisContext, ExecutionStatus.SKIPPED, false,
               "Could not find newly deployed instances. Skipping verification");
         }
@@ -220,6 +227,14 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
         if (isEmpty(lastExecutionNodes) && !isAwsLambdaState(context)) {
           if (getComparisonStrategy() == AnalysisComparisonStrategy.COMPARE_WITH_CURRENT) {
             getLogger().info("No nodes with older version found to compare the logs. Skipping analysis");
+
+            if (shouldFailOnEmptyNodes(analysisContext.getAccountId())) {
+              getLogger().info(
+                  "No nodes with older version found to compare the logs. failOnEmptyNodes is true. Failing execution");
+              return generateAnalysisResponse(analysisContext, ExecutionStatus.FAILED, false,
+                  "As no previous version instances exist for comparison, analysis will be marked as failed."
+                      + " Check your setup if this is the first deployment or if the previous instances have been deleted or replaced.");
+            }
             return generateAnalysisResponse(analysisContext, ExecutionStatus.SKIPPED, false,
                 "As no previous version instances exist for comparison, analysis will be skipped. Check your setup if this is the first deployment or if the previous instances have been deleted or replaced.");
           }

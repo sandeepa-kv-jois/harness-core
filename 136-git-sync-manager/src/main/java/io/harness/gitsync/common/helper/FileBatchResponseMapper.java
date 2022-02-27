@@ -15,6 +15,7 @@ import static java.util.stream.Collectors.toList;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.gitsync.common.dtos.GitFileChangeDTO;
+import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.product.ci.scm.proto.FileBatchContentResponse;
 import io.harness.product.ci.scm.proto.FileContent;
 
@@ -42,7 +43,8 @@ public class FileBatchResponseMapper {
         .commitId(commitId)
         .content(fileResponse.getContent())
         .error(fileResponse.getError())
-        .objectId(fileResponse.getBlobId())
+        .objectId(isEmpty(fileResponse.getBlobId()) ? EntityObjectIdUtils.getObjectIdOfYaml(fileResponse.getContent())
+                                                    : fileResponse.getBlobId())
         .path(fileResponse.getPath())
         .status(fileResponse.getStatus())
         .build();

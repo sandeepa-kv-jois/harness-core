@@ -104,6 +104,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
             .planNode(pipelinePlanNode)
             .ambiance(
                 ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode)).build())
+            .nodeId(pipelinePlanNode.getUuid())
+            .name(pipelinePlanNode.getName())
+            .stepType(pipelinePlanNode.getStepType())
+            .identifier(pipelinePlanNode.getIdentifier())
+            .module(pipelinePlanNode.getServiceName())
+            .skipGraphType(pipelinePlanNode.getSkipGraphType())
             .build();
 
     PlanNode stagePlanNode =
@@ -121,7 +127,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
             .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
                           .build())
-            .planNode(stagePlanNode)
+            .nodeId(stagePlanNode.getUuid())
+            .name(stagePlanNode.getName())
+            .stepType(stagePlanNode.getStepType())
+            .identifier(stagePlanNode.getIdentifier())
+            .module(stagePlanNode.getServiceName())
+            .skipGraphType(stagePlanNode.getSkipGraphType())
             .build();
 
     PlanNode forkPlanNode =
@@ -140,7 +151,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .build())
-            .planNode(forkPlanNode)
+            .nodeId(forkPlanNode.getUuid())
+            .name(forkPlanNode.getName())
+            .stepType(forkPlanNode.getStepType())
+            .identifier(forkPlanNode.getIdentifier())
+            .module(forkPlanNode.getServiceName())
+            .skipGraphType(forkPlanNode.getSkipGraphType())
             .build();
     // This node is getting transitioned to SUCCEEDED from MANUAL_INTERVENTION
     PlanNode child1Node =
@@ -160,7 +176,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(child1Id, child1Node))
                           .build())
-            .planNode(child1Node)
+            .nodeId(child1Node.getUuid())
+            .name(child1Node.getName())
+            .stepType(child1Node.getStepType())
+            .identifier(child1Node.getIdentifier())
+            .module(child1Node.getServiceName())
+            .skipGraphType(child1Node.getSkipGraphType())
             .build();
 
     PlanNode child2Node =
@@ -180,7 +201,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(child2Id, child2Node))
                           .build())
-            .planNode(child2Node)
+            .nodeId(child2Node.getUuid())
+            .name(child2Node.getName())
+            .stepType(child2Node.getStepType())
+            .identifier(child2Node.getIdentifier())
+            .module(child2Node.getServiceName())
+            .skipGraphType(child2Node.getSkipGraphType())
             .build();
 
     PlanNode child3Node =
@@ -200,7 +226,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(child3Id, child3Node))
                           .build())
-            .planNode(child3Node)
+            .nodeId(child3Node.getUuid())
+            .name(child3Node.getName())
+            .stepType(child3Node.getStepType())
+            .identifier(child3Node.getIdentifier())
+            .module(child3Node.getServiceName())
+            .skipGraphType(child3Node.getSkipGraphType())
             .build();
 
     mongoTemplate.save(planExecution);
@@ -285,7 +316,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
             .status(Status.RUNNING)
             .ambiance(
                 ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode)).build())
-            .planNode(pipelinePlanNode)
+            .nodeId(pipelinePlanNode.getUuid())
+            .name(pipelinePlanNode.getName())
+            .stepType(pipelinePlanNode.getStepType())
+            .identifier(pipelinePlanNode.getIdentifier())
+            .module(pipelinePlanNode.getServiceName())
+            .skipGraphType(pipelinePlanNode.getSkipGraphType())
             .build();
 
     PlanNode stagePlanNode =
@@ -304,7 +340,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
             .ambiance(ambianceBuilder.addLevels(PmsLevelUtils.buildLevelFromNode(pipelineNodeId, pipelinePlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
                           .build())
-            .planNode(stagePlanNode)
+            .nodeId(stagePlanNode.getUuid())
+            .name(stagePlanNode.getName())
+            .stepType(stagePlanNode.getStepType())
+            .identifier(stagePlanNode.getIdentifier())
+            .module(stagePlanNode.getServiceName())
+            .skipGraphType(stagePlanNode.getSkipGraphType())
             .build();
 
     PlanNode forkPlanNode =
@@ -323,7 +364,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .build())
-            .planNode(forkPlanNode)
+            .nodeId(forkPlanNode.getUuid())
+            .name(forkPlanNode.getName())
+            .stepType(forkPlanNode.getStepType())
+            .identifier(forkPlanNode.getIdentifier())
+            .module(forkPlanNode.getServiceName())
+            .skipGraphType(forkPlanNode.getSkipGraphType())
             .build();
     // This node is getting transitioned to SUCCEEDED from MANUAL_INTERVENTION
     PlanNode child1Node =
@@ -343,7 +389,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(child1Id, child1Node))
                           .build())
-            .planNode(child1Node)
+            .nodeId(child1Node.getUuid())
+            .name(child1Node.getName())
+            .stepType(child1Node.getStepType())
+            .identifier(child1Node.getIdentifier())
+            .module(child1Node.getServiceName())
+            .skipGraphType(child1Node.getSkipGraphType())
             .build();
 
     PlanNode child2Node =
@@ -363,7 +414,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(child2Id, child2Node))
                           .build())
-            .planNode(child2Node)
+            .nodeId(child2Node.getUuid())
+            .name(child2Node.getName())
+            .stepType(child2Node.getStepType())
+            .identifier(child2Node.getIdentifier())
+            .module(child2Node.getServiceName())
+            .skipGraphType(child2Node.getSkipGraphType())
             .build();
 
     PlanNode child3Node =
@@ -383,7 +439,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(forkNodeId, forkPlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(child3Id, child3Node))
                           .build())
-            .planNode(child3Node)
+            .nodeId(child3Node.getUuid())
+            .name(child3Node.getName())
+            .stepType(child3Node.getStepType())
+            .identifier(child3Node.getIdentifier())
+            .module(child3Node.getServiceName())
+            .skipGraphType(child3Node.getSkipGraphType())
             .build();
 
     PlanNode fork2PlanNode =
@@ -402,7 +463,13 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeId, stagePlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(fork2Id, fork2PlanNode))
                           .build())
-            .planNode(forkPlanNode)
+            .nodeId(fork2PlanNode.getUuid())
+            .name(fork2PlanNode.getName())
+            .stepType(fork2PlanNode.getStepType())
+            .identifier(fork2PlanNode.getIdentifier())
+            .module(fork2PlanNode.getServiceName())
+            .skipGraphType(fork2PlanNode.getSkipGraphType())
+
             .build();
 
     PlanNode child4Node =
@@ -422,7 +489,12 @@ public class PausedStepStatusUpdateTest extends OrchestrationTestBase {
                           .addLevels(PmsLevelUtils.buildLevelFromNode(fork2Id, fork2PlanNode))
                           .addLevels(PmsLevelUtils.buildLevelFromNode(child4Id, child4Node))
                           .build())
-            .planNode(child3Node)
+            .nodeId(child4Node.getUuid())
+            .name(child4Node.getName())
+            .stepType(child4Node.getStepType())
+            .identifier(child4Node.getIdentifier())
+            .module(child4Node.getServiceName())
+            .skipGraphType(child4Node.getSkipGraphType())
             .build();
 
     mongoTemplate.save(planExecution);

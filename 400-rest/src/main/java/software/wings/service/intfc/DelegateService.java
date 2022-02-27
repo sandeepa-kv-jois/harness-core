@@ -174,8 +174,6 @@ public interface DelegateService extends OwnedByAccount {
 
   List<DelegateInitializationDetails> obtainDelegateInitializationDetails(String accountID, List<String> delegateIds);
 
-  void regenerateCapabilityPermissions(String accountId, String delegateId);
-
   DelegateGroup upsertDelegateGroup(String name, String accountId, DelegateSetupDetails delegateSetupDetails);
 
   boolean sampleDelegateExists(String accountId);
