@@ -118,6 +118,7 @@ public interface AppRenamingOperator {
             .finalErrorMessage(String.format("Failed to rename application - [%s] even after retrying ",
                 encodeColor(cfRequestConfig.getApplicationName())))
             .retry(5)
+            .throwError(true)
             .build();
 
     retryAbleTaskExecutor.execute(
@@ -132,11 +133,11 @@ public interface AppRenamingOperator {
     RetryAbleTaskExecutor retryAbleTaskExecutor = RetryAbleTaskExecutor.getExecutor();
     RetryPolicy retryPolicy =
         RetryPolicy.builder()
-            .userMessageOnFailure(
-                String.format("Failed to rename application - [%s]", encodeColor(cfRequestConfig.getApplicationName())))
-            .finalErrorMessage(String.format("Failed to rename application - [%s] even after retrying ",
-                encodeColor(cfRequestConfig.getApplicationName())))
+            .userMessageOnFailure(String.format("Failed to rename application - [%s]", encodeColor(oldName)))
+            .finalErrorMessage(
+                String.format("Failed to rename application - [%s] even after retrying ", encodeColor(oldName)))
             .retry(5)
+            .throwError(true)
             .build();
 
     retryAbleTaskExecutor.execute(

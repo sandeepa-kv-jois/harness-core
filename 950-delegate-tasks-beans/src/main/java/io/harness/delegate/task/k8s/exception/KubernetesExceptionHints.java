@@ -18,13 +18,14 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class KubernetesExceptionHints {
   public final String K8S_API_GENERIC_NETWORK_EXCEPTION =
-      "Verify network connection between Kubernetes cluster and Harness delegate";
+      "Please connect remotely to Harness delegate and verify network connection between Kubernetes cluster and Harness delegate.";
   public final String K8S_API_SOCKET_TIMEOUT_EXCEPTION =
-      "Verify if Harness delegate is whitelisted to access Kubernetes API";
+      "Please connect remotely to Harness delegate and verify if Harness delegate is whitelisted to access Kubernetes API.";
   public final String K8S_API_FORBIDDEN_EXCEPTION =
       "Check configured Kubernetes user permissions and authorization policies. \nTo know more about Roles, ClusterRoles and ClusterRoleBindings, refer: https://kubernetes.io/docs/reference/access-authn-authz/rbac/";
-  public final String K8S_API_UNAUTHORIZED_EXCEPTION = "Check Kubernetes connector credentials";
+  public final String K8S_API_UNAUTHORIZED_EXCEPTION = "Check Kubernetes connector credentials.";
   public final String K8S_API_VALIDATION_ERROR = "Validate Kubernetes infrastructure configuration";
+  public final String K8S_API_SSL_VALIDATOR = "Check if provided CA certificate is valid for this kubernetes cluster";
 
   public final String DRY_RUN_MANIFEST_FAILED =
       "Check manifest output for invalid fields name, types or empty manifest";
@@ -78,4 +79,9 @@ public class KubernetesExceptionHints {
       "Please check the inputs provided to the scale step: namespace(if provided), resource type or resource name.";
   public final String UNRESOLVED_MANIFEST_FIELD =
       "Please check values.yaml file(s) for any missing/null fields inside manifests or any unresolved expressions referencing harness variables.";
+
+  public final String API_CLIENT_CREATE_FAILED = "Check kubernetes connector for invalid values";
+  public final String API_CLIENT_CA_CERT_INVALID_FORMAT = "Check if given CA certificate is a valid X.509 certificate";
+  public final String API_CLIENT_CA_CERT_INCOMPLETE =
+      "Check if given CA certificate is in encoded in base64 and all data, header and footer are in place";
 }

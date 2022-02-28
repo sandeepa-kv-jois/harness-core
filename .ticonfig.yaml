@@ -13,3 +13,4 @@ config:
     - "product/**/*"
     - "commons/**/*"
     - "**/*.hash"
+    - "toolset/git-hooks/**/*"

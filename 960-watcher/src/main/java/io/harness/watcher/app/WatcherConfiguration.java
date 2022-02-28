@@ -8,6 +8,7 @@
 package io.harness.watcher.app;
 
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 /**
  * Created by brett on 10/30/17
@@ -16,6 +17,7 @@ import lombok.Data;
 public class WatcherConfiguration {
   private String accountId;
   private String accountSecret;
+  private String delegateToken;
   private String managerUrl;
   private boolean doUpgrade;
   private String upgradeCheckLocation;
@@ -27,4 +29,13 @@ public class WatcherConfiguration {
   private boolean fileHandlesMonitoringEnabled;
   private long fileHandlesMonitoringIntervalInMinutes;
   private long fileHandlesLogsRetentionInMinutes;
+
+  // TODO: This method will get removed once we rolled out new delegate.
+  public String getDelegateToken() {
+    if (StringUtils.isEmpty(delegateToken)) {
+      // Return account secret only if delegate token is not available.
+      return accountSecret;
+    }
+    return delegateToken;
+  }
 }

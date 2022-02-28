@@ -36,5 +36,4 @@ pipeline:
                     templateInputs:
                       spec:
                         url: https://www.google.com
-                        method: POST.allowedValues(POST, PUT, GET)
-                        requestBody: 11.regex(^1*)
+                        method: GET

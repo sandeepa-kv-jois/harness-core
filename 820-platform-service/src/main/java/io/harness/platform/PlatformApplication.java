@@ -324,7 +324,8 @@ public class PlatformApplication extends Application<PlatformConfiguration> {
                 || resourceInfoAndRequest.getValue().getUriInfo().getAbsolutePath().getPath().endsWith("api/swagger")
                 || resourceInfoAndRequest.getValue().getUriInfo().getAbsolutePath().getPath().endsWith(
                     "api/swagger.json")
-                || resourceInfoAndRequest.getValue().getUriInfo().getAbsolutePath().getPath().endsWith("/openapi.json")
+                || resourceInfoAndRequest.getValue().getUriInfo().getAbsolutePath().getPath().matches(
+                    ".*\\/api\\/(?:[a-zA-Z]+-){0,5}openapi\\.json$")
                 || resourceInfoAndRequest.getValue().getUriInfo().getAbsolutePath().getPath().endsWith(
                     "api/swagger.yaml"));
   }

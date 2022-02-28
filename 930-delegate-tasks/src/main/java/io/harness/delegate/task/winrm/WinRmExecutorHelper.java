@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package software.wings.core.ssh.executors;
+package io.harness.delegate.task.winrm;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
@@ -15,7 +15,6 @@ import static org.apache.commons.codec.binary.Base64.encodeBase64String;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.delegate.task.winrm.WinRmSession;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;

@@ -22,6 +22,8 @@ import io.harness.beans.gitsync.GitFileDetails;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
 import io.harness.beans.gitsync.GitWebhookDetails;
+import io.harness.constants.Constants;
+import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ExceptionUtils;
@@ -62,6 +64,8 @@ import io.harness.product.ci.scm.proto.GetAuthenticatedUserRequest;
 import io.harness.product.ci.scm.proto.GetAuthenticatedUserResponse;
 import io.harness.product.ci.scm.proto.GetBatchFileRequest;
 import io.harness.product.ci.scm.proto.GetFileRequest;
+import io.harness.product.ci.scm.proto.GetLatestCommitOnFileRequest;
+import io.harness.product.ci.scm.proto.GetLatestCommitOnFileResponse;
 import io.harness.product.ci.scm.proto.GetLatestCommitRequest;
 import io.harness.product.ci.scm.proto.GetLatestCommitResponse;
 import io.harness.product.ci.scm.proto.GetLatestFileRequest;
@@ -91,6 +95,7 @@ import com.google.inject.Singleton;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -107,7 +112,16 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   public CreateFileResponse createFile(
       ScmConnector scmConnector, GitFileDetails gitFileDetails, SCMGrpc.SCMBlockingStub scmBlockingStub) {
     FileModifyRequest fileModifyRequest = getFileModifyRequest(scmConnector, gitFileDetails).build();
-    return scmBlockingStub.createFile(fileModifyRequest);
+    CreateFileResponse createFileResponse = scmBlockingStub.createFile(fileModifyRequest);
+    if (ScmResponseStatusUtils.isSuccessResponse(createFileResponse.getStatus())
+        && isEmpty(createFileResponse.getCommitId())) {
+      // In case commit id is empty for any reason, we treat this as an error case even if file got created on git
+      return CreateFileResponse.newBuilder()
+          .setStatus(Constants.SCM_INTERNAL_SERVER_ERROR_CODE)
+          .setError(Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE)
+          .build();
+    }
+    return createFileResponse;
   }
 
   private FileModifyRequest.Builder getFileModifyRequest(ScmConnector scmConnector, GitFileDetails gitFileDetails) {
@@ -130,10 +144,26 @@ public class ScmServiceClientImpl implements ScmServiceClient {
   @Override
   public UpdateFileResponse updateFile(
       ScmConnector scmConnector, GitFileDetails gitFileDetails, SCMGrpc.SCMBlockingStub scmBlockingStub) {
+    Optional<UpdateFileResponse> preChecksStatus =
+        runUpdateFileOpsPreChecks(scmConnector, scmBlockingStub, gitFileDetails);
+    if (preChecksStatus.isPresent()) {
+      return preChecksStatus.get();
+    }
+
     final FileModifyRequest.Builder fileModifyRequestBuilder = getFileModifyRequest(scmConnector, gitFileDetails);
     final FileModifyRequest fileModifyRequest =
         fileModifyRequestBuilder.setBlobId(gitFileDetails.getOldFileSha()).build();
-    return scmBlockingStub.updateFile(fileModifyRequest);
+    UpdateFileResponse updateFileResponse = scmBlockingStub.updateFile(fileModifyRequest);
+
+    if (ScmResponseStatusUtils.isSuccessResponse(updateFileResponse.getStatus())
+        && isEmpty(updateFileResponse.getCommitId())) {
+      // In case commit id is empty for any reason, we treat this as an error case even if file got updated on git
+      return UpdateFileResponse.newBuilder()
+          .setStatus(Constants.SCM_INTERNAL_SERVER_ERROR_CODE)
+          .setError(Constants.SCM_INTERNAL_SERVER_ERROR_MESSAGE)
+          .build();
+    }
+    return updateFileResponse;
   }
 
   @Override
@@ -163,11 +193,8 @@ public class ScmServiceClientImpl implements ScmServiceClient {
       ScmConnector scmConnector, GitFilePathDetails gitFilePathDetails, SCMGrpc.SCMBlockingStub scmBlockingStub) {
     Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector);
     String slug = scmGitProviderHelper.getSlug(scmConnector);
-    final GetFileRequest.Builder gitFileRequestBuilder = GetFileRequest.newBuilder()
-                                                             .setBranch(gitFilePathDetails.getBranch())
-                                                             .setPath(gitFilePathDetails.getFilePath())
-                                                             .setProvider(gitProvider)
-                                                             .setSlug(slug);
+    final GetFileRequest.Builder gitFileRequestBuilder =
+        GetFileRequest.newBuilder().setPath(gitFilePathDetails.getFilePath()).setProvider(gitProvider).setSlug(slug);
     if (gitFilePathDetails.getBranch() != null) {
       gitFileRequestBuilder.setBranch(gitFilePathDetails.getBranch());
     } else if (gitFilePathDetails.getRef() != null) {
@@ -723,5 +750,34 @@ public class ScmServiceClientImpl implements ScmServiceClient {
       WebhookResponse webhookResponse, GitWebhookDetails gitWebhookDetails, ScmConnector scmConnector) {
     return isIdenticalTarget(webhookResponse, gitWebhookDetails)
         && ScmGitWebhookHelper.isIdenticalEvents(webhookResponse, gitWebhookDetails.getHookEventType(), scmConnector);
+  }
+
+  private GetLatestCommitOnFileResponse getLatestCommitOnFile(
+      ScmConnector scmConnector, SCMGrpc.SCMBlockingStub scmBlockingStub, String branch, String filepath) {
+    Provider gitProvider = scmGitProviderMapper.mapToSCMGitProvider(scmConnector, true);
+    String slug = scmGitProviderHelper.getSlug(scmConnector);
+    return scmBlockingStub.getLatestCommitOnFile(GetLatestCommitOnFileRequest.newBuilder()
+                                                     .setProvider(gitProvider)
+                                                     .setSlug(slug)
+                                                     .setBranch(branch)
+                                                     .setFilePath(filepath)
+                                                     .build());
+  }
+
+  private Optional<UpdateFileResponse> runUpdateFileOpsPreChecks(
+      ScmConnector scmConnector, SCMGrpc.SCMBlockingStub scmBlockingStub, GitFileDetails gitFileDetails) {
+    // Check if current file commit is same as latest commit on file on remote
+    if (ConnectorType.BITBUCKET.equals(scmConnector.getConnectorType())) {
+      GetLatestCommitOnFileResponse latestCommitResponse = getLatestCommitOnFile(
+          scmConnector, scmBlockingStub, gitFileDetails.getBranch(), gitFileDetails.getFilePath());
+      if (!latestCommitResponse.getCommitId().equals(gitFileDetails.getCommitId())) {
+        return Optional.of(UpdateFileResponse.newBuilder()
+                               .setStatus(Constants.SCM_CONFLICT_ERROR_CODE)
+                               .setError(Constants.SCM_CONFLICT_ERROR_MESSAGE)
+                               .setCommitId(latestCommitResponse.getCommitId())
+                               .build());
+      }
+    }
+    return Optional.empty();
   }
 }

@@ -19,6 +19,7 @@ import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.client.NextGenService;
 import io.harness.cvng.core.beans.DatasourceTypeDTO;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.CVConfig;
@@ -299,8 +300,20 @@ public class CVConfigServiceImpl implements CVConfigService {
   }
 
   @Override
+  public List<CVConfig> list(MonitoredServiceParams monitoredServiceParams) {
+    return createQuery(monitoredServiceParams).asList();
+  }
+
+  @Override
   public List<CVConfig> list(ServiceEnvironmentParams serviceEnvironmentParams, List<String> identifiers) {
     Query<CVConfig> query = createQuery(serviceEnvironmentParams);
+    query.field(CVConfigKeys.identifier).in(identifiers);
+    return query.asList();
+  }
+
+  @Override
+  public List<CVConfig> list(MonitoredServiceParams monitoredServiceParams, List<String> identifiers) {
+    Query<CVConfig> query = createQuery(monitoredServiceParams);
     query.field(CVConfigKeys.identifier).in(identifiers);
     return query.asList();
   }
@@ -321,6 +334,14 @@ public class CVConfigServiceImpl implements CVConfigService {
       ServiceEnvironmentParams serviceEnvironmentParams, List<String> cvConfigIds) {
     Map<String, DataSourceType> cvConfigIdDataSourceTypeMap = new HashMap<>();
     Query<CVConfig> query = createQuery(serviceEnvironmentParams);
+    query.asList().forEach(cvConfig -> cvConfigIdDataSourceTypeMap.put(cvConfig.getUuid(), cvConfig.getType()));
+    return cvConfigIdDataSourceTypeMap;
+  }
+
+  @Override
+  public Map<String, DataSourceType> getDataSourceTypeForCVConfigs(MonitoredServiceParams monitoredServiceParams) {
+    Map<String, DataSourceType> cvConfigIdDataSourceTypeMap = new HashMap<>();
+    Query<CVConfig> query = createQuery(monitoredServiceParams);
     query.asList().forEach(cvConfig -> cvConfigIdDataSourceTypeMap.put(cvConfig.getUuid(), cvConfig.getType()));
     return cvConfigIdDataSourceTypeMap;
   }
@@ -395,6 +416,14 @@ public class CVConfigServiceImpl implements CVConfigService {
         .filter(CVConfigKeys.projectIdentifier, serviceEnvironmentParams.getProjectIdentifier())
         .filter(CVConfigKeys.serviceIdentifier, serviceEnvironmentParams.getServiceIdentifier())
         .filter(CVConfigKeys.envIdentifier, serviceEnvironmentParams.getEnvironmentIdentifier());
+  }
+
+  private Query createQuery(MonitoredServiceParams monitoredServiceParams) {
+    return hPersistence.createQuery(CVConfig.class, excludeAuthority)
+        .filter(CVConfigKeys.accountId, monitoredServiceParams.getAccountIdentifier())
+        .filter(CVConfigKeys.orgIdentifier, monitoredServiceParams.getOrgIdentifier())
+        .filter(CVConfigKeys.projectIdentifier, monitoredServiceParams.getProjectIdentifier())
+        .filter(CVConfigKeys.monitoredServiceIdentifier, monitoredServiceParams.getMonitoredServiceIdentifier());
   }
 
   private void deleteConfigsForEntity(

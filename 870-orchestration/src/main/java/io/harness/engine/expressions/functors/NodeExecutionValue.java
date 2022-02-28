@@ -76,7 +76,7 @@ public class NodeExecutionValue implements LateBindingValue {
   private boolean canAdd(NodeExecution nodeExecution) {
     Level level = Objects.requireNonNull(AmbianceUtils.obtainCurrentLevel(nodeExecution.getAmbiance()));
     return !level.getSkipExpressionChain() && EmptyPredicate.isNotEmpty(level.getIdentifier())
-        && !nodeExecution.isOldRetry();
+        && !nodeExecution.getOldRetry();
   }
 
   private void addToMap(Map<String, Object> map, NodeExecution nodeExecution) {

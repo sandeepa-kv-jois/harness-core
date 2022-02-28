@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.commons.lang3.StringUtils.isNotBlank;
 
+import io.harness.exception.runtime.KubernetesApiClientRuntimeException;
 import io.harness.k8s.model.KubernetesClusterAuthType;
 import io.harness.k8s.model.KubernetesConfig;
 import io.harness.k8s.oidc.OidcTokenRetriever;
@@ -38,7 +39,13 @@ public class ApiClientFactoryImpl implements ApiClientFactory {
 
   public static ApiClient fromKubernetesConfig(KubernetesConfig kubernetesConfig, OidcTokenRetriever tokenRetriever) {
     // should we cache the client ?
-    return createNewApiClient(kubernetesConfig, tokenRetriever);
+    try {
+      return createNewApiClient(kubernetesConfig, tokenRetriever);
+    } catch (RuntimeException e) {
+      throw new KubernetesApiClientRuntimeException(e.getMessage(), e.getCause());
+    } catch (Exception e) {
+      throw new KubernetesApiClientRuntimeException(e.getMessage(), e);
+    }
   }
 
   private static ApiClient createNewApiClient(KubernetesConfig kubernetesConfig, OidcTokenRetriever tokenRetriever) {

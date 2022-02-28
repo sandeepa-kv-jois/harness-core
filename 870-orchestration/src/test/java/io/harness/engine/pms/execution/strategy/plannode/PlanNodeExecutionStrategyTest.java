@@ -117,7 +117,7 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestTriggerNode() {
+  public void shouldTestRunNode() {
     String planExecutionId = generateUuid();
     Ambiance ambiance = Ambiance.newBuilder()
                             .setPlanExecutionId(planExecutionId)
@@ -139,7 +139,7 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
     doReturn(NodeExecution.builder().build())
         .when(executionStrategy)
         .createNodeExecution(ambiance, planNode, null, null, null, null);
-    executionStrategy.triggerNode(ambiance, planNode, null);
+    executionStrategy.runNode(ambiance, planNode, null);
     verify(executorService).submit(any(Runnable.class));
   }
 

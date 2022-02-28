@@ -468,7 +468,8 @@ public class InfrastructureProvisionerServiceImpl implements InfrastructureProvi
         SettingAttributeKeys.value_type, Operator.EQ, SettingVariableTypes.GIT.name());
     settingAttributePageRequest.addFilter(SettingAttributeKeys.uuid, Operator.IN, settingAttributeIds.toArray());
 
-    PageResponse<SettingAttribute> settingAttributes = settingService.list(settingAttributePageRequest, null, null);
+    PageResponse<SettingAttribute> settingAttributes =
+        settingService.list(settingAttributePageRequest, null, null, false);
 
     Map<String, SettingAttribute> idToSettingAttributeMapping = new HashMap<>();
     for (SettingAttribute settingAttribute : settingAttributes.getResponse()) {

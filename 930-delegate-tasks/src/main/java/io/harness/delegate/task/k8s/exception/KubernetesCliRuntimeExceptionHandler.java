@@ -40,7 +40,7 @@ public class KubernetesCliRuntimeExceptionHandler implements ExceptionHandler {
   private static final String KUBECTL_SCALE_CONSOLE_ERROR = "Failed to scale resource(s) with error:\n%s";
   private static final String UNRESOLVED_VALUE = "<no value>";
 
-  private static final String INVALID_RESOURCE_REGEX = "((\\S+) \"([^\"]*)\" is invalid: .*?: Invalid value: \".*?\")";
+  private static final String INVALID_RESOURCE_REGEX = "((\\S+) \"([^\"]*)\" is invalid:)";
   private static final String RESOURCE_NOT_FOUND_REGEX = ".* \"(.*?)\" not found.*";
   private static final String INVALID_TYPE_VALUE_REGEX = ".* ValidationError\\((.*?)\\).*invalid type.*";
   private static final String UNKNOWN_FIELD_REGEX = ".* ValidationError\\((.*?)\\).*unknown field \"(.*?)\".*";

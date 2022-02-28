@@ -189,7 +189,7 @@ public class EventJobScheduler {
   public void runConnectorsHealthStatusJob() {
     boolean masterPod = accountShardService.isMasterPod();
     if (masterPod) {
-      try (AutoLogContext ignore = new CronJobTypeLogContext("runConnectorsHealthStatusJob", OVERRIDE_ERROR)) {
+      try {
         log.info("running billing data pipeline health status service job");
         billingDataPipelineHealthStatusService.processAndUpdateHealthStatus();
       } catch (Exception ex) {
@@ -202,7 +202,7 @@ public class EventJobScheduler {
   public void runAccountExpiryCleanup() {
     boolean masterPod = accountShardService.isMasterPod();
     if (masterPod) {
-      try (AutoLogContext ignore = new CronJobTypeLogContext("runAccountExpiryCleanup", OVERRIDE_ERROR)) {
+      try {
         accountExpiryCleanupService.execute();
       } catch (Exception ex) {
         log.error("Exception while running runAccountExpiryCleanup {}", ex);
@@ -212,7 +212,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.weeklyReportsJobCron}")
   public void runWeeklyReportJob() {
-    try (AutoLogContext ignore = new CronJobTypeLogContext("runWeeklyReportJob", OVERRIDE_ERROR)) {
+    try {
       weeklyReportService.generateAndSendWeeklyReport();
       log.info("Weekly billing report generated and send");
     } catch (Exception ex) {
@@ -223,7 +223,7 @@ public class EventJobScheduler {
   @Scheduled(cron = "0 */30 * * * ?") // Run every 30 mins. Change to 0 */10 * * * ? for every 10 mins for testing
   public void runScheduledReportJob() {
     // In case jobs take longer time, the jobs will be queued and executed in turn
-    try (AutoLogContext ignore = new CronJobTypeLogContext("runScheduledReportJob", OVERRIDE_ERROR)) {
+    try {
       scheduledReportService.generateAndSendScheduledReport();
       log.info("Scheduled reports generated and sent");
     } catch (Exception ex) {
@@ -233,7 +233,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "0 0 */1 ? * *")
   public void updateCostMetadatRecord() {
-    try (AutoLogContext ignore = new CronJobTypeLogContext("updateCostMetadatRecord", OVERRIDE_ERROR)) {
+    try {
       ceMetaDataRecordUpdateService.updateCloudProviderMetadata();
       log.info("updated cost data");
     } catch (Exception ex) {
@@ -257,7 +257,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "0 30 8 * * ?")
   public void runViewUpdateCostJob() {
-    try (AutoLogContext ignore = new CronJobTypeLogContext("runViewUpdateCostJob", OVERRIDE_ERROR)) {
+    try {
       viewCostUpdateService.updateTotalCost();
       log.info("Updated view total cost");
     } catch (Exception ex) {
@@ -267,7 +267,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.budgetAlertsJobCron}")
   public void runBudgetAlertsJob() {
-    try (AutoLogContext ignore = new CronJobTypeLogContext("runBudgetAlertsJob", OVERRIDE_ERROR)) {
+    try {
       budgetAlertsService.sendBudgetAlerts();
       log.info("Budget alerts send");
     } catch (Exception ex) {
@@ -277,7 +277,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.budgetCostUpdateJobCron}")
   public void runBudgetCostUpdateJob() {
-    try (AutoLogContext ignore = new CronJobTypeLogContext("runBudgetCostUpdateJob", OVERRIDE_ERROR)) {
+    try {
       budgetCostUpdateService.updateCosts();
       log.info("Costs updated for budgets");
     } catch (Exception ex) {
@@ -287,7 +287,7 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.connectorHealthUpdateJobCron}")
   public void runNGConnectorsHealthUpdateJob() {
-    try (AutoLogContext ignore = new CronJobTypeLogContext("runNGConnectorsHealthUpdateJob", OVERRIDE_ERROR)) {
+    try {
       if (!batchMainConfig.getConnectorHealthUpdateJobConfig().isEnabled()) {
         log.info("connectorHealthUpdateJob is disabled in config");
         return;

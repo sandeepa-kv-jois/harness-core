@@ -7,6 +7,7 @@
 
 package io.harness.pms.sdk.core.plan.creation.yaml;
 
+@Deprecated
 public enum StepOutcomeGroup {
   STAGE,
   STEP,

@@ -105,7 +105,7 @@ public class SecretsRBACServiceImpl implements SecretsRBACService {
     Map<String, List<Base>> appIdEnvMapForAccount = envService.getAppIdEnvMap(appsByAccountId);
 
     for (SecretScopeMetadata secretScopeMetadata : secretsScopeMetadata) {
-      if (!usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appId, envId,
+      if (!usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appId, envId, false,
               secretScopeMetadata.getCalculatedScopes().getUsageRestrictions(), restrictionsFromUserPermissions,
               appEnvMapFromPermissions, appIdEnvMapForAccount,
               secretScopeMetadata.getCalculatedScopes().isScopedToAccount())) {
@@ -121,8 +121,8 @@ public class SecretsRBACServiceImpl implements SecretsRBACService {
   }
 
   @Override
-  public List<SecretScopeMetadata> filterSecretsByReadPermission(
-      String accountId, List<SecretScopeMetadata> secretsScopeMetadata, String appId, String envId) {
+  public List<SecretScopeMetadata> filterSecretsByReadPermission(String accountId,
+      List<SecretScopeMetadata> secretsScopeMetadata, String appId, String envId, boolean forUsageInNewApp) {
     List<SecretScopeMetadata> filteredList = new ArrayList<>();
     boolean isAccountAdmin = userService.hasPermission(accountId, MANAGE_SECRETS);
     RestrictionsAndAppEnvMap restrictionsAndAppEnvMap =
@@ -134,7 +134,7 @@ public class SecretsRBACServiceImpl implements SecretsRBACService {
     Map<String, List<Base>> appIdEnvMapForAccount = envService.getAppIdEnvMap(appsByAccountId);
 
     for (SecretScopeMetadata secretScopeMetadata : secretsScopeMetadata) {
-      if (usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appId, envId,
+      if (usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appId, envId, forUsageInNewApp,
               secretScopeMetadata.getCalculatedScopes().getUsageRestrictions(), restrictionsFromUserPermissions,
               appEnvMapFromPermissions, appIdEnvMapForAccount,
               secretScopeMetadata.getCalculatedScopes().isScopedToAccount())) {

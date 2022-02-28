@@ -87,7 +87,7 @@ public class WinRmSessionTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testExecuteCommandString() throws JSchException {
     PowerMockito.mockStatic(SshHelperUtils.class);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .domain("KRB.LOCAL")
                              .skipCertChecks(true)
                              .username("TestUser")
@@ -114,7 +114,7 @@ public class WinRmSessionTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testRemoteHost() throws JSchException {
     PowerMockito.mockStatic(SshHelperUtils.class);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .domain("KRB.LOCAL")
                              .skipCertChecks(true)
                              .username("TestUser")
@@ -158,7 +158,7 @@ public class WinRmSessionTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetUserPrincipal() throws JSchException {
     PowerMockito.mockStatic(SshHelperUtils.class);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .domain("KRB.LOCAL")
                              .skipCertChecks(true)
                              .username("TestUser")
@@ -181,7 +181,7 @@ public class WinRmSessionTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testGetUserPrincipalWithDomainInUsername() throws JSchException {
     PowerMockito.mockStatic(SshHelperUtils.class);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .domain("KRB.LOCAL")
                              .skipCertChecks(true)
                              .username("TestUser")
@@ -207,7 +207,7 @@ public class WinRmSessionTest extends CategoryTest {
     PowerMockito
         .when(SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), any(Writer.class), anyBoolean()))
         .thenReturn(true);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .domain("KRB.LOCAL")
                              .skipCertChecks(true)
                              .environment(new HashMap<>())
@@ -228,7 +228,7 @@ public class WinRmSessionTest extends CategoryTest {
     PowerMockito
         .when(SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), any(Writer.class), anyBoolean()))
         .thenReturn(true);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .skipCertChecks(true)
                              .username("TestUser")
                              .environment(new HashMap<>())
@@ -249,7 +249,7 @@ public class WinRmSessionTest extends CategoryTest {
     PowerMockito
         .when(SshHelperUtils.executeLocalCommand(anyString(), any(LogCallback.class), any(Writer.class), anyBoolean()))
         .thenReturn(true);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .domain("KRB.LOCAL")
                              .skipCertChecks(true)
                              .username("TestUser")
@@ -328,7 +328,7 @@ public class WinRmSessionTest extends CategoryTest {
     when(WinRmClient.builder(anyString())).thenReturn(winRmClientBuilder);
     doReturn(winRmClient).when(winRmClientBuilder).build();
     when(winRmClient.createShell()).thenReturn(shell);
-    winRmSessionConfig = WinRmSessionConfig.builder()
+    winRmSessionConfig = io.harness.delegate.task.winrm.WinRmSessionConfig.builder()
                              .skipCertChecks(true)
                              .username("TestUser")
                              .password("password")

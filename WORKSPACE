@@ -1008,8 +1008,8 @@ go_repository(
 go_repository(
     name = "com_github_drone_go_scm",
     importpath = "github.com/drone/go-scm",
-    sum = "h1:6DAQ92lcywJsD1WkaajUKMEWD8fmLUnH1VzI6k0vLe4=",
-    version = "v1.19.1-0.20220222164129-d3dd72e400d1",
+    sum = "h1:BQn5DpjS33LenuXwMufodhNAeY9+VxiMltq87J+nU+k=",
+    version = "v1.19.1",
 )
 
 go_repository(
@@ -4555,6 +4555,7 @@ plain_artifacts = [
     "de.danielbechler:java-object-diff:0.94",
     "de.javakaffee:kryo-serializers:0.41",
     "de.jkeylockmanager:jkeylockmanager:2.1.0",
+    "de.skuzzle:semantic-version:2.1.0",
     "dk.brics.automaton:automaton:1.11-8",
     "dnsjava:dnsjava:2.1.8",
     "es.moki.ratelimitj:ratelimitj-core:0.6.0",

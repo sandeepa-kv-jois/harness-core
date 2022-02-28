@@ -7,6 +7,8 @@
 
 package io.harness.pms.utilities;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
@@ -18,13 +20,16 @@ import io.harness.pms.yaml.YamlUtils;
 import com.fasterxml.jackson.databind.JsonNode;
 import java.io.IOException;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @UtilityClass
+@Slf4j
 public class ResourceConstraintUtility {
   public JsonNode getResourceConstraintJsonNode(String resourceUnit) {
     String yamlField = "---\n"
         + "name: \"Resource Constraint\"\n"
+        + "identifier: \"rc-" + generateUuid() + "\"\n"
         + "timeout: \"1w\"\n"
         + "type: \"ResourceConstraint\"\n"
         + "spec:\n"
@@ -39,6 +44,7 @@ public class ResourceConstraintUtility {
       String yamlFieldWithUuid = YamlUtils.injectUuid(yamlField);
       resourceConstraintYamlField = YamlUtils.readTree(yamlFieldWithUuid);
     } catch (IOException e) {
+      log.error("Exception occured while creating resource constraint", e);
       throw new InvalidRequestException("Exception while creating resource constraint");
     }
     return resourceConstraintYamlField.getNode().getCurrJsonNode();

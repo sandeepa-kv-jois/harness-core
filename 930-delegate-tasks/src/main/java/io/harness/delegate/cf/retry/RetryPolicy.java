@@ -15,11 +15,13 @@ public class RetryPolicy {
   private int retry;
   private String userMessageOnFailure = "";
   private String finalErrorMessage = "";
+  private boolean throwError;
 
   @Builder
-  public RetryPolicy(int retry, String userMessageOnFailure, String finalErrorMessage) {
+  public RetryPolicy(int retry, String userMessageOnFailure, String finalErrorMessage, boolean throwError) {
     this.retry = retry == 0 ? RetryAbleTaskExecutor.MIN_RETRY : retry;
     this.userMessageOnFailure = userMessageOnFailure;
     this.finalErrorMessage = finalErrorMessage;
+    this.throwError = throwError;
   }
 }

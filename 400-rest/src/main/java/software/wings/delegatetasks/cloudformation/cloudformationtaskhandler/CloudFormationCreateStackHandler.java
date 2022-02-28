@@ -30,7 +30,6 @@ import io.harness.logging.LogLevel;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AwsConfig;
-import software.wings.beans.GitOperationContext;
 import software.wings.beans.NameValuePair;
 import software.wings.beans.ServiceVariable.Type;
 import software.wings.beans.command.ExecutionLogCallback;
@@ -139,12 +138,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
       }
       switch (updateRequest.getCreateType()) {
         case CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_GIT: {
-          executionLogCallback.saveExecutionLog(format("Fetching template from git url: %s, "
-                  + "branch: %s, templatePath: %s, commitId: %s [ ignored branch if commitId is "
-                  + "set ]",
-              updateRequest.getGitConfig().getRepoUrl(), updateRequest.getGitConfig().getBranch(),
-              updateRequest.getGitFileConfig().getFilePath(), updateRequest.getGitFileConfig().getCommitId()));
-          setRequestDataFromGit(updateRequest);
+          executionLogCallback.saveExecutionLog("# Using Git Template Body to Update Stack");
+          updateRequest.setCreateType(CLOUD_FORMATION_STACK_CREATE_BODY);
           updateStackRequest.withTemplateBody(updateRequest.getData());
           updateStackRequest.withCapabilities(getCapabilities(updateRequest.getAwsConfig(), updateRequest.getRegion(),
               updateRequest.getData(), updateRequest.getCapabilities(), "body"));
@@ -201,15 +196,6 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
     return builder.build();
   }
 
-  private void setRequestDataFromGit(CloudFormationCreateStackRequest request) {
-    GitOperationContext gitOperationContext = gitUtilsDelegate.cloneRepo(
-        request.getGitConfig(), request.getGitFileConfig(), request.getSourceRepoEncryptionDetails());
-    String templatePathRepo =
-        gitUtilsDelegate.resolveAbsoluteFilePath(gitOperationContext, request.getGitFileConfig().getFilePath());
-    request.setData(gitUtilsDelegate.getRequestDataFromFile(templatePathRepo));
-    request.setCreateType(CLOUD_FORMATION_STACK_CREATE_BODY);
-  }
-
   private CloudFormationCommandExecutionResponse createStack(
       CloudFormationCreateStackRequest createRequest, ExecutionLogCallback executionLogCallback) {
     CloudFormationCommandExecutionResponseBuilder builder = CloudFormationCommandExecutionResponse.builder();
@@ -234,12 +220,8 @@ public class CloudFormationCreateStackHandler extends CloudFormationCommandTaskH
       }
       switch (createRequest.getCreateType()) {
         case CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_GIT: {
-          executionLogCallback.saveExecutionLog(format("Fetching template from git url: %s, "
-                  + "branch: %s, templatePath: %s, commitId: %s [ ignored branch if commitId is "
-                  + "set ] ",
-              createRequest.getGitConfig().getRepoUrl(), createRequest.getGitConfig().getBranch(),
-              createRequest.getGitFileConfig().getFilePath(), createRequest.getGitFileConfig().getCommitId()));
-          setRequestDataFromGit(createRequest);
+          executionLogCallback.saveExecutionLog("# Using Git Template Body to Create Stack");
+          createRequest.setCreateType(CLOUD_FORMATION_STACK_CREATE_BODY);
           createStackRequest.withTemplateBody(createRequest.getData());
           createStackRequest.withCapabilities(getCapabilities(createRequest.getAwsConfig(), createRequest.getRegion(),
               createRequest.getData(), createRequest.getCapabilities(), "body"));

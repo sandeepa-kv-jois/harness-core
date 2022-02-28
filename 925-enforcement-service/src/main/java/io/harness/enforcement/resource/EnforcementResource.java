@@ -140,8 +140,9 @@ public class EnforcementResource {
             responseCode = "default", description = "This returns a list of Feature Restrictions and their metadata")
       })
   public ResponseDTO<List<FeatureRestrictionMetadataDTO>>
-  getAllFeatureRestrictionMetadata() {
-    return ResponseDTO.newResponse(featureService.getAllFeatureRestrictionMetadata());
+  getAllFeatureRestrictionMetadata(@Parameter(required = true, description = ACCOUNT_PARAM_MESSAGE) @QueryParam(
+      NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier) {
+    return ResponseDTO.newResponse(featureService.getAllFeatureRestrictionMetadata(accountIdentifier));
   }
 
   @GET

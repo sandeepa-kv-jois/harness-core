@@ -10,16 +10,17 @@ package io.harness.gitsync.scm;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
+import static io.harness.gitsync.interceptor.GitSyncConstants.DEFAULT;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub;
-import io.harness.gitsync.Principal;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.common.helper.ChangeTypeMapper;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
@@ -32,7 +33,9 @@ import io.harness.gitsync.scm.beans.ScmPushResponse;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
+import io.harness.security.Principal;
 import io.harness.security.SourcePrincipalContextBuilder;
+import io.harness.security.dto.ServiceAccountPrincipal;
 import io.harness.security.dto.ServicePrincipal;
 import io.harness.security.dto.UserPrincipal;
 
@@ -76,8 +79,8 @@ public class SCMGitSyncHelper {
         throw new InvalidRequestException(String.format(
             "A file with name %s already exists in the remote Git repository", gitBranchInfo.getFilePath()));
       }
-      throw e;
     }
+    throw e;
   }
 
   private FileInfo getFileInfo(
@@ -109,6 +112,12 @@ public class SCMGitSyncHelper {
     if (gitBranchInfo.getLastObjectId() != null) {
       builder.setOldFileSha(StringValue.of(gitBranchInfo.getLastObjectId()));
     }
+
+    if (gitBranchInfo.getResolvedConflictCommitId() != null
+        && !gitBranchInfo.getResolvedConflictCommitId().equals(DEFAULT)) {
+      builder.setCommitId(gitBranchInfo.getResolvedConflictCommitId());
+    }
+
     return builder.build();
   }
 
@@ -132,8 +141,13 @@ public class SCMGitSyncHelper {
           isNotEmpty(pushFileResponse.getError()) ? pushFileResponse.getError() : "Error in doing git push";
       throw new GitSyncException(errorMessage);
     }
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        pushFileResponse.getScmResponseCode(), pushFileResponse.getError());
+    try {
+      ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
+          pushFileResponse.getScmResponseCode(), pushFileResponse.getError());
+    } catch (WingsException ex) {
+      ex.setMetadata(ScmErrorMetadataDTO.builder().conflictCommitId(pushFileResponse.getCommitId()).build());
+      throw ex;
+    }
   }
 
   private Principal getPrincipal() {
@@ -148,9 +162,18 @@ public class SCMGitSyncHelper {
         return principalBuilder.setUserPrincipal(UserPrincipalMapper.toProto(userPrincipalFromContext)).build();
       case SERVICE:
         final ServicePrincipal servicePrincipalFromContext = (ServicePrincipal) sourcePrincipal;
-        final io.harness.gitsync.ServicePrincipal servicePrincipal =
-            io.harness.gitsync.ServicePrincipal.newBuilder().setName(servicePrincipalFromContext.getName()).build();
+        final io.harness.security.ServicePrincipal servicePrincipal =
+            io.harness.security.ServicePrincipal.newBuilder().setName(servicePrincipalFromContext.getName()).build();
         return principalBuilder.setServicePrincipal(servicePrincipal).build();
+      case SERVICE_ACCOUNT:
+        final ServiceAccountPrincipal serviceAccountPrincipalFromContext = (ServiceAccountPrincipal) sourcePrincipal;
+        final io.harness.security.ServiceAccountPrincipal serviceAccountPrincipal =
+            io.harness.security.ServiceAccountPrincipal.newBuilder()
+                .setName(StringValue.of(serviceAccountPrincipalFromContext.getName()))
+                .setEmail(StringValue.of(serviceAccountPrincipalFromContext.getEmail()))
+                .setUserName(StringValue.of(serviceAccountPrincipalFromContext.getUsername()))
+                .build();
+        return principalBuilder.setServiceAccountPrincipal(serviceAccountPrincipal).build();
       default:
         throw new InvalidRequestException("Principal type not set.");
     }

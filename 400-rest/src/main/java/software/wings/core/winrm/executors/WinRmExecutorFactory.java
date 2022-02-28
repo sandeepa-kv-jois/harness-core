@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.delegate.task.winrm.DefaultWinRmExecutor;
 import io.harness.delegate.task.winrm.WinRmSessionConfig;
 
 import software.wings.beans.command.ExecutionLogCallback;
@@ -30,14 +31,13 @@ public class WinRmExecutorFactory {
   @Inject private DelegateFileManager delegateFileManager;
 
   public WinRmExecutor getExecutor(WinRmSessionConfig config, boolean disableCommandEncoding) {
-    return new DefaultWinRmExecutor(
-        getExecutionLogCallback(config), delegateFileManager, true, config, disableCommandEncoding);
+    return new DefaultWinRmExecutor(getExecutionLogCallback(config), true, config, disableCommandEncoding);
   }
 
   public WinRmExecutor getExecutor(
       WinRmSessionConfig config, boolean disableCommandEncoding, boolean shouldSaveExecutionLogs) {
     return new DefaultWinRmExecutor(
-        getExecutionLogCallback(config), delegateFileManager, shouldSaveExecutionLogs, config, disableCommandEncoding);
+        getExecutionLogCallback(config), shouldSaveExecutionLogs, config, disableCommandEncoding);
   }
 
   public FileBasedWinRmExecutor getFiledBasedWinRmExecutor(WinRmSessionConfig config, boolean disableCommandEncoding) {

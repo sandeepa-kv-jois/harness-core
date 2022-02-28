@@ -55,4 +55,5 @@ public class TemplateSummaryResponseDTO {
   EntityGitDetails gitDetails;
   EntityValidityDetails entityValidityDetails;
   long lastUpdatedAt;
+  long createdAt;
 }

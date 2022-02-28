@@ -16,7 +16,6 @@ import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
 
 import com.google.inject.Inject;
-import java.time.Clock;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateResults;
@@ -24,11 +23,10 @@ import org.mongodb.morphia.query.UpdateResults;
 @Slf4j
 public class AddMonitoredServiceToActivityMigration implements CVNGMigration {
   @Inject private HPersistence hPersistence;
-  @Inject private Clock clock;
 
   @Override
   public void migrate() {
-    log.info("Begin migration for updating HeatMap with monitoredServiceIdentifier");
+    log.info("Begin migration for updating Activity with monitoredServiceIdentifier");
     Query<MonitoredService> monitoredServiceQuery = hPersistence.createQuery(MonitoredService.class);
     try (HIterator<MonitoredService> iterator = new HIterator<>(monitoredServiceQuery.fetch())) {
       while (iterator.hasNext()) {

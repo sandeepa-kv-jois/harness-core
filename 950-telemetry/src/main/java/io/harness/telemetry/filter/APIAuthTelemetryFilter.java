@@ -45,6 +45,7 @@ public class APIAuthTelemetryFilter implements ContainerRequestFilter {
   public static final String AUTH_TYPE = "auth_type";
   public static final String ACCOUNT_IDENTIFIER = "account_identifier";
   public static final String API_ENDPOINT = "api_endpoint";
+  public static final String API_TYPE = "api_type";
   public static final String API_ENDPOINTS_AUTH_SCHEMES = "api_endpoints_auth_schemes";
   public static final String API_AUTH_TELEMETRY_RATE_LIMITER_NAME = "api-auth-telemetry-rate-limiter";
   public static final int DEFAULT_RATE_LIMIT = 50;
@@ -81,6 +82,7 @@ public class APIAuthTelemetryFilter implements ContainerRequestFilter {
       properties.put(AUTH_TYPE, X_API_KEY);
       properties.put(ACCOUNT_IDENTIFIER, accountIdentifierOptional.get());
       properties.put(API_ENDPOINT, containerRequestContext.getUriInfo().getPath());
+      properties.put(API_TYPE, containerRequestContext.getMethod());
 
       try {
         rateLimitedConsumer.accept(reporter

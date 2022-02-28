@@ -24,6 +24,7 @@ import java.net.SocketTimeoutException;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import javax.net.ssl.SSLHandshakeException;
 import lombok.extern.slf4j.Slf4j;
 import org.json.JSONObject;
 
@@ -46,13 +47,18 @@ public class KubernetesApiExceptionHandler implements ExceptionHandler {
 
     if (apiException.getCause() != null) {
       String message = apiException.getCause().getMessage();
+      Throwable cause = apiException.getCause();
       resetApiExceptionCause(apiException);
-      if (apiException.getCause() instanceof SocketTimeoutException) {
+      if (cause instanceof SocketTimeoutException) {
         return NestedExceptionUtils.hintWithExplanationException(
             KubernetesExceptionHints.K8S_API_SOCKET_TIMEOUT_EXCEPTION,
             KubernetesExceptionExplanation.K8S_API_SOCKET_TIMEOUT_EXCEPTION,
             new KubernetesApiTaskException(message, FailureType.TIMEOUT_ERROR));
-      } else if (apiException.getCause() instanceof IOException) {
+      } else if (cause instanceof SSLHandshakeException) {
+        return NestedExceptionUtils.hintWithExplanationException(KubernetesExceptionHints.K8S_API_SSL_VALIDATOR,
+            KubernetesExceptionExplanation.K8S_API_SSL_VALIDATOR + ": " + message,
+            new KubernetesApiTaskException(message, FailureType.CONNECTIVITY));
+      } else if (cause instanceof IOException) {
         return NestedExceptionUtils.hintWithExplanationException(
             KubernetesExceptionHints.K8S_API_GENERIC_NETWORK_EXCEPTION,
             KubernetesExceptionExplanation.K8S_API_IO_EXCEPTION,

@@ -40,6 +40,7 @@ import io.harness.event.OrchestrationEndGraphHandler;
 import io.harness.event.OrchestrationLogPublisher;
 import io.harness.event.OrchestrationStartEventHandler;
 import io.harness.exception.GeneralException;
+import io.harness.execution.consumers.InitiateNodeEventRedisConsumer;
 import io.harness.execution.consumers.SdkResponseEventRedisConsumer;
 import io.harness.gitsync.AbstractGitSyncSdkModule;
 import io.harness.gitsync.GitSdkConfiguration;
@@ -653,6 +654,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
         pipelineServiceConsumersConfig.getPlanNotify().getThreads());
     pipelineEventConsumerController.register(injector.getInstance(PmsNotifyEventConsumerRedis.class),
         pipelineServiceConsumersConfig.getPmsNotify().getThreads());
+    pipelineEventConsumerController.register(injector.getInstance(InitiateNodeEventRedisConsumer.class),
+        pipelineServiceConsumersConfig.getInitiateNode().getThreads());
   }
 
   /**-----------------------------Git sync --------------------------------------*/

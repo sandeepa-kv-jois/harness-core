@@ -210,7 +210,6 @@ import io.kubernetes.client.openapi.models.V1ServiceBuilder;
 import io.kubernetes.client.openapi.models.V1ServicePortBuilder;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatusBuilder;
-import io.kubernetes.client.openapi.models.VersionInfo;
 import io.kubernetes.client.util.Yaml;
 import java.io.IOException;
 import java.net.URL;
@@ -3116,16 +3115,10 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .when(mockK8sYamlToDelegateDTOMapper)
         .createKubernetesConfigFromClusterConfig(clusterConfigDTO);
 
-    doThrow(InvalidRequestException.builder().message("Unable to retrieve k8s version. Code: 401").build())
-        .when(mockKubernetesContainerService)
-        .getVersion(kubernetesConfig);
-    try {
-      k8sTaskHelperBase.validate(clusterConfigDTO, emptyList());
-    } catch (HintException he) {
-      assertThat(he.getMessage()).contains(K8sExceptionConstants.KUBERNETES_CLUSTER_CONNECTION_VALIDATION_FAILED);
-      assertThat(he.getCause()).isInstanceOf(ExplanationException.class);
-      assertThat(he.getCause().getMessage()).contains("Unable to retrieve k8s version. Code: 401");
-    }
+    InvalidRequestException exception = new InvalidRequestException("Unable to retrieve k8s version. Code: 401");
+
+    doThrow(exception).when(mockKubernetesContainerService).validateCredentials(kubernetesConfig);
+    assertThatThrownBy(() -> k8sTaskHelperBase.validate(clusterConfigDTO, emptyList())).isSameAs(exception);
   }
 
   @Test
@@ -3148,7 +3141,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .when(mockK8sYamlToDelegateDTOMapper)
         .createKubernetesConfigFromClusterConfig(clusterConfigDTO);
 
-    doReturn(new VersionInfo()).when(mockKubernetesContainerService).getVersion(kubernetesConfig);
+    doNothing().when(mockKubernetesContainerService).validateCredentials(kubernetesConfig);
 
     ConnectorValidationResult connectorValidationResult = k8sTaskHelperBase.validate(clusterConfigDTO, emptyList());
 

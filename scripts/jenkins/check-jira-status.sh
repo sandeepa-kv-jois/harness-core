@@ -6,7 +6,19 @@
 
 set +e
 
-PROJECTS="BT|CCE|CCM|CDC|CDNG|CDP|CE|CI|CV|CVNG|DEL|DOC|DX|ER|OPS|PIE|PL|SEC|SWAT|GTM|FFM|OPA|ONP|LWG|ART"
+function check_file_present(){
+     local_file=$1
+     if [ ! -f "$local_file" ]; then
+        echo "ERROR: $LINENO: File $local_file not found. Exiting"
+        exit 1
+     fi
+}
+
+SHDIR=$(dirname "$0")
+PROJFILE="$SHDIR/jira-projects.txt"
+check_file_present $PROJFILE
+PROJECTS=$(<$PROJFILE)
+
 
 # Check commit message if there's a single commit
 if [ $(git rev-list --count $ghprbActualCommit ^origin/develop)  -eq 1 ]; then

@@ -90,7 +90,6 @@ import com.google.common.collect.ImmutableList;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import org.assertj.core.util.Lists;
 import org.junit.Before;
@@ -303,9 +302,8 @@ public class K8sRollingDeployTaskHandlerTest extends WingsBaseTest {
     verify(k8sTaskHelperBase, times(1))
         .applyManifests(any(Kubectl.class), anyList(), any(K8sDelegateTaskParams.class),
             any(ExecutionLogCallback.class), anyBoolean());
-    verify(k8sRollingBaseHandler, times(1)).addLabelsInDeploymentSelectorForCanary(eq(false), anyList());
-    verify(k8sTaskHelperBase, never())
-        .getDeploymentContainingTrackStableSelector(any(KubernetesConfig.class), anyList(), any(Map.Entry.class));
+    verify(k8sRollingBaseHandler, times(1))
+        .addLabelsInDeploymentSelectorForCanary(eq(false), eq(false), anyList(), any(KubernetesConfig.class));
   }
 
   @Test
@@ -355,9 +353,8 @@ public class K8sRollingDeployTaskHandlerTest extends WingsBaseTest {
         .applyManifests(any(Kubectl.class), anyList(), any(K8sDelegateTaskParams.class),
             any(ExecutionLogCallback.class), anyBoolean());
     verify(handler, never()).prune(any(), any(), any());
-    verify(k8sRollingBaseHandler, times(1)).addLabelsInDeploymentSelectorForCanary(eq(true), anyList());
-    verify(k8sTaskHelperBase, times(1))
-        .getDeploymentContainingTrackStableSelector(any(KubernetesConfig.class), anyList(), any(Map.Entry.class));
+    verify(k8sRollingBaseHandler, times(1))
+        .addLabelsInDeploymentSelectorForCanary(eq(true), eq(true), anyList(), any(KubernetesConfig.class));
   }
 
   @Test

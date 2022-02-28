@@ -205,7 +205,7 @@ public class NodeExecutionMap extends LateBindingMap {
         return stepParameters;
       }
     }
-    Node node = nodeExecutionsCache.fetchNode(nodeExecution.nodeId());
+    Node node = nodeExecutionsCache.fetchNode(nodeExecution.getNodeId());
     return NodeExecutionUtils.extractAndProcessObject(node.getStepParameters().toJson());
   }
 

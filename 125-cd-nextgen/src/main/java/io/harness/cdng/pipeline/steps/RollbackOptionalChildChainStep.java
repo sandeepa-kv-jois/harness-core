@@ -20,7 +20,6 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
-import io.harness.pms.sdk.core.plan.creation.yaml.StepOutcomeGroup;
 import io.harness.pms.sdk.core.resolver.RefObjectUtils;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.executables.ChildChainExecutable;
@@ -98,10 +97,10 @@ public class RollbackOptionalChildChainStep implements ChildChainExecutable<Roll
     // Publish this outcome to let the next step advise for stage know that the stage has been rolled back and new stage
     // should not run
     OptionalSweepingOutput optionalSweepingOutput = executionSweepingOutputService.resolveOptional(
-        ambiance, RefObjectUtils.getSweepingOutputRefObject(YAMLFieldNameConstants.DEPLOYMENT_ROLLED_BACK));
+        ambiance, RefObjectUtils.getSweepingOutputRefObject(YAMLFieldNameConstants.STOP_STAGE_SEQUENCE));
     if (!optionalSweepingOutput.isFound()) {
-      executionSweepingOutputService.consume(ambiance, YAMLFieldNameConstants.DEPLOYMENT_ROLLED_BACK,
-          RollbackTriggeredOutput.builder().rollbackTriggered(true).build(), StepOutcomeGroup.PIPELINE.name());
+      executionSweepingOutputService.consume(ambiance, YAMLFieldNameConstants.STOP_STAGE_SEQUENCE,
+          RollbackTriggeredOutput.builder().rollbackTriggered(true).build(), StepCategory.PIPELINE.name());
     }
     // If status is suspended, then we should mark the execution as success
     if (notifyData.getStatus() == Status.SUSPENDED) {

@@ -90,6 +90,9 @@ public class ScmGitProviderMapper {
     } catch (SecurityException e) {
       log.error("Don't have sufficient permission to query ADDITIONAL_CERTS_PATH", e);
     }
+    if (additionalCertsPath == null) {
+      additionalCertsPath = "";
+    }
     return additionalCertsPath;
   }
 

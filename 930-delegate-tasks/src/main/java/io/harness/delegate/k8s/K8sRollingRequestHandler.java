@@ -114,7 +114,8 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
     LogCallback prepareLogCallback =
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Prepare, true, commandUnitsProgress);
     prepareForRolling(k8sDelegateTaskParams, prepareLogCallback, k8sRollingDeployRequest.isInCanaryWorkflow(),
-        k8sRollingDeployRequest.isSkipResourceVersioning());
+        k8sRollingDeployRequest.isSkipResourceVersioning(),
+        k8sRollingDeployRequest.isSkipAddingTrackSelectorToDeployment());
 
     List<KubernetesResource> allWorkloads = ListUtils.union(managedWorkloads, customWorkloads);
     List<K8sPod> existingPodList = k8sRollingBaseHandler.getExistingPods(
@@ -236,7 +237,8 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
   }
 
   private void prepareForRolling(K8sDelegateTaskParams k8sDelegateTaskParams, LogCallback executionLogCallback,
-      boolean inCanaryWorkflow, boolean skipResourceVersioning) throws Exception {
+      boolean inCanaryWorkflow, boolean skipResourceVersioning, boolean skipAddingTrackSelectorToDeployment)
+      throws Exception {
     managedWorkloads = getWorkloads(resources);
     if (isNotEmpty(managedWorkloads) && !skipResourceVersioning) {
       markVersionedResources(resources);
@@ -271,7 +273,8 @@ public class K8sRollingRequestHandler extends K8sRequestHandler {
       }
 
       k8sRollingBaseHandler.addLabelsInManagedWorkloadPodSpec(inCanaryWorkflow, managedWorkloads, releaseName);
-      k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow, managedWorkloads);
+      k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(
+          inCanaryWorkflow, skipAddingTrackSelectorToDeployment, managedWorkloads, kubernetesConfig);
     }
   }
 }

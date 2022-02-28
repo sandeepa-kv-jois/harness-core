@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
  */
 
-package io.harness.beans.steps;
+package io.harness.steps;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
@@ -15,6 +15,7 @@ import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
 import io.harness.beans.yaml.extended.ImagePullPolicy;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.config.StepImageConfig;
+import io.harness.execution.CIExecutionConfigService;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.yaml.core.variables.OutputNGVariable;
 
@@ -24,11 +25,11 @@ import java.util.stream.Collectors;
 
 public class CIStepInfoUtils {
   public static String getPluginCustomStepImage(
-      PluginCompatibleStep step, CIExecutionServiceConfig ciExecutionServiceConfig, Type infraType) {
+      PluginCompatibleStep step, CIExecutionConfigService ciExecutionConfigService, Type infraType, String accountId) {
     if (infraType == Type.K8) {
-      return getK8PluginCustomStepImageConfig(step, ciExecutionServiceConfig).getImage();
+      return getK8PluginCustomStepImageConfig(step, ciExecutionConfigService, accountId).getImage();
     } else if (infraType == Type.VM) {
-      return getVmPluginCustomStepImageConfig(step, ciExecutionServiceConfig);
+      return getVmPluginCustomStepImageConfig(step, ciExecutionConfigService.getCiExecutionServiceConfig());
     }
     return null;
   }
@@ -67,36 +68,13 @@ public class CIStepInfoUtils {
   }
 
   public static List<String> getK8PluginCustomStepEntrypoint(
-      PluginCompatibleStep step, CIExecutionServiceConfig ciExecutionServiceConfig) {
-    return getK8PluginCustomStepImageConfig(step, ciExecutionServiceConfig).getEntrypoint();
+      PluginCompatibleStep step, CIExecutionConfigService ciExecutionConfigService, String accountId) {
+    return getK8PluginCustomStepImageConfig(step, ciExecutionConfigService, accountId).getEntrypoint();
   }
 
   private static StepImageConfig getK8PluginCustomStepImageConfig(
-      PluginCompatibleStep step, CIExecutionServiceConfig ciExecutionServiceConfig) {
-    switch (step.getNonYamlInfo().getStepInfoType()) {
-      case DOCKER:
-        return ciExecutionServiceConfig.getStepConfig().getBuildAndPushDockerRegistryConfig();
-      case GCR:
-        return ciExecutionServiceConfig.getStepConfig().getBuildAndPushGCRConfig();
-      case ECR:
-        return ciExecutionServiceConfig.getStepConfig().getBuildAndPushECRConfig();
-      case RESTORE_CACHE_S3:
-      case SAVE_CACHE_S3:
-        return ciExecutionServiceConfig.getStepConfig().getCacheS3Config();
-      case UPLOAD_S3:
-        return ciExecutionServiceConfig.getStepConfig().getS3UploadConfig();
-      case UPLOAD_GCS:
-        return ciExecutionServiceConfig.getStepConfig().getGcsUploadConfig();
-      case SAVE_CACHE_GCS:
-      case RESTORE_CACHE_GCS:
-        return ciExecutionServiceConfig.getStepConfig().getCacheGCSConfig();
-      case SECURITY:
-        return ciExecutionServiceConfig.getStepConfig().getSecurityConfig();
-      case UPLOAD_ARTIFACTORY:
-        return ciExecutionServiceConfig.getStepConfig().getArtifactoryUploadConfig();
-      default:
-        throw new IllegalStateException("Unexpected value: " + step.getStepType().getType());
-    }
+      PluginCompatibleStep step, CIExecutionConfigService ciExecutionConfigService, String accountId) {
+    return ciExecutionConfigService.getPluginVersion(step.getNonYamlInfo().getStepInfoType(), accountId);
   }
 
   private static String getVmPluginCustomStepImageConfig(

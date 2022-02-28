@@ -85,7 +85,11 @@ public class InterventionWaitAdviserResponseHandlerTest extends OrchestrationTes
     nodeExecution = NodeExecution.builder()
                         .uuid(NODE_EXECUTION_ID)
                         .ambiance(ambiance)
-                        .planNode(planNode)
+                        .nodeId(NODE_SETUP_ID)
+                        .name("DUMMY")
+                        .identifier("dummy")
+                        .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
+                        .module("CD")
                         .startTs(System.currentTimeMillis())
                         .status(Status.FAILED)
                         .build();

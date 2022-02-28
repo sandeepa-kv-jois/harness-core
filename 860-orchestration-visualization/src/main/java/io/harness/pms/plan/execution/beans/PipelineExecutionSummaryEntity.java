@@ -24,6 +24,7 @@ import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.FdUniqueIndex;
 import io.harness.mongo.index.MongoIndex;
+import io.harness.mongo.index.SortCompoundMongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.ng.core.common.beans.NGTag;
 import io.harness.persistence.CreatedAtAware;
@@ -206,9 +207,10 @@ public class PipelineExecutionSummaryEntity implements PersistentEntity, UuidAwa
                  .field(PlanExecutionSummaryKeys.accountId)
                  .field(PlanExecutionSummaryKeys.createdAt)
                  .build())
-        .add(CompoundMongoIndex.builder()
-                 .name("root_execution_id")
+        .add(SortCompoundMongoIndex.builder()
+                 .name("rootExecution_createdAt_id")
                  .field(PlanExecutionSummaryKeys.rootExecutionId)
+                 .descSortField(PlanExecutionSummaryKeys.createdAt)
                  .build())
         .build();
   }

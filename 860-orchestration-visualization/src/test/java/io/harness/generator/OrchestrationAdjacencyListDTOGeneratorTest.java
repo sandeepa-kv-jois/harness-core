@@ -564,7 +564,12 @@ public class OrchestrationAdjacencyListDTOGeneratorTest extends OrchestrationVis
                           .addLevels(PmsLevelUtils.buildLevelFromNode("section_chain_start", secChainNode))
                           .build())
             .mode(ExecutionMode.CHILD_CHAIN)
-            .planNode(secChainNode)
+            .nodeId(secChainNode.getUuid())
+            .name(secChainNode.getName())
+            .stepType(secChainNode.getStepType())
+            .identifier(secChainNode.getIdentifier())
+            .module(secChainNode.getServiceName())
+            .skipGraphType(secChainNode.getSkipGraphType())
             .createdAt(System.currentTimeMillis())
             .lastUpdatedAt(System.currentTimeMillis())
             .build();

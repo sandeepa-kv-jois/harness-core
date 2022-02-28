@@ -4,10 +4,24 @@
 # that can be found in the licenses directory at the root of this repository, also available at
 # https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
 
+function check_file_present(){
+     local_file=$1
+     if [ ! -f "$local_file" ]; then
+        echo "ERROR: $LINENO: File $local_file not found. Exiting"
+        exit 1
+     fi
+}
+
 set +e
 
+SHDIR=$(dirname "$0")
+PROJFILE="$SHDIR/jira-projects.txt"
+check_file_present $PROJFILE
+PROJECTS=$(<$PROJFILE)
+
 COMMIT_CONTENT="\[feat]|\[fix]|\[techdebt]|feat|fix|techdebt"
-PROJECTS="BT|CCE|CCM|CDB|CDC|CDNG|CDS|CE|CI|CV|CVNG|CVS|DEL|DOC|DX|ER|OPS|PIE|PL|SEC|SWAT|GTM|FFM|OPA|ONP|LWG|ART|GIT|OENG|COMP"
+SHDIR=`dirname "$0"`
+PROJECTS=$(<$SHDIR/jira-projects.txt)
 
 # Check commit message if there's a single commit
 #if [ $(git rev-list --count $ghprbActualCommit ^origin/master)  -eq 1 ]; then

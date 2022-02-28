@@ -12,6 +12,7 @@ import static io.harness.delegate.beans.connector.k8Connector.KubernetesCredenti
 import static io.harness.encryption.Scope.ACCOUNT;
 import static io.harness.encryption.SecretRefData.SECRET_DELIMINITER;
 import static io.harness.encryption.SecretRefData.SECRET_DOT_DELIMINITER;
+import static io.harness.rule.OwnerRule.ABOSII;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -281,6 +282,43 @@ public class KubernetesEntityToDTOTest extends CategoryTest {
     KubernetesServiceAccountDTO kubernetesUserNamePasswordDTO =
         (KubernetesServiceAccountDTO) credentialDTO.getAuth().getCredentials();
     assertThat(kubernetesUserNamePasswordDTO.getServiceAccountTokenRef()).isEqualTo(serviceAccountsecret);
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testCreateK8ClusterConfigDTOForServiceAccountCaCertRef() {
+    String masterURL = "masterURL";
+    String serviceAccountKeyIdentifier = "serviceAccountKeyIdentifier";
+    String caCertKeyIdentifier = "caCertKeyIdentifier";
+    String serviceAccountRef = ACCOUNT.getYamlRepresentation() + SECRET_DOT_DELIMINITER + serviceAccountKeyIdentifier;
+    String caCertAccountRef = ACCOUNT.getYamlRepresentation() + SECRET_DOT_DELIMINITER + caCertKeyIdentifier;
+    SecretRefData serviceAccountsecret =
+        SecretRefData.builder().identifier(serviceAccountKeyIdentifier).scope(ACCOUNT).build();
+    SecretRefData caCertSecret = SecretRefData.builder().identifier(caCertKeyIdentifier).scope(ACCOUNT).build();
+    K8sServiceAccount k8sServiceAccount =
+        K8sServiceAccount.builder().serviceAcccountTokenRef(serviceAccountRef).caCertRef(caCertAccountRef).build();
+    KubernetesClusterDetails kubernetesClusterDetails = KubernetesClusterDetails.builder()
+                                                            .masterUrl(masterURL)
+                                                            .authType(KubernetesAuthType.SERVICE_ACCOUNT)
+                                                            .auth(k8sServiceAccount)
+                                                            .build();
+    Connector connector = KubernetesClusterConfig.builder()
+                              .credentialType(MANUAL_CREDENTIALS)
+                              .credential(kubernetesClusterDetails)
+                              .build();
+    KubernetesClusterConfigDTO connectorDTO =
+        kubernetesEntityToDTO.createConnectorDTO((KubernetesClusterConfig) connector);
+    assertThat(connectorDTO).isNotNull();
+    assertThat(connectorDTO.getCredential().getConfig()).isNotNull();
+    assertThat(connectorDTO.getCredential().getKubernetesCredentialType()).isEqualTo(MANUAL_CREDENTIALS);
+    KubernetesClusterDetailsDTO credentialDTO = (KubernetesClusterDetailsDTO) connectorDTO.getCredential().getConfig();
+    assertThat(credentialDTO).isNotNull();
+    assertThat(credentialDTO.getMasterUrl()).isNotNull();
+    KubernetesServiceAccountDTO kubernetesUserNamePasswordDTO =
+        (KubernetesServiceAccountDTO) credentialDTO.getAuth().getCredentials();
+    assertThat(kubernetesUserNamePasswordDTO.getServiceAccountTokenRef()).isEqualTo(serviceAccountsecret);
+    assertThat(kubernetesUserNamePasswordDTO.getCaCertRef()).isEqualTo(caCertSecret);
   }
 
   @Test(expected = UnexpectedException.class)

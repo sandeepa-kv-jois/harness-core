@@ -41,6 +41,7 @@ public class GitSyncEntityDTO {
   @Schema(description = GitSyncApiConstants.FILEPATH_PARAM_MESSAGE) private String entityGitPath;
   @Schema(description = "Type of Git Repo Provider") private RepoProviders repoProviderType;
   @Schema(description = "This contains details about the Entity’s Scope and its Identifier")
-  private EntityReference entityReference;
+  EntityReference entityReference;
   @Schema(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @JsonIgnore String accountId;
+  @Schema(hidden = true) @JsonIgnore String lastCommitId;
 }

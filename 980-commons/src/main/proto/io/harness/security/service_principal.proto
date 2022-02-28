@@ -5,13 +5,10 @@
 
 syntax = "proto3";
 
-package io.harness.gitsync;
+package io.harness.security;
 
 option java_multiple_files = true;
-import "google/protobuf/wrappers.proto";
 
-message UserPrincipal {
-  google.protobuf.StringValue user_id = 1;
-  google.protobuf.StringValue email = 2;
-  google.protobuf.StringValue user_name = 3;
+message ServicePrincipal {
+  string name = 1;
 }

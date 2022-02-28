@@ -14,9 +14,11 @@ import io.harness.pms.events.base.PmsAbstractRedisConsumer;
 import io.harness.queue.QueueController;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import javax.cache.Cache;
 
+@Singleton
 public class PmsNotifyEventConsumerRedis extends PmsAbstractRedisConsumer<PmsNotifyEventMessageListener> {
   @Inject
   public PmsNotifyEventConsumerRedis(@Named(PMS_ORCHESTRATION_NOTIFY_EVENT) Consumer redisConsumer,

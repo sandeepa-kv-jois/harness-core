@@ -2175,7 +2175,7 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
 
   private void addSystemSecrets(Set<String> secrets) {
     // Add config file secrets
-    secrets.add(delegateConfiguration.getAccountSecret());
+    secrets.add(delegateConfiguration.getDelegateToken());
 
     // Add environment variable secrets
     String delegateProfileId = System.getenv().get("DELEGATE_PROFILE");

@@ -18,7 +18,6 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.encryption.Scope;
-import io.harness.enforcement.client.services.EnforcementClientService;
 import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
@@ -49,7 +48,6 @@ public class NGTemplateServiceHelperTest extends CategoryTest {
   NGTemplateServiceHelper templateServiceHelper;
   @Mock FilterService filterService;
   @Mock NGTemplateRepository templateRepository;
-  @Mock EnforcementClientService enforcementClientService;
 
   private final String ACCOUNT_ID = "account_id";
   private final String ORG_IDENTIFIER = "orgId";
@@ -60,7 +58,7 @@ public class NGTemplateServiceHelperTest extends CategoryTest {
   @Before
   public void setUp() {
     MockitoAnnotations.initMocks(this);
-    templateServiceHelper = new NGTemplateServiceHelper(filterService, templateRepository, enforcementClientService);
+    templateServiceHelper = new NGTemplateServiceHelper(filterService, templateRepository);
   }
 
   @Test

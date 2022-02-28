@@ -13,10 +13,12 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.GeneralException;
 import io.harness.exception.HttpResponseException;
+import io.harness.exception.InvalidRequestException;
 
 import java.io.IOException;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.ResponseBody;
 import org.apache.commons.lang3.StringUtils;
 import retrofit2.Call;
 import retrofit2.Response;
@@ -49,6 +51,34 @@ public class SafeHttpCall {
         response.errorBody().close();
       }
     }
+  }
+
+  public static <T> T executeWithErrorMessage(Call<T> call) throws IOException {
+    Response<T> response = null;
+    try {
+      response = call.execute();
+      throwErrorMessageIfAny(response);
+      return response.body();
+    } finally {
+      if (response != null && !response.isSuccessful()) {
+        response.errorBody().close();
+      }
+    }
+  }
+
+  private static <T> void throwErrorMessageIfAny(Response<T> response) throws IOException {
+    if (response == null) {
+      throw new GeneralException("Null response found");
+    }
+    if (response.isSuccessful()) {
+      return;
+    }
+    ResponseBody errorBody = response.errorBody();
+    if (errorBody == null) {
+      throw new HttpResponseException(response.raw().code(), getErrorMessage(response, response.raw()));
+    }
+    String errorString = errorBody.string();
+    throw new InvalidRequestException(errorString);
   }
 
   public static void validateResponse(Response<?> response) throws IOException {

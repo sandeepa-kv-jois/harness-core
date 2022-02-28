@@ -15,8 +15,12 @@ import org.joda.time.format.PeriodFormatterBuilder;
 
 @UtilityClass
 public class HDurations {
-  private static final PeriodFormatter formatter =
-      new PeriodFormatterBuilder().appendMinutes().appendSuffix("m").appendSeconds().appendSuffix("s").toFormatter();
+  private static final PeriodFormatter formatter = new PeriodFormatterBuilder()
+                                                       .appendMinutes()
+                                                       .appendSuffix("m")
+                                                       .appendSecondsWithOptionalMillis()
+                                                       .appendSuffix("s")
+                                                       .toFormatter();
 
   public Duration parse(String duration) {
     return Durations.fromSeconds(formatter.parsePeriod(duration).toStandardDuration().getStandardSeconds());

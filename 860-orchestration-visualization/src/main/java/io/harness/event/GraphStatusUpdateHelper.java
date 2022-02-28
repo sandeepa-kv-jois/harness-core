@@ -64,14 +64,14 @@ public class GraphStatusUpdateHelper {
 
       Map<String, GraphVertex> graphVertexMap = orchestrationGraph.getAdjacencyList().getGraphVertexMap();
       if (graphVertexMap.containsKey(nodeExecutionId)) {
-        if (nodeExecution.isOldRetry()) {
+        if (nodeExecution.getOldRetry()) {
           log.info("[PMS_GRAPH]  Removing graph vertex with id [{}] and status [{}]. PlanExecutionId: [{}]",
               nodeExecutionId, nodeExecution.getStatus(), planExecutionId);
           orchestrationAdjacencyListGenerator.removeVertex(orchestrationGraph.getAdjacencyList(), nodeExecution);
         } else {
           updateGraphVertex(graphVertexMap, nodeExecution, planExecutionId);
         }
-      } else if (!nodeExecution.isOldRetry()) {
+      } else if (!nodeExecution.getOldRetry()) {
         log.info("[PMS_GRAPH] Adding graph vertex with id [{}] and status [{}]. PlanExecutionId: [{}]", nodeExecutionId,
             nodeExecution.getStatus(), planExecutionId);
         orchestrationAdjacencyListGenerator.addVertex(orchestrationGraph.getAdjacencyList(), nodeExecution);
@@ -110,7 +110,7 @@ public class GraphStatusUpdateHelper {
             .ambiance(nodeExecution.getAmbiance())
             .planNodeId(level.getSetupId())
             .identifier(level.getIdentifier())
-            .name(nodeExecution.name())
+            .name(nodeExecution.getName())
             .startTs(nodeExecution.getStartTs())
             .endTs(nodeExecution.getEndTs())
             .initialWaitDuration(nodeExecution.getInitialWaitDuration())
@@ -124,7 +124,7 @@ public class GraphStatusUpdateHelper {
             .executableResponses(CollectionUtils.emptyIfNull(nodeExecution.getExecutableResponses()))
             .interruptHistories(nodeExecution.getInterruptHistories())
             .retryIds(nodeExecution.getRetryIds())
-            .skipType(nodeExecution.skipGraphType())
+            .skipType(nodeExecution.getSkipGraphType())
             .unitProgresses(nodeExecution.getUnitProgresses())
             .progressData(nodeExecution.getPmsProgressData());
     if (nodeExecution.getResolvedInputs() != null) {

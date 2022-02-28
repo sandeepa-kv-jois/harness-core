@@ -8,6 +8,10 @@
 package software.wings.core.ssh.executors;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.winrm.WinRmExecutorHelper.constructPSScriptWithCommands;
+import static io.harness.delegate.task.winrm.WinRmExecutorHelper.constructPSScriptWithCommandsBulk;
+import static io.harness.delegate.task.winrm.WinRmExecutorHelper.getScriptExecutingCommand;
+import static io.harness.delegate.task.winrm.WinRmExecutorHelper.psWrappedCommandWithEncoding;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.RUNNING;
@@ -22,10 +26,6 @@ import static software.wings.beans.LogColor.Green;
 import static software.wings.beans.LogColor.Yellow;
 import static software.wings.beans.LogHelper.color;
 import static software.wings.beans.LogWeight.Bold;
-import static software.wings.core.ssh.executors.WinRmExecutorHelper.constructPSScriptWithCommands;
-import static software.wings.core.ssh.executors.WinRmExecutorHelper.constructPSScriptWithCommandsBulk;
-import static software.wings.core.ssh.executors.WinRmExecutorHelper.getScriptExecutingCommand;
-import static software.wings.core.ssh.executors.WinRmExecutorHelper.psWrappedCommandWithEncoding;
 
 import static java.lang.Math.min;
 import static java.lang.String.format;
@@ -37,6 +37,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.data.encoding.EncodingUtils;
 import io.harness.delegate.beans.FileBucket;
+import io.harness.delegate.task.winrm.WinRmExecutorHelper;
 import io.harness.delegate.task.winrm.WinRmSession;
 import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.eraro.ResponseMessage;
@@ -194,7 +195,8 @@ public class FileBasedWinRmExecutor implements FileBasedScriptExecutor {
           WinRmExecutorHelper.psWrappedCommandWithEncoding(command, powershell), outputWriter, errorWriter, false);
     }
     log.info("Execute Command String returned exit code.", exitCode);
-    WinRmExecutorHelper.cleanupFiles(session, psScriptFile, powershell, disableCommandEncoding);
+    io.harness.delegate.task.winrm.WinRmExecutorHelper.cleanupFiles(
+        session, psScriptFile, powershell, disableCommandEncoding);
     return exitCode == 0 ? SUCCESS : FAILURE;
   }
 
@@ -285,7 +287,8 @@ public class FileBasedWinRmExecutor implements FileBasedScriptExecutor {
           psWrappedCommandWithEncoding(command, powershell), outputWriter, errorWriter, false);
     }
     log.info("Execute Command String returned exit code.", exitCode);
-    WinRmExecutorHelper.cleanupFiles(session, psScriptFile, powershell, disableCommandEncoding);
+    io.harness.delegate.task.winrm.WinRmExecutorHelper.cleanupFiles(
+        session, psScriptFile, powershell, disableCommandEncoding);
     return exitCode == 0 ? SUCCESS : FAILURE;
   }
 

@@ -16,12 +16,14 @@ import io.harness.pms.events.base.PmsAbstractRedisConsumer;
 import io.harness.queue.QueueController;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import javax.cache.Cache;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @OwnedBy(HarnessTeam.PIPELINE)
+@Singleton
 public class PlanNotifyEventConsumer extends PmsAbstractRedisConsumer<PlanNotifyMessageListener> {
   public static final String PMS_PLAN_CREATION = "pms_plan_creation";
 

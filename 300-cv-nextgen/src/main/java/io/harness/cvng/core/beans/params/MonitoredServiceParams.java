@@ -7,16 +7,18 @@
 
 package io.harness.cvng.core.beans.params;
 
+import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.SuperBuilder;
 
-// eventually this should extend ProjectParams.
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @Data
 @SuperBuilder
-public class MonitoredServiceParams extends ServiceEnvironmentParams {
+public class MonitoredServiceParams extends ProjectParams {
+  @QueryParam("serviceIdentifier") @Deprecated String serviceIdentifier;
+  @QueryParam("environmentIdentifier") @Deprecated String environmentIdentifier;
   String monitoredServiceIdentifier;
   // Only for migration code.
   @Deprecated
@@ -28,5 +30,12 @@ public class MonitoredServiceParams extends ServiceEnvironmentParams {
         .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
         .serviceIdentifier(serviceEnvironmentParams.getServiceIdentifier())
         .environmentIdentifier(serviceEnvironmentParams.getEnvironmentIdentifier());
+  }
+
+  public ServiceEnvironmentParams getServiceEnvironmentParams() {
+    return ServiceEnvironmentParams.builderWithProjectParams(this)
+        .serviceIdentifier(getServiceIdentifier())
+        .environmentIdentifier(getEnvironmentIdentifier())
+        .build();
   }
 }

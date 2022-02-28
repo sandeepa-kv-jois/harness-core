@@ -17,6 +17,7 @@ java_library(
         "//930-ng-license-manager:module",
         "//943-enforcement-beans:module",
         "//948-access-control-sdk:module",
+        "//956-feature-flag-beans:module",
         "//960-ng-core-beans:module",
         "//970-ng-commons:module",
         "//980-commons:module",

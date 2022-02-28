@@ -33,7 +33,7 @@ public class DelegateNgTokenCreateEvent extends AbstractDelegateConfigurationEve
 
   @Override
   public Resource getResource() {
-    return Resource.builder().identifier(token.getIdentifier()).type(ResourceTypeConstants.DELEGATE_TOKEN).build();
+    return Resource.builder().identifier(token.getName()).type(ResourceTypeConstants.DELEGATE_TOKEN).build();
   }
 
   @Override

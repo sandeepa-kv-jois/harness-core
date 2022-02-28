@@ -16,10 +16,12 @@ import io.harness.pms.events.base.PmsAbstractRedisConsumer;
 import io.harness.queue.QueueController;
 
 import com.google.inject.Inject;
+import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import javax.cache.Cache;
 
 @OwnedBy(HarnessTeam.PIPELINE)
+@Singleton
 public class PartialPlanResponseRedisConsumer
     extends PmsAbstractRedisConsumer<PartialPlanResponseEventMessageListener> {
   @Inject

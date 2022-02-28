@@ -32,27 +32,35 @@ public abstract class AbstractNodeExecutionStrategy<P extends Node, M extends Pm
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
 
   @Override
-  public NodeExecution triggerNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata) {
+  public NodeExecution runNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata) {
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
       String parentId = AmbianceUtils.obtainParentRuntimeId(ambiance);
       String notifyId = parentId == null ? null : AmbianceUtils.obtainCurrentRuntimeId(ambiance);
-      return createAndTriggerNodeExecution(ambiance, node, metadata, notifyId, parentId, null);
+      return createAndRunNodeExecution(ambiance, node, metadata, notifyId, parentId, null);
+    } catch (Exception ex) {
+      log.error("Exception happened while running Node", ex);
+      handleError(ambiance, ex);
+      return null;
     }
   }
 
   @Override
-  public NodeExecution triggerNextNode(
+  public NodeExecution runNextNode(
       @NonNull Ambiance ambiance, @NonNull P node, NodeExecution prevExecution, M metadata) {
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
-      return createAndTriggerNodeExecution(
+      return createAndRunNodeExecution(
           ambiance, node, metadata, prevExecution.getNotifyId(), prevExecution.getParentId(), prevExecution.getUuid());
+    } catch (Exception ex) {
+      log.error("Exception happened while running next Node", ex);
+      handleError(ambiance, ex);
+      return null;
     }
   }
 
-  private NodeExecution createAndTriggerNodeExecution(
+  private NodeExecution createAndRunNodeExecution(
       Ambiance ambiance, P node, M metadata, String notifyId, String parentId, String previousId) {
     NodeExecution savedExecution = createNodeExecution(ambiance, node, metadata, notifyId, parentId, previousId);
-    executorService.submit(() -> { orchestrationEngine.startNodeExecution(savedExecution.getAmbiance()); });
+    executorService.submit(() -> orchestrationEngine.startNodeExecution(savedExecution.getAmbiance()));
     return savedExecution;
   }
 

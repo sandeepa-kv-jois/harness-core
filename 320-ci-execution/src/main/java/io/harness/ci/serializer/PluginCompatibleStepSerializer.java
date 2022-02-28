@@ -12,16 +12,16 @@ import static io.harness.common.CIExecutionConstants.PLUGIN_ARTIFACT_FILE_VALUE;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
-import io.harness.beans.steps.CIStepInfoUtils;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
 import io.harness.callback.DelegateCallbackToken;
-import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.exception.ngexception.CIStageExecutionException;
+import io.harness.execution.CIExecutionConfigService;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.product.ci.engine.proto.PluginStep;
 import io.harness.product.ci.engine.proto.StepContext;
 import io.harness.product.ci.engine.proto.UnitStep;
 import io.harness.stateutils.buildstate.PluginSettingUtils;
+import io.harness.steps.CIStepInfoUtils;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
 
@@ -33,7 +33,7 @@ import java.util.function.Supplier;
 @OwnedBy(CI)
 public class PluginCompatibleStepSerializer implements ProtobufStepSerializer<PluginCompatibleStep> {
   @Inject private Supplier<DelegateCallbackToken> delegateCallbackTokenSupplier;
-  @Inject private CIExecutionServiceConfig ciExecutionServiceConfig;
+  @Inject private CIExecutionConfigService ciExecutionConfigService;
 
   public UnitStep serializeStepWithStepParameters(PluginCompatibleStep pluginCompatibleStep, Integer port,
       String callbackId, String logKey, String identifier, ParameterField<Timeout> parameterFieldTimeout,
@@ -52,17 +52,17 @@ public class PluginCompatibleStepSerializer implements ProtobufStepSerializer<Pl
     StepContext stepContext = StepContext.newBuilder().setExecutionTimeoutSecs(timeout).build();
     Map<String, String> envVarMap =
         PluginSettingUtils.getPluginCompatibleEnvVariables(pluginCompatibleStep, identifier, timeout, Type.K8);
-    PluginStep pluginStep =
-        PluginStep.newBuilder()
-            .setContainerPort(port)
-            .setImage(CIStepInfoUtils.getPluginCustomStepImage(pluginCompatibleStep, ciExecutionServiceConfig, Type.K8))
-            .addAllEntrypoint(
-                CIStepInfoUtils.getK8PluginCustomStepEntrypoint(pluginCompatibleStep, ciExecutionServiceConfig))
-            .setContext(stepContext)
-            .addAllEnvVarOutputs(outputVarNames)
-            .putAllEnvironment(envVarMap)
-            .setArtifactFilePath(PLUGIN_ARTIFACT_FILE_VALUE)
-            .build();
+    PluginStep pluginStep = PluginStep.newBuilder()
+                                .setContainerPort(port)
+                                .setImage(CIStepInfoUtils.getPluginCustomStepImage(
+                                    pluginCompatibleStep, ciExecutionConfigService, Type.K8, accountId))
+                                .addAllEntrypoint(CIStepInfoUtils.getK8PluginCustomStepEntrypoint(
+                                    pluginCompatibleStep, ciExecutionConfigService, accountId))
+                                .setContext(stepContext)
+                                .addAllEnvVarOutputs(outputVarNames)
+                                .putAllEnvironment(envVarMap)
+                                .setArtifactFilePath(PLUGIN_ARTIFACT_FILE_VALUE)
+                                .build();
 
     return UnitStep.newBuilder()
         .setAccountId(accountId)

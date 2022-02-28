@@ -273,7 +273,7 @@ public class JenkinsState extends State implements SweepingOutputStateMixin {
 
     if (settingsService
             .getFilteredSettingAttributes(
-                Collections.singletonList(settingsService.get(jenkinsConfigId)), context.getAppId(), null)
+                Collections.singletonList(settingsService.get(jenkinsConfigId)), context.getAppId(), null, false)
             .isEmpty()) {
       return ExecutionResponse.builder()
           .executionStatus(FAILED)

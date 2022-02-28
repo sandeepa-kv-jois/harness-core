@@ -53,16 +53,18 @@ public interface UsageRestrictionsService {
    * Access is determined from Usage restrictions, permissions and context.
    *
    * @param accountId account
-   *@param appIdFromRequest current app context
+   * @param appIdFromRequest current app context
    * @param envIdFromRequest current env context
+   * @param forUsageInNewApp
    * @param entityUsageRestrictions
    * @param restrictionsFromUserPermissions
-   * @param appIdEnvMap
    * @param appEnvMapFromPermissions       @return boolean if the user needs to be provided access or not
-   */
+   * @param appIdEnvMap
+   * */
   boolean hasAccess(String accountId, boolean isAccountAdmin, String appIdFromRequest, String envIdFromRequest,
-      UsageRestrictions entityUsageRestrictions, UsageRestrictions restrictionsFromUserPermissions,
-      Map<String, Set<String>> appEnvMapFromPermissions, Map<String, List<Base>> appIdEnvMap, boolean scopedToAccount);
+      boolean forUsageInNewApp, UsageRestrictions entityUsageRestrictions,
+      UsageRestrictions restrictionsFromUserPermissions, Map<String, Set<String>> appEnvMapFromPermissions,
+      Map<String, List<Base>> appIdEnvMap, boolean scopedToAccount);
 
   /**
    * Lists all the applications and environments that the user has update permissions on.

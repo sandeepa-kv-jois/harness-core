@@ -7,6 +7,7 @@
 
 package io.harness.engine.pms.data;
 
+import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ALEXEI;
 import static io.harness.rule.OwnerRule.PRASHANT;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
@@ -26,6 +27,8 @@ import io.harness.engine.expressions.ExpressionEvaluatorProvider;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.expression.VariableResolverTracker;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.ambiance.Level;
+import io.harness.pms.contracts.data.StepOutcomeRef;
 import io.harness.pms.data.PmsOutcome;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.Outcome;
@@ -234,6 +237,39 @@ public class PmsOutcomeServiceImplTest extends OrchestrationTestBase {
     assertThat(optionalOutcome).isNotNull();
     assertThat(optionalOutcome.getOutcome()).isEqualTo(outcomeJson);
     assertThat(optionalOutcome.isFound()).isTrue();
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void fetchOutcomeRefs() {
+    String planId = generateUuid();
+    String planExecutionId = generateUuid();
+    String nodeExecution1Id = generateUuid();
+    String nodeExecution2Id = generateUuid();
+
+    Ambiance.Builder ambianceBuilder = Ambiance.newBuilder().setPlanExecutionId(planExecutionId).setPlanId(planId);
+    Ambiance ambiance1 = ambianceBuilder.addLevels(Level.newBuilder().setRuntimeId(nodeExecution1Id).build()).build();
+    Ambiance ambiance2 = ambianceBuilder.addLevels(Level.newBuilder().setRuntimeId(nodeExecution2Id).build()).build();
+    DummyOrchestrationOutcome outcome1 = DummyOrchestrationOutcome.builder().test("test1").build();
+    DummyOrchestrationOutcome outcome2 = DummyOrchestrationOutcome.builder().test("test2").build();
+    DummyOrchestrationOutcome outcome3 = DummyOrchestrationOutcome.builder().test("test3").build();
+
+    pmsOutcomeService.consume(ambiance1, "outcome1", RecastOrchestrationUtils.toJson(outcome1), null);
+    pmsOutcomeService.consume(ambiance1, "outcome2", RecastOrchestrationUtils.toJson(outcome2), null);
+    pmsOutcomeService.consume(ambiance2, "outcome3", RecastOrchestrationUtils.toJson(outcome3), null);
+    Map<String, List<StepOutcomeRef>> refMap =
+        pmsOutcomeService.fetchOutcomeRefs(Arrays.asList(nodeExecution1Id, nodeExecution2Id));
+
+    assertThat(refMap).containsKey(nodeExecution1Id);
+    List<StepOutcomeRef> refs1 = refMap.get(nodeExecution1Id);
+    assertThat(refs1).hasSize(2);
+    assertThat(refs1.stream().map(StepOutcomeRef::getName)).containsExactlyInAnyOrder("outcome1", "outcome2");
+
+    assertThat(refMap).containsKey(nodeExecution2Id);
+    List<StepOutcomeRef> refs2 = refMap.get(nodeExecution2Id);
+    assertThat(refs2).hasSize(1);
+    assertThat(refs2.stream().map(StepOutcomeRef::getName)).containsExactlyInAnyOrder("outcome3");
   }
 
   public static class SampleEngineExpressionEvaluator extends EngineExpressionEvaluator {

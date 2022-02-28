@@ -35,6 +35,7 @@ import io.harness.logging.LogCallback;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.IOException;
@@ -48,6 +49,8 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class K8sRollingBaseHandler {
+  public static final Map.Entry<String, String> HARNESS_TRACK_STABLE_SELECTOR =
+      Maps.immutableEntry(HarnessLabels.track, HarnessLabelValues.trackStable);
   @Inject K8sTaskHelperBase k8sTaskHelperBase;
 
   @VisibleForTesting
@@ -169,5 +172,17 @@ public class K8sRollingBaseHandler {
     logCallback.saveExecutionLog("\nDone.", INFO, CommandExecutionStatus.SUCCESS);
 
     return existingPodList;
+  }
+
+  public void addLabelsInDeploymentSelectorForCanary(boolean inCanaryWorkflow,
+      boolean skipAddingTrackSelectorToDeployment, List<KubernetesResource> managedWorkloads,
+      KubernetesConfig kubernetesConfig) {
+    if (skipAddingTrackSelectorToDeployment && inCanaryWorkflow) {
+      List<KubernetesResource> workloadsFromServer = k8sTaskHelperBase.getDeploymentContainingTrackStableSelector(
+          kubernetesConfig, managedWorkloads, HARNESS_TRACK_STABLE_SELECTOR);
+      addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow, workloadsFromServer);
+    } else {
+      addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow, managedWorkloads);
+    }
   }
 }

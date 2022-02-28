@@ -10,7 +10,7 @@ package io.harness.gitsync.common.helper;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.gitsync.UserPrincipal;
+import io.harness.security.UserPrincipal;
 
 import com.google.protobuf.StringValue;
 import lombok.experimental.UtilityClass;

@@ -48,7 +48,7 @@ public class SettingAttributeSetupUsageBuilder implements SecretSetupUsageBuilde
                       .addFilter(ID_KEY, SearchFilter.Operator.IN, parentIds.toArray())
                       .addFilter(ACCOUNT_ID_KEY, SearchFilter.Operator.EQ, accountId)
                       .build(),
-                null, null)
+                null, null, false)
             .getResponse();
 
     Set<SecretSetupUsage> secretSetupUsages = new HashSet<>();

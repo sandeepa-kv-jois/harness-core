@@ -565,16 +565,6 @@ public class ActivityServiceImpl implements ActivityService {
   }
 
   @Override
-  public List<Activity> get(ServiceEnvironmentParams serviceEnvironmentParams, List<String> changeSourceIdentifiers,
-      Instant startTime, Instant endTime, List<ActivityType> activityTypes) {
-    Query<Activity> query = createQuery(serviceEnvironmentParams, changeSourceIdentifiers, startTime, endTime);
-    if (CollectionUtils.isNotEmpty(activityTypes)) {
-      query = query.field(ActivityKeys.type).in(activityTypes);
-    }
-    return query.asList();
-  }
-
-  @Override
   public Long getCount(ServiceEnvironmentParams serviceEnvironmentParams, List<String> changeSourceIdentifiers,
       Instant startTime, Instant endTime, List<ActivityType> activityTypes) {
     Query<Activity> query = createQuery(serviceEnvironmentParams, changeSourceIdentifiers, startTime, endTime);

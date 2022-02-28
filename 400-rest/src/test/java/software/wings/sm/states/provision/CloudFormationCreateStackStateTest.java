@@ -12,9 +12,9 @@ import static io.harness.beans.FeatureName.CLOUDFORMATION_SKIP_WAIT_FOR_RESOURCE
 import static io.harness.beans.FeatureName.SKIP_BASED_ON_STACK_STATUSES;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
-import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.BOJANA;
 import static io.harness.rule.OwnerRule.JELENA;
+import static io.harness.rule.OwnerRule.NAVNEET;
 import static io.harness.rule.OwnerRule.PRAKHAR;
 import static io.harness.rule.OwnerRule.RAGHVENDRA;
 import static io.harness.rule.OwnerRule.TMACARI;
@@ -348,7 +348,7 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = BOJANA)
+  @Owner(developers = NAVNEET)
   @Category(UnitTests.class)
   public void buildDelegateTaskProvisionByGitRepo() {
     CloudFormationInfrastructureProvisioner provisioner = CloudFormationInfrastructureProvisioner.builder()
@@ -357,29 +357,40 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
                                                                                  .connectorId("sourceRepoSettingId")
                                                                                  .branch("gitBranch")
                                                                                  .commitId("commitId")
+                                                                                 .filePath("template.json")
                                                                                  .build())
                                                               .build();
 
     GitConfig gitConfig = GitConfig.builder().urlType(GitConfig.UrlType.REPO).repoUrl(repoUrl).build();
     when(gitUtilsManager.getGitConfig("sourceRepoSettingId")).thenReturn(gitConfig);
-
-    state.buildAndQueueDelegateTask(mockContext, provisioner, awsConfig, ACTIVITY_ID);
+    when(mockInfrastructureProvisionerService.get(anyString(), anyString())).thenReturn(provisioner);
+    state.setFileFetched(false);
+    state.executeInternal(mockContext, ACTIVITY_ID);
     ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);
     verify(delegateService).queueTask(captor.capture());
     DelegateTask delegateTask = captor.getValue();
-    verifyDelegateTask(delegateTask, true);
-    CloudFormationCreateStackRequest request =
-        (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
-    assertThat(request.getGitConfig()).isEqualTo(gitConfig);
-    assertThat(request.getGitConfig().getBranch()).isEqualTo("gitBranch");
-    assertThat(request.getGitConfig().getReference()).isEqualTo("commitId");
-    assertThat(request.getGitConfig().getRepoName()).isNull();
-    assertThat(request.getGitConfig().getRepoUrl()).isEqualTo(repoUrl);
-    assertThat(request.getCreateType()).isEqualTo(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_GIT);
+
+    assertThat(delegateTask.getAccountId()).isEqualTo(ACCOUNT_ID);
+
+    GitFetchFilesTaskParams request = (GitFetchFilesTaskParams) delegateTask.getData().getParameters()[0];
+    assertThat(request.getAccountId()).isEqualTo(ACCOUNT_ID);
+    assertThat(request.getAppId()).isEqualTo(APP_ID);
+    assertThat(request.getActivityId()).isEqualTo(ACTIVITY_ID);
+
+    GitFetchFilesConfig gitFetchFilesConfig = request.getGitFetchFilesConfigMap().get("Cloud Formation parameters");
+    GitConfig fileMapGitConfig = gitFetchFilesConfig.getGitConfig();
+    assertThat(fileMapGitConfig.getBranch()).isEqualTo("gitBranch");
+    assertThat(fileMapGitConfig.getReference()).isEqualTo("commitId");
+    assertThat(fileMapGitConfig.getRepoName()).isNull();
+    assertThat(fileMapGitConfig.getRepoUrl()).isEqualTo(repoUrl);
+
+    GitFileConfig gitFileConfig = gitFetchFilesConfig.getGitFileConfig();
+    assertThat(gitFileConfig).isEqualTo(provisioner.getGitFileConfig());
+    assertThat(gitFileConfig.getFilePathList().get(0)).isEqualTo("template.json");
   }
 
   @Test
-  @Owner(developers = ARVIND)
+  @Owner(developers = NAVNEET)
   @Category(UnitTests.class)
   public void buildDelegateTaskProvisionByGitAccount() {
     CloudFormationInfrastructureProvisioner provisioner = CloudFormationInfrastructureProvisioner.builder()
@@ -389,25 +400,36 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
                                                                                  .branch("gitBranch")
                                                                                  .commitId("commitId")
                                                                                  .repoName("z.git")
+                                                                                 .filePath("template.json")
                                                                                  .build())
                                                               .build();
 
     GitConfig gitConfig = GitConfig.builder().urlType(GitConfig.UrlType.ACCOUNT).repoUrl("http://xyz.com").build();
     when(gitUtilsManager.getGitConfig("sourceRepoSettingId")).thenReturn(gitConfig);
-
-    state.buildAndQueueDelegateTask(mockContext, provisioner, awsConfig, ACTIVITY_ID);
+    when(mockInfrastructureProvisionerService.get(anyString(), anyString())).thenReturn(provisioner);
+    state.setFileFetched(false);
+    state.executeInternal(mockContext, ACTIVITY_ID);
     ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);
     verify(delegateService).queueTask(captor.capture());
     DelegateTask delegateTask = captor.getValue();
-    verifyDelegateTask(delegateTask, true);
-    CloudFormationCreateStackRequest request =
-        (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
-    assertThat(request.getGitConfig()).isEqualTo(gitConfig);
-    assertThat(request.getGitConfig().getBranch()).isEqualTo("gitBranch");
-    assertThat(request.getGitConfig().getReference()).isEqualTo("commitId");
-    assertThat(request.getGitConfig().getRepoName()).isEqualTo("z.git");
-    assertThat(request.getGitConfig().getRepoUrl()).isEqualTo(repoUrl);
-    assertThat(request.getCreateType()).isEqualTo(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_GIT);
+
+    assertThat(delegateTask.getAccountId()).isEqualTo(ACCOUNT_ID);
+
+    GitFetchFilesTaskParams request = (GitFetchFilesTaskParams) delegateTask.getData().getParameters()[0];
+    assertThat(request.getAccountId()).isEqualTo(ACCOUNT_ID);
+    assertThat(request.getAppId()).isEqualTo(APP_ID);
+    assertThat(request.getActivityId()).isEqualTo(ACTIVITY_ID);
+
+    GitFetchFilesConfig gitFetchFilesConfig = request.getGitFetchFilesConfigMap().get("Cloud Formation parameters");
+    GitConfig fileMapGitConfig = gitFetchFilesConfig.getGitConfig();
+    assertThat(fileMapGitConfig.getBranch()).isEqualTo("gitBranch");
+    assertThat(fileMapGitConfig.getReference()).isEqualTo("commitId");
+    assertThat(fileMapGitConfig.getRepoName()).isEqualTo("z.git");
+    assertThat(fileMapGitConfig.getRepoUrl()).isEqualTo(repoUrl);
+
+    GitFileConfig gitFileConfig = gitFetchFilesConfig.getGitFileConfig();
+    assertThat(gitFileConfig).isEqualTo(provisioner.getGitFileConfig());
+    assertThat(gitFileConfig.getFilePathList().get(0)).isEqualTo("template.json");
   }
 
   @Test
@@ -467,6 +489,19 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
   @Owner(developers = TMACARI)
   @Category(UnitTests.class)
   public void testHandAsyncResponseForGitFetchFiles() {
+    CloudFormationInfrastructureProvisioner cloudFormationInfrastructureProvisioner =
+        CloudFormationInfrastructureProvisioner.builder()
+            .sourceType(GIT.name())
+            .gitFileConfig(GitFileConfig.builder().connectorId("sourceRepoSettingId").commitId("commitId").build())
+            .build();
+
+    GitConfig gitConfig = GitConfig.builder().urlType(GitConfig.UrlType.REPO).repoUrl(repoUrl).build();
+    when(gitUtilsManager.getGitConfig("sourceRepoSettingId")).thenReturn(gitConfig);
+
+    when(mockInfrastructureProvisionerService.get(anyString(), anyString()))
+        .thenReturn(cloudFormationInfrastructureProvisioner);
+
+    state.setUseParametersFile(true);
     state.setParametersFilePaths(Collections.singletonList("filePath"));
     WorkflowStandardParams workflowStandardParams = new WorkflowStandardParams();
     workflowStandardParams.setAppId(APP_ID);
@@ -646,7 +681,7 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = BOJANA)
+  @Owner(developers = NAVNEET)
   @Category(UnitTests.class)
   public void testExecuteInternalProvisionByGitEmptyBranch() {
     CloudFormationInfrastructureProvisioner cloudFormationInfrastructureProvisioner =
@@ -661,6 +696,7 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
     when(mockInfrastructureProvisionerService.get(anyString(), anyString()))
         .thenReturn(cloudFormationInfrastructureProvisioner);
 
+    state.setFileFetched(false);
     state.setTemplateExpressions(emptyList());
     state.setAwsConfigId("awsConfigId");
     ExecutionResponse executionResponse = state.executeInternal(mockContext, ACTIVITY_ID);
@@ -669,14 +705,22 @@ public class CloudFormationCreateStackStateTest extends WingsBaseTest {
     verify(delegateService).queueTask(captor.capture());
     DelegateTask delegateTask = captor.getValue();
     assertThat(delegateTask).isNotNull();
-    verifyDelegateTask(delegateTask, false);
-    CloudFormationCreateStackRequest request =
-        (CloudFormationCreateStackRequest) delegateTask.getData().getParameters()[0];
-    assertThat(request.getGitConfig()).isEqualTo(gitConfig);
-    assertThat(request.getGitConfig().getReference()).isEqualTo("commitId");
-    assertThat(request.getGitConfig().getRepoName()).isNull();
-    assertThat(request.getGitConfig().getRepoUrl()).isEqualTo(repoUrl);
-    assertThat(request.getCreateType()).isEqualTo(CloudFormationCreateStackRequest.CLOUD_FORMATION_STACK_CREATE_GIT);
+
+    assertThat(delegateTask.getAccountId()).isEqualTo(ACCOUNT_ID);
+
+    GitFetchFilesTaskParams request = (GitFetchFilesTaskParams) delegateTask.getData().getParameters()[0];
+    assertThat(request.getAccountId()).isEqualTo(ACCOUNT_ID);
+    assertThat(request.getAppId()).isEqualTo(APP_ID);
+    assertThat(request.getActivityId()).isEqualTo(ACTIVITY_ID);
+
+    GitFetchFilesConfig gitFetchFilesConfig = request.getGitFetchFilesConfigMap().get("Cloud Formation parameters");
+    GitConfig fileMapGitConfig = gitFetchFilesConfig.getGitConfig();
+    assertThat(fileMapGitConfig.getReference()).isEqualTo("commitId");
+    assertThat(fileMapGitConfig.getRepoName()).isNull();
+    assertThat(fileMapGitConfig.getRepoUrl()).isEqualTo(repoUrl);
+
+    GitFileConfig gitFileConfig = gitFetchFilesConfig.getGitFileConfig();
+    assertThat(gitFileConfig).isEqualTo(cloudFormationInfrastructureProvisioner.getGitFileConfig());
   }
 
   private void verifyDelegateTask(DelegateTask delegateTask, boolean checkTags) {

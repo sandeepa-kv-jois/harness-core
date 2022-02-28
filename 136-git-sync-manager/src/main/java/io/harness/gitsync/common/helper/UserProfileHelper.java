@@ -27,13 +27,13 @@ import io.harness.delegate.beans.connector.scm.github.GithubUsernameTokenDTO;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.InvalidRequestException;
-import io.harness.gitsync.UserPrincipal;
 import io.harness.ng.userprofile.commons.BitbucketSCMDTO;
 import io.harness.ng.userprofile.commons.GithubSCMDTO;
 import io.harness.ng.userprofile.commons.SCMType;
 import io.harness.ng.userprofile.commons.SourceCodeManagerDTO;
 import io.harness.ng.userprofile.services.api.SourceCodeManagerService;
 import io.harness.security.SourcePrincipalContextBuilder;
+import io.harness.security.UserPrincipal;
 import io.harness.security.dto.PrincipalType;
 
 import com.google.inject.Inject;

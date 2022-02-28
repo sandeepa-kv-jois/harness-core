@@ -9,6 +9,7 @@ package software.wings.sm.states.pcf;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.beans.ExecutionStatus.FAILED;
+import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.beans.FeatureName.CF_ALLOW_SPECIAL_CHARACTERS;
 import static io.harness.beans.FeatureName.CF_CUSTOM_EXTRACTION;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
@@ -26,6 +27,7 @@ import static io.harness.rule.OwnerRule.ANIL;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.TMACARI;
+import static io.harness.rule.OwnerRule.VAIBHAV_KUMAR;
 
 import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.Environment.Builder.anEnvironment;
@@ -96,6 +98,7 @@ import io.harness.beans.FeatureName;
 import io.harness.beans.SweepingOutputInstance;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.TaskData;
+import io.harness.delegate.beans.pcf.CfAppSetupTimeDetails;
 import io.harness.delegate.beans.pcf.CfInternalConfig;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.manifests.response.CustomManifestValuesFetchResponse;
@@ -107,12 +110,14 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.expression.VariableResolverTracker;
 import io.harness.ff.FeatureFlagService;
 import io.harness.logging.CommandExecutionStatus;
+import io.harness.pcf.model.PcfConstants;
 import io.harness.rule.Owner;
 import io.harness.tasks.ResponseData;
 
 import software.wings.WingsBaseTest;
 import software.wings.api.PhaseElement;
 import software.wings.api.ServiceElement;
+import software.wings.api.pcf.InfoVariables;
 import software.wings.api.pcf.PcfSetupStateExecutionData;
 import software.wings.app.MainConfiguration;
 import software.wings.app.PortalConfig;
@@ -136,6 +141,7 @@ import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
+import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.DockerArtifactStream;
 import software.wings.beans.artifact.JenkinsArtifactStream;
 import software.wings.beans.command.CommandType;
@@ -170,6 +176,7 @@ import software.wings.service.intfc.StateExecutionService;
 import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
+import software.wings.settings.SettingVariableTypes;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
@@ -400,6 +407,41 @@ public class PcfSetupStateTest extends WingsBaseTest {
     doReturn("artifact-name").when(pcfSetupState).artifactFileNameForSource(any(), any());
     doReturn("artifact-path").when(pcfSetupState).artifactPathForSource(any(), any());
     doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());
+  }
+
+  @Test
+  @Owner(developers = VAIBHAV_KUMAR)
+  @Category(UnitTests.class)
+  public void testArtifactPathForSource() {
+    when(pcfSetupState.artifactPathForSource(any(), any())).thenCallRealMethod();
+
+    // Case1: when jobName occurs as a substring inside artifactPath
+    String path = "harness-internal/harness-internal/20211208.2.zip";
+    String jobName1 = "harness-internal";
+    String url1 = "https://harness.jfrog.io/artifactory/harness-internal/harness-internal/20211208.2.zip";
+    Map<String, String> metadata = new HashMap<String, String>() {
+      {
+        put("artifactPath", path);
+        put("url", url1);
+      }
+    };
+
+    Artifact artifact = new Artifact();
+    ArtifactStreamAttributes artifactStreamAttributes = ArtifactStreamAttributes.builder()
+                                                            .artifactStreamType(SettingVariableTypes.ARTIFACTORY.name())
+                                                            .jobName(jobName1)
+                                                            .metadata(metadata)
+                                                            .build();
+    String result = pcfSetupState.artifactPathForSource(artifact, artifactStreamAttributes);
+    assertThat(result).isEqualTo(path);
+
+    // Case2: when there is no overlap between jobName and artifactPath
+    String jobName2 = "test";
+    String url2 = "https://harness.jfrog.io/artifactory/test/harness-internal/20211208.2.zip";
+    artifactStreamAttributes.setJobName(jobName2);
+    metadata.put("url", url2);
+    result = pcfSetupState.artifactPathForSource(artifact, artifactStreamAttributes);
+    assertThat(result).isEqualTo(path);
   }
 
   @Test
@@ -684,6 +726,62 @@ public class PcfSetupStateTest extends WingsBaseTest {
 
     pcfSetupState.handleAsyncInternal(context, response);
     verify(activityService, times(1)).updateStatus("activityId", APP_ID, FAILED);
+  }
+
+  @Test
+  @Owner(developers = ANIL)
+  @Category(UnitTests.class)
+  public void testActiveInActiveInBuiltVariablesAfterAppSetup() {
+    String appPrefix = "PaymentApp";
+    String oldAppName = "PaymentApp";
+    String oldAppId = "oldAppId";
+    String newAppId = "newAppId";
+    String newAppName = appPrefix + PcfConstants.INACTIVE_APP_NAME_SUFFIX;
+    String prevInActiveAppOldName = "PaymentApp__INACTIVE";
+
+    CfAppSetupTimeDetails mostRecentInactiveAppVersion =
+        CfAppSetupTimeDetails.builder().oldName(prevInActiveAppOldName).applicationName(appPrefix + "__0").build();
+
+    CfAppSetupTimeDetails activeApp =
+        CfAppSetupTimeDetails.builder().applicationName(oldAppName).applicationGuid(oldAppId).build();
+
+    CfAppSetupTimeDetails newApp =
+        CfAppSetupTimeDetails.builder().applicationName(newAppName).applicationGuid(newAppId).build();
+
+    CfSetupCommandResponse pcfCommandResponse = CfSetupCommandResponse.builder()
+                                                    .mostRecentInactiveAppVersion(mostRecentInactiveAppVersion)
+                                                    .downsizeDetails(Collections.singletonList(activeApp))
+                                                    .newApplicationDetails(newApp)
+                                                    .build();
+
+    CfCommandExecutionResponse cfCommandExecutionResponse = CfCommandExecutionResponse.builder()
+                                                                .pcfCommandResponse(pcfCommandResponse)
+                                                                .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+                                                                .build();
+
+    Map<String, ResponseData> response = new HashMap<>();
+    response.put("activityId", cfCommandExecutionResponse);
+
+    PcfSetupStateExecutionData pcfSetupStateExecutionData = context.getStateExecutionData();
+    pcfSetupStateExecutionData.setTaskType(PCF_COMMAND_TASK);
+    pcfSetupStateExecutionData.setActivityId("activityId");
+    pcfSetupStateExecutionData.setStandardBlueGreen(true);
+    pcfSetupStateExecutionData.setAppId(APP_ID);
+    pcfSetupStateExecutionData.setInfraMappingId(INFRA_MAPPING_ID);
+
+    ExecutionResponse executionResponse = pcfSetupState.handleAsyncInternal(context, response);
+    assertThat(executionResponse.getExecutionStatus()).isEqualTo(SUCCESS);
+
+    ArgumentCaptor<SweepingOutputInstance> outputInstanceArgumentCaptor =
+        ArgumentCaptor.forClass(SweepingOutputInstance.class);
+
+    verify(sweepingOutputService, times(2)).save(outputInstanceArgumentCaptor.capture());
+    List<SweepingOutputInstance> allValues = outputInstanceArgumentCaptor.getAllValues();
+    assertThat(allValues.size()).isEqualTo(2);
+    InfoVariables infoVariables = (InfoVariables) allValues.get(1).getValue();
+    assertThat(infoVariables.getActiveAppName()).isEqualTo(oldAppName);
+    assertThat(infoVariables.getInActiveAppName()).isEqualTo(newAppName);
+    assertThat(infoVariables.getMostRecentInactiveAppVersionOldName()).isEqualTo(prevInActiveAppOldName);
   }
 
   @Test

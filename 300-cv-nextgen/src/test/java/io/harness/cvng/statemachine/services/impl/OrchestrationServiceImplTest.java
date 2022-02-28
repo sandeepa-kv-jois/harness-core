@@ -22,6 +22,8 @@ import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.DataGenerator;
+import io.harness.cvng.analysis.entities.LearningEngineTask;
+import io.harness.cvng.analysis.entities.LearningEngineTask.LearningEngineTaskKeys;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.services.api.VerificationTaskService;
@@ -34,6 +36,7 @@ import io.harness.cvng.statemachine.beans.AnalysisStatus;
 import io.harness.cvng.statemachine.entities.AnalysisOrchestrator;
 import io.harness.cvng.statemachine.entities.AnalysisOrchestrator.AnalysisOrchestratorKeys;
 import io.harness.cvng.statemachine.entities.AnalysisStateMachine;
+import io.harness.cvng.statemachine.entities.AnalysisStateMachine.AnalysisStateMachineKeys;
 import io.harness.cvng.statemachine.entities.ServiceGuardTimeSeriesAnalysisState;
 import io.harness.cvng.statemachine.entities.TimeSeriesAnalysisState;
 import io.harness.cvng.statemachine.services.api.AnalysisStateMachineService;
@@ -56,6 +59,8 @@ import java.util.Set;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mongodb.morphia.query.Query;
+import org.mongodb.morphia.query.UpdateOperations;
 
 public class OrchestrationServiceImplTest extends CvNextGenTestBase {
   @Inject HPersistence hPersistence;
@@ -138,6 +143,43 @@ public class OrchestrationServiceImplTest extends CvNextGenTestBase {
     assertThat(orchestrator).hasSize(1);
     assertThat(orchestrator.get(0).getStatus().name()).isEqualTo(AnalysisStatus.RUNNING.name());
     assertThat(orchestrator.get(0).getAnalysisStateMachineQueue()).hasSize(8);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testRetryLogic() {
+    Instant startTime = clock.instant();
+    orchestrationService.queueAnalysis(verificationTaskId, startTime, startTime.plus(5, ChronoUnit.MINUTES));
+    AnalysisStateMachine analysisStateMachine;
+
+    List<AnalysisOrchestrator> orchestrator =
+        hPersistence.createQuery(AnalysisOrchestrator.class)
+            .filter(AnalysisOrchestratorKeys.verificationTaskId, verificationTaskId)
+            .asList();
+    assertThat(orchestrator).hasSize(1);
+    assertThat(orchestrator.get(0).getStatus().name()).isEqualTo(AnalysisStatus.CREATED.name());
+    assertThat(orchestrator.get(0).getAnalysisStateMachineQueue()).hasSize(1);
+    orchestrationService.orchestrate(orchestrator.get(0));
+
+    for (int i = 0; i < 3; i++) {
+      updateLearningEngineTask();
+      orchestrationService.orchestrate(orchestrator.get(0));
+    }
+
+    analysisStateMachine = hPersistence.createQuery(AnalysisStateMachine.class)
+                               .filter(AnalysisStateMachineKeys.verificationTaskId, verificationTaskId)
+                               .get();
+    assertThat(analysisStateMachine.getCurrentState().getStatus().name()).isEqualTo(AnalysisStatus.FAILED.name());
+    assertThat(analysisStateMachine.getCurrentState().getRetryCount()).isEqualTo(2);
+  }
+
+  private void updateLearningEngineTask() {
+    UpdateOperations<LearningEngineTask> updateOperations =
+        hPersistence.createUpdateOperations(LearningEngineTask.class)
+            .set(LearningEngineTaskKeys.taskStatus, LearningEngineTask.ExecutionStatus.TIMEOUT);
+    Query<LearningEngineTask> timeoutQuery = hPersistence.createQuery(LearningEngineTask.class);
+    hPersistence.update(timeoutQuery, updateOperations);
   }
 
   @Test

@@ -18,7 +18,6 @@ import io.harness.cvng.core.entities.MonitoredService;
 import io.harness.cvng.core.entities.ServiceDependency;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.core.services.api.monitoredService.ServiceDependencyService;
-import io.harness.cvng.core.utils.ServiceEnvKey;
 import io.harness.cvng.dashboard.beans.ServiceDependencyGraphDTO;
 import io.harness.cvng.dashboard.beans.ServiceDependencyGraphDTO.Edge;
 import io.harness.cvng.dashboard.beans.ServiceDependencyGraphDTO.ServiceSummaryDetails;
@@ -47,25 +46,37 @@ public class ServiceDependencyGraphServiceImpl implements ServiceDependencyGraph
   public ServiceDependencyGraphDTO getDependencyGraph(@NonNull ProjectParams projectParams,
       @Nullable String serviceIdentifier, @Nullable String environmentIdentifier,
       @NonNull boolean servicesAtRiskFilter) {
+    if (serviceIdentifier == null && environmentIdentifier == null) {
+      return getDependencyGraph(projectParams, null, servicesAtRiskFilter);
+    }
     List<MonitoredService> monitoredServices =
         monitoredServiceService.list(projectParams, serviceIdentifier, environmentIdentifier);
-    Set<String> identifiers =
+    Set<String> monitoredServiceIdentifiers =
+        monitoredServices.stream().map(MonitoredService::getIdentifier).collect(Collectors.toSet());
+    return getDependencyGraph(projectParams, new ArrayList<>(monitoredServiceIdentifiers), servicesAtRiskFilter);
+  }
+
+  @Override
+  public ServiceDependencyGraphDTO getDependencyGraph(@NonNull ProjectParams projectParams,
+      @Nullable List<String> monitoredServiceIdentifiers, @NonNull boolean servicesAtRiskFilter) {
+    List<MonitoredService> monitoredServices = monitoredServiceService.list(projectParams, monitoredServiceIdentifiers);
+    Set<String> monitoredServiceIdentifierSet =
         monitoredServices.stream().map(MonitoredService::getIdentifier).collect(Collectors.toSet());
     List<ServiceDependency> serviceDependencies =
-        serviceDependencyService.getServiceDependencies(projectParams, new ArrayList<>(identifiers));
+        serviceDependencyService.getServiceDependencies(projectParams, new ArrayList<>(monitoredServiceIdentifierSet));
 
     // Get nodes for dependent services
     serviceDependencies.forEach(
-        serviceDependency -> identifiers.add(serviceDependency.getFromMonitoredServiceIdentifier()));
-    monitoredServices = monitoredServiceService.list(projectParams, new ArrayList<>(identifiers));
+        serviceDependency -> monitoredServiceIdentifierSet.add(serviceDependency.getFromMonitoredServiceIdentifier()));
+    monitoredServices = monitoredServiceService.list(projectParams, new ArrayList<>(monitoredServiceIdentifierSet));
 
     Set<String> serviceIdentifiers =
         monitoredServices.stream().map(MonitoredService::getServiceIdentifier).collect(Collectors.toSet());
     Set<String> environmentIdentifiers =
         monitoredServices.stream().map(MonitoredService::getEnvironmentIdentifier).collect(Collectors.toSet());
 
-    Map<ServiceEnvKey, RiskData> latestHealthScores = heatMapService.getLatestHealthScore(
-        projectParams, new ArrayList<>(serviceIdentifiers), new ArrayList<>(environmentIdentifiers));
+    Map<String, RiskData> latestHealthScores =
+        heatMapService.getLatestHealthScore(projectParams, new ArrayList<>(monitoredServiceIdentifierSet));
 
     ServiceDependencyGraphDTO serviceDependencyGraphDTO = constructGraph(monitoredServices, serviceDependencies,
         latestHealthScores, nextGenService.getServiceIdNameMap(projectParams, new ArrayList<>(serviceIdentifiers)),
@@ -93,14 +104,10 @@ public class ServiceDependencyGraphServiceImpl implements ServiceDependencyGraph
   }
 
   private ServiceDependencyGraphDTO constructGraph(List<MonitoredService> monitoredServices,
-      List<ServiceDependency> serviceDependencies, Map<ServiceEnvKey, RiskData> latestHealthScores,
+      List<ServiceDependency> serviceDependencies, Map<String, RiskData> latestHealthScores,
       Map<String, String> serviceIdNameMap, Map<String, String> environmentIdNameMap) {
-    Map<ServiceEnvKey, MonitoredService> monitoredServiceMap = monitoredServices.stream().collect(Collectors.toMap(x
-        -> ServiceEnvKey.builder()
-               .serviceIdentifier(x.getServiceIdentifier())
-               .envIdentifier(x.getEnvironmentIdentifier())
-               .build(),
-        x -> x));
+    Map<String, MonitoredService> monitoredServiceMap =
+        monitoredServices.stream().collect(Collectors.toMap(x -> x.getIdentifier(), x -> x));
 
     List<ServiceSummaryDetails> nodes = new ArrayList<>();
     monitoredServiceMap.forEach((key, value) -> {

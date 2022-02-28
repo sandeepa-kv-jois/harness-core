@@ -624,7 +624,7 @@ public class InfrastructureProvisionerServiceImplTest extends WingsBaseTest {
     SettingAttribute settingAttribute1 = aSettingAttribute().withUuid("id1").build();
     SettingAttribute settingAttribute2 = aSettingAttribute().withUuid("id2").build();
     settingAttributePageResponse.setResponse(asList(settingAttribute1, settingAttribute2));
-    when(settingService.list(settingAttributePageRequest, null, null)).thenReturn(settingAttributePageResponse);
+    when(settingService.list(settingAttributePageRequest, null, null, false)).thenReturn(settingAttributePageResponse);
 
     Map<String, SettingAttribute> idToSettingAttributeMapping =
         ((InfrastructureProvisionerServiceImpl) infrastructureProvisionerService)

@@ -30,7 +30,6 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
-import io.harness.plan.PlanNode;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ExecutionMode;
@@ -88,13 +87,12 @@ public class GraphGenerationServiceImplTest extends OrchestrationVisualizationTe
                           .addAllLevels(Collections.singletonList(Level.newBuilder().setSetupId("node1_plan").build()))
                           .build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid("node1_plan")
-                          .name("name")
-                          .stepType(StepType.newBuilder().setType("DUMMY").build())
-                          .identifier("identifier1")
-                          .serviceName("CD")
-                          .build())
+            .nodeId("node1_plan")
+            .name("name")
+            .stepType(StepType.newBuilder().setType("DUMMY").build())
+            .identifier("identifier1")
+            .module("CD")
+            .skipGraphType(SkipType.NOOP)
             .build();
     nodeExecutionService.save(dummyStart);
 
@@ -127,13 +125,12 @@ public class GraphGenerationServiceImplTest extends OrchestrationVisualizationTe
                           .addAllLevels(Collections.singletonList(Level.newBuilder().setSetupId("node1_plan").build()))
                           .build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid("node1_plan")
-                          .name("name")
-                          .stepType(StepType.newBuilder().setType("DUMMY").build())
-                          .identifier("identifier1")
-                          .serviceName("CD")
-                          .build())
+            .nodeId("node1_plan")
+            .name("name")
+            .stepType(StepType.newBuilder().setType("DUMMY").build())
+            .identifier("identifier1")
+            .module("CD")
+            .skipGraphType(SkipType.NOOP)
             .build();
     nodeExecutionService.save(dummyStart);
 
@@ -179,13 +176,13 @@ public class GraphGenerationServiceImplTest extends OrchestrationVisualizationTe
                           .addAllLevels(Collections.singletonList(Level.newBuilder().setSetupId("node1_plan").build()))
                           .build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid("node1_plan")
-                          .name("name")
-                          .stepType(StepType.newBuilder().setType("DUMMY").build())
-                          .identifier("identifier1")
-                          .serviceName("CD")
-                          .build())
+            .nodeId("node1_plan")
+            .name("name")
+            .stepType(StepType.newBuilder().setType("DUMMY").build())
+            .identifier("identifier1")
+            .module("CD")
+            .skipGraphType(SkipType.NOOP)
+            .identifier("identifier1")
             .build();
     nodeExecutionService.save(dummyStart);
 
@@ -218,13 +215,13 @@ public class GraphGenerationServiceImplTest extends OrchestrationVisualizationTe
                           .addAllLevels(Collections.singletonList(Level.newBuilder().setSetupId("node1_plan").build()))
                           .build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid("node1_plan")
-                          .name("name")
-                          .stepType(StepType.newBuilder().setType("DUMMY").build())
-                          .identifier("identifier1")
-                          .serviceName("CD")
-                          .build())
+            .nodeId("node1_plan")
+            .name("name")
+            .stepType(StepType.newBuilder().setType("DUMMY").build())
+            .identifier("identifier1")
+            .module("CD")
+            .skipGraphType(SkipType.NOOP)
+            .identifier("identifier1")
             .build();
     nodeExecutionService.save(dummyStart);
 
@@ -237,13 +234,13 @@ public class GraphGenerationServiceImplTest extends OrchestrationVisualizationTe
                           .addAllLevels(Collections.singletonList(Level.newBuilder().setSetupId("node2_plan").build()))
                           .build())
             .mode(ExecutionMode.SYNC)
-            .planNode(PlanNode.builder()
-                          .uuid("node2_plan")
-                          .name("nam2")
-                          .stepType(StepType.newBuilder().setType("DUMMY").build())
-                          .identifier("identifier2")
-                          .serviceName("CD")
-                          .build())
+            .nodeId("node2_plan")
+            .name("name2")
+            .stepType(StepType.newBuilder().setType("DUMMY").build())
+            .identifier("identifier1")
+            .module("CD")
+            .skipGraphType(SkipType.NOOP)
+            .identifier("identifier2")
             .previousId(dummyStart.getUuid())
             .build();
     nodeExecutionService.save(dummyEnd);

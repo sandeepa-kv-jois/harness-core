@@ -5,9 +5,10 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package software.wings.core.winrm.executors;
+package io.harness.delegate.task.winrm;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.task.winrm.WinRmExecutorHelper.getScriptExecutingCommand;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.RUNNING;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
@@ -19,16 +20,12 @@ import static software.wings.beans.LogColor.Gray;
 import static software.wings.beans.LogColor.White;
 import static software.wings.beans.LogHelper.color;
 import static software.wings.beans.LogWeight.Bold;
-import static software.wings.core.ssh.executors.WinRmExecutorHelper.getScriptExecutingCommand;
-import static software.wings.sm.StateExecutionData.SECRET_MASK;
 
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.delegate.task.winrm.WinRmSession;
-import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.eraro.ResponseMessage;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -38,8 +35,7 @@ import io.harness.shell.ExecuteCommandResponse.ExecuteCommandResponseBuilder;
 import io.harness.shell.ShellExecutionData;
 import io.harness.shell.ShellExecutionData.ShellExecutionDataBuilder;
 
-import software.wings.core.ssh.executors.WinRmExecutorHelper;
-import software.wings.delegatetasks.DelegateFileManager;
+import software.wings.core.winrm.executors.WinRmExecutor;
 import software.wings.utils.ExecutionLogWriter;
 
 import java.io.StringWriter;
@@ -64,17 +60,17 @@ public class DefaultWinRmExecutor implements WinRmExecutor {
   private static final String ERROR_WHILE_EXECUTING_COMMAND = "Error while executing command";
   public static final String POWERSHELL_NO_PROFILE = "Powershell -NoProfile ";
   public static final String POWERSHELL = "Powershell ";
+  public static final String SECRET_MASK = "************";
+
   protected LogCallback logCallback;
   private final WinRmSessionConfig config;
-  protected DelegateFileManager delegateFileManager;
   private final boolean disableCommandEncoding;
   private final boolean shouldSaveExecutionLogs;
   private final String powershell;
 
-  DefaultWinRmExecutor(LogCallback logCallback, DelegateFileManager delegateFileManager,
-      boolean shouldSaveExecutionLogs, WinRmSessionConfig config, boolean disableCommandEncoding) {
+  public DefaultWinRmExecutor(LogCallback logCallback, boolean shouldSaveExecutionLogs, WinRmSessionConfig config,
+      boolean disableCommandEncoding) {
     this.logCallback = logCallback;
-    this.delegateFileManager = delegateFileManager;
     this.shouldSaveExecutionLogs = shouldSaveExecutionLogs;
     this.config = config;
     this.disableCommandEncoding = disableCommandEncoding;

@@ -25,4 +25,5 @@ public class GitFileDetails {
   String oldFileSha; // not only in case of create file.
   String userEmail;
   String userName;
+  String commitId; // current commit of file in Harness, needed in case of bitbucket
 }

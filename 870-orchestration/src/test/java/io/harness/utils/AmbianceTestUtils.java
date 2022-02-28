@@ -18,6 +18,7 @@ import com.google.common.collect.ImmutableMap;
 import java.util.ArrayList;
 import java.util.List;
 
+@Deprecated
 public class AmbianceTestUtils {
   public static final String ACCOUNT_ID = generateUuid();
   public static final String APP_ID = generateUuid();

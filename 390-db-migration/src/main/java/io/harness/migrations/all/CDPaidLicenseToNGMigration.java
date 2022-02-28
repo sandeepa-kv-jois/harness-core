@@ -8,11 +8,7 @@
 package io.harness.migrations.all;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.persistence.HQuery.excludeAuthorityCount;
 import static io.harness.remote.client.NGRestUtils.getResponse;
-
-import static software.wings.beans.Account.GLOBAL_ACCOUNT_ID;
-import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 
 import io.harness.ModuleType;
 import io.harness.licensing.Edition;
@@ -25,11 +21,8 @@ import io.harness.licensing.beans.modules.ModuleLicenseDTO;
 import io.harness.licensing.beans.modules.types.CDLicenseType;
 import io.harness.licensing.remote.admin.AdminLicenseHttpClient;
 import io.harness.migrations.Migration;
-import io.harness.persistence.HIterator;
 
 import software.wings.beans.Account;
-import software.wings.beans.Account.AccountKeys;
-import software.wings.beans.Application.ApplicationKeys;
 import software.wings.beans.LicenseInfo;
 import software.wings.dl.WingsPersistence;
 import software.wings.service.intfc.AccountService;
@@ -42,7 +35,6 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
-import org.mongodb.morphia.query.Query;
 
 @Slf4j
 public class CDPaidLicenseToNGMigration implements Migration {
@@ -55,54 +47,55 @@ public class CDPaidLicenseToNGMigration implements Migration {
 
   @Override
   public void migrate() {
-    Query<Account> query = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
-                               .filter(ApplicationKeys.appId, GLOBAL_APP_ID)
-                               .project(AccountKeys.uuid, true);
-    query.and(query.criteria(ApplicationKeys.uuid).notEqual(GLOBAL_ACCOUNT_ID));
-
-    try (HIterator<Account> records = new HIterator<>(query.fetch())) {
-      while (records.hasNext()) {
-        Account record = records.next();
-        Account account = accountService.get(record.getUuid());
-
-        try {
-          checkExistingNGLicenseAndMigrate(account);
-        } catch (Exception e) {
-          log.error("Failed to get CD summary info during CD License migration", e);
-          log.error("Put account {} in retry list ", account.getUuid());
-          retryQueue.add(account);
-          try {
-            Thread.sleep(60000);
-          } catch (InterruptedException interruptedException) {
-            log.error("Thread sleep error", interruptedException);
-          }
-        }
-      }
-    }
-
-    while (!retryQueue.isEmpty()) {
-      Account account = retryQueue.poll();
-      try {
-        checkExistingNGLicenseAndMigrate(account);
-      } catch (Exception e) {
-        log.error("Failed on CD license migration during retry", e);
-        log.error("Put account {} in retry list again", account.getUuid());
-        retryQueue.add(account);
-
-        if (maxRetryTimes == 0) {
-          log.error("Still failed after retried 10 hours, stop the migration");
-          break;
-        }
-        maxRetryTimes--;
-
-        try {
-          Thread.sleep(60000);
-        } catch (InterruptedException interruptedException) {
-          log.error("Thread sleep error", interruptedException);
-        }
-      }
-    }
-    log.info("Migration for CD Paid license to NG Finished");
+    log.info("Skip CD Paid License migration");
+    //    Query<Account> query = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
+    //                               .filter(ApplicationKeys.appId, GLOBAL_APP_ID)
+    //                               .project(AccountKeys.uuid, true);
+    //    query.and(query.criteria(ApplicationKeys.uuid).notEqual(GLOBAL_ACCOUNT_ID));
+    //
+    //    try (HIterator<Account> records = new HIterator<>(query.fetch())) {
+    //      while (records.hasNext()) {
+    //        Account record = records.next();
+    //        Account account = accountService.get(record.getUuid());
+    //
+    //        try {
+    //          checkExistingNGLicenseAndMigrate(account);
+    //        } catch (Exception e) {
+    //          log.error("Failed to get CD summary info during CD License migration", e);
+    //          log.error("Put account {} in retry list ", account.getUuid());
+    //          retryQueue.add(account);
+    //          try {
+    //            Thread.sleep(60000);
+    //          } catch (InterruptedException interruptedException) {
+    //            log.error("Thread sleep error", interruptedException);
+    //          }
+    //        }
+    //      }
+    //    }
+    //
+    //    while (!retryQueue.isEmpty()) {
+    //      Account account = retryQueue.poll();
+    //      try {
+    //        checkExistingNGLicenseAndMigrate(account);
+    //      } catch (Exception e) {
+    //        log.error("Failed on CD license migration during retry", e);
+    //        log.error("Put account {} in retry list again", account.getUuid());
+    //        retryQueue.add(account);
+    //
+    //        if (maxRetryTimes == 0) {
+    //          log.error("Still failed after retried 10 hours, stop the migration");
+    //          break;
+    //        }
+    //        maxRetryTimes--;
+    //
+    //        try {
+    //          Thread.sleep(60000);
+    //        } catch (InterruptedException interruptedException) {
+    //          log.error("Thread sleep error", interruptedException);
+    //        }
+    //      }
+    //    }
+    //    log.info("Migration for CD Paid license to NG Finished");
   }
 
   private void checkExistingNGLicenseAndMigrate(Account account) {

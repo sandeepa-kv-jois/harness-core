@@ -147,8 +147,8 @@ public class HeatMapServiceImpl implements HeatMapService {
     }
   }
 
-  private List<HeatMap> getLatestHeatMaps(
-      ProjectParams projectParams, List<String> serviceIdentifiers, List<String> envIdentifiers) {
+  private List<HeatMap> getLatestHeatMaps(ProjectParams projectParams, List<String> serviceIdentifiers,
+      List<String> envIdentifiers, List<String> monitoredServiceIdentifiers) {
     HeatMapResolution heatMapResolution = HeatMapResolution.FIVE_MIN;
     Instant bucketEndTime = roundDownTo5MinBoundary(clock.instant()).minus(RISK_TIME_BUFFER_MINS, ChronoUnit.MINUTES);
     Query<HeatMap> heatMapQuery = hPersistence.createQuery(HeatMap.class, excludeAuthority)
@@ -163,6 +163,9 @@ public class HeatMapServiceImpl implements HeatMapService {
     }
     if (serviceIdentifiers != null) {
       heatMapQuery.field(HeatMapKeys.serviceIdentifier).in(serviceIdentifiers);
+    }
+    if (monitoredServiceIdentifiers != null) {
+      heatMapQuery.field(HeatMapKeys.monitoredServiceIdentifier).in(monitoredServiceIdentifiers);
     }
     List<HeatMap> heatMapList = heatMapQuery.asList();
     Map<HeatMapKey, HeatMap> heatMapMap = new HashMap<>();
@@ -195,7 +198,7 @@ public class HeatMapServiceImpl implements HeatMapService {
   public Map<ServiceEnvKey, RiskData> getLatestHealthScore(@NonNull ProjectParams projectParams,
       @NonNull List<String> serviceIdentifiers, @NonNull List<String> envIdentifiers) {
     Map<ServiceEnvKey, RiskData> latestHealthScoresMap = new HashMap<>();
-    List<HeatMap> latestHeatMaps = getLatestHeatMaps(projectParams, serviceIdentifiers, envIdentifiers);
+    List<HeatMap> latestHeatMaps = getLatestHeatMaps(projectParams, serviceIdentifiers, envIdentifiers, null);
     Map<ServiceEnvKey, List<HeatMap>> heatMapMap = latestHeatMaps.stream().collect(Collectors.groupingBy(x
         -> ServiceEnvKey.builder()
                .serviceIdentifier(x.getServiceIdentifier())
@@ -205,6 +208,25 @@ public class HeatMapServiceImpl implements HeatMapService {
       double riskScore =
           heatMaps.stream().mapToDouble(x -> x.getHeatMapRisks().iterator().next().getRiskScore()).max().orElse(-1.0);
       latestHealthScoresMap.put(serviceEnvKey,
+          RiskData.builder()
+              .healthScore(Risk.getHealthScoreFromRiskScore(riskScore))
+              .riskStatus(Risk.getRiskFromRiskScore(riskScore))
+              .build());
+    });
+    return latestHealthScoresMap;
+  }
+
+  @Override
+  public Map<String, RiskData> getLatestHealthScore(
+      @NonNull ProjectParams projectParams, @NonNull List<String> monitoredServiceIdentifiers) {
+    Map<String, RiskData> latestHealthScoresMap = new HashMap<>();
+    List<HeatMap> latestHeatMaps = getLatestHeatMaps(projectParams, null, null, monitoredServiceIdentifiers);
+    Map<String, List<HeatMap>> heatMapMap =
+        latestHeatMaps.stream().collect(Collectors.groupingBy(x -> x.getMonitoredServiceIdentifier()));
+    heatMapMap.forEach((monitoredServiceIdentifier, heatMaps) -> {
+      double riskScore =
+          heatMaps.stream().mapToDouble(x -> x.getHeatMapRisks().iterator().next().getRiskScore()).max().orElse(-1.0);
+      latestHealthScoresMap.put(monitoredServiceIdentifier,
           RiskData.builder()
               .healthScore(Risk.getHealthScoreFromRiskScore(riskScore))
               .riskStatus(Risk.getRiskFromRiskScore(riskScore))

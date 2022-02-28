@@ -3630,6 +3630,9 @@
             "serviceAccountTokenRef"
           ],
           "properties": {
+            "caCertRef": {
+              "type": "string"
+            },
             "serviceAccountTokenRef": {
               "type": "string"
             }

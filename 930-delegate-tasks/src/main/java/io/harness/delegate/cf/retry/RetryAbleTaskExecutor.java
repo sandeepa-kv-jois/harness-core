@@ -13,6 +13,7 @@ import static software.wings.beans.LogColor.White;
 import static software.wings.beans.LogHelper.color;
 import static software.wings.beans.LogWeight.Bold;
 
+import io.harness.exception.InvalidRequestException;
 import io.harness.logging.LogCallback;
 import io.harness.logging.LogLevel;
 import io.harness.pcf.PivotalClientApiException;
@@ -32,12 +33,14 @@ public class RetryAbleTaskExecutor {
     int attempt = 0;
     boolean isComplete = false;
     int retry = policy.getRetry() == 0 ? MIN_RETRY : policy.getRetry();
+    Exception ex = null;
 
     while (!isComplete && attempt < retry) {
       try {
         task.execute();
         isComplete = true;
       } catch (PivotalClientApiException exception) {
+        ex = exception;
         executionLogCallback.saveExecutionLog(policy.getUserMessageOnFailure(), LogLevel.ERROR);
         log.warn(exception.getMessage());
 
@@ -51,6 +54,9 @@ public class RetryAbleTaskExecutor {
 
     if (retry == attempt) {
       executionLogCallback.saveExecutionLog(color(policy.getFinalErrorMessage(), White, Bold));
+      if (policy.isThrowError()) {
+        throw new InvalidRequestException(String.format("Failed to complete task after retry - [%d]", retry), ex);
+      }
     }
   }
 }

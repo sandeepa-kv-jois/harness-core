@@ -10,6 +10,7 @@ package io.harness.cvng.core.services.api;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.DatasourceTypeDTO;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.CVConfig;
@@ -67,11 +68,16 @@ public interface CVConfigService extends DeleteEntityByHandler<CVConfig> {
   void setHealthMonitoringFlag(
       String accountId, String orgIdentifier, String projectIdentifier, List<String> identifiers, boolean isEnabled);
 
-  List<CVConfig> list(ServiceEnvironmentParams serviceEnvironmentParams);
-  List<CVConfig> list(ServiceEnvironmentParams serviceEnvironmentParams, List<String> identifiers);
+  @Deprecated List<CVConfig> list(ServiceEnvironmentParams serviceEnvironmentParams);
+  List<CVConfig> list(MonitoredServiceParams monitoredServiceParams);
+  @Deprecated List<CVConfig> list(ServiceEnvironmentParams serviceEnvironmentParams, List<String> identifiers);
+  List<CVConfig> list(MonitoredServiceParams monitoredServiceParams, List<String> identifiers);
 
+  @Deprecated
   Map<String, DataSourceType> getDataSourceTypeForCVConfigs(
       ServiceEnvironmentParams serviceEnvironmentParams, List<String> cvConfigIds);
+  Map<String, DataSourceType> getDataSourceTypeForCVConfigs(MonitoredServiceParams monitoredServiceParams);
   List<CVConfig> getCVConfigs(ProjectParams projectParams, String identifier);
+
   List<CVConfig> list(ProjectParams projectParams, List<String> identifiers);
 }

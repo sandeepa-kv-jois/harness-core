@@ -261,6 +261,7 @@ import software.wings.beans.TechStack;
 import software.wings.beans.TerraformInputVariablesTaskResponse;
 import software.wings.beans.TrialSignupOptions;
 import software.wings.beans.User;
+import software.wings.beans.UserGroupEntityReference;
 import software.wings.beans.UserInvite;
 import software.wings.beans.UserInviteSource;
 import software.wings.beans.Variable;
@@ -1723,5 +1724,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherKubernetesInfrastructure.class, 50007);
     kryo.register(RancherKubernetesInfrastructure.ClusterSelectionCriteriaEntry.class, 50008);
     kryo.register(RancherStateExecutionData.class, 50009);
+    kryo.register(UserGroupEntityReference.class, 50010);
   }
 }

@@ -526,7 +526,8 @@ public class NGTemplateResource {
       @QueryParam(NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
       @QueryParam(NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo, @NotNull TemplateApplyRequestDTO templateApplyRequestDTO) {
-    TemplateMergeResponseDTO templateMergeResponseDTO = templateMergeHelper.mergeTemplateSpecToPipelineYaml(
+    log.info("Applying templates to pipeline yaml in project {}, org {}, account {}", projectId, orgId, accountId);
+    TemplateMergeResponseDTO templateMergeResponseDTO = templateMergeHelper.applyTemplatesToYaml(
         accountId, orgId, projectId, templateApplyRequestDTO.getOriginalEntityYaml());
     if (templateApplyRequestDTO.isCheckForAccess() && templateMergeResponseDTO != null
         && EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries())) {
@@ -570,7 +571,10 @@ public class NGTemplateResource {
           NGCommonEntityConstants.PROJECT_KEY) String projectId,
       @RequestBody(required = true, description = "Template YAML") @NotNull @ApiParam(hidden = true) String yaml) {
     log.info("Creating variables for template.");
-    TemplateEntity templateEntity = NGTemplateDtoMapper.toTemplateEntity(accountId, orgId, projectId, yaml);
+    String appliedTemplateYaml =
+        templateMergeHelper.applyTemplatesToYaml(accountId, orgId, projectId, yaml).getMergedPipelineYaml();
+    TemplateEntity templateEntity =
+        NGTemplateDtoMapper.toTemplateEntity(accountId, orgId, projectId, appliedTemplateYaml);
     String pmsUnderstandableYaml =
         templateYamlConversionHelper.convertTemplateYamlToPMSUnderstandableYaml(templateEntity);
     VariablesServiceRequest request = VariablesServiceRequest.newBuilder().setYaml(pmsUnderstandableYaml).build();

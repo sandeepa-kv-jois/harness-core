@@ -24,6 +24,7 @@ import io.harness.waiter.OldNotifyCallback;
 import com.google.inject.Inject;
 import java.util.Map;
 import lombok.Builder;
+import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 
@@ -32,8 +33,8 @@ import lombok.extern.slf4j.Slf4j;
 public class EngineWaitRetryCallback implements OldNotifyCallback {
   @Inject private InterruptManager interruptManager;
 
-  @NonNull String planExecutionId;
-  @NonNull String nodeExecutionId;
+  @NonNull @Getter String planExecutionId;
+  @NonNull @Getter String nodeExecutionId;
 
   @Builder
   public EngineWaitRetryCallback(@NonNull String planExecutionId, @NonNull String nodeExecutionId) {
