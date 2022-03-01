@@ -58,6 +58,7 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
   private static final String HEALTH_SOURCE_NAME = "some-name";
   private static final String ENV_IDENTIFIER = builderFactory.getContext().getEnvIdentifier();
   private static final String MONITORED_SERVICE_IDENTIFIER = "mock_monitored_service_identifier";
+  private static final List<String> SERVICE_METHOD_IDS = Collections.singletonList("SERVICE_METHOD_ID");
 
   private static DynatraceCVConfig apply(CVConfig cvConfig) {
     return (DynatraceCVConfig) cvConfig;
@@ -134,6 +135,7 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
                          .feature(FEATURE)
                          .serviceId(DYNATRACE_ENTITY_SERVICE_ID)
                          .metricPacks(Collections.singleton(MetricPackDTO.toMetricPackDTO(mockMetricPack)))
+                         .serviceMethodIds(SERVICE_METHOD_IDS)
                          .build();
     List<CVConfig> cvConfigs = new ArrayList<>();
     CVConfig cvConfigToUpdate = createCVConfig(mockMetricPack);
@@ -146,6 +148,7 @@ public class DynatraceHealthSourceSpecTest extends CvNextGenTestBase {
     DynatraceCVConfig dynatraceCVConfig = (DynatraceCVConfig) result.getUpdated().get(0);
     assertCommon(dynatraceCVConfig);
     assertThat(dynatraceCVConfig.getMetricPack().getCategory()).isEqualTo(CVMonitoringCategory.PERFORMANCE);
+    assertThat(dynatraceCVConfig.getServiceMethodIds()).isEqualTo(SERVICE_METHOD_IDS);
   }
 
   private void assertCommon(DynatraceCVConfig cvConfig) {

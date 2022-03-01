@@ -34,6 +34,7 @@ public class NotificationRegistrars {
           .addAll(WaitEngineRegistrars.kryoRegistrars)
           .addAll(SMCoreRegistrars.kryoRegistrars)
           .addAll(ApiServiceBeansRegistrars.kryoRegistrars)
+          .addAll(AccessControlClientRegistrars.kryoRegistrars)
           .add(NGCoreKryoRegistrar.class)
           .add(NGAuditCommonsKryoRegistrar.class)
           .add(DelegateTasksKryoRegistrar.class)

@@ -14,6 +14,7 @@ import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusRequestDTO;
 import io.harness.cdng.artifact.resources.nexus.dtos.NexusResponseDTO;
+import io.harness.cdng.artifact.resources.nexus.service.NexusResourceService;
 import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.artifacts.resources.util.ArtifactResourceUtils;
 import io.harness.ng.core.dto.ErrorDTO;
@@ -21,8 +22,6 @@ import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.pipeline.remote.PipelineServiceClient;
 import io.harness.utils.IdentifierRefHelper;
-
-import software.wings.utils.RepositoryFormat;
 
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
@@ -54,6 +53,7 @@ import lombok.extern.slf4j.Slf4j;
 @AllArgsConstructor(access = AccessLevel.PACKAGE, onConstructor = @__({ @Inject }))
 @Slf4j
 public class NexusArtifactResource {
+  private final NexusResourceService nexusResourceService;
   private final PipelineServiceClient pipelineServiceClient;
 
   @GET
@@ -61,7 +61,7 @@ public class NexusArtifactResource {
   @ApiOperation(value = "Gets nexus artifact build details", nickname = "getBuildDetailsForNexusArtifact")
   public ResponseDTO<NexusResponseDTO> getBuildDetails(@QueryParam("repository") String repository,
       @QueryParam("repositoryPort") String repositoryPort, @QueryParam("repositoryFormat") String repositoryFormat,
-      @QueryParam("dockerRepositoryServer") String dockerRepositoryServer, @QueryParam("imagePath") String imagePath,
+      @QueryParam("repositoryUrl") String artifactRepositoryUrl, @QueryParam("artifactPath") String artifactPath,
       @QueryParam("connectorRef") String nexusConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
@@ -69,11 +69,9 @@ public class NexusArtifactResource {
       @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
     IdentifierRef connectorRef =
         IdentifierRefHelper.getIdentifierRef(nexusConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
-    if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
-      repositoryFormat = RepositoryFormat.docker.name();
-    }
-
-    return ResponseDTO.newResponse(null);
+    NexusResponseDTO buildDetails = nexusResourceService.getBuildDetails(connectorRef, repository, repositoryPort,
+        artifactPath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(buildDetails);
   }
 
   @POST
@@ -82,8 +80,8 @@ public class NexusArtifactResource {
       nickname = "getBuildDetailsForNexusArtifactWithYaml")
   public ResponseDTO<NexusResponseDTO>
   getBuildDetailsV2(@QueryParam("repository") String repository, @QueryParam("repositoryPort") String repositoryPort,
-      @QueryParam("imagePath") String imagePath, @QueryParam("repositoryFormat") String repositoryFormat,
-      @QueryParam("dockerRepositoryServer") String dockerRepositoryServer,
+      @QueryParam("artifactPath") String artifactPath, @QueryParam("repositoryFormat") String repositoryFormat,
+      @QueryParam("repositoryUrl") String artifactRepositoryUrl,
       @QueryParam("connectorRef") String nexusConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
@@ -93,13 +91,11 @@ public class NexusArtifactResource {
       @NotNull String runtimeInputYaml) {
     IdentifierRef connectorRef =
         IdentifierRefHelper.getIdentifierRef(nexusConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
-    imagePath = ArtifactResourceUtils.getResolvedImagePath(pipelineServiceClient, accountId, orgIdentifier,
-        projectIdentifier, pipelineIdentifier, runtimeInputYaml, imagePath, fqnPath, gitEntityBasicInfo);
-
-    if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
-      repositoryFormat = RepositoryFormat.docker.name();
-    }
-    return ResponseDTO.newResponse(null);
+    artifactPath = ArtifactResourceUtils.getResolvedImagePath(pipelineServiceClient, accountId, orgIdentifier,
+        projectIdentifier, pipelineIdentifier, runtimeInputYaml, artifactPath, fqnPath, gitEntityBasicInfo);
+    NexusResponseDTO buildDetails = nexusResourceService.getBuildDetails(connectorRef, repository, repositoryPort,
+        artifactPath, repositoryFormat, artifactRepositoryUrl, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(buildDetails);
   }
 
   @POST
@@ -108,20 +104,19 @@ public class NexusArtifactResource {
       value = "Gets nexus artifact last successful build", nickname = "getLastSuccessfulBuildForNexusArtifact")
   public ResponseDTO<NexusBuildDetailsDTO>
   getLastSuccessfulBuild(@QueryParam("repository") String repository,
-      @QueryParam("repositoryPort") String repositoryPort, @QueryParam("imagePath") String imagePath,
+      @QueryParam("repositoryPort") String repositoryPort, @QueryParam("artifactPath") String artifactPath,
       @QueryParam("repositoryFormat") String repositoryFormat,
-      @QueryParam("dockerRepositoryServer") String dockerRepositoryServer,
+      @QueryParam("repositoryUrl") String artifactRepositoryUrl,
       @QueryParam("connectorRef") String dockerConnectorIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
       @NotNull @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgIdentifier,
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier, NexusRequestDTO requestDTO) {
     IdentifierRef connectorRef =
         IdentifierRefHelper.getIdentifierRef(dockerConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
-
-    if (!RepositoryFormat.docker.name().equals(repositoryFormat)) {
-      repositoryFormat = RepositoryFormat.docker.name();
-    }
-    return ResponseDTO.newResponse(null);
+    NexusBuildDetailsDTO buildDetails =
+        nexusResourceService.getSuccessfulBuild(connectorRef, repository, repositoryPort, artifactPath,
+            repositoryFormat, artifactRepositoryUrl, requestDTO, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(buildDetails);
   }
 
   @GET
@@ -133,6 +128,8 @@ public class NexusArtifactResource {
       @NotNull @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectIdentifier) {
     IdentifierRef connectorRef =
         IdentifierRefHelper.getIdentifierRef(nexusConnectorIdentifier, accountId, orgIdentifier, projectIdentifier);
-    return ResponseDTO.newResponse(false);
+    boolean isValidArtifactServer =
+        nexusResourceService.validateArtifactServer(connectorRef, orgIdentifier, projectIdentifier);
+    return ResponseDTO.newResponse(isValidArtifactServer);
   }
 }

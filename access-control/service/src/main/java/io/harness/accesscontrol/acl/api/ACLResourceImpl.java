@@ -14,14 +14,9 @@ import static io.harness.accesscontrol.principals.PrincipalType.API_KEY;
 import static io.harness.accesscontrol.principals.PrincipalType.SERVICE;
 import static io.harness.accesscontrol.principals.PrincipalType.SERVICE_ACCOUNT;
 
-import io.harness.accesscontrol.Principal;
 import io.harness.accesscontrol.acl.ACLService;
 import io.harness.accesscontrol.acl.PermissionCheck;
 import io.harness.accesscontrol.acl.PermissionCheckResult;
-import io.harness.accesscontrol.clients.AccessCheckRequestDTO;
-import io.harness.accesscontrol.clients.AccessCheckResponseDTO;
-import io.harness.accesscontrol.clients.AccessControlDTO;
-import io.harness.accesscontrol.clients.PermissionCheckDTO;
 import io.harness.accesscontrol.preference.services.AccessControlPreferenceService;
 import io.harness.accesscontrol.principals.PrincipalType;
 import io.harness.accesscontrol.roleassignments.privileged.PrivilegedAccessCheck;

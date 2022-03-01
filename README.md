@@ -578,7 +578,7 @@ git clone git@github.com:bazelbuild/bazel-gazelle.git
 cd bazel-gazelle
 git reset origin/release-0.21 --hard
 cd cmd/gazelle
-baselisk build gazelle
+bazelisk build gazelle
 $(bazelisk info bazel-bin)/cmd/gazelle/gazelle_/gazelle
 # it expands out to something like below, giving the 0.21 binary
 /home/tp/.cache/bazel/_bazel_tp/46ccc68b31f8c833946cfcd24410eb45/execroot/bazel_gazelle/bazel-out/k8-fastbuild/bin/cmd/gazelle/gazelle_/gazelle

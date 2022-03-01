@@ -9,10 +9,10 @@ package io.harness.cdng.infra;
 
 import static io.harness.ng.core.mapper.TagMapper.convertToList;
 
-import io.harness.accesscontrol.Principal;
+import io.harness.accesscontrol.acl.api.Principal;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.accesscontrol.principals.PrincipalType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;

@@ -7,7 +7,9 @@
 				},
 				"type": {
 					"enum": [
-						"Dockerhub"
+						"Dockerhub",
+						"Nexus3Registry",
+						"ArtifactoryRegistry"
 					]
 				}
 			},
@@ -22,6 +24,34 @@
 				"properties": {
 					"spec": {
 						"$ref": "<<schema/pipeline/stage/service/serviceDef/artifact/dockerHub.json>>"
+					}
+				}
+			},
+			"if": {
+				"properties": {
+					"type": {
+						"const": "Nexus3Registry"
+					}
+				}
+			},
+			"then": {
+				"properties": {
+					"spec": {
+						"$ref": "<<schema/pipeline/stage/service/serviceDef/artifact/nexus3Registry.json>>"
+					}
+				}
+			},
+			"if": {
+				"properties": {
+					"type": {
+						"const": "ArtifactoryRegistry"
+					}
+				}
+			},
+			"then": {
+				"properties": {
+					"spec": {
+						"$ref": "<<schema/pipeline/stage/service/serviceDef/artifact/artifactoryRegistry.json>>"
 					}
 				}
 			}

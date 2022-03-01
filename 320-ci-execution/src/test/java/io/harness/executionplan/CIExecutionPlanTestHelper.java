@@ -109,6 +109,7 @@ import io.harness.k8s.model.ImageDetails;
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.yaml.core.variables.NGVariable;
 import io.harness.yaml.core.variables.SecretNGVariable;
@@ -200,7 +201,7 @@ public class CIExecutionPlanTestHelper {
   }
 
   public CodeBase getCICodebaseWithRepoName() {
-    return CodeBase.builder().connectorRef(GIT_CONNECTOR).repoName("portal").build();
+    return CodeBase.builder().connectorRef(GIT_CONNECTOR).repoName(ParameterField.createValueField("portal")).build();
   }
 
   public ConnectorDetails getGitConnector() {

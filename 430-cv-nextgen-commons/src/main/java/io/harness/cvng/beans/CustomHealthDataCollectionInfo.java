@@ -36,6 +36,7 @@ public class CustomHealthDataCollectionInfo extends TimeSeriesDataCollectionInfo
   @FieldDefaults(level = AccessLevel.PRIVATE)
   public static class CustomHealthMetricInfo {
     String metricName;
+    String metricIdentifier;
     String body;
     String urlPath;
     CustomHealthMethod method;
@@ -47,6 +48,7 @@ public class CustomHealthDataCollectionInfo extends TimeSeriesDataCollectionInfo
   @Override
   public Map<String, Object> getDslEnvVariables(CustomHealthConnectorDTO connectorConfigDTO) {
     List<String> metricNames = new ArrayList<>();
+    List<String> metricIdentifiers = new ArrayList<>();
     List<String> urlPaths = new ArrayList<>();
     List<Object> bodies = new ArrayList<>();
     List<String> methods = new ArrayList<>();
@@ -60,6 +62,7 @@ public class CustomHealthDataCollectionInfo extends TimeSeriesDataCollectionInfo
 
     metricInfoList.forEach(metricInfo -> {
       metricNames.add(metricInfo.getMetricName());
+      metricIdentifiers.add(metricInfo.getMetricIdentifier());
       bodies.add(isEmpty(metricInfo.getBody()) ? null : JsonUtils.asMap(metricInfo.body));
       methods.add(metricInfo.getMethod().toString());
       urlPaths.add(metricInfo.getUrlPath());
@@ -77,6 +80,7 @@ public class CustomHealthDataCollectionInfo extends TimeSeriesDataCollectionInfo
 
     Map<String, Object> envVars = new HashMap<>();
     envVars.put("metricNames", metricNames);
+    envVars.put("metricIdentifiers", metricIdentifiers);
     envVars.put("methods", methods);
     envVars.put("urlPaths", urlPaths);
     envVars.put("startTimePlaceholders", startTimePlaceholders);

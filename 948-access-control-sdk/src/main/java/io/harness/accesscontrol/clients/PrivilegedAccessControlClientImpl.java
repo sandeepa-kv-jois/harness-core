@@ -7,6 +7,8 @@
 
 package io.harness.accesscontrol.clients;
 
+import io.harness.accesscontrol.acl.api.AccessCheckRequestDTO;
+import io.harness.accesscontrol.acl.api.AccessCheckResponseDTO;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.remote.client.NGRestUtils;

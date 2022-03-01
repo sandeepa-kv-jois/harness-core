@@ -66,6 +66,7 @@ public class ManagerRegistrars {
           .add(DelegateServiceKryoRegister.class)
           .addAll(NGAuditCommonsRegistrars.kryoRegistrars)
           .addAll(OutboxEventRegistrars.kryoRegistrars)
+          .addAll(AccessControlClientRegistrars.kryoRegistrars)
           .add(EventEntitiesKryoRegistrar.class)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .add(NgAuthenticationServiceKryoRegistrar.class)

@@ -239,14 +239,14 @@ public class IntegrationStagePMSPlanCreator extends GenericStagePlanCreator {
       return BuildStatusUpdateParameter.builder()
           .sha(sha)
           .connectorIdentifier(codeBase.getConnectorRef())
-          .repoName(codeBase.getRepoName())
+          .repoName(codeBase.getRepoName().getValue())
           .name(stageElementConfig.getName())
           .identifier(stageElementConfig.getIdentifier())
           .build();
     } else {
       return BuildStatusUpdateParameter.builder()
           .connectorIdentifier(codeBase.getConnectorRef())
-          .repoName(codeBase.getRepoName())
+          .repoName(codeBase.getRepoName().getValue())
           .name(stageElementConfig.getName())
           .identifier(stageElementConfig.getIdentifier())
           .build();

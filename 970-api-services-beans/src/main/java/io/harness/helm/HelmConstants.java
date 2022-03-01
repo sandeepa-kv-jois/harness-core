@@ -120,6 +120,7 @@ public final class HelmConstants {
     public static final String HELM_CACHE_HOME = "XDG_CACHE_HOME";
     public static final String HELM_CACHE_HOME_PATH = "${HELM_CACHE_HOME}/repo-${REPO_NAME}";
     public static final String HELM_CHART_VERSION_FLAG = " --version ${CHART_VERSION}";
+    public static final String HELM_REPO_ADD_FORCE_UPDATE = " --force-update";
 
     private V3Commands() {
       throw new UnsupportedOperationException("This is a utility class and cannot be instantiated");

@@ -22,10 +22,10 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 @OwnedBy(HarnessTeam.CDC)
 public class ArtifactUtilities {
-  public static String getArtifactoryRegistryUrl(String url, String dockerRepositoryServer, String jobName) {
+  public static String getArtifactoryRegistryUrl(String url, String artifactRepositoryUrl, String jobName) {
     String registryUrl;
-    if (dockerRepositoryServer != null) {
-      registryUrl = format("http%s://%s", url.startsWith("https") ? "s" : "", dockerRepositoryServer);
+    if (isNotEmpty(artifactRepositoryUrl)) {
+      registryUrl = format("http%s://%s", url.startsWith("https") ? "s" : "", artifactRepositoryUrl);
     } else {
       int firstDotIndex = url.indexOf('.');
       int slashAfterDomain = url.indexOf('/', firstDotIndex);
@@ -36,10 +36,10 @@ public class ArtifactUtilities {
   }
 
   public static String getArtifactoryRepositoryName(
-      String url, String dockerRepositoryServer, String jobName, String imageName) {
+      String url, String artifactRepositoryUrl, String jobName, String imageName) {
     String registryName;
-    if (dockerRepositoryServer != null) {
-      registryName = dockerRepositoryServer + "/" + imageName;
+    if (isNotEmpty(artifactRepositoryUrl)) {
+      registryName = artifactRepositoryUrl + "/" + imageName;
     } else {
       String registryUrl = getArtifactoryRegistryUrl(url, null, jobName);
       String namePrefix = registryUrl.substring(registryUrl.indexOf("://") + 3);
@@ -63,6 +63,23 @@ public class ArtifactUtilities {
     return format("http%s://%s", nexusUrl.startsWith("https") ? "s" : "", extractUrl(dockerRegistryUrl));
   }
 
+  public static String getNexusRegistryUrlNG(String nexusUrl, String dockerPort, String dockerRegistryUrl) {
+    if (isEmpty(dockerRegistryUrl)) {
+      String registryUrl = extractNexusDockerRegistryUrl(nexusUrl);
+      registryUrl = trimSlashforwardChars(registryUrl);
+      if (isNotEmpty(dockerPort)) {
+        registryUrl = registryUrl + ":" + dockerPort;
+      }
+      return registryUrl;
+    }
+    if (dockerRegistryUrl.startsWith("http") || dockerRegistryUrl.startsWith("https")) {
+      // User can input the docker registry with real http or https
+      return trimSlashforwardChars(dockerRegistryUrl);
+    }
+    return format(
+        "http%s://%s", nexusUrl.startsWith("https") ? "s" : "", trimSlashforwardChars(extractUrl(dockerRegistryUrl)));
+  }
+
   private static String extractNexusDockerRegistryUrl(String url) {
     int firstDotIndex = url.indexOf('.');
     int colonIndex = url.indexOf(':', firstDotIndex);
@@ -81,6 +98,17 @@ public class ArtifactUtilities {
     }
   }
 
+  public static String getNexusRepositoryNameNG(
+      String nexusUrl, String repositoryPort, String artifactRepositoryUrl, String imageName) {
+    if (isEmpty(artifactRepositoryUrl)) {
+      String registryUrl = getNexusRegistryUrlNG(nexusUrl, repositoryPort, artifactRepositoryUrl);
+      String namePrefix = registryUrl.substring(registryUrl.indexOf("://") + 3);
+      return trimSlashforwardChars(namePrefix) + "/" + trimSlashforwardChars(imageName);
+    } else {
+      return trimSlashforwardChars(extractUrl(artifactRepositoryUrl)) + "/" + trimSlashforwardChars(imageName);
+    }
+  }
+
   private static String extractUrl(String dockerRegistryUrl) {
     try {
       URL url = new URL(dockerRegistryUrl);
@@ -90,6 +118,22 @@ public class ArtifactUtilities {
       return url.getHost();
     } catch (MalformedURLException e) {
       return dockerRegistryUrl;
+    }
+  }
+
+  public static String getBaseUrl(String url) {
+    return url.endsWith("/") ? url : url + "/";
+  }
+
+  public static String getHostname(String resourceUrl) {
+    try {
+      URL url = new URL(resourceUrl);
+      if (isNotEmpty(url.getProtocol())) {
+        return url.getProtocol() + "://" + extractUrl(resourceUrl);
+      }
+      return "https://" + extractUrl(resourceUrl);
+    } catch (MalformedURLException e) {
+      return resourceUrl;
     }
   }
 
@@ -117,5 +161,20 @@ public class ArtifactUtilities {
     } else {
       return artifactPath.substring(0, index);
     }
+  }
+
+  public String trimSlashforwardChars(String stringToTrim) {
+    if (isNotEmpty(stringToTrim)) {
+      if (stringToTrim.charAt(0) == '/') {
+        stringToTrim = stringToTrim.substring(1);
+      }
+    }
+
+    if (isNotEmpty(stringToTrim)) {
+      if (stringToTrim.charAt(stringToTrim.length() - 1) == '/') {
+        stringToTrim = stringToTrim.substring(0, stringToTrim.length() - 1);
+      }
+    }
+    return stringToTrim;
   }
 }

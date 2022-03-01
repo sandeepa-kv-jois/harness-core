@@ -7,6 +7,7 @@
 
 package io.harness.cdng.creator.plan.artifact;
 
+import static io.harness.rule.OwnerRule.MLUKIC;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -50,18 +51,24 @@ public class SideCarPlanCreatorTest extends CDNGTestBase {
   }
 
   @Test
-  @Owner(developers = PRASHANTSHARMA)
+  @Owner(developers = {PRASHANTSHARMA, MLUKIC})
   @Category(UnitTests.class)
   public void testGetSupportedTypes() {
     Map<String, Set<String>> supportedTypes = sidecarPlanCreator.getSupportedTypes();
     assertThat(supportedTypes.containsKey(YamlTypes.SIDECAR_ARTIFACT_CONFIG)).isEqualTo(true);
-    assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).size()).isEqualTo(3);
+    assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).size()).isEqualTo(5);
     assertThat(
         supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.DOCKER_REGISTRY_NAME))
         .isEqualTo(true);
     assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.ECR_NAME))
         .isEqualTo(true);
     assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.GCR_NAME))
+        .isEqualTo(true);
+    assertThat(
+        supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG).contains(ArtifactSourceConstants.NEXUS3_REGISTRY_NAME))
+        .isEqualTo(true);
+    assertThat(supportedTypes.get(YamlTypes.SIDECAR_ARTIFACT_CONFIG)
+                   .contains(ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME))
         .isEqualTo(true);
   }
 

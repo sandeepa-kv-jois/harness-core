@@ -72,6 +72,11 @@ public class NewRelicDataCollectionInfo extends TimeSeriesDataCollectionInfo<New
     List<String> listOfMetricNames =
         metricPack.getMetrics().stream().map(MetricPackDTO.MetricDefinitionDTO::getName).collect(Collectors.toList());
 
+    List<String> listOfMetricIdentifiers = metricPack.getMetrics()
+                                               .stream()
+                                               .map(MetricPackDTO.MetricDefinitionDTO::getMetricIdentifier)
+                                               .collect(Collectors.toList());
+
     Preconditions.checkState(listOfQueries.size() == listOfMetricNames.size());
     Preconditions.checkState(listOfQueries.size() == listOfJsonPaths.size());
 
@@ -81,7 +86,7 @@ public class NewRelicDataCollectionInfo extends TimeSeriesDataCollectionInfo<New
     dslEnvVariables.put(QUERIES_KEY, listOfQueries);
     dslEnvVariables.put(JSON_PATH_KEY, listOfJsonPaths);
     dslEnvVariables.put(METRIC_NAMES_KEY, listOfMetricNames);
-    dslEnvVariables.put(METRIC_IDENTIFIERS_KEY, listOfMetricNames);
+    dslEnvVariables.put(METRIC_IDENTIFIERS_KEY, listOfMetricIdentifiers);
 
     dslEnvVariables.put("collectHostData", Boolean.toString(this.isCollectHostData()));
     return dslEnvVariables;

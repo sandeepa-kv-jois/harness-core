@@ -12,6 +12,7 @@ foreach metricToValidate in Env:metricsToValidate {
   Var query = extract(Var:metricToValidate, $.querySelector)
   Var:params.put("metricSelector", Var:query)
   Var metricName = extract(Var:metricToValidate, $.metricName)
+  Var metricIdentifier = extract(Var:metricToValidate, $.metricIdentifier)
   Var resp = sync-call(url=Var:metricsUrl, header=Env:commonHeaders, options=Var:params)
   Var value = null
 
@@ -29,7 +30,7 @@ foreach metricToValidate in Env:metricsToValidate {
         foreach metricTimestamp in Var:metricTimestamps {
            Var metricValue = Var:metricValues[Var:index]
            if Var:metricValue != Var:nullObject {
-              Var tsRecord = new TimeseriesRecord(txnName=Env:groupName, metricName=Var:metricName, metricValue=Var:metricValue, timestamp=Var:metricTimestamp, host=Env:host)
+              Var tsRecord = new TimeseriesRecord(txnName=Env:groupName, metricName=Var:metricName, metricIdentifier=Var:metricIdentifier, metricValue=Var:metricValue, timestamp=Var:metricTimestamp, host=Env:host)
               Var:returnList.append(Var:tsRecord)
            }
            index = Var:index + Var:one

@@ -34,7 +34,7 @@ public class CodeBaseTest extends CategoryTest {
         + "    branch: main";
     CodeBase actual = YamlPipelineUtils.read(yaml, CodeBase.class);
     assertThat(actual.getConnectorRef()).isEqualTo("springboot");
-    assertThat(actual.getRepoName()).isEqualTo("abc");
+    assertThat(actual.getRepoName().getValue()).isEqualTo("abc");
     assertThat(actual.getBuild().getValue().getType()).isEqualTo(BuildType.BRANCH);
     assertThat(((BranchBuildSpec) actual.getBuild().getValue().getSpec()).getBranch().getValue()).isEqualTo("main");
   }

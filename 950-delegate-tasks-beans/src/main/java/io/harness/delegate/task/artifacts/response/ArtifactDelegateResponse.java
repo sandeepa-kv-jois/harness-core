@@ -17,8 +17,13 @@ import lombok.Getter;
  */
 @Getter
 @AllArgsConstructor
-public abstract class ArtifactDelegateResponse {
+public abstract class ArtifactDelegateResponse implements ArtifactDelegateResponseBase {
   ArtifactBuildDetailsNG buildDetails;
   /** Artifact Source type.*/
   ArtifactSourceType sourceType;
+
+  @Override
+  public String describe() {
+    return "type: " + sourceType.getDisplayName();
+  }
 }

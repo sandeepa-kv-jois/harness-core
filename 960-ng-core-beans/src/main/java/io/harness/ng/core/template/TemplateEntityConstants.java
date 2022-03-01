@@ -15,6 +15,7 @@ import io.harness.annotations.dev.OwnedBy;
 public interface TemplateEntityConstants {
   String STEP = "Step";
   String STAGE = "Stage";
+  String PIPELINE = "Pipeline";
   String STABLE_TEMPLATE = "Stable";
   String LAST_UPDATES_TEMPLATE = "LastUpdated";
   String ALL = "All";
@@ -28,4 +29,5 @@ public interface TemplateEntityConstants {
   String OTHERS = "Others";
   String STEP_ROOT_FIELD = "step";
   String STAGE_ROOT_FIELD = "stage";
+  String PIPELINE_ROOT_FIELD = "pipeline";
 }

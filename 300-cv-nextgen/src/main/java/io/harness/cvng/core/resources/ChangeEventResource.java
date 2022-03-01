@@ -188,6 +188,7 @@ public class ChangeEventResource {
       @PathParam(CVNextGenConstants.PROJECT_IDENTIFIER_KEY) @NonNull String projectIdentifier,
       @QueryParam("serviceIdentifiers") List<String> serviceIdentifiers,
       @QueryParam("envIdentifiers") List<String> envIdentifiers,
+      @QueryParam("monitoredServiceIdentifiers") List<String> monitoredServiceIdentifiers,
       @QueryParam("changeCategories") List<ChangeCategory> changeCategories,
       @QueryParam("changeSourceTypes") List<ChangeSourceType> changeSourceTypes,
       @QueryParam("searchText") String searchText,
@@ -199,9 +200,9 @@ public class ChangeEventResource {
                                       .orgIdentifier(orgIdentifier)
                                       .projectIdentifier(projectIdentifier)
                                       .build();
-    return new RestResponse<>(
-        changeEventService.getTimeline(projectParams, serviceIdentifiers, envIdentifiers, searchText, changeCategories,
-            changeSourceTypes, Instant.ofEpochMilli(startTime), Instant.ofEpochMilli(endTime), pointCount));
+    return new RestResponse<>(changeEventService.getTimeline(projectParams, serviceIdentifiers, envIdentifiers,
+        monitoredServiceIdentifiers, searchText, changeCategories, changeSourceTypes, Instant.ofEpochMilli(startTime),
+        Instant.ofEpochMilli(endTime), pointCount));
   }
 
   @GET

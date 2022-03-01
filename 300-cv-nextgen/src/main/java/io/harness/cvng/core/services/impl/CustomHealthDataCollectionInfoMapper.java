@@ -67,6 +67,7 @@ public class CustomHealthDataCollectionInfoMapper
     MetricResponseMapping metricResponseMapping = metricDefinition.getMetricResponseMapping();
     return CustomHealthDataCollectionInfo.CustomHealthMetricInfo.builder()
         .metricName(metricDefinition.getMetricName())
+        .metricIdentifier(metricDefinition.getIdentifier())
         .endTime(metricDefinition.getEndTime())
         .responseMapping(MetricResponseMappingDTO.builder()
                              .metricValueJsonPath(metricResponseMapping.getMetricValueJsonPath())

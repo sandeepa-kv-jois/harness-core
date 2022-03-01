@@ -34,9 +34,9 @@ import static org.mockito.Mockito.when;
 import io.harness.accesscontrol.AccessControlPermissions;
 import io.harness.accesscontrol.AccessControlResourceTypes;
 import io.harness.accesscontrol.AccessControlTestBase;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.accesscontrol.common.filter.ManagedFilter;
 import io.harness.accesscontrol.common.validation.ValidationResult;
 import io.harness.accesscontrol.commons.validation.HarnessActionValidator;
@@ -113,7 +113,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
   private HarnessActionValidator<RoleAssignment> actionValidator;
   private OutboxService outboxService;
   private AccessControlClient accessControlClient;
-  private RoleAssignmentResource roleAssignmentResource;
+  private RoleAssignmentResourceImpl roleAssignmentResource;
   private PageRequest pageRequest;
   private String accountIdentifier;
   private String orgIdentifier;
@@ -141,7 +141,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     outboxService = mock(OutboxService.class);
     accessControlClient = mock(AccessControlClient.class);
     roleAssignmentResource =
-        spy(new RoleAssignmentResource(roleAssignmentService, harnessResourceGroupService, harnessUserGroupService,
+        spy(new RoleAssignmentResourceImpl(roleAssignmentService, harnessResourceGroupService, harnessUserGroupService,
             harnessUserService, harnessServiceAccountService, harnessScopeService, scopeService, roleService,
             resourceGroupService, userGroupService, userService, serviceAccountService, roleAssignmentDTOMapper,
             roleDTOMapper, transactionTemplate, actionValidator, outboxService, accessControlClient));

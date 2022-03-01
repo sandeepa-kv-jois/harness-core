@@ -57,6 +57,7 @@ public class DelegateConfiguration {
   private String logStreamingServiceBaseUrl;
   private boolean clientToolsDownloadDisabled;
   private boolean installClientToolsInBackground;
+  private boolean dynamicHandlingOfRequestEnabled;
 
   // TODO: This method will get removed once we rolled out new delegate.
   public String getDelegateToken() {

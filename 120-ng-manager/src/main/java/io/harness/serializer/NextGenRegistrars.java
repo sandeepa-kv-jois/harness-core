@@ -8,7 +8,6 @@
 package io.harness.serializer;
 
 import io.harness.EntityType;
-import io.harness.accesscontrol.serializer.AccessControlClientRegistrars;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.morphia.MorphiaRegistrar;

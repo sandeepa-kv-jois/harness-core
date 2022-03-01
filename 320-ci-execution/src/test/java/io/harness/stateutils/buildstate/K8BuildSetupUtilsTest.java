@@ -65,6 +65,7 @@ import io.harness.pms.contracts.plan.ExecutionMetadata;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.rbac.PipelineRbacHelper;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
+import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
 import io.harness.secretmanagerclient.SecretType;
 import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
@@ -283,7 +284,7 @@ public class K8BuildSetupUtilsTest extends CIExecutionTestBase {
                 ciExecutionPlanTestHelper.getAwsCodeCommitConnectorDTO().getConnectorInfo().getConnectorType())
             .build();
     doNothing().when(pipelineRbacHelper).checkRuntimePermissions(any(), any(), any());
-    CodeBase codeBase = CodeBase.builder().repoName("test").build();
+    CodeBase codeBase = CodeBase.builder().repoName(ParameterField.createValueField("test")).build();
     Map<String, String> gitEnvVariables = codebaseUtils.getGitEnvVariables(gitConnector, codeBase);
     assertThat(gitEnvVariables).containsKeys(DRONE_REMOTE_URL, DRONE_AWS_REGION);
     assertThat(gitEnvVariables.get(DRONE_REMOTE_URL))
