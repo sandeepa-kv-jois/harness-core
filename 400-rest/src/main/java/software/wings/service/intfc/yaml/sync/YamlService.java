@@ -13,6 +13,7 @@ import io.harness.yaml.BaseYaml;
 import software.wings.beans.Base;
 import software.wings.beans.yaml.Change;
 import software.wings.beans.yaml.ChangeContext;
+import software.wings.beans.yaml.FilePathWithSubtype;
 import software.wings.exception.YamlProcessingException;
 import software.wings.yaml.FileOperationStatus;
 import software.wings.yaml.YamlOperationResponse;
@@ -57,6 +58,8 @@ public interface YamlService<Y extends BaseYaml, B extends Base> {
   YamlOperationResponse upsertYAMLFilesAsZip(String accountId, InputStream fileInputStream) throws IOException;
 
   YamlOperationResponse deleteYAMLByPaths(String accountId, List<String> filePaths);
+
+  YamlOperationResponse deleteYAMLByPathsV2(String accountId, List<FilePathWithSubtype> filePathsWithSubtype);
 
   FileOperationStatus upsertYAMLFile(String accountId, String yamlFilePath, String yamlContent);
 }

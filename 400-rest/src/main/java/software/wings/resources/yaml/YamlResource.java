@@ -60,6 +60,7 @@ import software.wings.beans.appmanifest.ManifestFile;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.command.ServiceCommand;
 import software.wings.beans.template.Template;
+import software.wings.beans.yaml.FilePathWithSubtype;
 import software.wings.exception.YamlProcessingException;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.security.PermissionAttribute.Action;
@@ -1326,10 +1327,21 @@ public class YamlResource {
     return new RestResponse<>(yamlService.deleteYAMLByPaths(accountId, filePaths));
   }
 
+  @DELETE
+  @Path("delete-entities-v2")
+  @Timed
+  @ExceptionMetered
+  @AuthRule(permissionType = ACCOUNT_MANAGEMENT)
+  @ApiKeyAuthorized(permissionType = ACCOUNT_MANAGEMENT)
+  public RestResponse<YamlOperationResponse> deleteYAMLEntitiesV2(
+      @QueryParam("accountId") @NotEmpty String accountId, @NotEmpty List<FilePathWithSubtype> filePathsWithSubtype) {
+    return new RestResponse<>(yamlService.deleteYAMLByPathsV2(accountId, filePathsWithSubtype));
+  }
+
   /**
    * Gets the yaml version of a Governance Config by accountId
    *
-   * @param accountId  the accountId
+   * @param accountId the accountId
    * @return the rest response
    */
   @GET
