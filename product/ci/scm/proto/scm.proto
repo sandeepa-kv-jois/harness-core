@@ -20,6 +20,7 @@ enum GitProvider {
   GOGS = 4;
   STASH = 5;
   CODECOMMIT = 6;
+  AZURE = 7;
 }
 
 enum Action {
@@ -238,6 +239,12 @@ message CodecommitProvider {
   string secret_key = 2;
 }
 
+message AzureProvider {
+  string personal_access_token = 1;
+  string organization = 2;
+  string project = 3;
+}
+
 message Provider {
   oneof hook {
     GithubProvider github = 1;
@@ -246,6 +253,7 @@ message Provider {
     BitbucketCloudProvider bitbucket_cloud = 4;
     BitbucketServerProvider bitbucket_server = 5;
     CodecommitProvider codecommit = 6;
+    AzureProvider azure = 11;
   }
   string endpoint = 7;
   bool skipVerify = 8;

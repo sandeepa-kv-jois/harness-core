@@ -80,6 +80,17 @@ uses `https://github.com/tphoney/scm-test`, **remove the test_branch branch. Rem
 GITHUB_ACCESS_TOKEN=963408579168567c07ff8bfd2a5455e5307f74d4 go test -count=1 -v ./...
 ```
 
+### Azure DevOps
+
+uses `https://dev.azure.com/tphoney/test_project/_git/test_repo2`, **Remove the pr that is using the pr_branch branch**
+NB make sure to encode your PAT token in the environment variable `AZURE_TOKEN` Following this guide `https://docs.microsoft.com/en-us/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate?view=azure-devops&tabs=Linux#use-a-pat`
+
+```BASH
+AZURE_TOKEN=963408579168567c07ff8bfd2a5455e5307f74d4 go test -count=1 -v ./...
+```
+
+For more information On its implementation look [here](https://harness.atlassian.net/wiki/spaces/DRON/pages/21044068687/Azure+DevOps+ADO+support).
+
 ### Bitbucket cloud
 
 uses `https://bitbucket.org/tphoney/scm-test`, **remove the branch test_branch**

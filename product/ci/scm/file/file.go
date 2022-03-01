@@ -276,6 +276,10 @@ func CreateFile(ctx context.Context, fileRequest *pb.FileModifyRequest, log *zap
 		Name:  fileRequest.GetSignature().GetName(),
 		Email: fileRequest.GetSignature().GetEmail(),
 	}
+	// include the commitid if set, this is for azure
+	if fileRequest.GetCommitId() != "" {
+		inputParams.Ref = fileRequest.GetCommitId()
+	}
 	response, err := client.Contents.Create(ctx, fileRequest.GetSlug(), fileRequest.GetPath(), inputParams)
 	if err != nil {
 		log.Errorw("CreateFile failure", "slug", fileRequest.GetSlug(), "path", fileRequest.GetPath(), "branch", inputParams.Branch, "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
@@ -316,7 +320,7 @@ func FindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchReq
 		log.Errorw("FindFilesInBranch failure, bad ref/branch", "provider", gitclient.GetProvider(*fileRequest.GetProvider()), "slug", fileRequest.GetSlug(), "ref", ref, "filepath", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
-	
+
 	files, response, err := client.Contents.List(ctx, fileRequest.GetSlug(), fileRequest.GetPath(), ref, getCustomListOptsFindFilesInBranch(ctx, fileRequest))
 	if err != nil {
 		log.Errorw("FindFilesInBranch failure", "provider", gitclient.GetProvider(*fileRequest.GetProvider()), "slug", fileRequest.GetSlug(), "ref", ref, "filepath", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
@@ -327,7 +331,7 @@ func FindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchReq
 	out = &pb.FindFilesInBranchResponse{
 		File: convertContentList(files),
 		Pagination: &pb.PageResponse{
-			Next: int32(response.Page.Next),
+			Next:    int32(response.Page.Next),
 			NextUrl: response.Page.NextURL,
 		},
 	}
@@ -418,9 +422,9 @@ func parseCrudResponse(ctx context.Context, client *scm.Client, body io.Reader, 
 		// Bitbucket doesn't work on blobId concept for a file, thus it will  always be empty
 		// We try to find out the latest commit on the file, which is most-likely the commit done by SCM itself
 		// It works on best-effort basis
-		request := &pb.GetLatestCommitOnFileRequest {
-			Slug: request.Slug,
-			Branch: request.Branch,
+		request := &pb.GetLatestCommitOnFileRequest{
+			Slug:     request.Slug,
+			Branch:   request.Branch,
 			Provider: &p,
 			FilePath: request.FilePath,
 		}
@@ -429,12 +433,29 @@ func parseCrudResponse(ctx context.Context, client *scm.Client, body io.Reader, 
 			return "", ""
 		}
 		return response.CommitId, ""
+	case *pb.Provider_Azure:
+		type azureResponse struct {
+			RefUpdates []struct {
+				RepositoryID string `json:"repositoryId"`
+				Name         string `json:"name"`
+				OldObjectID  string `json:"oldObjectId"`
+				NewObjectID  string `json:"newObjectId"`
+			} `json:"refUpdates"`
+		}
+		out := azureResponse{}
+		err := json.Unmarshal([]byte(bodyStr), &out)
+		// there is no commit id or sha, no need to error
+		if err != nil {
+			log.Errorw("parseCrudResponse unable to get commitid/blobid from Azure CRUD operation", zap.Error(err))
+			return "", ""
+		}
+		return out.RefUpdates[0].NewObjectID, ""
 	default:
 		return "", ""
 	}
 }
 
-func getCustomListOptsFindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchRequest) (scm.ListOptions) {
+func getCustomListOptsFindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchRequest) scm.ListOptions {
 	opts := &scm.ListOptions{Page: int(fileRequest.GetPagination().GetPage())}
 	switch fileRequest.GetProvider().GetHook().(type) {
 	case *pb.Provider_BitbucketCloud:
@@ -447,7 +468,7 @@ func getCustomListOptsFindFilesInBranch(ctx context.Context, fileRequest *pb.Fin
 }
 
 type requestContext struct {
-	Slug string
-	Branch string
+	Slug     string
+	Branch   string
 	FilePath string
 }

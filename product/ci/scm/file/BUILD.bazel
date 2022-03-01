@@ -18,6 +18,7 @@ go_library(
 go_test(
     name = "file_test",
     srcs = [
+        "azure_test.go",
         "bitbucket_cloud_test.go",
         "file_test.go",
         "github_test.go",

@@ -14,6 +14,7 @@ import (
 	"net/http/httputil"
 
 	"github.com/drone/go-scm/scm"
+	"github.com/drone/go-scm/scm/driver/azure"
 	"github.com/drone/go-scm/scm/driver/bitbucket"
 	"github.com/drone/go-scm/scm/driver/gitea"
 	"github.com/drone/go-scm/scm/driver/github"
@@ -115,6 +116,8 @@ func GetValidRef(p pb.Provider, inputRef, inputBranch string) (string, error) {
 			return inputBranch, nil
 		case *pb.Provider_BitbucketServer:
 			return inputBranch, nil
+		case *pb.Provider_Azure:
+			return inputBranch, nil
 		default:
 			return scm.ExpandRef(inputBranch, "refs/heads"), nil
 		}
@@ -201,6 +204,15 @@ func GetGitClient(p pb.Provider, log *zap.SugaredLogger) (client *scm.Client, er
 		}
 		client.Client = &http.Client{
 			Transport: bitbucketTransport(p.GetBitbucketServer().GetUsername(), p.GetBitbucketServer().GetPersonalAccessToken(), p.GetSkipVerify(), p.GetAdditionalCertsPath(), log),
+		}
+	case *pb.Provider_Azure:
+		client = azure.NewDefault(p.GetAzure().GetOrganization(), p.GetAzure().GetProject())
+		client.Client = &http.Client{
+			Transport: &transport.Custom{
+				Before: func(r *http.Request) {
+					r.Header.Set("Authorization", fmt.Sprintf("Basic %s", p.GetAzure().GetPersonalAccessToken()))
+				},
+			},
 		}
 	default:
 		log.Errorw("GetGitClient unsupported git provider", "endpoint", p.GetEndpoint())
