@@ -114,7 +114,7 @@ public class WebhookParameters {
   /* For Pull request merged event */
   public static final String AZURE_DEVOPS_PULL_REQUEST_MERGED_REF_BRANCH =
       "${resource.targetRefName.split('refs/heads/')[1]}";
-  public static final String AZURE_DEVOPS_PULL_REQUEST_MERGED_COMMIT_ID = "${resource.lastMergeSourceCommit.commitId}";
+  public static final String AZURE_DEVOPS_PULL_REQUEST_MERGED_COMMIT_ID = "${resource.lastMergeCommit.commitId}";
   public static final String AZURE_DEVOPS_PULL_REQUEST_MERGED_REPOSITORY_FULL_NAME = "${resource.repository.name}";
 
   public static List<String> bitBucketPullRequestExpressions() {
