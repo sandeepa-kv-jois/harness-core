@@ -13,7 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
@@ -41,11 +41,10 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
 
     CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
         CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
-            .healthDefinition(CustomHealthDefinition.builder()
-                                  .method(CustomHealthMethod.GET)
-                                  .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                  .urlPath("https://dd.com")
-                                  .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.GET)
+                                   .urlPath("https://dd.com")
+                                   .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
             .sli(AnalysisInfo.SLI.builder().enabled(true).build())
@@ -54,8 +53,7 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
             .build();
 
     metricDefinitions.add(metricDefinition);
-<<<<<<< HEAD
-    customHealthCVConfig = CustomHealthCVConfig.builder()
+    customHealthCVConfig = CustomHealthMetricCVConfig.builder()
                                .groupName("group1")
                                .queryType(HealthSourceQueryType.SERVICE_BASED)
                                .metricDefinitions(metricDefinitions)
@@ -76,7 +74,7 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenLiveMonitoringIsTrueForHostBasedQuery() {
-    metricDefinitions.get(0).getHealthDefinition().setQueryType(HealthSourceQueryType.HOST_BASED);
+    customHealthCVConfig.setQueryType(HealthSourceQueryType.HOST_BASED);
     metricDefinitions.get(0).setDeploymentVerification(
         AnalysisInfo.DeploymentVerification.builder().enabled(true).build());
     metricDefinitions.get(0).setLiveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build());
@@ -103,11 +101,10 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
   public void testValidateParams_whenThereAreDuplicateMetricDefinitions() {
     CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
         CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
-            .healthDefinition(CustomHealthDefinition.builder()
-                                  .method(CustomHealthMethod.GET)
-                                  .queryType(HealthSourceQueryType.HOST_BASED)
-                                  .urlPath("https://dd.com")
-                                  .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.GET)
+                                   .urlPath("https://dd.com")
+                                   .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
             .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
@@ -115,6 +112,7 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
             .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
             .build();
     metricDefinitions.add(metricDefinition);
+    customHealthCVConfig.setQueryType(HealthSourceQueryType.SERVICE_BASED);
 
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(InvalidRequestException.class)

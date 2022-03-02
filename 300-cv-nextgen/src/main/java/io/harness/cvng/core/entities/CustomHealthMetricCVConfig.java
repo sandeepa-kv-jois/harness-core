@@ -13,8 +13,8 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.TimeSeriesMetricType;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
-import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
+import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.services.CVNextGenConstants;
@@ -26,7 +26,6 @@ import java.util.List;
 import java.util.Set;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -50,7 +49,7 @@ public class CustomHealthMetricCVConfig extends MetricCVConfig {
   @SuperBuilder
   @FieldDefaults(level = AccessLevel.PRIVATE)
   public static class CustomHealthCVConfigMetricDefinition extends AnalysisInfo {
-    CustomHealthDefinition healthDefinition;
+    CustomHealthRequestDefinition requestDefinition;
     MetricResponseMapping metricResponseMapping;
     TimeSeriesMetricType metricType;
     String metricName;
@@ -70,20 +69,21 @@ public class CustomHealthMetricCVConfig extends MetricCVConfig {
   protected void validateParams() {
     checkNotNull(groupName, generateErrorMessageFromParam(CustomHealthMetricCVConfigKeys.groupName));
     checkNotNull(metricDefinitions, generateErrorMessageFromParam(CustomHealthMetricCVConfigKeys.metricDefinitions));
+    checkNotNull(queryType, generateErrorMessageFromParam(CustomHealthMetricCVConfigKeys.queryType));
     Set<String> uniqueMetricDefinitionsNames = new HashSet<>();
 
     for (int metricDefinitionIndex = 0; metricDefinitionIndex < metricDefinitions.size(); metricDefinitionIndex++) {
       CustomHealthCVConfigMetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
-      CustomHealthDefinition customHealthDefinition = metricDefinition.getHealthDefinition();
+      CustomHealthRequestDefinition customHealthDefinition = metricDefinition.getRequestDefinition();
 
       checkNotNull(metricDefinition.getMetricName(),
           generateErrorMessageFromParam("metricName") + " for index " + metricDefinitionIndex);
       checkNotNull(customHealthDefinition.getMethod(),
-          generateErrorMessageFromParam(CustomHealthDefinition.CustomHealthDefinitionKeys.method) + " for index "
+          generateErrorMessageFromParam(CustomHealthRequestDefinition.CustomHealthDefinitionKeys.method) + " for index "
               + metricDefinitionIndex);
       checkNotNull(customHealthDefinition.getUrlPath(),
-          generateErrorMessageFromParam(CustomHealthDefinition.CustomHealthDefinitionKeys.urlPath) + " for index "
-              + metricDefinitionIndex);
+          generateErrorMessageFromParam(CustomHealthRequestDefinition.CustomHealthDefinitionKeys.urlPath)
+              + " for index " + metricDefinitionIndex);
 
       AnalysisInfo.SLI sliDTO = metricDefinition.getSli();
       AnalysisInfo.DeploymentVerification deploymentVerification = metricDefinition.getDeploymentVerification();
@@ -124,6 +124,7 @@ public class CustomHealthMetricCVConfig extends MetricCVConfig {
                                 .accountId(getAccountId())
                                 .dataSourceType(DataSourceType.CUSTOM_HEALTH_METRIC)
                                 .projectIdentifier(getProjectIdentifier())
+                                .orgIdentifier(getOrgIdentifier())
                                 .identifier(CVNextGenConstants.CUSTOM_PACK_IDENTIFIER)
                                 .build();
 

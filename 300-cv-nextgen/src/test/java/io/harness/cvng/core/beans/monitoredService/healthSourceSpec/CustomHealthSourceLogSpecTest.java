@@ -15,9 +15,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.beans.customhealth.TimestampInfo;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
-import io.harness.cvng.core.beans.HealthSourceQueryType;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceLogSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
@@ -57,17 +56,17 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
     customHealthSourceSpecs = new ArrayList<>();
     CustomHealthLogDefinition customHealthSpecLogDefinition =
         CustomHealthLogDefinition.builder()
-            .queryValueJsonPath(queryValueJSONPath)
+            .logMessageJsonPath(queryValueJSONPath)
             .queryName(queryName)
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .method(CustomHealthMethod.GET)
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .startTimeInfo(TimestampInfo.builder().build())
-                                        .endTimeInfo(TimestampInfo.builder().build())
-                                        .urlPath(urlPath)
-                                        .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.GET)
+
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .endTimeInfo(TimestampInfo.builder().build())
+                                   .urlPath(urlPath)
+                                   .build())
             .timestampJsonPath(timestampValueJSONPath)
-            .queryValueJsonPath(queryValueJSONPath)
+            .logMessageJsonPath(queryValueJSONPath)
             .build();
     customHealthSourceSpecs.add(customHealthSpecLogDefinition);
     customHealthSourceSpec = CustomHealthSourceLogSpec.builder().logDefinitions(customHealthSourceSpecs).build();
@@ -77,60 +76,58 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testGetCVConfigUpdateResult_forCreate() {
-    CustomHealthLogDefinition existingLogDefinitionURL =
-        CustomHealthLogDefinition.builder()
-            .queryValueJsonPath("sdfsdf")
-            .timestampJsonPath("sdf")
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .method(CustomHealthMethod.GET)
-                                        .urlPath("fsdfd")
-                                        .endTimeInfo(TimestampInfo.builder().build())
-                                        .startTimeInfo(TimestampInfo.builder().build())
-                                        .build())
-            .build();
-
-    CustomHealthLogDefinition existingDefinitionMethod =
-        CustomHealthLogDefinition.builder()
-            .queryValueJsonPath("sdfsdf")
-            .timestampJsonPath("sdf")
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .method(CustomHealthMethod.POST)
-                                        .requestBody("{}")
-                                        .urlPath("fsdfd")
-                                        .endTimeInfo(TimestampInfo.builder().build())
-                                        .startTimeInfo(TimestampInfo.builder().build())
-                                        .build())
-            .build();
-
     CustomHealthLogDefinition addedLogDefinition =
         CustomHealthLogDefinition.builder()
-            .queryValueJsonPath(queryValueJSONPath)
+            .logMessageJsonPath(queryValueJSONPath)
             .timestampJsonPath(timestampValueJSONPath)
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .urlPath(urlPath)
-                                        .method(CustomHealthMethod.GET)
-                                        .endTimeInfo(TimestampInfo.builder().build())
-                                        .startTimeInfo(TimestampInfo.builder().build())
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .urlPath(urlPath)
+                                   .method(CustomHealthMethod.GET)
+                                   .endTimeInfo(TimestampInfo.builder().build())
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .build())
             .build();
 
-    CustomHealthLogCVConfig existingCVConfigURL = CustomHealthLogCVConfig.builder()
-                                                      .queryDefinition(existingLogDefinitionURL)
-                                                      .query("error query")
-                                                      .queryName("existing_query1")
-                                                      .build();
+    CustomHealthLogCVConfig existingCVConfigURL =
+        CustomHealthLogCVConfig.builder()
+            .logMessageJsonPath("sdfsdf")
+            .timestampJsonPath("sdf")
+            .query("error query")
+            .queryName("existing_query1")
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.GET)
+                                   .urlPath("fsdfd")
+                                   .endTimeInfo(TimestampInfo.builder().build())
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .build())
+            .build();
 
-    CustomHealthLogCVConfig existingCVConfigMethod = CustomHealthLogCVConfig.builder()
-                                                         .queryDefinition(existingDefinitionMethod)
-                                                         .query("another query")
-                                                         .queryName("existing_query2")
-                                                         .build();
+    CustomHealthLogCVConfig existingCVConfigMethod =
+        CustomHealthLogCVConfig.builder()
+            .logMessageJsonPath("sdfsdf")
+            .timestampJsonPath("sdf")
+            .query("another query")
+            .queryName("existing_query2")
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.POST)
+                                   .requestBody("{}")
+                                   .urlPath("fsdfd")
+                                   .endTimeInfo(TimestampInfo.builder().build())
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .build())
+            .build();
 
-    CustomHealthLogCVConfig addedCVConfig =
-        CustomHealthLogCVConfig.builder().queryDefinition(addedLogDefinition).queryName(queryName).build();
+    CustomHealthLogCVConfig addedCVConfig = CustomHealthLogCVConfig.builder()
+                                                .logMessageJsonPath(queryValueJSONPath)
+                                                .timestampJsonPath(timestampValueJSONPath)
+                                                .queryName(queryName)
+                                                .requestDefinition(CustomHealthRequestDefinition.builder()
+                                                                       .urlPath(urlPath)
+                                                                       .method(CustomHealthMethod.GET)
+                                                                       .endTimeInfo(TimestampInfo.builder().build())
+                                                                       .startTimeInfo(TimestampInfo.builder().build())
+                                                                       .build())
+                                                .build();
 
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfigURL);
@@ -151,57 +148,49 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   public void testGetCVConfigUpdateResult_forUpdate() {
     CustomHealthLogDefinition addedLogDefinitionURL =
         CustomHealthLogDefinition.builder()
-            .queryValueJsonPath("sdfsdf")
+            .logMessageJsonPath("sdfsdf")
             .timestampJsonPath("sdf")
             .queryName(queryName)
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .method(CustomHealthMethod.GET)
-                                        .urlPath("https://url.com?start-time=start_time&end-time=end_time")
-                                        .endTimeInfo(TimestampInfo.builder()
-                                                         .placeholder("end_time")
-                                                         .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
-                                                         .build())
-                                        .startTimeInfo(TimestampInfo.builder()
-                                                           .placeholder("start_time")
-                                                           .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
-                                                           .build())
-                                        .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.GET)
+                                   .urlPath("https://url.com?start-time=start_time&end-time=end_time")
+                                   .endTimeInfo(TimestampInfo.builder()
+                                                    .placeholder("end_time")
+                                                    .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
+                                                    .build())
+                                   .startTimeInfo(TimestampInfo.builder()
+                                                      .placeholder("start_time")
+                                                      .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
+                                                      .build())
+                                   .build())
             .build();
 
     CustomHealthLogCVConfig customHealthLogCVConfig =
         CustomHealthLogCVConfig.builder()
             .queryName(queryName)
-            .queryDefinition(CustomHealthLogDefinition.builder()
-                                 .customHealthDefinition(addedLogDefinitionURL.getCustomHealthDefinition())
-                                 .timestampJsonPath("sdf")
-                                 .queryValueJsonPath("sdfsdf")
-                                 .build())
+            .requestDefinition(addedLogDefinitionURL.getRequestDefinition())
+            .timestampJsonPath("sdf")
+            .logMessageJsonPath("sdfsdf")
             .build();
 
     List<CustomHealthLogDefinition> logDefinitions = new ArrayList<>();
     logDefinitions.add(addedLogDefinitionURL);
     customHealthSourceSpec.setLogDefinitions(logDefinitions);
 
-    CustomHealthLogDefinition existingDefinitionMethod =
-        CustomHealthLogDefinition.builder()
-            .queryValueJsonPath("sdfsdf")
+    CustomHealthLogCVConfig existingCVConfig =
+        CustomHealthLogCVConfig.builder()
+            .logMessageJsonPath("sdfsdf")
             .timestampJsonPath("sdf")
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .method(CustomHealthMethod.POST)
-                                        .requestBody("{}")
-                                        .urlPath("fsdfd")
-                                        .endTimeInfo(TimestampInfo.builder().build())
-                                        .startTimeInfo(TimestampInfo.builder().build())
-                                        .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.POST)
+                                   .requestBody("{}")
+                                   .urlPath("fsdfd")
+                                   .endTimeInfo(TimestampInfo.builder().build())
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .build())
+            .query("error query")
+            .queryName(queryName)
             .build();
-
-    CustomHealthLogCVConfig existingCVConfig = CustomHealthLogCVConfig.builder()
-                                                   .queryDefinition(existingDefinitionMethod)
-                                                   .query("error query")
-                                                   .queryName(queryName)
-                                                   .build();
 
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);
@@ -222,45 +211,39 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
   public void testGetCVConfigUpdateResult_forDelete() {
     CustomHealthLogDefinition addedLogDefinitionURL =
         CustomHealthLogDefinition.builder()
-            .queryValueJsonPath("sdfsdf")
+            .logMessageJsonPath("sdfsdf")
             .timestampJsonPath("sdf")
             .queryName("vbccn")
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .method(CustomHealthMethod.GET)
-                                        .urlPath("https://url.com?start-time=start_time&end-time=end_time")
-                                        .endTimeInfo(TimestampInfo.builder()
-                                                         .placeholder("end_time")
-                                                         .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
-                                                         .build())
-                                        .startTimeInfo(TimestampInfo.builder()
-                                                           .placeholder("start_time")
-                                                           .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
-                                                           .build())
-                                        .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.GET)
+                                   .urlPath("https://url.com?start-time=start_time&end-time=end_time")
+                                   .endTimeInfo(TimestampInfo.builder()
+                                                    .placeholder("end_time")
+                                                    .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
+                                                    .build())
+                                   .startTimeInfo(TimestampInfo.builder()
+                                                      .placeholder("start_time")
+                                                      .timestampFormat(TimestampInfo.TimestampFormat.MILLISECONDS)
+                                                      .build())
+                                   .build())
             .build();
 
     customHealthSourceSpec.getLogDefinitions().add(addedLogDefinitionURL);
 
-    CustomHealthLogDefinition existingDefinitionMethod =
-        CustomHealthLogDefinition.builder()
-            .queryValueJsonPath("sdfsdf")
+    CustomHealthLogCVConfig existingCVConfig =
+        CustomHealthLogCVConfig.builder()
+            .logMessageJsonPath("sdfsdf")
             .timestampJsonPath("sdf")
-            .customHealthDefinition(CustomHealthDefinition.builder()
-                                        .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                        .method(CustomHealthMethod.POST)
-                                        .requestBody("{}")
-                                        .urlPath("fsdfd")
-                                        .endTimeInfo(TimestampInfo.builder().build())
-                                        .startTimeInfo(TimestampInfo.builder().build())
-                                        .build())
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.POST)
+                                   .requestBody("{}")
+                                   .urlPath("fsdfd")
+                                   .endTimeInfo(TimestampInfo.builder().build())
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .build())
+            .query("error query")
+            .queryName("uioiuoo9")
             .build();
-
-    CustomHealthLogCVConfig existingCVConfig = CustomHealthLogCVConfig.builder()
-                                                   .queryDefinition(existingDefinitionMethod)
-                                                   .query("error query")
-                                                   .queryName("uioiuoo9")
-                                                   .build();
 
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);

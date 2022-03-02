@@ -11,8 +11,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 
 import io.harness.cvng.beans.CustomHealthDataCollectionInfo;
 import io.harness.cvng.beans.MetricResponseMappingDTO;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
-import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
@@ -25,7 +24,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
-public class CustomHealthDataCollectionInfoMapper
+public class CustomHealthMetricDataCollectionInfoMapper
     implements DataCollectionInfoMapper<CustomHealthDataCollectionInfo, CustomHealthMetricCVConfig>,
                DataCollectionSLIInfoMapper<CustomHealthDataCollectionInfo, CustomHealthMetricCVConfig> {
   @Override
@@ -71,7 +70,7 @@ public class CustomHealthDataCollectionInfoMapper
   private CustomHealthDataCollectionInfo.CustomHealthMetricInfo mapMetricDefinitionToMetricInfo(
       CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition) {
     MetricResponseMapping metricResponseMapping = metricDefinition.getMetricResponseMapping();
-    CustomHealthDefinition healthDefinition = metricDefinition.getHealthDefinition();
+    CustomHealthRequestDefinition healthDefinition = metricDefinition.getRequestDefinition();
     return CustomHealthDataCollectionInfo.CustomHealthMetricInfo.builder()
         .metricName(metricDefinition.getMetricName())
         .metricIdentifier(metricDefinition.getIdentifier())

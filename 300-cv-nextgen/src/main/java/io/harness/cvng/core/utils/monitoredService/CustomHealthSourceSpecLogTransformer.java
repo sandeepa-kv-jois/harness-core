@@ -7,8 +7,8 @@
 
 package io.harness.cvng.core.utils.monitoredService;
 
-import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceLogSpec;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
 
@@ -28,22 +28,19 @@ public class CustomHealthSourceSpecLogTransformer
                                             .build();
 
     cvConfigGroup.forEach(cvConfig -> {
-      CustomHealthLogDefinition customHealthLogDefinition = cvConfig.getQueryDefinition();
-      CustomHealthDefinition customHealthDefinition = customHealthLogDefinition.getCustomHealthDefinition();
+      CustomHealthRequestDefinition requestDefinition = cvConfig.getRequestDefinition();
       CustomHealthLogDefinition specLogDefinition =
           CustomHealthLogDefinition.builder()
-              .customHealthDefinition(CustomHealthDefinition.builder()
-                                          .endTimeInfo(customHealthDefinition.getEndTimeInfo())
-                                          .startTimeInfo(customHealthDefinition.getStartTimeInfo())
-                                          .method(customHealthDefinition.getMethod())
-                                          .queryType(customHealthDefinition.getQueryType())
-                                          .requestBody(customHealthDefinition.getRequestBody())
-                                          .urlPath(customHealthDefinition.getUrlPath())
-                                          .build())
-              .timestampFormat(customHealthLogDefinition.getTimestampFormat())
-              .queryValueJsonPath(customHealthLogDefinition.getQueryValueJsonPath())
-              .timestampJsonPath(customHealthLogDefinition.getTimestampJsonPath())
-              .serviceInstanceJsonPath(customHealthLogDefinition.getServiceInstanceJsonPath())
+              .requestDefinition(CustomHealthRequestDefinition.builder()
+                                     .endTimeInfo(requestDefinition.getEndTimeInfo())
+                                     .startTimeInfo(requestDefinition.getStartTimeInfo())
+                                     .method(requestDefinition.getMethod())
+                                     .requestBody(requestDefinition.getRequestBody())
+                                     .urlPath(requestDefinition.getUrlPath())
+                                     .build())
+              .logMessageJsonPath(cvConfig.getLogMessageJsonPath())
+              .timestampJsonPath(cvConfig.getTimestampJsonPath())
+              .serviceInstanceJsonPath(cvConfig.getServiceInstanceJsonPath())
               .queryName(cvConfig.getQueryName())
               .build();
       logSpec.getLogDefinitions().add(specLogDefinition);

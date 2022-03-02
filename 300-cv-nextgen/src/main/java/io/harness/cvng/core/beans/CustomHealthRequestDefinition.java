@@ -25,8 +25,7 @@ import lombok.experimental.SuperBuilder;
 @AllArgsConstructor
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @FieldNameConstants(innerTypeName = "CustomHealthDefinitionKeys")
-public class CustomHealthDefinition {
-  HealthSourceQueryType queryType;
+public class CustomHealthRequestDefinition {
   String urlPath;
   String requestBody;
   CustomHealthMethod method;

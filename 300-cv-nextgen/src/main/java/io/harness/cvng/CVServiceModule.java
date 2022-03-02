@@ -152,7 +152,7 @@ import io.harness.cvng.core.services.impl.CVNGLogServiceImpl;
 import io.harness.cvng.core.services.impl.CVNGYamlSchemaServiceImpl;
 import io.harness.cvng.core.services.impl.ChangeEventServiceImpl;
 import io.harness.cvng.core.services.impl.ChangeSourceUpdateHandler;
-import io.harness.cvng.core.services.impl.CustomHealthDataCollectionInfoMapper;
+import io.harness.cvng.core.services.impl.CustomHealthMetricDataCollectionInfoMapper;
 import io.harness.cvng.core.services.impl.CustomHealthServiceImpl;
 import io.harness.cvng.core.services.impl.DataCollectionTaskServiceImpl;
 import io.harness.cvng.core.services.impl.DatadogMetricDataCollectionInfoMapper;
@@ -452,7 +452,7 @@ public class CVServiceModule extends AbstractModule {
     dataSourceTypeDataCollectionInfoMapperMapBinder.addBinding(DataSourceType.STACKDRIVER_LOG)
         .to(StackdriverLogDataCollectionInfoMapper.class);
     dataSourceTypeDataCollectionInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_METRIC)
-        .to(CustomHealthDataCollectionInfoMapper.class)
+        .to(CustomHealthMetricDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionInfoMapperMapBinder.addBinding(DataSourceType.SPLUNK)
         .to(SplunkDataCollectionInfoMapper.class)
@@ -494,7 +494,7 @@ public class CVServiceModule extends AbstractModule {
         .to(StackdriverDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.CUSTOM_HEALTH_METRIC)
-        .to(CustomHealthDataCollectionInfoMapper.class)
+        .to(CustomHealthMetricDataCollectionInfoMapper.class)
         .in(Scopes.SINGLETON);
     dataSourceTypeDataCollectionSLIInfoMapperMapBinder.addBinding(DataSourceType.DYNATRACE)
         .to(DynatraceDataCollectionInfoMapper.class)

@@ -12,14 +12,10 @@ import static io.harness.cvng.core.utils.ErrorMessageUtils.generateErrorMessageF
 import static com.google.common.base.Preconditions.checkNotNull;
 
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
-import io.harness.cvng.core.beans.CustomHealthDefinition.CustomHealthDefinitionKeys;
-import io.harness.cvng.core.beans.CustomHealthLogDefinition;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition.CustomHealthLogDefinitionKeys;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition.CustomHealthDefinitionKeys;
 
-import com.google.common.io.Resources;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -37,41 +33,26 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @EqualsAndHashCode(callSuper = true)
 public class CustomHealthLogCVConfig extends LogCVConfig {
-  // TODO: will enable when ready for DSL
-  //  static String DSL;
-  //
-  //  static {
-  //    try {
-  //      DSL = Resources.toString(
-  //          DatadogLogCVConfig.class.getResource("datadog-log-fetch-data.datacollection"), StandardCharsets.UTF_8);
-  //    } catch (IOException e) {
-  //      throw new IllegalStateException(e);
-  //    }
-  //  }
-
-  CustomHealthLogDefinition queryDefinition;
+  CustomHealthRequestDefinition requestDefinition;
+  String logMessageJsonPath;
+  String timestampJsonPath;
+  String serviceInstanceJsonPath;
 
   @Override
   protected void validateParams() {
     checkNotNull(getQueryName(), generateErrorMessageFromParam(LogCVConfigKeys.queryName));
     checkNotNull(getQuery(), generateErrorMessageFromParam(LogCVConfigKeys.query));
-    checkNotNull(queryDefinition, generateErrorMessageFromParam(CustomHealthLogCVConfigKeys.queryDefinition));
-    checkNotNull(queryDefinition.getQueryValueJsonPath(),
-        generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.queryValueJsonPath));
-    checkNotNull(queryDefinition.getTimestampJsonPath(),
-        generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.timestampJsonPath));
-    checkNotNull(queryDefinition.getServiceInstanceJsonPath(),
-        generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.serviceInstanceJsonPath));
-
-    CustomHealthDefinition customHealthDefinition = queryDefinition.getCustomHealthDefinition();
-
+    checkNotNull(requestDefinition, generateErrorMessageFromParam(CustomHealthLogCVConfigKeys.requestDefinition));
+    checkNotNull(logMessageJsonPath, generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.logMessageJsonPath));
     checkNotNull(
-        customHealthDefinition.getUrlPath(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.urlPath));
-    checkNotNull(customHealthDefinition.getMethod(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.method));
-    checkNotNull(customHealthDefinition.getStartTimeInfo(),
-        generateErrorMessageFromParam(CustomHealthDefinitionKeys.startTimeInfo));
+        serviceInstanceJsonPath, generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.serviceInstanceJsonPath));
+    checkNotNull(timestampJsonPath, generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.timestampJsonPath));
+    checkNotNull(requestDefinition.getUrlPath(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.urlPath));
+    checkNotNull(requestDefinition.getMethod(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.method));
     checkNotNull(
-        customHealthDefinition.getEndTimeInfo(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.endTimeInfo));
+        requestDefinition.getStartTimeInfo(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.startTimeInfo));
+    checkNotNull(
+        requestDefinition.getEndTimeInfo(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.endTimeInfo));
   }
 
   @Override

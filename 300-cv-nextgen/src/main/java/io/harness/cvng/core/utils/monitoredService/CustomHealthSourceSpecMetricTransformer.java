@@ -7,8 +7,8 @@
 
 package io.harness.cvng.core.utils.monitoredService;
 
-import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition.SLIDTO;
 import io.harness.cvng.core.beans.RiskProfile;
@@ -38,18 +38,18 @@ public class CustomHealthSourceSpecMetricTransformer
                                       .thresholdTypes(customHealthCVConfig.getThresholdTypeOfMetric(
                                           cvMetricDefinition.getMetricName(), customHealthCVConfig))
                                       .build();
-        CustomHealthDefinition baseDefinition = cvMetricDefinition.getHealthDefinition();
+        CustomHealthRequestDefinition requestDefinition = cvMetricDefinition.getRequestDefinition();
         CustomHealthMetricDefinition customHealthMetricDefinition =
             CustomHealthMetricDefinition.builder()
                 .groupName(customHealthCVConfig.getGroupName())
-                .healthDefinition(CustomHealthDefinition.builder()
-                                      .urlPath(baseDefinition.getUrlPath())
-                                      .queryType(baseDefinition.getQueryType())
-                                      .method(baseDefinition.getMethod())
-                                      .requestBody(baseDefinition.getRequestBody())
-                                      .startTimeInfo(baseDefinition.getStartTimeInfo())
-                                      .endTimeInfo(baseDefinition.getEndTimeInfo())
-                                      .build())
+                .queryType(customHealthCVConfig.getQueryType())
+                .requestDefinition(CustomHealthRequestDefinition.builder()
+                                       .urlPath(requestDefinition.getUrlPath())
+                                       .method(requestDefinition.getMethod())
+                                       .requestBody(requestDefinition.getRequestBody())
+                                       .startTimeInfo(requestDefinition.getStartTimeInfo())
+                                       .endTimeInfo(requestDefinition.getEndTimeInfo())
+                                       .build())
                 .metricResponseMapping(cvMetricDefinition.getMetricResponseMapping())
                 .metricName(cvMetricDefinition.getMetricName())
                 .sli(SLIDTO.builder().enabled(cvMetricDefinition.getSli().isEnabled()).build())

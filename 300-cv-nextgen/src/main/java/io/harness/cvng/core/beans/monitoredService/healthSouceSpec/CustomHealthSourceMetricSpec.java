@@ -11,8 +11,9 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
+import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
@@ -52,7 +53,7 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
     String groupName;
     CVMonitoringCategory category;
     HealthSourceQueryType queryType;
-}
+  }
 
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
@@ -62,11 +63,15 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
         (List<CustomHealthMetricCVConfig>) (List<?>) existingCVConfigs;
     Map<Key, CustomHealthMetricCVConfig> existingConfigs = new HashMap<>();
     existingDBCVConfigs.forEach(config
-        -> existingConfigs.put(
-            Key.builder().groupName(config.getGroupName()).category(config.getCategory()).build(), config));
+        -> existingConfigs.put(Key.builder()
+                                   .groupName(config.getGroupName())
+                                   .category(config.getCategory())
+                                   .queryType(config.getQueryType())
+                                   .build(),
+            config));
 
-    Map<Key, CustomHealthMetricCVConfig> currentCVConfigs =
-        getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+    Map<Key, CustomHealthMetricCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
     Set<Key> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
     Set<Key> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
     Set<Key> updated = Sets.intersection(existingConfigs.keySet(), currentCVConfigs.keySet());
@@ -83,11 +88,17 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
         .build();
   }
 
-  public Map<Key, CustomHealthCVConfig> getCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
-      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
-    Map<Key, CustomHealthCVConfig> cvConfigMap = new HashMap<>();
+  @Override
+  public DataSourceType getType() {
+    return DataSourceType.CUSTOM_HEALTH_METRIC;
+  }
+
+  public Map<Key, CustomHealthMetricCVConfig> getCVConfigs(String accountId, String orgIdentifier,
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name) {
+    Map<Key, CustomHealthMetricCVConfig> cvConfigMap = new HashMap<>();
     metricDefinitions.forEach(metricDefinition -> {
-      CustomHealthDefinition customHealthDefinition = metricDefinition.getHealthDefinition();
+      CustomHealthRequestDefinition customHealthDefinition = metricDefinition.getRequestDefinition();
       String groupName = metricDefinition.getGroupName();
       RiskProfile riskProfile = metricDefinition.getRiskProfile();
 
@@ -95,20 +106,31 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
         return;
       }
 
-      Key cvConfigKey = Key.builder().category(riskProfile.getCategory()).groupName(groupName).build();
+      Key cvConfigKey = Key.builder()
+                            .category(riskProfile.getCategory())
+                            .groupName(groupName)
+                            .queryType(metricDefinition.getQueryType())
+                            .build();
+
       CustomHealthMetricCVConfig existingCvConfig = cvConfigMap.get(cvConfigKey);
       List<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition> cvConfigMetricDefinitions =
+          existingCvConfig != null && isNotEmpty(existingCvConfig.getMetricDefinitions())
+          ? existingCvConfig.getMetricDefinitions()
+          : new ArrayList<>();
 
+      MetricResponseMapping metricResponseMapping = metricDefinition.getMetricResponseMapping();
+      cvConfigMetricDefinitions.add(
+          CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
+              .metricName(metricDefinition.getMetricName())
+              .metricType(riskProfile.getMetricType())
               .identifier(metricDefinition.getIdentifier())
-              .method(metricDefinition.getMethod())
-              .healthDefinition(CustomHealthDefinition.builder()
-                                    .endTimeInfo(customHealthDefinition.getEndTimeInfo())
-                                    .startTimeInfo(customHealthDefinition.getStartTimeInfo())
-                                    .queryType(customHealthDefinition.getQueryType())
-                                    .method(customHealthDefinition.getMethod())
-                                    .requestBody(customHealthDefinition.getRequestBody())
-                                    .urlPath(customHealthDefinition.getUrlPath())
-                                    .build())
+              .requestDefinition(CustomHealthRequestDefinition.builder()
+                                     .endTimeInfo(customHealthDefinition.getEndTimeInfo())
+                                     .startTimeInfo(customHealthDefinition.getStartTimeInfo())
+                                     .method(customHealthDefinition.getMethod())
+                                     .requestBody(customHealthDefinition.getRequestBody())
+                                     .urlPath(customHealthDefinition.getUrlPath())
+                                     .build())
               .metricResponseMapping(metricResponseMapping)
               .sli(SLIMetricTransformer.transformDTOtoEntity(metricDefinition.getSli()))
               .liveMonitoring(LiveMonitoringTransformer.transformDTOtoEntity(metricDefinition.getAnalysis()))
@@ -119,6 +141,7 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
       CustomHealthMetricCVConfig mappedCVConfig = CustomHealthMetricCVConfig.builder()
                                                       .groupName(groupName)
                                                       .metricDefinitions(cvConfigMetricDefinitions)
+                                                      .queryType(metricDefinition.getQueryType())
                                                       .accountId(accountId)
                                                       .orgIdentifier(orgIdentifier)
                                                       .projectIdentifier(projectIdentifier)
@@ -128,6 +151,7 @@ public class CustomHealthSourceMetricSpec extends MetricHealthSourceSpec {
                                                       .envIdentifier(environmentRef)
                                                       .connectorIdentifier(getConnectorRef())
                                                       .monitoringSourceName(name)
+                                                      .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                       .build();
       mappedCVConfig.setMetricPack(mappedCVConfig.generateMetricPack(
           metricDefinition.getIdentifier(), metricDefinition.getMetricName(), metricDefinition.getRiskProfile()));

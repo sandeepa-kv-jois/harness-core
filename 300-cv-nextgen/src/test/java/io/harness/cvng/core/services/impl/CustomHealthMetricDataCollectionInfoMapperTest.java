@@ -15,11 +15,8 @@ import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.beans.CustomHealthDataCollectionInfo;
 import io.harness.cvng.beans.MetricResponseMappingDTO;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
-import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
-import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
-import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.entities.AnalysisInfo;
 import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
@@ -35,8 +32,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
-public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase {
-  @Inject private CustomHealthDataCollectionInfoMapper customHealthMapper;
+public class CustomHealthMetricDataCollectionInfoMapperTest extends CvNextGenTestBase {
+  @Inject private CustomHealthMetricDataCollectionInfoMapper customHealthMapper;
   CustomHealthMetricCVConfig customHealthCVConfig;
 
   String groupName = "group";
@@ -59,21 +56,43 @@ public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase 
                                                 .timestampJsonPath(timestampJSONPath)
                                                 .build();
 
-    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
+    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition cvMetricDefinition =
         CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
-            .healthDefinition(CustomHealthDefinition.builder()
-                                  .method(CustomHealthMethod.GET)
-                                  .queryType(HealthSourceQueryType.HOST_BASED)
-                                  .urlPath(urlPath)
-                                  .build())
+            .requestDefinition(
+                CustomHealthRequestDefinition.builder().method(CustomHealthMethod.GET).urlPath(urlPath).build())
             .metricResponseMapping(responseMapping)
             .metricName(metricName)
-            .sli(AnalysisInfo.SLI.builder().build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().build())
+            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
             .build();
 
-    metricDefinitions.add(metricDefinition);
+    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition sliMetricDefinition =
+        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
+            .requestDefinition(
+                CustomHealthRequestDefinition.builder().method(CustomHealthMethod.GET).urlPath(urlPath1).build())
+            .metricResponseMapping(responseMapping)
+            .metricName(metricName1)
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
+            .build();
+
+    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition liveMonitoringMetricDefinition =
+        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
+            .requestDefinition(
+                CustomHealthRequestDefinition.builder().method(CustomHealthMethod.GET).urlPath(urlPath2).build())
+            .metricResponseMapping(responseMapping)
+            .metricName(metricName2)
+            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
+            .build();
+
+    metricDefinitions.add(cvMetricDefinition);
+    metricDefinitions.add(sliMetricDefinition);
+    metricDefinitions.add(liveMonitoringMetricDefinition);
+
     customHealthCVConfig = CustomHealthMetricCVConfig.builder()
                                .groupName(groupName)
                                .queryType(HealthSourceQueryType.HOST_BASED)
@@ -115,8 +134,8 @@ public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase 
     assertThat(customHealthMetricInfo.size()).isEqualTo(1);
 
     CustomHealthDataCollectionInfo.CustomHealthMetricInfo customHealthMetricInfo1 = customHealthMetricInfo.get(0);
-    assertThat(customHealthMetricInfo1.getMetricName()).isEqualTo(metricName2);
-    assertThat(customHealthMetricInfo1.getUrlPath()).isEqualTo(urlPath2);
+    assertThat(customHealthMetricInfo1.getMetricName()).isEqualTo(metricName1);
+    assertThat(customHealthMetricInfo1.getUrlPath()).isEqualTo(urlPath1);
     assertThat(customHealthMetricInfo1.getResponseMapping())
         .isEqualTo(MetricResponseMappingDTO.builder()
                        .metricValueJsonPath(metricValueJSONPath)
@@ -136,8 +155,8 @@ public class CustomHealthDataCollectionInfoMapperTest extends CvNextGenTestBase 
     assertThat(customHealthMetricInfo.size()).isEqualTo(1);
 
     CustomHealthDataCollectionInfo.CustomHealthMetricInfo customHealthMetricInfo1 = customHealthMetricInfo.get(0);
-    assertThat(customHealthMetricInfo1.getMetricName()).isEqualTo(metricName1);
-    assertThat(customHealthMetricInfo1.getUrlPath()).isEqualTo(urlPath1);
+    assertThat(customHealthMetricInfo1.getMetricName()).isEqualTo(metricName2);
+    assertThat(customHealthMetricInfo1.getUrlPath()).isEqualTo(urlPath2);
     assertThat(customHealthMetricInfo1.getResponseMapping())
         .isEqualTo(MetricResponseMappingDTO.builder()
                        .metricValueJsonPath(metricValueJSONPath)

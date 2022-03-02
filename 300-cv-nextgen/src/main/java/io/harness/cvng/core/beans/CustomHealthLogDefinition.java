@@ -18,10 +18,9 @@ import lombok.experimental.SuperBuilder;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @FieldNameConstants(innerTypeName = "CustomHealthLogDefinitionKeys")
 public class CustomHealthLogDefinition {
-  CustomHealthDefinition customHealthDefinition;
-  String queryValueJsonPath;
+  CustomHealthRequestDefinition requestDefinition;
+  String logMessageJsonPath;
   String timestampJsonPath;
   String serviceInstanceJsonPath;
-  String timestampFormat;
   String queryName;
 }

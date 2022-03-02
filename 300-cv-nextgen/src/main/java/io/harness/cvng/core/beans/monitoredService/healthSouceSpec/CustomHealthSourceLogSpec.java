@@ -7,8 +7,12 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSouceSpec;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
+import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
@@ -53,8 +57,8 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
     existingDBCVConfigs.forEach(
         config -> existingConfigs.put(Key.builder().queryName(config.getQueryName()).build(), config));
 
-    Map<Key, CustomHealthLogCVConfig> currentCVConfigs =
-        getCVConfigs(accountId, orgIdentifier, projectIdentifier, environmentRef, serviceRef, identifier, name);
+    Map<Key, CustomHealthLogCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
+        environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
 
     Set<Key> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
     Set<Key> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
@@ -73,10 +77,10 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
   }
 
   public Map<Key, CustomHealthLogCVConfig> getCVConfigs(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String identifier, String name) {
+      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
+      String identifier, String name) {
     Map<Key, CustomHealthLogCVConfig> cvConfigMap = new HashMap<>();
     logDefinitions.forEach(logDefinition -> {
-      String query = logDefinition.getCustomHealthDefinition().getRequestBody();
       String queryName = logDefinition.getQueryName();
 
       Key cvConfigKey = Key.builder().queryName(queryName).build();
@@ -86,6 +90,7 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
         return;
       }
 
+      CustomHealthRequestDefinition requestDefinition = logDefinition.getRequestDefinition();
       CustomHealthLogCVConfig mappedCVConfig =
           CustomHealthLogCVConfig.builder()
               .accountId(accountId)
@@ -95,14 +100,19 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
               .serviceIdentifier(serviceRef)
               .monitoringSourceName(name)
               .identifier(identifier)
-              .query(query)
-              .queryDefinition(CustomHealthLogDefinition.builder()
-                                   .customHealthDefinition(logDefinition.getCustomHealthDefinition())
-                                   .queryValueJsonPath(logDefinition.getQueryValueJsonPath())
-                                   .timestampFormat(logDefinition.getTimestampFormat())
-                                   .timestampJsonPath(logDefinition.getTimestampJsonPath())
-                                   .serviceInstanceJsonPath(logDefinition.getServiceInstanceJsonPath())
-                                   .build())
+              .monitoredServiceIdentifier(monitoredServiceIdentifier)
+              .logMessageJsonPath(logDefinition.getLogMessageJsonPath())
+              .timestampJsonPath(logDefinition.getTimestampJsonPath())
+              .serviceInstanceJsonPath(logDefinition.getServiceInstanceJsonPath())
+              .queryName(queryName)
+              .category(CVMonitoringCategory.ERRORS)
+              .requestDefinition(CustomHealthRequestDefinition.builder()
+                                     .requestBody(requestDefinition.getRequestBody())
+                                     .method(requestDefinition.getMethod())
+                                     .startTimeInfo(requestDefinition.getStartTimeInfo())
+                                     .endTimeInfo(requestDefinition.getEndTimeInfo())
+                                     .urlPath(requestDefinition.getUrlPath())
+                                     .build())
               .build();
 
       cvConfigMap.put(cvConfigKey, mappedCVConfig);

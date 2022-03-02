@@ -15,9 +15,7 @@ import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.customhealth.TimestampInfo;
-import io.harness.cvng.core.beans.CustomHealthDefinition;
-import io.harness.cvng.core.beans.CustomHealthLogDefinition;
-import io.harness.cvng.core.beans.HealthSourceQueryType;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.rule.Owner;
 
@@ -34,46 +32,41 @@ public class CustomHealthLogCVConfigTest extends CategoryTest {
 
   @Before
   public void setup() {
-    customHealthCVConfig =
-        CustomHealthLogCVConfig.builder()
-            .category(CVMonitoringCategory.PERFORMANCE)
-            .accountId(accountId)
-            .projectIdentifier(projectId)
-            .orgIdentifier(orgId)
-            .connectorIdentifier(connectorId)
-            .query("error*")
-            .queryName("Error Query")
-            .queryDefinition(CustomHealthLogDefinition.builder()
-                                 .timestampJsonPath("$.[0].timestamp")
-                                 .timestampFormat("")
-                                 .queryValueJsonPath("$.[0].metricValue")
-                                 .serviceInstanceJsonPath("$.[0].serviceInstanceJSON")
-                                 .customHealthDefinition(CustomHealthDefinition.builder()
-                                                             .method(CustomHealthMethod.GET)
-                                                             .queryType(HealthSourceQueryType.SERVICE_BASED)
-                                                             .endTimeInfo(TimestampInfo.builder().build())
-                                                             .startTimeInfo(TimestampInfo.builder().build())
-                                                             .urlPath("https://url.com")
-                                                             .build())
-                                 .build())
-            .build();
+    customHealthCVConfig = CustomHealthLogCVConfig.builder()
+                               .category(CVMonitoringCategory.PERFORMANCE)
+                               .accountId(accountId)
+                               .projectIdentifier(projectId)
+                               .orgIdentifier(orgId)
+                               .connectorIdentifier(connectorId)
+                               .query("error*")
+                               .queryName("Error Query")
+                               .timestampJsonPath("$.[0].timestamp")
+                               .logMessageJsonPath("$.[0].metricValue")
+                               .serviceInstanceJsonPath("$.[0].serviceInstanceJSON")
+                               .requestDefinition(CustomHealthRequestDefinition.builder()
+                                                      .method(CustomHealthMethod.GET)
+                                                      .endTimeInfo(TimestampInfo.builder().build())
+                                                      .startTimeInfo(TimestampInfo.builder().build())
+                                                      .urlPath("https://url.com")
+                                                      .build())
+                               .build();
   }
 
   @Test
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenQueryDefinitionIsNull() {
-    customHealthCVConfig.setQueryDefinition(null);
+    customHealthCVConfig.setRequestDefinition(null);
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(NullPointerException.class)
-        .hasMessage("queryDefinition should not be null");
+        .hasMessage("requestDefinition should not be null");
   }
 
   @Test
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenTimestampJSONPathIsNull() {
-    customHealthCVConfig.getQueryDefinition().setTimestampJsonPath(null);
+    customHealthCVConfig.setTimestampJsonPath(null);
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(NullPointerException.class)
         .hasMessage("timestampJsonPath should not be null");
@@ -83,7 +76,7 @@ public class CustomHealthLogCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenURLIsNull() {
-    customHealthCVConfig.getQueryDefinition().getCustomHealthDefinition().setUrlPath(null);
+    customHealthCVConfig.getRequestDefinition().setUrlPath(null);
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(NullPointerException.class)
         .hasMessage("urlPath should not be null");
@@ -93,7 +86,7 @@ public class CustomHealthLogCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenEndTimeInfoIsNull() {
-    customHealthCVConfig.getQueryDefinition().getCustomHealthDefinition().setEndTimeInfo(null);
+    customHealthCVConfig.getRequestDefinition().setEndTimeInfo(null);
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(NullPointerException.class)
         .hasMessage("endTimeInfo should not be null");

@@ -7,13 +7,10 @@
 
 package io.harness.cvng.core.beans;
 
-import io.harness.cvng.beans.TimeSeriesMetricType;
-import io.harness.cvng.beans.customhealth.TimestampInfo;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 
 import lombok.AccessLevel;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
@@ -25,7 +22,8 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @FieldNameConstants(innerTypeName = "CustomHealthMetricDefinitionKeys")
 public class CustomHealthMetricDefinition extends HealthSourceMetricDefinition {
-  CustomHealthDefinition healthDefinition;
+  CustomHealthRequestDefinition requestDefinition;
+  HealthSourceQueryType queryType;
   MetricResponseMapping metricResponseMapping;
   String groupName;
 }
