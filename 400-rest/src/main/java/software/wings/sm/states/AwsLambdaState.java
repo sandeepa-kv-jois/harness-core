@@ -19,6 +19,7 @@ import static io.harness.validation.Validator.nullCheckForInvalidRequest;
 import static software.wings.api.CommandStateExecutionData.Builder.aCommandStateExecutionData;
 import static software.wings.beans.Log.Builder.aLog;
 import static software.wings.beans.TaskType.AWS_LAMBDA_TASK;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 import static software.wings.service.intfc.ServiceTemplateService.EncryptedFieldComputeMode.OBTAIN_VALUE;
 import static software.wings.sm.StateType.AWS_LAMBDA_STATE;
 
@@ -467,7 +468,8 @@ public class AwsLambdaState extends State {
       case ARTIFACTORY:
       case NEXUS:
       case S3:
-        return artifactStream.isMetadataOnly();
+        return metadataOnlyBehindFlag(
+            featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly());
       default:
         return false;
     }

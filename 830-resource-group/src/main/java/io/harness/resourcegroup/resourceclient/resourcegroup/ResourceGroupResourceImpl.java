@@ -24,11 +24,11 @@ import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.resourcegroup.ResourceGroupEntityChangeDTO;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
-import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
-import io.harness.resourcegroupclient.ResourceGroupResponse;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
 import io.harness.resourcegroupclient.remote.ResourceGroupClient;
+import io.harness.resourcegroupclient.remote.v1.ResourceGroupResponse;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;

@@ -19,6 +19,7 @@ import static io.harness.validation.Validator.notNullCheck;
 import static software.wings.api.CommandStateExecutionData.Builder.aCommandStateExecutionData;
 import static software.wings.beans.command.Command.Builder.aCommand;
 import static software.wings.beans.command.ServiceCommand.Builder.aServiceCommand;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 import static software.wings.sm.StateMachineExecutor.DEFAULT_STATE_TIMEOUT_MILLIS;
 import static software.wings.sm.StateType.COMMAND;
 
@@ -766,7 +767,9 @@ public class CommandState extends State {
           (EncryptableSetting) artifactStreamAttributes.getServerSetting().getValue(), context.getAppId(),
           context.getWorkflowExecutionId()));
     }
-    artifactStreamAttributes.setMetadataOnly(artifactStream.isMetadataOnly());
+
+    artifactStreamAttributes.setMetadataOnly(
+        metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly()));
     artifactStreamAttributes.setMetadata(artifact.getMetadata());
     artifactStreamAttributes.setArtifactFileMetadata(artifact.getArtifactFileMetadata());
 
@@ -812,7 +815,9 @@ public class CommandState extends State {
           artifactStreamAttributes.setArtifactServerEncryptedDataDetails(encryptedDataDetails);
           artifactServerEncryptedDataDetailsMap.put(artifact.getUuid(), encryptedDataDetails);
         }
-        artifactStreamAttributes.setMetadataOnly(artifactStream.isMetadataOnly());
+
+        artifactStreamAttributes.setMetadataOnly(
+            metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly()));
         artifactStreamAttributes.setMetadata(artifact.getMetadata());
         artifactStreamAttributes.setArtifactFileMetadata(artifact.getArtifactFileMetadata());
 

@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.when;
 
 import io.harness.category.element.UnitTests;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
@@ -44,6 +45,7 @@ import org.mockito.Mock;
 public class AzureArtifactsBuildServiceTest extends WingsBaseTest {
   @Mock private AzureArtifactsService azureArtifactsService;
   @Inject @InjectMocks private AzureArtifactsBuildService azureArtifactsBuildService;
+  @Inject private FeatureFlagService featureFlagService;
 
   private static final AzureArtifactsPATConfig azureArtifactsPATConfig =
       AzureArtifactsPATConfig.builder().azureDevopsUrl("http://dev.azure.com/ORG").pat("pat".toCharArray()).build();
@@ -77,7 +79,7 @@ public class AzureArtifactsBuildServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldValidateArtifactSource() {
     ArtifactStreamAttributes artifactStreamAttributes =
-        azureArtifactsArtifactStream.fetchArtifactStreamAttributes(null);
+        azureArtifactsArtifactStream.fetchArtifactStreamAttributes(featureFlagService);
     when(azureArtifactsService.validateArtifactSource(azureArtifactsPATConfig, null, artifactStreamAttributes))
         .thenReturn(true);
     assertThat(
@@ -96,7 +98,7 @@ public class AzureArtifactsBuildServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   public void shouldGetBuilds() {
     ArtifactStreamAttributes artifactStreamAttributes =
-        azureArtifactsArtifactStream.fetchArtifactStreamAttributes(null);
+        azureArtifactsArtifactStream.fetchArtifactStreamAttributes(featureFlagService);
     when(azureArtifactsService.getBuilds(artifactStreamAttributes, azureArtifactsPATConfig, null))
         .thenReturn(
             Lists.newArrayList(aBuildDetails().withNumber("10").build(), aBuildDetails().withNumber("9").build()));

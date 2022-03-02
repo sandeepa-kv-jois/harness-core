@@ -17,8 +17,8 @@ import io.harness.beans.Scope;
 import io.harness.beans.ScopeLevel;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;

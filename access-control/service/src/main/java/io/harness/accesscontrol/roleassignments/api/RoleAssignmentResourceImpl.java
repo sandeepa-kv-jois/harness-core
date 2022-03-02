@@ -75,6 +75,7 @@ import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.outbox.api.OutboxService;
+import io.harness.security.annotations.InternalApi;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -292,6 +293,7 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
   }
 
   @Override
+  @InternalApi
   public ResponseDTO<List<RoleAssignmentResponseDTO>> create(HarnessScopeParams harnessScopeParams,
       RoleAssignmentCreateRequestDTO roleAssignmentCreateRequestDTO, Boolean managed) {
     // TODO: remove this deprecated resource group handling

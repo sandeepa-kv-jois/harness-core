@@ -11,8 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.migration.NGMigration;
-import io.harness.resourcegroup.framework.repositories.spring.ResourceGroupRepository;
-import io.harness.resourcegroup.model.ResourceGroup.ResourceGroupKeys;
+import io.harness.resourcegroup.framework.v1.repositories.spring.ResourceGroupRepository;
+import io.harness.resourcegroup.v1.model.ResourceGroup.ResourceGroupKeys;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;

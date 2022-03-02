@@ -149,7 +149,7 @@ function setupDelegateJars() {
 
     done
 
-    for version in v0.8.2 v0.13.0; do
+    for version in v0.8.2 v0.12.0; do
 
       echo "Copying chartmuseum ${version} binaries for ${platform}"
 

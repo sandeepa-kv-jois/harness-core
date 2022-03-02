@@ -35,7 +35,7 @@ public class TriggerOutboxEventHandler implements OutboxEventHandler {
   private ObjectMapper objectMapper;
   private final AuditClientService auditClientService;
   @Inject
-  TriggerOutboxEventHandler(AuditClientService auditClientService) {
+  public TriggerOutboxEventHandler(AuditClientService auditClientService) {
     this.objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     this.auditClientService = auditClientService;
   }

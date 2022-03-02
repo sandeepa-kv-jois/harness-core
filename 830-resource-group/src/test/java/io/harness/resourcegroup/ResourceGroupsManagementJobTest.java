@@ -20,9 +20,9 @@ import io.harness.ng.beans.PageRequest;
 import io.harness.reflection.ReflectionUtils;
 import io.harness.resourcegroup.commons.bootstrap.ConfigurationState;
 import io.harness.resourcegroup.commons.bootstrap.ConfigurationStateRepository;
-import io.harness.resourcegroup.framework.service.ResourceGroupService;
-import io.harness.resourcegroup.remote.dto.ManagedFilter;
-import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
+import io.harness.resourcegroup.framework.v1.service.ResourceGroupService;
+import io.harness.resourcegroup.v1.remote.dto.ManagedFilter;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;

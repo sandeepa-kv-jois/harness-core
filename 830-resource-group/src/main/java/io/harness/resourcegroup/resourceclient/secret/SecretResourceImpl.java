@@ -25,8 +25,8 @@ import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 import io.harness.secrets.remote.SecretNGManagerClient;
 
 import com.google.common.collect.ImmutableMap;

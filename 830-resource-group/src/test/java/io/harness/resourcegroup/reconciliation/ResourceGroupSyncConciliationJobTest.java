@@ -34,16 +34,16 @@ import io.harness.eventsframework.entity_crud.organization.OrganizationEntityCha
 import io.harness.eventsframework.entity_crud.resourcegroup.ResourceGroupEntityChangeDTO;
 import io.harness.ng.beans.PageRequest;
 import io.harness.resourcegroup.ResourceGroupTestBase;
-import io.harness.resourcegroup.framework.remote.mapper.ResourceGroupMapper;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceGroupService;
-import io.harness.resourcegroup.model.ResourceGroup;
-import io.harness.resourcegroup.model.StaticResourceSelector;
-import io.harness.resourcegroup.remote.dto.ManagedFilter;
-import io.harness.resourcegroup.remote.dto.ResourceGroupDTO;
-import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
-import io.harness.resourcegroup.remote.dto.ResourceSelectorFilter;
-import io.harness.resourcegroupclient.ResourceGroupResponse;
+import io.harness.resourcegroup.framework.v1.remote.mapper.ResourceGroupMapper;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceGroupService;
+import io.harness.resourcegroup.v1.model.ResourceGroup;
+import io.harness.resourcegroup.v1.model.StaticResourceSelector;
+import io.harness.resourcegroup.v1.remote.dto.ManagedFilter;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
+import io.harness.resourcegroup.v1.remote.dto.ResourceSelectorFilter;
+import io.harness.resourcegroupclient.remote.v1.ResourceGroupResponse;
 import io.harness.rule.Owner;
 import io.harness.utils.PageTestUtils;
 

@@ -14,6 +14,8 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.network.Http;
 import io.harness.ng.core.utils.NGYamlUtils;
+import io.harness.ngmigration.beans.DiscoverEntityInput;
+import io.harness.ngmigration.beans.DiscoveryInput;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
@@ -93,6 +95,37 @@ public class DiscoveryService {
     }
   }
 
+  /*
+   * We individually discover provided entities & finally merge them to a dummy head
+   * */
+  public DiscoveryResult discoverMulti(String accountId, DiscoveryInput discoveryInput) {
+    Map<CgEntityId, CgEntityNode> entities = new HashMap<>();
+    Map<CgEntityId, Set<CgEntityId>> graph = new HashMap<>();
+    NgMigrationService ngMigrationService = migrationFactory.getMethod(NGMigrationEntityType.DUMMY_HEAD);
+    DiscoveryNode head = ngMigrationService.discover(accountId, null, null);
+    // Add the dummy head to the graph
+    entities.putIfAbsent(head.getEntityNode().getEntityId(), head.getEntityNode());
+    graph.putIfAbsent(head.getEntityNode().getEntityId(), new HashSet<>());
+    if (isNotEmpty(discoveryInput.getEntities())) {
+      for (DiscoverEntityInput child : discoveryInput.getEntities()) {
+        String appId = child.getAppId();
+        ngMigrationService = migrationFactory.getMethod(child.getType());
+        DiscoveryNode node = ngMigrationService.discover(accountId, child.getAppId(), child.getEntityId());
+        if (node == null) {
+          throw new IllegalStateException(
+              String.format("Entity not found! - Type: %s & ID: %s", child.getType(), child.getEntityId()));
+        }
+        // We add the node the dummy head's children & to the graph
+        head.getChildren().add(node.getEntityNode().getEntityId());
+        graph.get(head.getEntityNode().getEntityId()).add(node.getEntityNode().getEntityId());
+        // Individually discover the child of every input
+        travel(accountId, appId, entities, graph, null, node);
+      }
+    }
+    exportImg(entities, graph);
+    return DiscoveryResult.builder().entities(entities).links(graph).root(head.getEntityNode().getEntityId()).build();
+  }
+
   public DiscoveryResult discover(String accountId, String appId, String entityId, NGMigrationEntityType entityType) {
     Map<CgEntityId, CgEntityNode> entities = new HashMap<>();
     Map<CgEntityId, Set<CgEntityId>> graph = new HashMap<>();
@@ -103,13 +136,17 @@ public class DiscoveryService {
       throw new IllegalStateException("Root cannot be found!");
     }
     travel(accountId, appId, entities, graph, null, node);
+    exportImg(entities, graph);
+    return DiscoveryResult.builder().entities(entities).links(graph).root(node.getEntityNode().getEntityId()).build();
+  }
+
+  private void exportImg(Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph) {
     MutableGraph vizGraph = getGraphViz(entities, graph);
     try {
       Graphviz.fromGraph(vizGraph).render(Format.PNG).toFile(new File("/tmp/viz-output/viz.png"));
     } catch (IOException e) {
       log.warn("Unable to write visualization to file");
     }
-    return DiscoveryResult.builder().entities(entities).links(graph).root(node.getEntityNode().getEntityId()).build();
   }
 
   public List<NGYamlFile> migrateEntity(String auth, MigrationInputDTO inputDTO, DiscoveryResult discoveryResult) {

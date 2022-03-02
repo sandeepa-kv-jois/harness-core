@@ -62,7 +62,7 @@ public class InstallUtils {
   private static final String helmBaseDir = "./client-tools/helm/";
 
   private static final String chartMuseumVersionOld = "v0.8.2";
-  private static final String chartMuseumVersionNew = "v0.13.0"; // updated version from v0.8.2 to v0.13.0
+  private static final String chartMuseumVersionNew = "v0.12.0"; // updated version from v0.8.2 to v0.12.0
   // to enable IRSA for chartmuseum
   private static final List<String> chartMuseumVersions = Arrays.asList(chartMuseumVersionOld, chartMuseumVersionNew);
   private static final Map<String, String> chartMuseumPaths = new HashMap<>();
