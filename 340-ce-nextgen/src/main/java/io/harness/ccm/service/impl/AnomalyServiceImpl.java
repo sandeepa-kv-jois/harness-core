@@ -26,6 +26,7 @@ import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.TOTAL_COST_I
 
 import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.constants.AnomalyFieldConstants;
+import io.harness.ccm.commons.constants.ViewFieldConstants;
 import io.harness.ccm.commons.dao.anomaly.AnomalyDao;
 import io.harness.ccm.commons.entities.CCMAggregation;
 import io.harness.ccm.commons.entities.CCMField;
@@ -238,6 +239,17 @@ public class AnomalyServiceImpl implements AnomalyService {
         builder.append(anomaly.getWorkloadname());
       }
       return builder.toString();
+    } else if (anomaly.getGcpproject() != null) {
+      builder.append(anomaly.getGcpproject());
+      if (anomaly.getGcpproduct() != null) {
+        builder.append(SEPARATOR);
+        builder.append(anomaly.getGcpproduct());
+      }
+      if (anomaly.getGcpskudescription() != null) {
+        builder.append(SEPARATOR);
+        builder.append(anomaly.getGcpskudescription());
+      }
+      return builder.toString();
     }
     return "";
   }
@@ -245,14 +257,25 @@ public class AnomalyServiceImpl implements AnomalyService {
   private String getResourceInfo(Anomalies anomaly) {
     StringBuilder builder = new StringBuilder();
     if (anomaly.getClustername() != null) {
-      builder.append(AnomalyFieldConstants.CLUSTER);
+      builder.append(ViewFieldConstants.CLUSTER_NAME_FIELD_ID);
       if (anomaly.getNamespace() != null) {
         builder.append(SEPARATOR);
-        builder.append(AnomalyFieldConstants.NAMESPACE);
+        builder.append(ViewFieldConstants.NAMESPACE_FIELD_ID);
       }
       if (anomaly.getWorkloadname() != null) {
         builder.append(SEPARATOR);
-        builder.append(AnomalyFieldConstants.WORKLOAD);
+        builder.append(ViewFieldConstants.WORKLOAD_NAME_FIELD_ID);
+      }
+      return builder.toString();
+    } else if (anomaly.getGcpproject() != null) {
+      builder.append(ViewFieldConstants.GCP_PROJECT_FIELD_ID);
+      if (anomaly.getGcpproduct() != null) {
+        builder.append(SEPARATOR);
+        builder.append(ViewFieldConstants.GCP_PRODUCT_FIELD_ID);
+      }
+      if (anomaly.getGcpskuid() != null) {
+        builder.append(SEPARATOR);
+        builder.append(ViewFieldConstants.GCP_SKU_DESCRIPTION_FIELD_ID);
       }
       return builder.toString();
     }
