@@ -10,7 +10,7 @@ connector:
   type: Vault
   spec:
     vaultUrl: vaultUrl
-    renewIntervalHours: 0
+    renewalIntervalMinutes: 0
     secretEngineName: secret
     secretEngineVersion: 2
     default: false
