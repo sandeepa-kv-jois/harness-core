@@ -263,7 +263,7 @@ public class K8sStepHelper extends CDStepHelper {
       return emptyList();
     }
     return patchesFileContents.stream()
-        .map(patchesFileContent -> engineExpressionService.renderExpression(ambiance, patchesFileContent))
+        .map(patchesFileContent -> engineExpressionService.renderExpression(ambiance, patchesFileContent, false))
         .collect(Collectors.toList());
   }
 
