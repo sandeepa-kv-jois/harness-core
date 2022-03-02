@@ -781,8 +781,7 @@
           "type": "object",
           "required": [
             "credential",
-            "region",
-            "secretNamePrefix"
+            "region"
           ],
           "properties": {
             "credential": {
@@ -4055,7 +4054,7 @@
         {
           "type": "object",
           "required": [
-            "namespace",
+            "renewalIntervalMinutes",
             "vaultUrl"
           ],
           "properties": {
