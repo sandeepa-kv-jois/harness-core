@@ -24,6 +24,10 @@ public class SecretManagerDescriptionConstants {
   public static final String AWS_REGION = "This is the Aws region where aws iam auth will happen.";
   public static final String VAULT_AWS_IAM_HEADER =
       "This is the Aws Iam Header Server ID that has been configured for this Aws Iam instance.";
+  public static final String USE_K8s_AUTH = "Boolean value to indicate if K8s Auth is used for authentication.";
+  public static final String ROLE = "This is the role where K8s auth will happen.";
+  public static final String SERVICE_ACCOUNT_TOKEN_PATH =
+      "This is the SA token path where the token is mounted in the K8s Pod.";
   public static final String VAULT_URL = "URL of the Vault.";
   public static final String READ_ONLY = "Boolean value to indicate if the Secret Manager created is read only.";
   public static final String RENEWAL_INTERVAL_MINUTES = "This is the time interval for token renewal.";

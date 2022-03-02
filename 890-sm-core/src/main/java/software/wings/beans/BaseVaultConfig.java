@@ -72,6 +72,11 @@ public abstract class BaseVaultConfig extends SecretManagerConfig {
   @Attributes(title = "AWS region") private String awsRegion;
   @Attributes(title = "X_VAULT_AWS_IAM_SERVER_ID") private String xVaultAwsIamServerId;
 
+  // added for K8s Auth Method
+  @Attributes(title = "useK8sAuth") private boolean useK8sAuth;
+  @Attributes(title = "role") private String role;
+  @Attributes(title = "serviceAccountTokenPath") private String serviceAccountTokenPath;
+
   public boolean isCertValidationRequired() {
     return isCertValidationRequired;
   }

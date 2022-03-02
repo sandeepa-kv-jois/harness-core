@@ -85,6 +85,7 @@ import io.harness.secretmanagerclient.dto.VaultAgentCredentialDTO;
 import io.harness.secretmanagerclient.dto.VaultAppRoleCredentialDTO;
 import io.harness.secretmanagerclient.dto.VaultAuthTokenCredentialDTO;
 import io.harness.secretmanagerclient.dto.VaultAwsIamRoleCredentialDTO;
+import io.harness.secretmanagerclient.dto.VaultK8sCredentialDTO;
 import io.harness.secretmanagerclient.dto.VaultMetadataRequestSpecDTO;
 import io.harness.secretmanagerclient.dto.VaultMetadataSpecDTO;
 import io.harness.secretmanagerclient.dto.VaultSecretEngineDTO;
@@ -364,6 +365,7 @@ public class NGVaultServiceImpl implements NGVaultService {
     setVaultAgentParams(vaultConfig, specDTO);
     setTokenParam(vaultConfig, specDTO);
     setApproleParams(vaultConfig, specDTO);
+    setK8sAuthParams(vaultConfig, specDTO);
 
     Optional<Set<String>> delegateSelectors =
         Optional.ofNullable(specDTO).map(VaultMetadataRequestSpecDTO::getDelegateSelectors);
@@ -456,6 +458,30 @@ public class NGVaultServiceImpl implements NGVaultService {
                     ((VaultAwsIamRoleCredentialDTO) (x.getSpec())).getXVaultAwsIamServerId().getDecryptedValue()))
             .filter(x -> !x.isEmpty());
     xVaultAwsIamServerId.ifPresent(x -> { vaultConfig.setXVaultAwsIamServerId(x); });
+  }
+
+  private void setK8sAuthParams(BaseVaultConfig vaultConfig, VaultMetadataRequestSpecDTO specDTO) {
+    Optional<String> role = Optional.ofNullable(specDTO)
+                                .filter(x -> x.getAccessType() == AccessType.K8s_AUTH)
+                                .map(x -> ((VaultK8sCredentialDTO) (x.getSpec())).getRole())
+                                .filter(x -> !x.isEmpty());
+    role.ifPresent(x -> {
+      vaultConfig.setAuthToken(null);
+      vaultConfig.setAppRoleId(null);
+      vaultConfig.setSecretId(null);
+      vaultConfig.setSinkPath(null);
+      vaultConfig.setUseVaultAgent(false);
+      vaultConfig.setUseAwsIam(false);
+      vaultConfig.setUseK8sAuth(true);
+      vaultConfig.setRole(x);
+    });
+
+    Optional<String> serviceAccountTokenPath =
+        Optional.ofNullable(specDTO)
+            .filter(x -> x.getAccessType() == AccessType.K8s_AUTH)
+            .map(x -> ((VaultK8sCredentialDTO) (x.getSpec())).getServiceAccountTokenPath())
+            .filter(x -> !x.isEmpty());
+    serviceAccountTokenPath.ifPresent(x -> { vaultConfig.setServiceAccountTokenPath(x); });
   }
 
   private SecretManagerMetadataDTO getAzureKeyVaultMetadata(String accountIdentifier,

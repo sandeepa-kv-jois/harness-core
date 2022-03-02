@@ -8,8 +8,11 @@
 package io.harness.delegate.beans.connector.vaultconnector;
 
 import static io.harness.SecretManagerDescriptionConstants.AWS_REGION;
+import static io.harness.SecretManagerDescriptionConstants.ROLE;
+import static io.harness.SecretManagerDescriptionConstants.SERVICE_ACCOUNT_TOKEN_PATH;
 import static io.harness.SecretManagerDescriptionConstants.SINK_PATH;
 import static io.harness.SecretManagerDescriptionConstants.USE_AWS_IAM;
+import static io.harness.SecretManagerDescriptionConstants.USE_K8s_AUTH;
 import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_HEADER;
 import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_ROLE;
 import static io.harness.annotations.dev.HarnessTeam.PL;
@@ -88,12 +91,17 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @Schema(description = VAULT_AWS_IAM_HEADER)
   @JsonProperty(value = "xvaultAwsIamServerId")
   private SecretRefData headerAwsIam;
+  @Schema(description = USE_K8s_AUTH) private boolean useK8sAuth;
+  @Schema(description = ROLE) private String role;
+  @Schema(description = SERVICE_ACCOUNT_TOKEN_PATH) private String serviceAccountTokenPath;
 
   public AccessType getAccessType() {
     if (useVaultAgent) {
       return AccessType.VAULT_AGENT;
     } else if (useAwsIam) {
       return AccessType.AWS_IAM;
+    } else if (useK8sAuth) {
+      return AccessType.K8s_AUTH;
     } else {
       return isNotEmpty(appRoleId) ? AccessType.APP_ROLE : AccessType.TOKEN;
     }
@@ -127,6 +135,16 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
           "You must use either Vault Agent or Aws Iam Auth method to authenticate. Both can not be used together",
           INVALID_REQUEST, USER);
     }
+    if (isUseVaultAgent() && isUseK8sAuth()) {
+      throw new InvalidRequestException(
+          "You must use either Vault Agent or K8s Auth method to authenticate. Both can not be used together",
+          INVALID_REQUEST, USER);
+    }
+    if (isUseK8sAuth() && isUseAwsIam()) {
+      throw new InvalidRequestException(
+          "You must use either K8s or Aws Iam Auth method to authenticate. Both can not be used together",
+          INVALID_REQUEST, USER);
+    }
     if (isUseVaultAgent()) {
       if (isBlank(getSinkPath())) {
         throw new InvalidRequestException(
@@ -155,6 +173,22 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
         throw new InvalidRequestException(
             "You must provide a delegate selector which can connect to vault using Aws IAM auth method",
             INVALID_REQUEST, USER);
+      }
+    }
+    if (isUseK8sAuth()) {
+      if (isBlank(getRole())) {
+        throw new InvalidRequestException(
+            "You must provide a vault role if you are using Vault with K8s Auth method", INVALID_REQUEST, USER);
+      }
+      if (isBlank(getServiceAccountTokenPath())) {
+        throw new InvalidRequestException(
+            "You must provide the Service Account token path if you are using Vault with K8s Auth method",
+            INVALID_REQUEST, USER);
+      }
+      if (isEmpty(getDelegateSelectors())) {
+        throw new InvalidRequestException(
+            "You must provide a delegate selector which can connect to vault using K8s auth method", INVALID_REQUEST,
+            USER);
       }
     }
   }

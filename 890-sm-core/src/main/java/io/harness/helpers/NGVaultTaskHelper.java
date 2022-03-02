@@ -20,6 +20,9 @@ import io.harness.helpers.ext.vault.VaultAppRoleLoginRequest;
 import io.harness.helpers.ext.vault.VaultAppRoleLoginResponse;
 import io.harness.helpers.ext.vault.VaultAppRoleLoginResult;
 import io.harness.helpers.ext.vault.VaultAwsIamAuthLoginRequest;
+import io.harness.helpers.ext.vault.VaultK8sAuthLoginRequest;
+import io.harness.helpers.ext.vault.VaultK8sLoginResponse;
+import io.harness.helpers.ext.vault.VaultK8sLoginResult;
 import io.harness.helpers.ext.vault.VaultRestClientFactory;
 import io.harness.helpers.ext.vault.VaultSysAuthRestClient;
 
@@ -121,6 +124,42 @@ public class NGVaultTaskHelper {
     }
   }
 
+  public static VaultK8sLoginResult getVaultK8sAuthLoginResult(BaseVaultConfig vaultConfig) {
+    validateVaultConfigK8sAuth(vaultConfig);
+    try {
+      VaultSysAuthRestClient restClient =
+          VaultRestClientFactory.getVaultRetrofit(vaultConfig.getVaultUrl(), vaultConfig.isCertValidationRequired())
+              .create(VaultSysAuthRestClient.class);
+
+      String jwt;
+      try {
+        byte[] content = Files.readAllBytes(Paths.get(vaultConfig.getServiceAccountTokenPath()));
+        jwt = new String(content);
+      } catch (IOException e) {
+        throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR,
+            "Unable to read service account token From the service account token Path: "
+                + vaultConfig.getServiceAccountTokenPath(),
+            e, USER);
+      }
+      log.info("The mounted service account token is {}.", jwt);
+      VaultK8sAuthLoginRequest loginRequest =
+          VaultK8sAuthLoginRequest.builder().role(vaultConfig.getRole()).jwt(jwt).build();
+      Response<VaultK8sLoginResponse> response = restClient.k8sAuthLogin(loginRequest).execute();
+
+      VaultK8sLoginResult result = null;
+      if (response.isSuccessful()) {
+        result = response.body().getAuth();
+      } else {
+        logAndThrowVaultError(vaultConfig, response, "K8s Auth based login");
+      }
+      return result;
+    } catch (IOException e) {
+      String message = "NG: Failed to perform K8s Auth based login for secret manager " + vaultConfig.getName() + " at "
+          + vaultConfig.getVaultUrl();
+      throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR, message, e, USER);
+    }
+  }
+
   private static void validateVaultConfigAwsIam(BaseVaultConfig vaultConfig) {
     if (vaultConfig.isUseAwsIam()) {
       if (isBlank(vaultConfig.getVaultAwsIamRole())) {
@@ -138,6 +177,23 @@ public class NGVaultTaskHelper {
       if (isEmpty(vaultConfig.getDelegateSelectors())) {
         throw new io.harness.exception.SecretManagementException(
             VAULT_OPERATION_ERROR, "You must provide a delegate selector to read token if you are using Aws Iam", USER);
+      }
+    }
+  }
+
+  private static void validateVaultConfigK8sAuth(BaseVaultConfig vaultConfig) {
+    if (vaultConfig.isUseK8sAuth()) {
+      if (isBlank(vaultConfig.getRole())) {
+        throw new io.harness.exception.SecretManagementException(
+            VAULT_OPERATION_ERROR, "You must provide vault role if you are using Vault with K8s Auth method", USER);
+      }
+      if (isBlank(vaultConfig.getServiceAccountTokenPath())) {
+        throw new io.harness.exception.SecretManagementException(VAULT_OPERATION_ERROR,
+            "You must provide service account token path if you are using Vault with K8s Auth method", USER);
+      }
+      if (isEmpty(vaultConfig.getDelegateSelectors())) {
+        throw new io.harness.exception.SecretManagementException(VAULT_OPERATION_ERROR,
+            "You must provide a delegate selector to read token if you are using K8s Auth method", USER);
       }
     }
   }
@@ -174,6 +230,9 @@ public class NGVaultTaskHelper {
     } else if (vaultConfig.isUseAwsIam()) {
       VaultAppRoleLoginResult vaultAwmIamAuthLoginResult = getVaultAwmIamAuthLoginResult(vaultConfig);
       vaultConfig.setAuthToken(vaultAwmIamAuthLoginResult.getClientToken());
+    } else if (vaultConfig.isUseK8sAuth()) {
+      VaultK8sLoginResult vaultK8sLoginResult = getVaultK8sAuthLoginResult(vaultConfig);
+      vaultConfig.setAuthToken(vaultK8sLoginResult.getClientToken());
     }
     return vaultConfig.getAuthToken();
   }
