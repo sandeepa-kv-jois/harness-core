@@ -39,4 +39,7 @@ public class VaultConfigUpdateDTO extends SecretManagerConfigUpdateDTO {
   private String awsRegion;
   private String vaultAwsIamRole;
   private String xVaultAwsIamServerId;
+  private boolean useK8sAuth;
+  private String role;
+  private String serviceAccountTokenPath;
 }

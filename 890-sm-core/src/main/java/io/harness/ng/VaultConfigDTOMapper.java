@@ -48,7 +48,10 @@ public class VaultConfigDTOMapper {
             .description(connector.getDescription())
             .useAwsIam(vaultConnectorDTO.isUseAwsIam())
             .awsRegion(vaultConnectorDTO.getAwsRegion())
-            .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole());
+            .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole())
+            .useK8sAuth(vaultConnectorDTO.isUseK8sAuth())
+            .role(vaultConnectorDTO.getRole())
+            .serviceAccountTokenPath(vaultConnectorDTO.getServiceAccountTokenPath());
 
     if (null != vaultConnectorDTO.getHeaderAwsIam()
         && null != vaultConnectorDTO.getHeaderAwsIam().getDecryptedValue()) {
@@ -93,7 +96,10 @@ public class VaultConfigDTOMapper {
                                               .description(connector.getDescription())
                                               .useAwsIam(vaultConnectorDTO.isUseAwsIam())
                                               .awsRegion(vaultConnectorDTO.getAwsRegion())
-                                              .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole());
+                                              .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole())
+                                              .useK8sAuth(vaultConnectorDTO.isUseK8sAuth())
+                                              .role(vaultConnectorDTO.getRole())
+                                              .serviceAccountTokenPath(vaultConnectorDTO.getServiceAccountTokenPath());
 
     if (null != vaultConnectorDTO.getHeaderAwsIam()
         && null != vaultConnectorDTO.getHeaderAwsIam().getDecryptedValue()) {
