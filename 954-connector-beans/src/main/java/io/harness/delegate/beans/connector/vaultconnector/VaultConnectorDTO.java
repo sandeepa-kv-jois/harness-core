@@ -66,7 +66,9 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @Schema(description = SecretManagerDescriptionConstants.BASE_PATH) private String basePath;
   @NotNull @Schema(description = SecretManagerDescriptionConstants.VAULT_URL) private String vaultUrl;
   @Schema(description = SecretManagerDescriptionConstants.READ_ONLY) private boolean isReadOnly;
-  @Schema(description = SecretManagerDescriptionConstants.RENEWAL_INTERVAL_MINUTES) private long renewalIntervalMinutes;
+  @NotNull
+  @Schema(description = SecretManagerDescriptionConstants.RENEWAL_INTERVAL_MINUTES)
+  private long renewalIntervalMinutes;
   @Schema(description = SecretManagerDescriptionConstants.ENGINE_ENTERED_MANUALLY)
   private boolean secretEngineManuallyConfigured;
   @Schema(description = SecretManagerDescriptionConstants.SECRET_ENGINE_NAME) private String secretEngineName;
@@ -78,7 +80,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @Schema private boolean isDefault;
   @Schema(description = SecretManagerDescriptionConstants.SECRET_ENGINE_VERSION) private int secretEngineVersion;
   @Schema(description = SecretManagerDescriptionConstants.DELEGATE_SELECTORS) private Set<String> delegateSelectors;
-  @NotNull @Schema(description = SecretManagerDescriptionConstants.NAMESPACE) private String namespace;
+  @Schema(description = SecretManagerDescriptionConstants.NAMESPACE) private String namespace;
   @Schema(description = SINK_PATH) private String sinkPath;
   @Schema(description = SecretManagerDescriptionConstants.USE_VAULT_AGENT) private boolean useVaultAgent;
   @Schema(description = USE_AWS_IAM) private boolean useAwsIam;

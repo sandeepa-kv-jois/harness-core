@@ -10,7 +10,6 @@ connector:
   type: Vault
   spec:
     vaultUrl: vaultUrl
-    namespace: namespace
     renewIntervalHours: 0
     secretEngineName: secret
     secretEngineVersion: 2

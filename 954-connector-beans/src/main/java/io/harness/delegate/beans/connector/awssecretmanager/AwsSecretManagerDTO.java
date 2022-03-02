@@ -47,20 +47,18 @@ import lombok.ToString;
 @EqualsAndHashCode(callSuper = true)
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonInclude(JsonInclude.Include.NON_NULL)
-@Schema(name = "AwsSecretManager", description = "Returns AWS Secret Manager configuration details.")
+@Schema(name = "AwsSecretManager", description = SecretManagerDescriptionConstants.AWS_SM_CONFIG)
 public class AwsSecretManagerDTO extends ConnectorConfigDTO implements DelegateSelectable {
-  @Schema(description = "Type of Credential to be used to authenticate AWS KMS")
+  @Schema(description = SecretManagerDescriptionConstants.AWS_AUTH_CRED_SM)
   @Valid
   @NotNull
   AwsSecretManagerCredentialDTO credential;
 
-  @Schema(description = "Region for AWS Secret Manager.") @NotNull private String region;
+  @Schema(description = SecretManagerDescriptionConstants.AWS_REGION_SM) @NotNull private String region;
   @Schema(description = SecretManagerDescriptionConstants.DEFAULT) private boolean isDefault;
   @Schema(description = SecretManagerDescriptionConstants.HARNESS_MANAGED) @JsonIgnore private boolean harnessManaged;
 
-  @NotNull
-  @Schema(description = "Text that is prepended to the Secret name as a prefix.")
-  private String secretNamePrefix;
+  @Schema(description = SecretManagerDescriptionConstants.AWS_SECRET_NAME_PREFIX) private String secretNamePrefix;
   @Schema(description = SecretManagerDescriptionConstants.DELEGATE_SELECTORS) private Set<String> delegateSelectors;
 
   @Builder
@@ -88,7 +86,6 @@ public class AwsSecretManagerDTO extends ConnectorConfigDTO implements DelegateS
   @Override
   public void validate() {
     AwsSecretManagerCredentialType credentialType = this.credential.getCredentialType();
-    Preconditions.checkNotNull(secretNamePrefix, "Secret Name Prefix cannot be empty ");
     Preconditions.checkNotNull(region, "Region cannot be empty");
     if (MANUAL_CONFIG.equals(credentialType)) {
       AwsSMCredentialSpecManualConfigDTO awsKmsManualCredentials =

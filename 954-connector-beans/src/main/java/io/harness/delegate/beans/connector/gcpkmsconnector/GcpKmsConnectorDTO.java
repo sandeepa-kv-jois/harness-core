@@ -44,18 +44,18 @@ import org.hibernate.validator.constraints.NotBlank;
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @Schema(name = "GcpKmsConnector", description = "This contains GCP KMS SecretManager configuration.")
 public class GcpKmsConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable {
-  @NotNull @NotBlank @Schema(description = "ID of the project on GCP.") private String projectId;
-
-  @NotNull @NotBlank @Schema(description = "Location Region.") private String region;
-
   @NotNull
   @NotBlank
-  @Schema(description = "Name of the Key Ring where Google Cloud Symmetric Key is created.")
-  private String keyRing;
+  @Schema(description = SecretManagerDescriptionConstants.GCP_KMS_PROJECT_ID)
+  private String projectId;
 
-  @NotNull @NotBlank @Schema(description = "Name of the Google Cloud Symmetric Key.") private String keyName;
+  @NotNull @NotBlank @Schema(description = SecretManagerDescriptionConstants.GCP_KMS_REGION) private String region;
 
-  @Schema(description = "File Secret which is Service Account Key.")
+  @NotNull @NotBlank @Schema(description = SecretManagerDescriptionConstants.GCP_KEYRING) private String keyRing;
+
+  @NotNull @NotBlank @Schema(description = SecretManagerDescriptionConstants.GCP_KEYNAME) private String keyName;
+
+  @Schema(description = SecretManagerDescriptionConstants.GCP_CRED_FILE)
   @ApiModelProperty(dataType = "string")
   @NotNull
   @SecretReference

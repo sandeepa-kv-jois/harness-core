@@ -40,4 +40,16 @@ public class SecretManagerDescriptionConstants {
   public static final String EXTERNAL_NAME = "External Name.";
   public static final String ASSUME_STS_ROLE_DURATION = "This is the time duration for STS Role.";
   public static final String SINK_PATH = "This is the location at which auth token is to be read from.";
+  public static final String AWS_AUTH_CRED_KMS = "Type of Credential to be used to authenticate AWS KMS.";
+  public static final String AWS_ARN_KMS = "ARN for AWS KMS.";
+  public static final String AWS_REGION_KMS = "Region for AWS KMS.";
+  public static final String AWS_SM_CONFIG = "Returns AWS Secret Manager configuration details.";
+  public static final String AWS_AUTH_CRED_SM = "Type of Credential to be used to authenticate AWS KMS.";
+  public static final String AWS_REGION_SM = "Region for AWS SM.";
+  public static final String AWS_SECRET_NAME_PREFIX = "Text that is prepended to the Secret name as a prefix.";
+  public static final String GCP_KMS_PROJECT_ID = "ID of the project on GCP.";
+  public static final String GCP_KMS_REGION = "Region for GCP KMS";
+  public static final String GCP_KEYRING = "Name of the Key Ring where Google Cloud Symmetric Key is created.";
+  public static final String GCP_KEYNAME = "Name of the Google Cloud Symmetric Key.";
+  public static final String GCP_CRED_FILE = "File Secret which is Service Account Key.";
 }

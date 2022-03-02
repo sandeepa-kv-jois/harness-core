@@ -52,16 +52,16 @@ import lombok.ToString;
 public class AwsKmsConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable {
   @NotNull
   @Valid
-  @Schema(description = "Type of Credential to be used to authenticate AWS KMS")
+  @Schema(description = SecretManagerDescriptionConstants.AWS_AUTH_CRED_KMS)
   AwsKmsConnectorCredentialDTO credential;
 
-  @Schema(description = "ARN for AWS KMS.")
+  @Schema(description = SecretManagerDescriptionConstants.AWS_ARN_KMS)
   @SecretReference
   @ApiModelProperty(dataType = "string")
   @NotNull
   SecretRefData kmsArn;
 
-  @NotNull @Schema(description = "Region for AWS KMS.") private String region;
+  @NotNull @Schema(description = SecretManagerDescriptionConstants.AWS_REGION_KMS) private String region;
   @Schema(description = SecretManagerDescriptionConstants.DEFAULT) private boolean isDefault;
   @Schema(description = SecretManagerDescriptionConstants.HARNESS_MANAGED) @JsonIgnore private boolean harnessManaged;
   @Schema(description = SecretManagerDescriptionConstants.DELEGATE_SELECTORS) private Set<String> delegateSelectors;
@@ -116,9 +116,6 @@ public class AwsKmsConnectorDTO extends ConnectorConfigDTO implements DelegateSe
     }
     if (isEmpty(config.getRoleArn())) {
       throw new InvalidRequestException("Role Arn cannot be Empty.", INVALID_REQUEST, USER);
-    }
-    if (config.getAssumeStsRoleDuration() <= 0) {
-      throw new InvalidRequestException("Invalid value for Assumed Role Duration", INVALID_REQUEST, USER);
     }
   }
 
