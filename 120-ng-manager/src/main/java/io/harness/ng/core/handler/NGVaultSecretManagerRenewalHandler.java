@@ -109,7 +109,7 @@ public class NGVaultSecretManagerRenewalHandler implements Handler<VaultConnecto
   }
 
   private boolean isRenewalNotNeeded(VaultConnector vaultConnector) {
-    return vaultConnector.isUseVaultAgent() || vaultConnector.getUseAwsIam();
+    return vaultConnector.isUseVaultAgent() || vaultConnector.getUseAwsIam() || vaultConnector.getUseK8sAuth();
   }
 
   private SpringFilterExpander getFilterQuery() {

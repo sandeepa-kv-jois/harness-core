@@ -65,6 +65,10 @@ public class VaultConnector extends Connector implements PersistentRegularIterab
   String vaultAwsIamRoleRef;
   String xVaultAwsIamServerIdRef;
 
+  @Builder.Default Boolean useK8sAuth = Boolean.FALSE;
+  String role;
+  String serviceAccountTokenPath;
+
   public long getRenewedAt() {
     if (renewedAt == null) {
       return 0;
@@ -110,5 +114,9 @@ public class VaultConnector extends Connector implements PersistentRegularIterab
 
   public Boolean getUseAwsIam() {
     return useAwsIam == null ? Boolean.FALSE : useAwsIam;
+  }
+
+  public Boolean getUseK8sAuth() {
+    return useK8sAuth == null ? Boolean.FALSE : useK8sAuth;
   }
 }
