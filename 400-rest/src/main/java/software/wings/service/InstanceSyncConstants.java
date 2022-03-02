@@ -16,6 +16,7 @@ public final class InstanceSyncConstants {
   public static final String INFRASTRUCTURE_MAPPING_ID = "infrastructureMappingId";
   public static final String NAMESPACE = "namespace";
   public static final String RELEASE_NAME = "releaseName";
+  public static final String CLUSTER_NAME = "clusterName";
   public static final String CONTAINER_SERVICE_NAME = "containerSvcName";
   public static final String CONTAINER_TYPE = "containerType";
   public static final int TIMEOUT_SECONDS = 600;

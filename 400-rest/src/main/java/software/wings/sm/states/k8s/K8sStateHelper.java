@@ -97,6 +97,7 @@ import java.util.List;
 import java.util.Set;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.LineIterator;
+import org.apache.commons.lang3.StringUtils;
 import org.jetbrains.annotations.NotNull;
 
 @Singleton
@@ -284,6 +285,25 @@ public class K8sStateHelper {
         appId, serviceArtifactVariableNames, serviceId, infrastructureDefinition.getEnvId());
   }
 
+  public List<K8sPod> fetchPodListForCluster(ContainerInfrastructureMapping containerInfrastructureMapping,
+      String namespace, String releaseName, String clusterName) throws K8sPodSyncException, InterruptedException {
+    K8sInstanceSyncTaskParameters k8sInstanceSyncTaskParameters =
+        K8sInstanceSyncTaskParameters.builder()
+            .accountId(containerInfrastructureMapping.getAccountId())
+            .appId(containerInfrastructureMapping.getAppId())
+            .k8sClusterConfig(
+                containerDeploymentManagerHelper.getK8sClusterConfig(containerInfrastructureMapping, null))
+            .namespace(namespace)
+            .releaseName(releaseName)
+            .build();
+
+    if (StringUtils.isNotBlank(clusterName)) {
+      k8sInstanceSyncTaskParameters.getK8sClusterConfig().setClusterName(clusterName);
+    }
+
+    return fetchPodListInternal(containerInfrastructureMapping, releaseName, k8sInstanceSyncTaskParameters);
+  }
+
   public List<K8sPod> fetchPodList(ContainerInfrastructureMapping containerInfrastructureMapping, String namespace,
       String releaseName) throws K8sPodSyncException, InterruptedException {
     K8sInstanceSyncTaskParameters k8sInstanceSyncTaskParameters =
@@ -296,6 +316,12 @@ public class K8sStateHelper {
             .releaseName(releaseName)
             .build();
 
+    return fetchPodListInternal(containerInfrastructureMapping, releaseName, k8sInstanceSyncTaskParameters);
+  }
+
+  private List<K8sPod> fetchPodListInternal(ContainerInfrastructureMapping containerInfrastructureMapping,
+      String releaseName, K8sTaskParameters k8sInstanceSyncTaskParameters)
+      throws K8sPodSyncException, InterruptedException {
     List tags = new ArrayList();
     tags.addAll(awsCommandHelper.getAwsConfigTagsFromK8sConfig(k8sInstanceSyncTaskParameters));
 

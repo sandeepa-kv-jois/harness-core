@@ -111,6 +111,7 @@ public class K8sStateExecutionData extends StateExecutionData implements Delegat
         .delegateSelectors(delegateSelectors)
         .prunedResourcesIds(prunedResourcesIds)
         .exportManifests(exportManifests)
+        .clusterName(clusterName)
         .build();
   }
 }

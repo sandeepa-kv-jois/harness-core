@@ -142,7 +142,7 @@ public class ContainerDeploymentManagerHelper {
           (RancherKubernetesInfrastructureMapping) containerInfraMapping;
       namespace = rancherInfra.getNamespace();
 
-      if (Objects.nonNull(context.getContextElement())
+      if (Objects.nonNull(context) && Objects.nonNull(context.getContextElement())
           && context.getContextElement() instanceof RancherClusterElement) {
         RancherClusterElement element = context.getContextElement();
         clusterName = element.getClusterName();
@@ -193,8 +193,11 @@ public class ContainerDeploymentManagerHelper {
       settingAttribute = settingsService.get(rancherInfra.getComputeProviderSettingId());
       namespace = rancherInfra.getNamespace();
 
-      RancherClusterElement element = context.getContextElement();
-      clusterName = element.getClusterName();
+      if (Objects.nonNull(context) && Objects.nonNull(context.getContextElement())
+          && context.getContextElement() instanceof RancherClusterElement) {
+        RancherClusterElement element = context.getContextElement();
+        clusterName = element.getClusterName();
+      }
     } else if (containerInfraMapping instanceof DirectKubernetesInfrastructureMapping) {
       DirectKubernetesInfrastructureMapping directInfraMapping =
           (DirectKubernetesInfrastructureMapping) containerInfraMapping;

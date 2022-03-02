@@ -25,4 +25,5 @@ public class ContainerMetadata {
   private String containerServiceName;
   private String namespace;
   private String releaseName;
+  private String clusterName;
 }

@@ -26,4 +26,5 @@ public class ContainerInstanceSyncPerpetualTaskClientParams implements Perpetual
   String releaseName;
   String containerSvcName;
   String containerType;
+  String clusterName;
 }

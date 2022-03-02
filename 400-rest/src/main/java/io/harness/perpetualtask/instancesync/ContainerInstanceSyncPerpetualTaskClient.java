@@ -9,6 +9,7 @@ package io.harness.perpetualtask.instancesync;
 
 import static io.harness.beans.DelegateTask.DELEGATE_QUEUE_TIMEOUT;
 
+import static software.wings.service.InstanceSyncConstants.CLUSTER_NAME;
 import static software.wings.service.InstanceSyncConstants.CONTAINER_SERVICE_NAME;
 import static software.wings.service.InstanceSyncConstants.CONTAINER_TYPE;
 import static software.wings.service.InstanceSyncConstants.HARNESS_APPLICATION_ID;
@@ -59,6 +60,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.experimental.FieldDefaults;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 
 @Slf4j
 @FieldDefaults(level = AccessLevel.PRIVATE)
@@ -198,6 +200,8 @@ public class ContainerInstanceSyncPerpetualTaskClient implements PerpetualTaskSe
     boolean isK8sContainerType = isK8sContainerType(clientParams);
     SettingAttribute settingAttribute = getSettingAttribute(isK8sContainerType, containerInfrastructureMapping);
 
+    String clusterName = clientParams.getOrDefault(
+        CLUSTER_NAME, emptyIfNull(getClusterName(isK8sContainerType, containerInfrastructureMapping)));
     return ContainerInstanceSyncPerpetualTaskData.builder()
         .containerType(emptyIfNull(clientParams.get(CONTAINER_TYPE)))
         .accountId(containerInfrastructureMapping.getAccountId())
@@ -205,8 +209,8 @@ public class ContainerInstanceSyncPerpetualTaskClient implements PerpetualTaskSe
         .namespace(emptyIfNull(clientParams.get(NAMESPACE)))
         .releaseName(emptyIfNull(clientParams.get(RELEASE_NAME)))
         .containerServiceName(emptyIfNull(clientParams.get(CONTAINER_SERVICE_NAME)))
-        .k8sClusterConfig(getK8sClusterConfig(isK8sContainerType, containerInfrastructureMapping))
-        .clusterName(emptyIfNull(getClusterName(isK8sContainerType, containerInfrastructureMapping)))
+        .k8sClusterConfig(getK8sClusterConfig(isK8sContainerType, containerInfrastructureMapping, clusterName))
+        .clusterName(clusterName)
         .settingAttribute(settingAttribute)
         .encryptionDetails(getEncryptedDataDetails(settingAttribute, containerInfrastructureMapping))
         .region(emptyIfNull(getRegion(containerInfrastructureMapping)))
@@ -230,10 +234,15 @@ public class ContainerInstanceSyncPerpetualTaskClient implements PerpetualTaskSe
                                : null;
   }
   private K8sClusterConfig getK8sClusterConfig(
-      boolean isK8sContainerType, ContainerInfrastructureMapping containerInfrastructureMapping) {
-    return isK8sContainerType
-        ? containerDeploymentManagerHelper.getK8sClusterConfig(containerInfrastructureMapping, null)
-        : null;
+      boolean isK8sContainerType, ContainerInfrastructureMapping containerInfrastructureMapping, String clusterName) {
+    K8sClusterConfig k8sClusterConfig =
+        containerDeploymentManagerHelper.getK8sClusterConfig(containerInfrastructureMapping, null);
+
+    if (StringUtils.isNotBlank(clusterName)) {
+      k8sClusterConfig.setClusterName(clusterName);
+    }
+
+    return isK8sContainerType ? k8sClusterConfig : null;
   }
 
   private List<EncryptedDataDetail> getEncryptedDataDetails(

@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import static software.wings.service.InstanceSyncConstants.CLUSTER_NAME;
 import static software.wings.service.InstanceSyncConstants.CONTAINER_SERVICE_NAME;
 import static software.wings.service.InstanceSyncConstants.CONTAINER_TYPE;
 import static software.wings.service.InstanceSyncConstants.HARNESS_APPLICATION_ID;
@@ -59,6 +60,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
@@ -99,6 +101,7 @@ public class ContainerInstanceSyncPerpetualTaskCreator extends AbstractInstanceS
                    .containerServiceName(getContainerSvcNameIfAvailable(containerInfo))
                    .namespace(getNamespaceIfAvailable(containerInfo))
                    .releaseName(getReleaseNameIfAvailable(containerInfo))
+                   .clusterName(containerInfo.getClusterName())
                    .build())
         .collect(Collectors.toSet());
   }
@@ -143,6 +146,7 @@ public class ContainerInstanceSyncPerpetualTaskCreator extends AbstractInstanceS
                        .releaseName(record.getClientContext().getClientParams().get(InstanceSyncConstants.RELEASE_NAME))
                        .type(extractContainerMetadataType(
                            record.getClientContext().getClientParams().get(InstanceSyncConstants.CONTAINER_TYPE)))
+                       .clusterName(record.getClientContext().getClientParams().get(CLUSTER_NAME))
                        .build())
             .collect(Collectors.toSet());
 
@@ -175,6 +179,7 @@ public class ContainerInstanceSyncPerpetualTaskCreator extends AbstractInstanceS
                    .namespace(containerMetadata.getNamespace())
                    .releaseName(containerMetadata.getReleaseName())
                    .containerType(nonNull(containerMetadata.getType()) ? containerMetadata.getType().name() : null)
+                   .clusterName(containerMetadata.getClusterName())
                    .build())
         .map(params -> create(params, infrastructureMapping))
         .collect(Collectors.toList());
@@ -189,6 +194,10 @@ public class ContainerInstanceSyncPerpetualTaskCreator extends AbstractInstanceS
     clientParamMap.put(RELEASE_NAME, clientParams.getReleaseName());
     clientParamMap.put(CONTAINER_SERVICE_NAME, clientParams.getContainerSvcName());
     clientParamMap.put(CONTAINER_TYPE, Utils.emptyIfNull(clientParams.getContainerType()));
+
+    if (Objects.nonNull(clientParams.getClusterName())) {
+      clientParamMap.put(CLUSTER_NAME, clientParams.getClusterName());
+    }
 
     PerpetualTaskClientContext clientContext =
         PerpetualTaskClientContext.builder().clientParams(clientParamMap).build();
@@ -262,6 +271,7 @@ public class ContainerInstanceSyncPerpetualTaskCreator extends AbstractInstanceS
                    .type(K8S)
                    .releaseName(k8sDeploymentInfo.getReleaseName())
                    .namespace(namespace)
+                   .clusterName(k8sDeploymentInfo.getClusterName())
                    .build())
         .collect(Collectors.toSet());
   }

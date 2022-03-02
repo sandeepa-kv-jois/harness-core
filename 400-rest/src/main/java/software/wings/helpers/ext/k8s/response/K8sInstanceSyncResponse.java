@@ -26,4 +26,5 @@ public class K8sInstanceSyncResponse implements K8sTaskResponse {
   String releaseName;
   String namespace;
   List<K8sPod> k8sPodInfoList;
+  String clusterName;
 }
