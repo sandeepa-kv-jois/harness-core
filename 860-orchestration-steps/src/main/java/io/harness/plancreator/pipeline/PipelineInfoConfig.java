@@ -17,6 +17,7 @@ import io.harness.plancreator.flowcontrol.FlowControlConfig;
 import io.harness.plancreator.stages.StageElementWrapperConfig;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
+import io.harness.template.yaml.TemplateLinkConfig;
 import io.harness.validator.NGRegexValidatorConstants;
 import io.harness.yaml.core.properties.NGProperties;
 import io.harness.yaml.core.timeout.Timeout;
@@ -74,6 +75,8 @@ public class PipelineInfoConfig {
   @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH)
   @Pattern(regexp = NGRegexValidatorConstants.TIMEOUT_PATTERN)
   ParameterField<Timeout> timeout;
+
+  TemplateLinkConfig template;
 
   boolean allowStageExecutions;
 }
