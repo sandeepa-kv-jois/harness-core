@@ -7,8 +7,6 @@
 
 package io.harness.ccm.commons.entities.anomaly;
 
-import io.harness.ccm.commons.entities.CCMField;
-
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Value;
@@ -18,13 +16,13 @@ import lombok.experimental.FieldDefaults;
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class EntityInfo {
-  CCMField field;
+  String field;
   String clusterName;
   String clusterId;
   String namespace;
   String workloadName;
   String workloadType;
-  String gcpProject;
+  String gcpProjectId;
   String gcpProduct;
   String gcpSKUId;
   String gcpSKUDescription;

@@ -12,19 +12,13 @@ import static io.harness.ccm.commons.entities.CCMAggregationOperation.SUM;
 import static io.harness.ccm.commons.entities.CCMField.ACTUAL_COST;
 import static io.harness.ccm.commons.entities.CCMField.ALL;
 import static io.harness.ccm.commons.entities.CCMField.CLOUD_PROVIDER;
-import static io.harness.ccm.commons.entities.CCMField.CLUSTER_NAME;
 import static io.harness.ccm.commons.entities.CCMField.COST_IMPACT;
-import static io.harness.ccm.commons.entities.CCMField.GCP_PRODUCT;
-import static io.harness.ccm.commons.entities.CCMField.GCP_SKU_ID;
-import static io.harness.ccm.commons.entities.CCMField.NAMESPACE;
 import static io.harness.ccm.commons.entities.CCMField.STATUS;
-import static io.harness.ccm.commons.entities.CCMField.WORKLOAD;
 import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.ANOMALIES_BY_CLOUD_PROVIDERS;
 import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.ANOMALIES_BY_STATUS;
 import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.TOP_N_ANOMALIES;
 import static io.harness.ccm.commons.entities.anomaly.AnomalyWidget.TOTAL_COST_IMPACT;
 
-import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.constants.AnomalyFieldConstants;
 import io.harness.ccm.commons.constants.ViewFieldConstants;
 import io.harness.ccm.commons.dao.anomaly.AnomalyDao;
@@ -51,8 +45,12 @@ import io.harness.timescaledb.tables.pojos.Anomalies;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
 import org.jooq.Condition;
@@ -97,10 +95,11 @@ public class AnomalyServiceImpl implements AnomalyService {
     CEView perspective = viewService.get(perspectiveId);
     CCMFilter filters =
         perspectiveToAnomalyQueryHelper.getConvertedFiltersForPerspective(perspective, perspectiveQuery);
-    List<AnomalyData> anomalyData = listAnomalies(accountIdentifier, AnomalyQueryDTO.builder().filter(filters).build());
+    List<AnomalyData> anomalyData = listAnomalies(accountIdentifier,
+        AnomalyQueryDTO.builder().filter(filters).orderBy(Collections.emptyList()).limit(1000).offset(0).build());
     log.info("Anomalies for perspective: {}", anomalyData);
     // Todo: Add perspective query to anomaly query mapping
-    return Collections.singletonList(buildDummyPerspectiveAnomalyData());
+    return buildPerspectiveAnomalyData(anomalyData);
   }
 
   @Override
@@ -207,6 +206,45 @@ public class AnomalyServiceImpl implements AnomalyService {
         .build();
   }
 
+  private List<PerspectiveAnomalyData> buildPerspectiveAnomalyData(List<AnomalyData> anomalies) {
+    Map<Long, PerspectiveAnomalyData> timestampToAnomaly = new HashMap<>();
+    for (AnomalyData data : anomalies) {
+      Long anomalyTime = data.getTime();
+      if (timestampToAnomaly.containsKey(anomalyTime)) {
+        timestampToAnomaly.put(anomalyTime, getUpdatedPerspectiveAnomaly(data, timestampToAnomaly.get(anomalyTime)));
+      } else {
+        timestampToAnomaly.put(anomalyTime, getPerspectiveAnomaly(data));
+      }
+    }
+    List<PerspectiveAnomalyData> perspectiveAnomalies = new ArrayList<>(timestampToAnomaly.values());
+    perspectiveAnomalies.sort(Comparator.comparing(PerspectiveAnomalyData::getTimestamp));
+    return perspectiveAnomalies;
+  }
+
+  private PerspectiveAnomalyData getUpdatedPerspectiveAnomaly(
+      AnomalyData anomaly, PerspectiveAnomalyData cumulativeAnomalies) {
+    return PerspectiveAnomalyData.builder()
+        .timestamp(anomaly.getTime())
+        .anomalyCount(1 + cumulativeAnomalies.getAnomalyCount())
+        .actualCost(anomaly.getActualAmount() + cumulativeAnomalies.getActualCost())
+        .differenceFromExpectedCost(anomaly.getActualAmount() - anomaly.getExpectedAmount()
+            + cumulativeAnomalies.getDifferenceFromExpectedCost())
+        .associatedResources(cumulativeAnomalies.getAssociatedResources())
+        .resourceType(cumulativeAnomalies.getResourceType())
+        .build();
+  }
+
+  private PerspectiveAnomalyData getPerspectiveAnomaly(AnomalyData anomaly) {
+    return PerspectiveAnomalyData.builder()
+        .timestamp(anomaly.getTime())
+        .anomalyCount(1)
+        .actualCost(anomaly.getActualAmount())
+        .differenceFromExpectedCost(anomaly.getActualAmount() - anomaly.getExpectedAmount())
+        .associatedResources(Arrays.asList(anomaly.getEntity()))
+        .resourceType("")
+        .build();
+  }
+
   private String getRelativeTime(long anomalyTime, String template) {
     long currentTime = System.currentTimeMillis();
     long timeDiff = currentTime - anomalyTime;
@@ -291,7 +329,7 @@ public class AnomalyServiceImpl implements AnomalyService {
         .namespace(anomaly.getNamespace())
         .workloadName(anomaly.getWorkloadname())
         .workloadType(anomaly.getWorkloadtype())
-        .gcpProject(anomaly.getGcpproject())
+        .gcpProjectId(anomaly.getGcpproject())
         .gcpSKUId(anomaly.getGcpskuid())
         .gcpSKUDescription(anomaly.getGcpskudescription())
         .gcpProduct(anomaly.getGcpproduct())
@@ -302,22 +340,23 @@ public class AnomalyServiceImpl implements AnomalyService {
         .build();
   }
 
-  private CCMField getGroupByField(Anomalies anomaly) {
+  private String getGroupByField(Anomalies anomaly) {
     if (anomaly.getClustername() != null) {
       if (anomaly.getWorkloadname() != null) {
-        return WORKLOAD;
+        return ViewFieldConstants.WORKLOAD_NAME_FIELD_ID;
       }
       if (anomaly.getNamespace() != null) {
-        return NAMESPACE;
+        return ViewFieldConstants.NAMESPACE_FIELD_ID;
       }
-      return CLUSTER_NAME;
+      return ViewFieldConstants.CLUSTER_NAME_FIELD_ID;
     } else if (anomaly.getGcpproject() != null) {
-      if (anomaly.getGcpskuid() != null) {
-        return GCP_SKU_ID;
+      if (anomaly.getGcpskudescription() != null) {
+        return ViewFieldConstants.GCP_SKU_DESCRIPTION_FIELD_ID;
       }
       if (anomaly.getGcpproduct() != null) {
-        return GCP_PRODUCT;
+        return ViewFieldConstants.GCP_PRODUCT_FIELD_ID;
       }
+      return ViewFieldConstants.GCP_PROJECT_FIELD_ID;
     }
     return null;
   }
@@ -340,19 +379,6 @@ public class AnomalyServiceImpl implements AnomalyService {
         .orderBy(new ArrayList<>())
         .limit(DEFAULT_LIMIT)
         .offset(DEFAULT_OFFSET)
-        .build();
-  }
-
-  // Todo: remove these dummy response methods
-  private PerspectiveAnomalyData buildDummyPerspectiveAnomalyData() {
-    long anomalyTime = BudgetUtils.getStartOfCurrentDay() - 3 * BudgetUtils.ONE_DAY_MILLIS;
-    return PerspectiveAnomalyData.builder()
-        .timestamp(anomalyTime)
-        .anomalyCount(1)
-        .actualCost(137.22)
-        .differenceFromExpectedCost(120.21)
-        .associatedResources(Collections.singletonList("sample-ce-dev"))
-        .resourceType("cluster")
         .build();
   }
 

@@ -45,11 +45,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import lombok.NonNull;
 
 public class PerspectiveToAnomalyQueryHelper {
   @Inject ViewsQueryBuilder viewsQueryBuilder;
 
-  public List<CCMGroupBy> convertGroupBy(List<QLCEViewGroupBy> groupByList) {
+  public List<CCMGroupBy> convertGroupBy(@NonNull List<QLCEViewGroupBy> groupByList) {
     List<CCMGroupBy> convertedGroupByList = new ArrayList<>();
     groupByList.forEach(groupBy -> {
       if (groupBy.getEntityGroupBy() != null) {
@@ -178,7 +179,11 @@ public class PerspectiveToAnomalyQueryHelper {
   }
 
   public CCMFilter getConvertedFiltersForPerspective(CEView view, PerspectiveQueryDTO perspectiveQuery) {
-    List<CCMGroupBy> convertedGroupBy = convertGroupBy(perspectiveQuery.getGroupBy());
+    if (perspectiveQuery == null) {
+      return null;
+    }
+    List<CCMGroupBy> convertedGroupBy =
+        convertGroupBy(perspectiveQuery.getGroupBy() != null ? perspectiveQuery.getGroupBy() : Collections.emptyList());
     if (convertedGroupBy.isEmpty()) {
       convertedGroupBy = convertGroupBy(getPerspectiveDefaultGroupBy(view));
     }
@@ -186,7 +191,8 @@ public class PerspectiveToAnomalyQueryHelper {
     // Filters from group by
     allFilters.add(covertGroupByToFilter(convertedGroupBy));
     // Filters from perspective query
-    allFilters.add(convertFilters(perspectiveQuery.getFilters()));
+    allFilters.add(convertFilters(
+        perspectiveQuery.getFilters() != null ? perspectiveQuery.getFilters() : Collections.emptyList()));
     // Default perspective filters
     allFilters.add(convertFilters(getPerspectiveDefaultFilters(view)));
 
