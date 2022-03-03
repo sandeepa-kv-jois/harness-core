@@ -79,14 +79,19 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 @OwnedBy(PIPELINE)
+@Slf4j
 public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extends AbstractStepPlanCreator<T> {
   @Override
   public PlanCreationResponse createPlanForField(PlanCreationContext ctx, T stepElement) {
     boolean isStepInsideRollback = false;
+    long start = System.currentTimeMillis();
     if (YamlUtils.findParentNode(ctx.getCurrentField().getNode(), ROLLBACK_STEPS) != null) {
       isStepInsideRollback = true;
     }
+    YamlUtils.getFullyQualifiedName(ctx.getCurrentField().getNode());
+    log.info("[PlanCreator_shelltime] shell deserialize time {}ms", System.currentTimeMillis() - start);
 
     List<AdviserObtainment> adviserObtainmentFromMetaData = getAdviserObtainmentFromMetaData(ctx.getCurrentField());
 

@@ -314,7 +314,7 @@ public class ExecutionHelper {
                                                       .put(SetupAbstractionKeys.projectIdentifier, projectIdentifier)
                                                       .build();
       long endTs = System.currentTimeMillis();
-      log.info("Time taken to complete plan: {} ", endTs - startTs);
+      log.info("[PMS_PLAN] Time taken to complete plan: {}ms ", endTs - startTs);
       if (isRetry) {
         Plan newPlan = retryExecutionHelper.transformPlan(plan, identifierOfSkipStages, previousExecutionId);
         return orchestrationService.startExecution(newPlan, abstractions, executionMetadata, planExecutionMetadata);
