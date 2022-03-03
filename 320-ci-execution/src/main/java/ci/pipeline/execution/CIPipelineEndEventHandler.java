@@ -67,8 +67,8 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     sendCIExecutedEvent(ambiance, event, moduleInfo, identity, accountId);
   }
 
-  private void sendCIExecutedEvent(Ambiance ambiance, OrchestrationEvent eventx1, CIPipelineModuleInfo moduleInfo,
-      String identity, String accountId) {
+  private void sendCIExecutedEvent(
+      Ambiance ambiance, OrchestrationEvent event, CIPipelineModuleInfo moduleInfo, String identity, String accountId) {
     HashMap<String, Object> ciBuiltMap = new HashMap<>();
 
     StepElementParameters stepElementParameters = (StepElementParameters) event.getResolvedStepParameters();
