@@ -541,6 +541,9 @@ public class EngineExpressionEvaluator {
     public String resolve(String expression) {
       try {
         Object value = engineExpressionEvaluator.evaluateExpressionBlock(expression, ctx, depth);
+        if (value == null) {
+          unresolvedExpressions.add(expression);
+        }
         return String.valueOf(value);
       } catch (UnresolvedExpressionsException ex) {
         unresolvedExpressions.addAll(ex.fetchExpressions());

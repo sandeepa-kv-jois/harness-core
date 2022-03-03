@@ -17,6 +17,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.exception.UnresolvedExpressionsException;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableList;
@@ -377,7 +378,13 @@ public class EngineExpressionEvaluatorTest extends CategoryTest {
 
     assertThat(evaluator.renderExpression("<+a> + <+d>")).isEqualTo("5 + 5");
     assertThat(evaluator.renderExpression("<+a> + <+b> + <+c> + <+d>")).isEqualTo("5 + null + abc + 5");
+    assertThatThrownBy(() -> evaluator.renderExpression("<+a> + <+b> + <+c> + <+d>", false))
+        .isInstanceOf(UnresolvedExpressionsException.class)
+        .hasMessage("Unresolved expressions: b");
     assertThat(evaluator.renderExpression("<+a> + <+b> + <+c> + <+d>", true)).isEqualTo("5 + null + abc + 5");
+    assertThatThrownBy(() -> evaluator.renderExpression("<+a> + <+b> + <+c> + <+d>>", false))
+        .isInstanceOf(UnresolvedExpressionsException.class)
+        .hasMessage("Unresolved expressions: b");
   }
 
   @Value
