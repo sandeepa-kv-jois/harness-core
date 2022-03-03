@@ -12,8 +12,6 @@ import static io.harness.telemetry.Destination.AMPLITUDE;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.ci.plan.creator.execution.CIPipelineModuleInfo;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
-import io.harness.engine.executions.node.NodeExecutionService;
-import io.harness.execution.NodeExecution;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
@@ -29,26 +27,20 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.List;
 
 @Singleton
 public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
   @Inject CIAccountExecutionMetadataRepository ciAccountExecutionMetadataRepository;
   @Inject TelemetryReporter telemetryReporter;
-  @Inject NodeExecutionService nodeExecutionService;
   @Inject private ConnectorUtils connectorUtils;
 
   private static final String CI_EXECUTED = "ci_built";
-  private static final String NODE_EXECUTED = "step_executed";
   private static final String USED_CODEBASE = "used_codebase";
   private static final String URL = "url";
   private static final String BRANCH = "branch";
   private static final String BUILD_TYPE = "build_type";
   private static final String PRIVATE_REPO = "private_repo";
   private static final String REPO_NAME = "repo_name";
-  private static final String STEP_DURATION = "step_execution_duration";
-  private static final String STEP_TYPE = "step_execution_type";
-  private static final String STEP_ID = "step_execution_id";
 
   @Override
   public void handleEvent(OrchestrationEvent event) {
@@ -71,14 +63,12 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     Ambiance ambiance = event.getAmbiance();
     String identity = ambiance.getMetadata().getTriggerInfo().getTriggeredBy().getExtraInfoMap().get("email");
     String accountId = AmbianceUtils.getAccountId(ambiance);
-    String planExecutionId = ambiance.getPlanExecutionId();
 
     sendCIExecutedEvent(ambiance, event, moduleInfo, identity, accountId);
-    sendNodeExecutedEvent(identity, accountId, planExecutionId);
   }
 
-  private void sendCIExecutedEvent(
-      Ambiance ambiance, OrchestrationEvent event, CIPipelineModuleInfo moduleInfo, String identity, String accountId) {
+  private void sendCIExecutedEvent(Ambiance ambiance, OrchestrationEvent eventx1, CIPipelineModuleInfo moduleInfo,
+      String identity, String accountId) {
     HashMap<String, Object> ciBuiltMap = new HashMap<>();
 
     StepElementParameters stepElementParameters = (StepElementParameters) event.getResolvedStepParameters();
@@ -102,19 +92,6 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     telemetryReporter.sendTrackEvent(CI_EXECUTED, identity, accountId, ciBuiltMap,
         Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
         io.harness.telemetry.TelemetryOption.builder().sendForCommunity(false).build());
-  }
-
-  private void sendNodeExecutedEvent(String identity, String accountId, String planExecutionId) {
-    List<NodeExecution> nodeExecutionList = nodeExecutionService.fetchNodeExecutions(planExecutionId);
-    for (NodeExecution nodeExecution : nodeExecutionList) {
-      HashMap<String, Object> nodeExecutedMap = new HashMap<>();
-      nodeExecutedMap.put(STEP_ID, nodeExecution.getOriginalNodeExecutionId());
-      nodeExecutedMap.put(STEP_DURATION, (nodeExecution.getEndTs() - nodeExecution.getStartTs()) / 1000);
-      nodeExecutedMap.put(STEP_TYPE, nodeExecution.getNodeType());
-      telemetryReporter.sendTrackEvent(NODE_EXECUTED, identity, accountId, nodeExecutedMap,
-          Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL,
-          io.harness.telemetry.TelemetryOption.builder().sendForCommunity(false).build());
-    }
   }
 
   private BaseNGAccess retrieveBaseNGAccess(Ambiance ambiance) {
