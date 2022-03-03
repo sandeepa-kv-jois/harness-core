@@ -15,12 +15,23 @@ import static io.harness.ng.core.mapper.TagMapper.convertToMap;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.resourcegroup.beans.ScopeFilterType;
+import io.harness.resourcegroup.v1.model.DynamicResourceSelector;
+import io.harness.resourcegroup.v1.model.ResourceSelector;
+import io.harness.resourcegroup.v1.model.ResourceSelectorByScope;
+import io.harness.resourcegroup.v1.model.StaticResourceSelector;
+import io.harness.resourcegroup.v2.model.ResourceFilter;
 import io.harness.resourcegroup.v2.model.ResourceGroup;
+import io.harness.resourcegroup.v2.model.ScopeSelector;
 import io.harness.resourcegroup.v2.remote.dto.ResourceGroupDTO;
 import io.harness.resourcegroupclient.remote.v2.ResourceGroupResponse;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -84,5 +95,61 @@ public class ResourceGroupMapper {
         .resourceGroup(toDTO(resourceGroup))
         .harnessManaged(Boolean.TRUE.equals(resourceGroup.getHarnessManaged()))
         .build();
+  }
+
+  public static ResourceGroup fromV1(io.harness.resourcegroup.v1.model.ResourceGroup resourceGroup) {
+    if (resourceGroup == null) {
+      return null;
+    }
+
+    ResourceGroup resourceGroupV2 =
+        ResourceGroup.builder()
+            .accountIdentifier(resourceGroup.getAccountIdentifier())
+            .orgIdentifier(resourceGroup.getOrgIdentifier())
+            .projectIdentifier(resourceGroup.getProjectIdentifier())
+            .identifier(resourceGroup.getIdentifier())
+            .name(resourceGroup.getName())
+            .color(isBlank(resourceGroup.getColor()) ? HARNESS_BLUE : resourceGroup.getColor())
+            .tags(convertToList((Map<String, String>) resourceGroup.getTags()))
+            .description(resourceGroup.getDescription())
+            .allowedScopeLevels(
+                resourceGroup.getAllowedScopeLevels() == null ? new HashSet<>() : resourceGroup.getAllowedScopeLevels())
+            .build();
+
+    List<ResourceFilter> resourceFilter = new ArrayList<>();
+    List<ScopeSelector> includedScopes = new ArrayList<>();
+
+    AtomicBoolean includeChildScopes = new AtomicBoolean(false);
+
+    for (Iterator<ResourceSelector> iterator = resourceGroup.getResourceSelectors().iterator(); iterator.hasNext();) {
+      ResourceSelector resourceSelector = iterator.next();
+      if (resourceSelector instanceof StaticResourceSelector) {
+        resourceFilter.add(ResourceFilter.builder()
+                               .resourceType(((StaticResourceSelector) resourceSelector).getResourceType())
+                               .identifiers(((StaticResourceSelector) resourceSelector).getIdentifiers())
+                               .build());
+      } else if (resourceSelector instanceof DynamicResourceSelector) {
+        resourceFilter.add(ResourceFilter.builder()
+                               .resourceType(((DynamicResourceSelector) resourceSelector).getResourceType())
+                               .build());
+        if (((DynamicResourceSelector) resourceSelector).getIncludeChildScopes()) {
+          includeChildScopes.set(true);
+        }
+      } else if (resourceSelector instanceof ResourceSelectorByScope) {
+        if (((ResourceSelectorByScope) resourceSelector).isIncludeChildScopes()) {
+          includeChildScopes.set(true);
+        }
+      }
+    }
+
+    includedScopes.add(ScopeSelector.builder()
+                           .accountIdentifier(resourceGroup.getAccountIdentifier())
+                           .orgIdentifier(resourceGroup.getOrgIdentifier())
+                           .projectIdentifier(resourceGroup.getProjectIdentifier())
+                           .filter(includeChildScopes.get() ? ScopeFilterType.INCLUDING_CHILD_SCOPES
+                                                            : ScopeFilterType.EXCLUDING_CHILD_SCOPES)
+                           .build());
+
+    return resourceGroupV2;
   }
 }

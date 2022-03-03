@@ -104,6 +104,21 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     return ResourceGroupMapper.toResponseWrapper(create(resourceGroup));
   }
 
+  @Override
+  public Optional<ResourceGroupResponse> upsert(io.harness.resourcegroup.v1.model.ResourceGroup resourceGroup) {
+    Optional<ResourceGroup> resourceGroupOpt =
+        getResourceGroup(Scope.of(resourceGroup.getAccountIdentifier(), resourceGroup.getOrgIdentifier(),
+                             resourceGroup.getProjectIdentifier()),
+            resourceGroup.getIdentifier(), null);
+    ResourceGroup resourceGroupV2 = ResourceGroupMapper.fromV1(resourceGroup);
+    if (!resourceGroupOpt.isPresent()) {
+      return Optional.ofNullable(ResourceGroupMapper.toResponseWrapper(create(resourceGroupV2)));
+    } else {
+      return Optional.ofNullable(
+          update(ResourceGroupMapper.toDTO(resourceGroupV2), resourceGroupV2.getHarnessManaged()).orElse(null));
+    }
+  }
+
   private Criteria getResourceGroupFilterCriteria(ResourceGroupFilterDTO resourceGroupFilterDTO) {
     Criteria criteria = new Criteria();
     if (isNotEmpty(resourceGroupFilterDTO.getIdentifierFilter())) {

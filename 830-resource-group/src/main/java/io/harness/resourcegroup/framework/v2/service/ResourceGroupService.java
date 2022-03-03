@@ -24,6 +24,8 @@ import org.springframework.data.domain.Page;
 public interface ResourceGroupService {
   ResourceGroupResponse create(ResourceGroupDTO resourceGroupDTO, boolean harnessManaged);
 
+  Optional<ResourceGroupResponse> upsert(io.harness.resourcegroup.v1.model.ResourceGroup resourceGroup);
+
   Page<ResourceGroupResponse> list(ResourceGroupFilterDTO resourceGroupFilterDTO, PageRequest pageRequest);
 
   Page<ResourceGroupResponse> list(Scope scope, PageRequest pageRequest, String searchTerm);
