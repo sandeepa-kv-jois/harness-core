@@ -139,14 +139,15 @@ public class CustomHealthMetricCVConfig extends MetricCVConfig {
     return metricPack;
   }
 
-  public static class CustomHealthCVConfigUpdatableEntity
+  public static class CustomHealthMetricCVConfigUpdatableEntity
       extends MetricCVConfigUpdatableEntity<CustomHealthMetricCVConfig, CustomHealthMetricCVConfig> {
     @Override
     public void setUpdateOperations(UpdateOperations<CustomHealthMetricCVConfig> updateOperations,
         CustomHealthMetricCVConfig customHealthCVConfig) {
       setCommonOperations(updateOperations, customHealthCVConfig);
       updateOperations.set(CustomHealthMetricCVConfigKeys.groupName, customHealthCVConfig.getGroupName())
-          .set(CustomHealthMetricCVConfigKeys.metricDefinitions, customHealthCVConfig.getMetricDefinitions());
+          .set(CustomHealthMetricCVConfigKeys.metricDefinitions, customHealthCVConfig.getMetricDefinitions())
+          .set(CustomHealthMetricCVConfigKeys.queryType, customHealthCVConfig.getQueryType());
     }
   }
 

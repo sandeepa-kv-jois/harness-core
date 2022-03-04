@@ -7,8 +7,6 @@
 
 package io.harness.cvng.core.beans.monitoredService.healthSouceSpec;
 
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
@@ -17,7 +15,6 @@ import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
-import io.harness.cvng.core.validators.UniqueIdentifierCheck;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.Sets;
@@ -40,7 +37,7 @@ import lombok.experimental.SuperBuilder;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class CustomHealthSourceLogSpec extends HealthSourceSpec {
-  @UniqueIdentifierCheck List<CustomHealthLogDefinition> logDefinitions = new ArrayList<>();
+  List<CustomHealthLogDefinition> logDefinitions = new ArrayList<>();
 
   @Data
   @Builder
@@ -99,12 +96,14 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
               .envIdentifier(environmentRef)
               .serviceIdentifier(serviceRef)
               .monitoringSourceName(name)
+              .connectorIdentifier(getConnectorRef())
               .identifier(identifier)
               .monitoredServiceIdentifier(monitoredServiceIdentifier)
               .logMessageJsonPath(logDefinition.getLogMessageJsonPath())
               .timestampJsonPath(logDefinition.getTimestampJsonPath())
               .serviceInstanceJsonPath(logDefinition.getServiceInstanceJsonPath())
               .queryName(queryName)
+              .query("")
               .category(CVMonitoringCategory.ERRORS)
               .requestDefinition(CustomHealthRequestDefinition.builder()
                                      .requestBody(requestDefinition.getRequestBody())

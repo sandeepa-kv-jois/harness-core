@@ -24,6 +24,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldDefaults;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.SuperBuilder;
+import org.mongodb.morphia.query.UpdateOperations;
 
 @Data
 @SuperBuilder
@@ -68,5 +69,19 @@ public class CustomHealthLogCVConfig extends LogCVConfig {
   @Override
   public String getHostCollectionDSL() {
     throw new RuntimeException("Not implemented");
+  }
+
+  public static class CustomHealthLogCVConfigUpdatableEntity
+      extends LogCVConfigUpdatableEntity<CustomHealthLogCVConfig, CustomHealthLogCVConfig> {
+    @Override
+    public void setUpdateOperations(
+        UpdateOperations<CustomHealthLogCVConfig> updateOperations, CustomHealthLogCVConfig customLogCVConfig) {
+      setCommonOperations(updateOperations, customLogCVConfig);
+      updateOperations
+          .set(CustomHealthLogCVConfigKeys.serviceInstanceJsonPath, customLogCVConfig.getServiceInstanceJsonPath())
+          .set(CustomHealthLogCVConfigKeys.logMessageJsonPath, customLogCVConfig.getLogMessageJsonPath())
+          .set(CustomHealthLogCVConfigKeys.timestampJsonPath, customLogCVConfig.getTimestampJsonPath())
+          .set(CustomHealthLogCVConfigKeys.requestDefinition, customLogCVConfig.getRequestDefinition());
+    }
   }
 }
