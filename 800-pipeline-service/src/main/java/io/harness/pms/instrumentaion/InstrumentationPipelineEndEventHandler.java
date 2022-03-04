@@ -79,15 +79,20 @@ public class InstrumentationPipelineEndEventHandler implements OrchestrationEndO
   @Inject @Named("PipelineExecutorService") ExecutorService executorService;
   @Inject NodeExecutionService nodeExecutionService;
   @Inject SdkStepHelper sdkStepHelper;
+  private final Boolean skipInstrumentation = Boolean.valueOf(System.getenv().get("skipInstrumentation"));
 
   @Override
   public void onEnd(Ambiance ambiance) {
+    if (skipInstrumentation) {
+      return;
+    }
     String planExecutionId = ambiance.getPlanExecutionId();
     String accountId = AmbianceUtils.getAccountId(ambiance);
     AccountDTO accountDTO = accountService.getAccount(accountId);
     String accountName = accountDTO.getName();
     String projectId = AmbianceUtils.getProjectIdentifier(ambiance);
     String orgId = AmbianceUtils.getOrgIdentifier(ambiance);
+    // TODO : Optimize this query to use projections
     List<NodeExecution> nodeExecutionList = nodeExecutionService.fetchNodeExecutions(planExecutionId);
     Set<String> allSdkSteps = sdkStepHelper.getAllStepVisibleInUI();
 

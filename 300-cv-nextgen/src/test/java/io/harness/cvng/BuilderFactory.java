@@ -196,7 +196,10 @@ public class BuilderFactory {
 
   public VerificationJobInstanceBuilder verificationJobInstanceBuilder() {
     CVConfig cvConfig = appDynamicsCVConfigBuilder().uuid(generateUuid()).build();
-    Map<String, CVConfig> cvConfigMap = Collections.singletonMap(cvConfig.getUuid(), cvConfig);
+    CVConfig cvConfig2 = errorTrackingCVConfigBuilder().uuid(generateUuid()).build();
+    Map<String, CVConfig> cvConfigMap = new HashMap<>();
+    cvConfigMap.put(cvConfig.getUuid(), cvConfig);
+    cvConfigMap.put(cvConfig2.getUuid(), cvConfig2);
     return VerificationJobInstance.builder()
         .accountId(context.getAccountId())
         .deploymentStartTime(clock.instant().minus(Duration.ofMinutes(2)))

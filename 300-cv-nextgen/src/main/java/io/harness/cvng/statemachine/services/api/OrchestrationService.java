@@ -17,4 +17,5 @@ public interface OrchestrationService {
   void orchestrate(AnalysisOrchestrator orchestrator);
   void markCompleted(String verificationTaskId);
   void markCompleted(Set<String> verificationTaskIds);
+  AnalysisOrchestrator getAnalysisOrchestrator(String verificationTaskId);
 }

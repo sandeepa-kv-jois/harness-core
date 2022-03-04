@@ -59,7 +59,7 @@ public class DelegateInfoHelper {
     try {
       return SafeHttpCall.execute(delegateSelectionLogHttpClient.getDelegateInfo(accountId, taskId)).getResource();
     } catch (Exception exception) {
-      log.error("Not able to talk to delegate service. Ignoring delegate Information");
+      log.error("Not able to talk to delegate service. Ignoring delegate Information", exception);
       return DelegateSelectionLogParams.builder().build();
     }
   }
@@ -84,7 +84,7 @@ public class DelegateInfoHelper {
             }
             return null;
           } catch (Exception exception) {
-            log.error("Not able to talk to delegate service. Ignoring delegate Information");
+            log.error("Not able to talk to delegate service. Ignoring delegate Information", exception);
             return null;
           }
         })

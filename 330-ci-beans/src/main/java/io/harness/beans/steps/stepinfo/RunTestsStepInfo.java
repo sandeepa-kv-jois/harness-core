@@ -71,9 +71,11 @@ public class RunTestsStepInfo implements CIStepInfo {
 
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> args;
   @NotNull
+  @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.TILanguage")
   private ParameterField<TILanguage> language;
   @NotNull
+  @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.TIBuildTool")
   private ParameterField<TIBuildTool> buildTool;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> packages;
@@ -94,9 +96,12 @@ public class RunTestsStepInfo implements CIStepInfo {
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> postCommand;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = BOOLEAN_CLASSPATH) private ParameterField<Boolean> privileged;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
+  @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.ImagePullPolicy")
   private ParameterField<ImagePullPolicy> imagePullPolicy;
-  @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.CIShellType") private ParameterField<CIShellType> shell;
+  @YamlSchemaTypes({string})
+  @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.CIShellType")
+  private ParameterField<CIShellType> shell;
 
   @Builder
   @ConstructorProperties({"identifier", "name", "retry", "args", "language", "buildTool", "image", "connectorRef",

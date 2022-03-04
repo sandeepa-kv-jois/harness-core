@@ -46,7 +46,10 @@ public class StepDetailsUpdateEventHandler {
             stepDetails);
       }
     } catch (Exception e) {
-      log.error("Graph update for Step Details update event failed for node [{}]", nodeExecutionId, e);
+      log.error(String.format(
+                    "[GRAPH_ERROR] Graph update for Step Details update event failed for node [%s]", nodeExecutionId),
+          e);
+      throw e;
     }
     return orchestrationGraph;
   }
@@ -57,7 +60,9 @@ public class StepDetailsUpdateEventHandler {
       PmsStepParameters stepDetails = pmsGraphStepDetailsService.getStepInputs(planExecutionId, nodeExecutionId);
       orchestrationGraph.getAdjacencyList().getGraphVertexMap().get(nodeExecutionId).setStepParameters(stepDetails);
     } catch (Exception e) {
-      log.error("Graph update for Step Details update event failed for node [{}]", nodeExecutionId, e);
+      log.error(
+          String.format("[GRAPH_ERROR] Graph update for Step Input event failed for node [%s]", nodeExecutionId), e);
+      throw e;
     }
     return orchestrationGraph;
   }

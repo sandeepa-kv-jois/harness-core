@@ -14,9 +14,9 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.cdng.services.impl.CVNGStep;
+import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.OrchestrationFacilitatorType;
-import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.pms.yaml.ParameterField;
 
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
@@ -58,8 +58,16 @@ public class CVNGStepInfo implements CVStepInfoBase {
     return OrchestrationFacilitatorType.ASYNC;
   }
 
+  private ParameterField<String> createExpressionField(String expression) {
+    return ParameterField.createExpressionField(true, expression, null, true);
+  }
+
+  public void validate() {
+    spec.validate();
+  }
+
   @Override
-  public StepParameters getStepParameters() {
+  public SpecParameters getSpecParameters() {
     return CVNGStepParameter.builder()
         .serviceIdentifier(createExpressionField(SERVICE_IDENTIFIER_EXPRESSION))
         .envIdentifier(createExpressionField(ENV_IDENTIFIER_EXPRESSION))
@@ -67,13 +75,5 @@ public class CVNGStepInfo implements CVStepInfoBase {
         .sensitivity(spec.getSensitivity())
         .verificationJobBuilder(spec.getVerificationJobBuilder())
         .build();
-  }
-
-  private ParameterField<String> createExpressionField(String expression) {
-    return ParameterField.createExpressionField(true, expression, null, true);
-  }
-
-  public void validate() {
-    spec.validate();
   }
 }

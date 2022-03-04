@@ -2854,11 +2854,18 @@
               "type": "string"
             },
             "imagePullPolicy": {
-              "type": "string",
-              "enum": [
-                "Always",
-                "Never",
-                "IfNotPresent"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Always",
+                    "Never",
+                    "IfNotPresent"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "privileged": {
@@ -3213,10 +3220,17 @@
           ],
           "properties": {
             "archiveFormat": {
-              "type": "string",
-              "enum": [
-                "Tar",
-                "Gzip"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Tar",
+                    "Gzip"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "bucket": {
@@ -3271,10 +3285,17 @@
           ],
           "properties": {
             "archiveFormat": {
-              "type": "string",
-              "enum": [
-                "Tar",
-                "Gzip"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Tar",
+                    "Gzip"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "bucket": {
@@ -3418,11 +3439,18 @@
               "type": "string"
             },
             "imagePullPolicy": {
-              "type": "string",
-              "enum": [
-                "Always",
-                "Never",
-                "IfNotPresent"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Always",
+                    "Never",
+                    "IfNotPresent"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "outputVariables": {
@@ -3459,12 +3487,19 @@
               ]
             },
             "shell": {
-              "type": "string",
-              "enum": [
-                "Sh",
-                "Bash",
-                "Powershell",
-                "Pwsh"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Sh",
+                    "Bash",
+                    "Powershell",
+                    "Pwsh"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             }
           }
@@ -3489,13 +3524,20 @@
               "type": "string"
             },
             "buildTool": {
-              "type": "string",
-              "enum": [
-                "Maven",
-                "Bazel",
-                "Gradle",
-                "Dotnet",
-                "Nunitconsole"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Maven",
+                    "Bazel",
+                    "Gradle",
+                    "Dotnet",
+                    "Nunitconsole"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "connectorRef": {
@@ -3518,18 +3560,32 @@
               "type": "string"
             },
             "imagePullPolicy": {
-              "type": "string",
-              "enum": [
-                "Always",
-                "Never",
-                "IfNotPresent"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Always",
+                    "Never",
+                    "IfNotPresent"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "language": {
-              "type": "string",
-              "enum": [
-                "Java",
-                "Csharp"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Java",
+                    "Csharp"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "outputVariables": {
@@ -3585,12 +3641,19 @@
               ]
             },
             "shell": {
-              "type": "string",
-              "enum": [
-                "Sh",
-                "Bash",
-                "Powershell",
-                "Pwsh"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Sh",
+                    "Bash",
+                    "Powershell",
+                    "Pwsh"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "testAnnotations": {
@@ -3616,10 +3679,17 @@
           ],
           "properties": {
             "archiveFormat": {
-              "type": "string",
-              "enum": [
-                "Tar",
-                "Gzip"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Tar",
+                    "Gzip"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "bucket": {
@@ -3688,10 +3758,17 @@
           ],
           "properties": {
             "archiveFormat": {
-              "type": "string",
-              "enum": [
-                "Tar",
-                "Gzip"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Tar",
+                    "Gzip"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "bucket": {
@@ -3808,11 +3885,18 @@
               "type": "string"
             },
             "imagePullPolicy": {
-              "type": "string",
-              "enum": [
-                "Always",
-                "Never",
-                "IfNotPresent"
+              "oneOf": [
+                {
+                  "type": "string",
+                  "enum": [
+                    "Always",
+                    "Never",
+                    "IfNotPresent"
+                  ]
+                },
+                {
+                  "type": "string"
+                }
               ]
             },
             "outputVariables": {

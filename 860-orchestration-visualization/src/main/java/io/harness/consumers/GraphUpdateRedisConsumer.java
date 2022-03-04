@@ -50,6 +50,7 @@ public class GraphUpdateRedisConsumer implements PmsRedisConsumer {
   QueueController queueController;
   ExecutorService executorService;
   private AtomicBoolean shouldStop = new AtomicBoolean(false);
+  private final Boolean skipGraph = Boolean.valueOf(System.getenv().get("skipGraph"));
 
   @Inject
   public GraphUpdateRedisConsumer(@Named(ORCHESTRATION_LOG) Consumer redisConsumer,
@@ -98,6 +99,10 @@ public class GraphUpdateRedisConsumer implements PmsRedisConsumer {
 
   private void pollAndProcessMessages() {
     List<Message> messages = eventConsumer.read(Duration.ofSeconds(WAIT_TIME_IN_SECONDS));
+    if (skipGraph) {
+      messages.stream().map(Message::getId).forEach(eventConsumer::acknowledge);
+      return;
+    }
     Map<String, List<String>> planExIdToMessageMap = mapPlanExecutionToMessages(messages);
     for (Map.Entry<String, List<String>> entry : planExIdToMessageMap.entrySet()) {
       executorService.submit(GraphUpdateDispatcher.builder()
