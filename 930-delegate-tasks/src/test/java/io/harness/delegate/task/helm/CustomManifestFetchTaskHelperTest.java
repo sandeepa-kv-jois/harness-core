@@ -10,6 +10,7 @@ package io.harness.delegate.task.helm;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.delegate.task.helm.CustomManifestFetchTaskHelper.unzipManifestFiles;
 import static io.harness.delegate.task.helm.CustomManifestFetchTaskHelper.zipManifestDirectory;
+import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.TATHAGAT;
 
@@ -33,6 +34,8 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
+import io.harness.delegate.beans.DelegateFileManagerBase;
+import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.task.manifests.request.CustomManifestFetchConfig;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.manifests.response.CustomManifestValuesFetchResponse;
@@ -70,6 +73,7 @@ import org.mockito.Spy;
 public class CustomManifestFetchTaskHelperTest extends CategoryTest {
   @Mock CustomManifestService customManifestService;
   @Mock LogCallback logCallback;
+  @Mock DelegateFileManagerBase delegateFileManagerBase;
 
   @Spy @InjectMocks private CustomManifestFetchTaskHelper manifestFetchTaskHelper;
 
@@ -337,6 +341,44 @@ public class CustomManifestFetchTaskHelperTest extends CategoryTest {
         manifestFetchTaskHelper.fetchValuesTask(taskParams, logCallback, DEFAULT_DIRECTORY);
     assertThat(response.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
     assertThat(response.getValuesFilesContentMap()).isNullOrEmpty();
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testDownloadAndUnzipCustomSourceManifestFiles() throws IOException {
+    final String workingDirPath = "./repository/helm/work/ACTIVITY_ID";
+    final String sourceDirPath = "./repository/helm/source/manifests";
+    final String zipDirPath = "./repository/helm/zip/ACTIVITY_ID";
+    final String zipFilePath = format("%s/destZipFile.zip", zipDirPath);
+    final String fileId = "fileId";
+
+    FileIo.createDirectoryIfDoesNotExist(workingDirPath);
+    FileIo.createDirectoryIfDoesNotExist(sourceDirPath);
+    Files.createFile(Paths.get(sourceDirPath, "test1.yaml"));
+    Files.createFile(Paths.get(sourceDirPath, "test2.yaml"));
+    FileIo.createDirectoryIfDoesNotExist(zipDirPath);
+
+    zipManifestDirectory(sourceDirPath, zipFilePath);
+    InputStream targetStream = FileUtils.openInputStream(new File(zipFilePath));
+
+    doReturn(targetStream)
+        .when(delegateFileManagerBase)
+        .downloadByFileId(FileBucket.CUSTOM_MANIFEST, fileId, ACCOUNT_ID);
+
+    manifestFetchTaskHelper.downloadAndUnzipCustomSourceManifestFiles(workingDirPath, fileId, ACCOUNT_ID);
+
+    File destFile = new File(workingDirPath);
+    assertThat(destFile).exists();
+    String[] unzippedFiles = destFile.list((dir, name) -> !dir.isHidden());
+    assertThat(unzippedFiles).hasSize(1);
+    assertThat(unzippedFiles[0]).contains("manifests");
+    Path path = Paths.get(workingDirPath, unzippedFiles[0]);
+    File file = new File(path.toString());
+    assertThat(file.list()).contains("test1.yaml", "test2.yaml");
+    deleteDirectoryAndItsContentIfExists(workingDirPath);
+    deleteDirectoryAndItsContentIfExists(sourceDirPath);
+    deleteDirectoryAndItsContentIfExists(zipDirPath);
   }
 
   private static CustomManifestValuesFetchParams taskParams(List<CustomManifestFetchConfig> fetchConfigList) {

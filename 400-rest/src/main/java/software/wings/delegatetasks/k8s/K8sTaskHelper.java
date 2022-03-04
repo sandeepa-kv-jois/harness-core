@@ -38,6 +38,7 @@ import io.harness.beans.FileData;
 import io.harness.delegate.k8s.beans.K8sHandlerConfig;
 import io.harness.delegate.k8s.kustomize.KustomizeTaskHelper;
 import io.harness.delegate.k8s.openshift.OpenShiftDelegateService;
+import io.harness.delegate.task.helm.CustomManifestFetchTaskHelper;
 import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
@@ -109,6 +110,7 @@ public class K8sTaskHelper {
   @Inject private CustomManifestService customManifestService;
   @Inject private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
   @Inject private ScmFetchFilesHelper scmFetchFilesHelper;
+  @Inject private CustomManifestFetchTaskHelper customManifestFetchTaskHelper;
 
   public boolean doStatusCheckAllResourcesForHelm(Kubectl client, List<KubernetesResourceId> resourceIds, String ocPath,
       String workingDir, String namespace, String kubeconfigPath, ExecutionLogCallback executionLogCallback)
@@ -381,14 +383,14 @@ public class K8sTaskHelper {
 
       CustomManifestSource customManifestSource = delegateManifestConfig.getCustomManifestSource();
       handleIncorrectConfiguration(delegateManifestConfig);
-      helmTaskHelper.downloadAndUnzipCustomSourceManifestFiles(
+      customManifestFetchTaskHelper.downloadAndUnzipCustomSourceManifestFiles(
           workingDirectory, customManifestSource.getZippedManifestFileId(), customManifestSource.getAccountId());
       File file = new File(workingDirectory);
       if (isEmpty(file.list())) {
         throw new InvalidRequestException("No manifest files found under working directory", USER);
       }
-      File manifestDirectory = file.listFiles(pathname -> !file.isHidden())[0];
-      copyManifestFilesToWorkingDir(manifestDirectory, new File(manifestFilesDirectory));
+      File customFilePath = file.listFiles(pathname -> !file.isHidden())[0];
+      copyManifestFilesToWorkingDir(customFilePath, new File(manifestFilesDirectory));
       executionLogCallback.saveExecutionLog(color("Successfully fetched following files:", White, Bold));
       executionLogCallback.saveExecutionLog(k8sTaskHelperBase.getManifestFileNamesInLogFormat(manifestFilesDirectory));
       executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);

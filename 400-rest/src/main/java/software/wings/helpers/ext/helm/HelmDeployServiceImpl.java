@@ -32,6 +32,7 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.FileData;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.container.ContainerInfo;
+import io.harness.delegate.task.helm.CustomManifestFetchTaskHelper;
 import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.helm.HelmCommandResponse;
 import io.harness.delegate.task.k8s.ContainerDeploymentDelegateBaseHelper;
@@ -147,6 +148,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
   @Inject private GitClientHelper gitClientHelper;
   @Inject private KubernetesContainerService kubernetesContainerService;
   @Inject private ScmFetchFilesHelper scmFetchFilesHelper;
+  @Inject private CustomManifestFetchTaskHelper customManifestFetchTaskHelper;
 
   private static final String ACTIVITY_ID = "ACTIVITY_ID";
   protected static final String WORKING_DIR = "./repository/helm/source/${" + ACTIVITY_ID + "}";
@@ -366,7 +368,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
     handleIncorrectConfiguration(sourceRepoConfig);
     String workingDirectory = Paths.get(getWorkingDirectory(commandRequest)).toString();
-    helmTaskHelper.downloadAndUnzipCustomSourceManifestFiles(workingDirectory,
+    customManifestFetchTaskHelper.downloadAndUnzipCustomSourceManifestFiles(workingDirectory,
         sourceRepoConfig.getCustomManifestSource().getZippedManifestFileId(), commandRequest.getAccountId());
 
     File file = new File(workingDirectory);

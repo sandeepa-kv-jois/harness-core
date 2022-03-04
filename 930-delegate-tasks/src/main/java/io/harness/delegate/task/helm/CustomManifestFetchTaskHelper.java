@@ -20,6 +20,8 @@ import static java.lang.String.format;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.delegate.beans.DelegateFileManagerBase;
+import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.task.manifests.request.CustomManifestFetchConfig;
 import io.harness.delegate.task.manifests.request.CustomManifestValuesFetchParams;
 import io.harness.delegate.task.manifests.response.CustomManifestValuesFetchResponse;
@@ -37,6 +39,7 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
@@ -52,6 +55,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.CDP)
 public class CustomManifestFetchTaskHelper {
   @Inject CustomManifestService customManifestService;
+  @Inject DelegateFileManagerBase delegateFileManagerBase;
 
   private static File getNewFileForZipEntry(File destinationDir, ZipEntry zipEntry) throws IOException {
     File destFile = new File(destinationDir, zipEntry.getName());
@@ -223,5 +227,15 @@ public class CustomManifestFetchTaskHelper {
     } catch (Exception ex) {
       log.warn("Exception in directory cleanup.", ex);
     }
+  }
+
+  public void downloadAndUnzipCustomSourceManifestFiles(
+      String workingDirectory, String zippedManifestFileId, String accountId) throws IOException {
+    InputStream inputStream =
+        delegateFileManagerBase.downloadByFileId(FileBucket.CUSTOM_MANIFEST, zippedManifestFileId, accountId);
+    ZipInputStream zipInputStream = new ZipInputStream(inputStream);
+
+    File destDir = new File(workingDirectory);
+    unzipManifestFiles(destDir, zipInputStream);
   }
 }

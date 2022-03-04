@@ -453,9 +453,6 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
         customSourceConfig = applicationManifest.getCustomSourceConfig();
       }
 
-      if (customSourceConfig != null && customSourceConfig.getScript() == null) {
-        throw new InvalidRequestException("Script can not be null for custom manifest source", USER);
-      }
       // CustomSourceConfig will be null if task is only to fetch value
       fetchValuesParams.setCustomManifestSource(customSourceConfig == null
               ? null
