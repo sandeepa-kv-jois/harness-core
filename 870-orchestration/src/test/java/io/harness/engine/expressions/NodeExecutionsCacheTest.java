@@ -21,6 +21,7 @@ import io.harness.engine.executions.plan.PlanService;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.Sets;
@@ -53,9 +54,9 @@ public class NodeExecutionsCacheTest extends CategoryTest {
   public void testFindAllChildrenUsingRequiredProjection() {
     doReturn(Collections.singletonList(NodeExecution.builder().identifier("test").build()))
         .when(nodeExecutionService)
-        .findAllChildren("PLAN_EXECUTION_ID", "PARENT_ID", false,
+        .findAllChildrenWithStatusIn("PLAN_EXECUTION_ID", "PARENT_ID", StatusUtils.finalStatuses(), false, true,
             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet());
-    List<NodeExecution> allChildren = nodeExecutionsCache.findAllChildren("PARENT_ID");
+    List<NodeExecution> allChildren = nodeExecutionsCache.findAllTerminalChildren("PARENT_ID");
     assertThat(allChildren.size()).isEqualTo(1);
   }
 }

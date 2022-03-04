@@ -75,6 +75,7 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.core.spring.ProjectRepository;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.PrincipalType;
+import io.harness.telemetry.helpers.ProjectInstrumentationHelper;
 import io.harness.utils.PageUtils;
 import io.harness.utils.ScopeUtils;
 
@@ -95,6 +96,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -124,11 +126,13 @@ public class ProjectServiceImpl implements ProjectService {
   private final NgUserService ngUserService;
   private final AccessControlClient accessControlClient;
   private final ScopeAccessHelper scopeAccessHelper;
+  private final ProjectInstrumentationHelper instrumentationHelper;
 
   @Inject
   public ProjectServiceImpl(ProjectRepository projectRepository, OrganizationService organizationService,
       @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate, OutboxService outboxService,
-      NgUserService ngUserService, AccessControlClient accessControlClient, ScopeAccessHelper scopeAccessHelper) {
+      NgUserService ngUserService, AccessControlClient accessControlClient, ScopeAccessHelper scopeAccessHelper,
+      ProjectInstrumentationHelper instrumentationHelper) {
     this.projectRepository = projectRepository;
     this.organizationService = organizationService;
     this.transactionTemplate = transactionTemplate;
@@ -136,6 +140,7 @@ public class ProjectServiceImpl implements ProjectService {
     this.ngUserService = ngUserService;
     this.accessControlClient = accessControlClient;
     this.scopeAccessHelper = scopeAccessHelper;
+    this.instrumentationHelper = instrumentationHelper;
   }
 
   @Override
@@ -159,6 +164,7 @@ public class ProjectServiceImpl implements ProjectService {
       setupProject(Scope.of(accountIdentifier, orgIdentifier, projectDTO.getIdentifier()));
       log.info(String.format("Project with identifier %s and orgIdentifier %s was successfully created",
           project.getIdentifier(), projectDTO.getOrgIdentifier()));
+      CompletableFuture.runAsync(() -> instrumentationHelper.sendProjectCreateEvent(createdProject, accountIdentifier));
       return createdProject;
     } catch (DuplicateKeyException ex) {
       throw new DuplicateFieldException(
@@ -546,6 +552,8 @@ public class ProjectServiceImpl implements ProjectService {
         outboxService.save(
             new ProjectDeleteEvent(deletedProject.getAccountIdentifier(), ProjectMapper.writeDTO(deletedProject)));
 
+        CompletableFuture.runAsync(
+            () -> instrumentationHelper.sendProjectDeleteEvent(deletedProject, accountIdentifier));
       } else {
         log.error(String.format(
             "Project with identifier %s and orgIdentifier %s could not be deleted", projectIdentifier, orgIdentifier));

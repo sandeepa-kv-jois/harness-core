@@ -338,11 +338,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject @Named("watcherMonitorExecutor") private ScheduledExecutorService watcherMonitorExecutor;
   @Inject @Named("upgradeExecutor") private ScheduledExecutorService upgradeExecutor;
   @Inject @Named("inputExecutor") private ScheduledExecutorService inputExecutor;
-  @Inject @Named("rescheduleExecutor") private ScheduledExecutorService rescheduleExecutor;
   @Inject @Named("profileExecutor") private ScheduledExecutorService profileExecutor;
   @Inject @Named("watcherUpgradeExecutor") private ExecutorService watcherUpgradeExecutor;
   @Inject @Named("backgroundExecutor") private ExecutorService backgroundExecutor;
-  @Inject @Named("taskPollExecutor") private ExecutorService taskPollExecutor;
+  @Inject @Named("taskPollExecutor") private ScheduledExecutorService taskPollExecutor;
   @Inject @Named("taskExecutor") private ExecutorService taskExecutor;
   @Inject @Named("timeoutExecutor") private ExecutorService timeoutEnforcement;
   @Inject @Named("grpcServiceExecutor") private ExecutorService grpcServiceExecutor;
@@ -1446,9 +1445,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void startTaskPolling() {
-    rescheduleExecutor.scheduleAtFixedRate(
-        new Schedulable("Failed to poll for task", () -> taskPollExecutor.submit(this::pollForTask)), 0,
-        POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    taskPollExecutor.scheduleAtFixedRate(
+        new Schedulable("Failed to poll for task", () -> pollForTask()), 0, POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
   }
 
   private void startChroniqleQueueMonitor() {

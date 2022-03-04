@@ -59,6 +59,7 @@ import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.core.spring.OrganizationRepository;
 import io.harness.security.SourcePrincipalContextBuilder;
 import io.harness.security.dto.PrincipalType;
+import io.harness.telemetry.helpers.OrganizationInstrumentationHelper;
 import io.harness.utils.ScopeUtils;
 
 import com.google.common.collect.Lists;
@@ -74,6 +75,7 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
@@ -97,17 +99,20 @@ public class OrganizationServiceImpl implements OrganizationService {
   private final NgUserService ngUserService;
   private final AccessControlClient accessControlClient;
   private final ScopeAccessHelper scopeAccessHelper;
+  private final OrganizationInstrumentationHelper instrumentationHelper;
 
   @Inject
   public OrganizationServiceImpl(OrganizationRepository organizationRepository, OutboxService outboxService,
       @Named(OUTBOX_TRANSACTION_TEMPLATE) TransactionTemplate transactionTemplate, NgUserService ngUserService,
-      AccessControlClient accessControlClient, ScopeAccessHelper scopeAccessHelper) {
+      AccessControlClient accessControlClient, ScopeAccessHelper scopeAccessHelper,
+      OrganizationInstrumentationHelper instrumentationHelper) {
     this.organizationRepository = organizationRepository;
     this.outboxService = outboxService;
     this.transactionTemplate = transactionTemplate;
     this.ngUserService = ngUserService;
     this.accessControlClient = accessControlClient;
     this.scopeAccessHelper = scopeAccessHelper;
+    this.instrumentationHelper = instrumentationHelper;
   }
 
   @Override
@@ -120,6 +125,8 @@ public class OrganizationServiceImpl implements OrganizationService {
       Organization savedOrganization = saveOrganization(organization);
       setupOrganization(Scope.of(accountIdentifier, organizationDTO.getIdentifier(), null));
       log.info(String.format("Organization with identifier %s was successfully created", organization.getIdentifier()));
+      CompletableFuture.runAsync(
+          () -> instrumentationHelper.sendOrganizationCreateEvent(organization, accountIdentifier));
       return savedOrganization;
     } catch (DuplicateKeyException ex) {
       throw new DuplicateFieldException(
@@ -347,6 +354,8 @@ public class OrganizationServiceImpl implements OrganizationService {
       if (delete) {
         log.info(String.format("Organization with identifier %s was successfully deleted", organizationIdentifier));
         outboxService.save(new OrganizationDeleteEvent(accountIdentifier, OrganizationMapper.writeDto(organization)));
+        CompletableFuture.runAsync(
+            () -> instrumentationHelper.sendOrganizationDeleteEvent(organization, accountIdentifier));
       } else {
         log.error(String.format("Organization with identifier %s could not be deleted", organizationIdentifier));
       }

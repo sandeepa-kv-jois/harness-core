@@ -36,8 +36,7 @@ public class OrchestrationUtils {
     return StatusUtils.calculateStatus(statuses, planExecutionId);
   }
 
-  public Status calculateStatusForPlanExecution(List<NodeExecution> nodeExecutions, String planExecutionId) {
-    List<Status> statuses = nodeExecutions.stream().map(NodeExecution::getStatus).collect(Collectors.toList());
+  public Status calculateStatusForPlanExecution(List<Status> statuses, String planExecutionId) {
     Status calculatedStatus = StatusUtils.calculateStatus(statuses, planExecutionId);
     if (Status.QUEUED == calculatedStatus) {
       return Status.RUNNING;

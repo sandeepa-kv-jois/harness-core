@@ -45,6 +45,7 @@ import io.harness.repositories.core.spring.OrganizationRepository;
 import io.harness.rule.Owner;
 import io.harness.security.SourcePrincipalContextData;
 import io.harness.security.dto.UserPrincipal;
+import io.harness.telemetry.helpers.OrganizationInstrumentationHelper;
 
 import io.dropwizard.jersey.validation.JerseyViolationException;
 import java.util.Collections;
@@ -69,13 +70,14 @@ public class OrganizationServiceImplTest extends CategoryTest {
   @Mock private NgUserService ngUserService;
   @Mock private AccessControlClient accessControlClient;
   @Mock private ScopeAccessHelper scopeAccessHelper;
+  @Mock private OrganizationInstrumentationHelper instrumentationHelper;
   private OrganizationServiceImpl organizationService;
 
   @Before
   public void setup() {
     MockitoAnnotations.initMocks(this);
     organizationService = spy(new OrganizationServiceImpl(organizationRepository, outboxService, transactionTemplate,
-        ngUserService, accessControlClient, scopeAccessHelper));
+        ngUserService, accessControlClient, scopeAccessHelper, instrumentationHelper));
     when(scopeAccessHelper.getPermittedScopes(any())).then(returnsFirstArg());
   }
 

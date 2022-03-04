@@ -102,6 +102,7 @@ public class OwnerRule implements TestRule {
   public static final String BOGDAN = "bogdan.azaric";
   public static final String BOJAN = "bojan.micovic";
   public static final String BOOPESH = "boopesh.shanmugam";
+  public static final String BGROVES = "brandon.groves";
   public static final String BRETT = "brett";
   public static final String BRIJESH = "brijesh.dhakar";
   public static final String DEEPAK = "deepak.patankar";
@@ -173,6 +174,7 @@ public class OwnerRule implements TestRule {
   public static final String SRIRAM = "sriram";
   public static final String SUJAY = "sujay.sharma";
   public static final String SATYAM = "satyam.shanker";
+  public static final String TEJAS = "tejas.tiwari";
   public static final String UJJAWAL = "ujjawal.prasad";
   public static final String UTKARSH = "utkarsh.gupta";
   public static final String UTSAV = "utsav.krishnan";
@@ -276,6 +278,7 @@ public class OwnerRule implements TestRule {
           .put(BOGDAN, defaultUserInfo(BOGDAN).slack("U026QDGCDQA").team(CDP).build())
           .put(BOJAN, defaultUserInfo(BOJAN).slack("U0225T2NT1A").team(DEL).build())
           .put(BOOPESH, defaultUserInfo(BOOPESH).slack("U016QG20607").team(PL).build())
+          .put(BGROVES, defaultUserInfo(BGROVES).slack("U02MD3S12TU").team(CV).build())
           .put(BRETT, defaultUserInfo(BRETT).slack("U40VBHCGH").team(SWAT).build())
           .put(BRIJESH, defaultUserInfo(BRIJESH).slack("U015LRWS8KV").team(PL).build())
           .put(DEEPAK, defaultUserInfo(DEEPAK).slack("UK9EKBKQS").team(DX).build())

@@ -38,6 +38,8 @@ import io.harness.cvng.verificationjob.services.api.VerificationJobInstanceServi
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.Level;
+import io.harness.plancreator.steps.common.StepElementParameters;
+import io.harness.plancreator.steps.common.rollback.AsyncExecutableWithRollback;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.AsyncExecutableResponse;
 import io.harness.pms.contracts.execution.Status;
@@ -48,7 +50,6 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.Outcome;
-import io.harness.pms.sdk.core.steps.executables.AsyncExecutable;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
@@ -78,7 +79,7 @@ import org.springframework.data.annotation.TypeAlias;
 
 @Slf4j
 @OwnedBy(HarnessTeam.CV)
-public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
+public class CVNGStep extends AsyncExecutableWithRollback {
   public static final StepType STEP_TYPE = StepType.newBuilder()
                                                .setType(CVNGStepType.CVNG_VERIFY.getDisplayName())
                                                .setStepCategory(StepCategory.STEP)
@@ -92,9 +93,10 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   @Inject private SideKickService sideKickService;
 
   @Override
-  public AsyncExecutableResponse executeAsync(Ambiance ambiance, CVNGStepParameter stepParameters,
+  public AsyncExecutableResponse executeAsync(Ambiance ambiance, StepElementParameters stepElementParameters,
       StepInputPackage inputPackage, PassThroughData passThroughData) {
     log.info("ExecuteAsync called for CVNGStep");
+    CVNGStepParameter stepParameters = (CVNGStepParameter) stepElementParameters.getSpec();
     String accountId = AmbianceUtils.getAccountId(ambiance);
     String projectIdentifier = AmbianceUtils.getProjectIdentifier(ambiance);
     String orgIdentifier = AmbianceUtils.getOrgIdentifier(ambiance);
@@ -309,8 +311,9 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
 
   @Override
   public StepResponse handleAsyncResponse(
-      Ambiance ambiance, CVNGStepParameter stepParameters, Map<String, ResponseData> responseDataMap) {
+      Ambiance ambiance, StepElementParameters stepElementParameters, Map<String, ResponseData> responseDataMap) {
     log.info("handleAsyncResponse async response");
+    CVNGStepParameter stepParameters = (CVNGStepParameter) stepElementParameters.getSpec();
     CVNGResponseData cvngResponseData = (CVNGResponseData) responseDataMap.values().iterator().next();
     StepResponseBuilder stepResponseBuilder = StepResponse.builder();
     if (cvngResponseData.isSkip()) {
@@ -379,7 +382,8 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   }
 
   @Override
-  public ProgressData handleProgress(Ambiance ambiance, CVNGStepParameter stepParameters, ProgressData progressData) {
+  public ProgressData handleProgress(
+      Ambiance ambiance, StepElementParameters stepElementParameters, ProgressData progressData) {
     CVNGResponseData cvngResponseData = (CVNGResponseData) progressData;
     return VerifyStepOutcome.builder()
         .progressPercentage(cvngResponseData.getActivityStatusDTO().getProgressPercentage())
@@ -390,13 +394,13 @@ public class CVNGStep implements AsyncExecutable<CVNGStepParameter> {
   }
 
   @Override
-  public Class<CVNGStepParameter> getStepParametersClass() {
-    return CVNGStepParameter.class;
+  public Class<StepElementParameters> getStepParametersClass() {
+    return StepElementParameters.class;
   }
 
   @Override
   public void handleAbort(
-      Ambiance ambiance, CVNGStepParameter stepParameters, AsyncExecutableResponse executableResponse) {
+      Ambiance ambiance, StepElementParameters stepElementParameters, AsyncExecutableResponse executableResponse) {
     CVNGStepTask cvngStepTask = cvngStepTaskService.getByCallBackId(executableResponse.getCallbackIds(0));
     activityService.abort(cvngStepTask.getActivityId());
   }

@@ -35,6 +35,7 @@ import io.harness.pms.contracts.interrupts.InterruptConfig;
 import io.harness.pms.contracts.interrupts.InterruptType;
 import io.harness.pms.contracts.interrupts.IssuedBy;
 import io.harness.pms.contracts.interrupts.ManualIssuer;
+import io.harness.pms.contracts.steps.SkipType;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.utils.AmbianceUtils;
@@ -100,6 +101,9 @@ public class RetryHelperTest extends OrchestrationTestBase {
             .identifier("DUMMY")
             .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
             .module("CD")
+            .skipGraphType(SkipType.NOOP)
+            .stageFqn(generateUuid())
+            .group("STEP")
             .executableResponse(ExecutableResponse.newBuilder()
                                     .setTask(TaskExecutableResponse.newBuilder()
                                                  .setTaskId(generateUuid())
@@ -151,6 +155,9 @@ public class RetryHelperTest extends OrchestrationTestBase {
             .nodeId(nodeId)
             .identifier("DUMMY")
             .name("name")
+            .skipGraphType(SkipType.NOOP)
+            .stageFqn(generateUuid())
+            .group("STEP")
             .stepType(StepType.newBuilder().setType("DUMMY").build())
             .module("DUMMY")
             .status(Status.FAILED)
