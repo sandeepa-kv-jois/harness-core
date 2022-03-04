@@ -410,4 +410,4 @@ orchestrationRedisEventsConfig:
 
 allowedParallelStages: ${ALLOWED_PARALLEL_STAGES:-25}
 
-shouldSkipWhenCondition: ${SHOULD_SKIP_WHEN_CONDITION:-false}
+planCreatorMergeServiceDependencyBatch: ${PLAN_CREATOR_DEPENDENCY_BATCH:-20}

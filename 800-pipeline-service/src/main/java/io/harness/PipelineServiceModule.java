@@ -653,8 +653,8 @@ public class PipelineServiceModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named("shouldSkipWhenCondition")
-  public Boolean getShouldSkipWhenCondition() {
-    return configuration.getShouldSkipWhenCondition();
+  @Named("planCreatorMergeServiceDependencyBatch")
+  public Integer getPlanCreatorMergeServiceDependencyBatch() {
+    return configuration.getPlanCreatorMergeServiceDependencyBatch();
   }
 }

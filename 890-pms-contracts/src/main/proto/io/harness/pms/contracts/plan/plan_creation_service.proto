@@ -134,6 +134,7 @@ message VariablesCreationMetadata {
 message Dependencies {
   string yaml = 1;
   map<string, string> dependencies = 2;
+  // Metadata regarding the dependency added in above dependencies map
   map<string, Dependency> dependencyMetadata = 3;
 }
 

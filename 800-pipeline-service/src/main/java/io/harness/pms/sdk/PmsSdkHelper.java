@@ -38,7 +38,6 @@ public class PmsSdkHelper {
 
   /**
    * Gets the list of registered services with their PlanCreatorServiceInfo object
-   * @return
    */
   public Map<String, PlanCreatorServiceInfo> getServices() {
     Map<String, Map<String, Set<String>>> sdkInstances = pmsSdkInstanceService.getInstanceNameToSupportedTypes();
@@ -55,29 +54,7 @@ public class PmsSdkHelper {
 
   /**
    * Checks if the service supports any of the dependency mentioned.
-   * @param serviceInfo
-   * @param dependencies
-   * @return
    */
-  public boolean containsSupportedDependency(
-      PlanCreatorServiceInfo serviceInfo, Map<String, YamlFieldBlob> dependencies) {
-    Map<String, Set<String>> supportedTypes = serviceInfo.getSupportedTypes();
-    Map<String, YamlFieldBlob> filteredDependencies =
-        dependencies.entrySet()
-            .stream()
-            .filter(entry -> {
-              try {
-                YamlField field = YamlField.fromFieldBlob(entry.getValue());
-                return PlanCreatorUtils.supportsField(supportedTypes, field);
-              } catch (Exception e) {
-                log.error("Invalid yaml field", e);
-                return false;
-              }
-            })
-            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    return !EmptyPredicate.isEmpty(filteredDependencies);
-  }
-
   public boolean containsSupportedDependencyByYamlPath(
       PlanCreatorServiceInfo serviceInfo, Dependencies dependencies, String serviceName) {
     long start = System.currentTimeMillis();
@@ -113,5 +90,32 @@ public class PmsSdkHelper {
     log.info("ContainsSupportedDependencyByYamlPath took {}ms for dependencies size {} for serviceName {}",
         System.currentTimeMillis() - start, dependencies.getDependenciesMap().size(), serviceName);
     return supportedDependency;
+  }
+
+  /**
+   * Checks if the service supports any of the dependency mentioned.
+   */
+  public boolean containsSupportedSingleDependencyByYamlPath(
+      PlanCreatorServiceInfo serviceInfo, YamlField fullYamlField, Map.Entry<String, String> entry) {
+    if (entry == null) {
+      return false;
+    }
+    Map<String, Set<String>> supportedTypes = serviceInfo.getSupportedTypes();
+    try {
+      YamlField field = fullYamlField.fromYamlPath(entry.getValue());
+      return PlanCreatorUtils.supportsField(supportedTypes, field);
+    } catch (IOException ex) {
+      String message = "Invalid yaml during plan creation";
+      log.error(message, ex);
+      throw new InvalidRequestException(message);
+    }
+  }
+
+  public Dependencies createBatchDependency(Dependencies dependencies, Map<String, String> dependencyMap) {
+    return Dependencies.newBuilder()
+        .putAllDependencies(dependencyMap)
+        .putAllDependencyMetadata(dependencies.getDependencyMetadataMap())
+        .setYaml(dependencies.getYaml())
+        .build();
   }
 }
