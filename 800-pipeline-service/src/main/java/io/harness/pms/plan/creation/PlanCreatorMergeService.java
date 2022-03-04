@@ -123,8 +123,7 @@ public class PlanCreatorMergeService {
       log.info("[PlanCreatorMergeService] Starting plan creation");
       Map<String, PlanCreatorServiceInfo> services = pmsSdkHelper.getServices();
 
-      YamlField fullYamlField = YamlUtils.readTree(planExecutionMetadata.getProcessedYaml());
-      YamlField pipelineField = YamlUtils.getPipelineField(fullYamlField.getNode());
+      YamlField pipelineField = YamlUtils.extractPipelineField(planExecutionMetadata.getProcessedYaml());
       if (pipelineField.getNode().getUuid() == null) {
         throw new YamlException("Processed pipeline yaml does not have uuid for the pipeline field");
       }
@@ -133,9 +132,8 @@ public class PlanCreatorMergeService {
               .setYaml(planExecutionMetadata.getProcessedYaml())
               .putDependencies(pipelineField.getNode().getUuid(), pipelineField.getNode().getYamlPath())
               .build();
-      PlanCreationBlobResponse finalResponse =
-          createPlanForDependenciesRecursive(accountId, orgIdentifier, projectIdentifier, services, dependencies,
-              metadata, planExecutionMetadata.getTriggerPayload(), fullYamlField);
+      PlanCreationBlobResponse finalResponse = createPlanForDependenciesRecursive(accountId, orgIdentifier,
+          projectIdentifier, services, dependencies, metadata, planExecutionMetadata.getTriggerPayload());
       planCreationValidator.validate(accountId, finalResponse);
       log.info("[PlanCreatorMergeService_Time] Done with plan creation");
       return finalResponse;
@@ -162,7 +160,7 @@ public class PlanCreatorMergeService {
 
   private PlanCreationBlobResponse createPlanForDependenciesRecursive(String accountId, String orgIdentifier,
       String projectIdentifier, Map<String, PlanCreatorServiceInfo> services, Dependencies initialDependencies,
-      ExecutionMetadata metadata, TriggerPayload triggerPayload, YamlField fullYamlField) {
+      ExecutionMetadata metadata, TriggerPayload triggerPayload) {
     PlanCreationBlobResponse.Builder finalResponseBuilder =
         PlanCreationBlobResponse.newBuilder().setDeps(initialDependencies);
     if (EmptyPredicate.isEmpty(services) || EmptyPredicate.isEmpty(initialDependencies.getDependenciesMap())) {
@@ -172,20 +170,25 @@ public class PlanCreatorMergeService {
     finalResponseBuilder.putAllContext(
         createInitialPlanCreationContext(accountId, orgIdentifier, projectIdentifier, metadata, triggerPayload));
 
-    for (int i = 0; i < MAX_DEPTH && EmptyPredicate.isNotEmpty(finalResponseBuilder.getDeps().getDependenciesMap());
-         i++) {
-      PlanCreationBlobResponse currIterationResponse =
-          createPlanForDependencies(services, finalResponseBuilder, fullYamlField);
-      PlanCreationBlobResponseUtils.addNodes(finalResponseBuilder, currIterationResponse.getNodesMap());
-      PlanCreationBlobResponseUtils.mergeStartingNodeId(
-          finalResponseBuilder, currIterationResponse.getStartingNodeId());
-      PlanCreationBlobResponseUtils.mergeLayoutNodeInfo(finalResponseBuilder, currIterationResponse);
-      if (EmptyPredicate.isNotEmpty(finalResponseBuilder.getDeps().getDependenciesMap())) {
-        throw new InvalidRequestException(
-            PmsExceptionUtils.getUnresolvedDependencyPathsErrorMessage(finalResponseBuilder.getDeps()));
+    try {
+      for (int i = 0; i < MAX_DEPTH && EmptyPredicate.isNotEmpty(finalResponseBuilder.getDeps().getDependenciesMap());
+           i++) {
+        YamlField fullYamlField = YamlUtils.readTree(finalResponseBuilder.getDeps().getYaml());
+        PlanCreationBlobResponse currIterationResponse =
+            createPlanForDependencies(services, finalResponseBuilder, fullYamlField);
+        PlanCreationBlobResponseUtils.addNodes(finalResponseBuilder, currIterationResponse.getNodesMap());
+        PlanCreationBlobResponseUtils.mergeStartingNodeId(
+            finalResponseBuilder, currIterationResponse.getStartingNodeId());
+        PlanCreationBlobResponseUtils.mergeLayoutNodeInfo(finalResponseBuilder, currIterationResponse);
+        if (EmptyPredicate.isNotEmpty(finalResponseBuilder.getDeps().getDependenciesMap())) {
+          throw new InvalidRequestException(
+              PmsExceptionUtils.getUnresolvedDependencyPathsErrorMessage(finalResponseBuilder.getDeps()));
+        }
+        PlanCreationBlobResponseUtils.mergeContext(finalResponseBuilder, currIterationResponse.getContextMap());
+        PlanCreationBlobResponseUtils.addDependenciesV2(finalResponseBuilder, currIterationResponse);
       }
-      PlanCreationBlobResponseUtils.mergeContext(finalResponseBuilder, currIterationResponse.getContextMap());
-      PlanCreationBlobResponseUtils.addDependenciesV2(finalResponseBuilder, currIterationResponse);
+    } catch (Exception e) {
+      throw new UnexpectedException("Error merging plan responses from services", e);
     }
 
     return finalResponseBuilder.build();

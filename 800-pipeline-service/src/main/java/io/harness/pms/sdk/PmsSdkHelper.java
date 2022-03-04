@@ -104,8 +104,8 @@ public class PmsSdkHelper {
     try {
       YamlField field = fullYamlField.fromYamlPath(entry.getValue());
       return PlanCreatorUtils.supportsField(supportedTypes, field);
-    } catch (IOException ex) {
-      String message = "Invalid yaml during plan creation";
+    } catch (Exception ex) {
+      String message = "Invalid yaml during plan creation for dependency path - " + entry.getValue();
       log.error(message, ex);
       throw new InvalidRequestException(message);
     }

@@ -175,7 +175,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
       }));
 
       try {
-        List<PlanCreationResponse> planCreationResponses = completableFutures.allOf().get(2, TimeUnit.MINUTES);
+        List<PlanCreationResponse> planCreationResponses = completableFutures.allOf().get(5, TimeUnit.MINUTES);
         return PlanCreatorServiceHelper.handlePlanCreationResponses(
             planCreationResponses, finalResponse, currentYaml, dependencies, dependenciesList);
       } catch (Exception ex) {
@@ -240,6 +240,7 @@ public class PlanCreatorService extends PlanCreationServiceImplBase {
   }
 
   // Method to create plan for single dependency
+  // Dependency passed from parent to its children plan creator
   private PlanCreationResponse createPlanForDependencyInternal(
       String currentYaml, YamlField field, PlanCreationContext ctx, Dependency dependency) {
     long start = System.currentTimeMillis();

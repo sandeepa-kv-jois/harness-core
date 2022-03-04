@@ -86,12 +86,9 @@ public abstract class PMSStepPlanCreatorV2<T extends PmsAbstractStepNode> extend
   @Override
   public PlanCreationResponse createPlanForField(PlanCreationContext ctx, T stepElement) {
     boolean isStepInsideRollback = false;
-    long start = System.currentTimeMillis();
     if (YamlUtils.findParentNode(ctx.getCurrentField().getNode(), ROLLBACK_STEPS) != null) {
       isStepInsideRollback = true;
     }
-    YamlUtils.getFullyQualifiedName(ctx.getCurrentField().getNode());
-    log.info("[PlanCreator_shelltime] shell deserialize time {}ms", System.currentTimeMillis() - start);
 
     List<AdviserObtainment> adviserObtainmentFromMetaData = getAdviserObtainmentFromMetaData(ctx.getCurrentField());
 
