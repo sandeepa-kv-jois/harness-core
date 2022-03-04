@@ -9,6 +9,7 @@ package io.harness.repositories.accountsetting;
 
 import static org.springframework.data.mongodb.core.query.Update.update;
 
+import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
 import io.harness.ng.core.accountsetting.entities.AccountSettings;
 import io.harness.ng.core.accountsetting.entities.AccountSettings.AccountSettingsKeys;
@@ -18,12 +19,14 @@ import com.mongodb.client.result.UpdateResult;
 import java.util.List;
 import javax.ws.rs.NotFoundException;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
 
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
+@Slf4j
 public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomRepository {
   private MongoTemplate mongoTemplate;
   @Override
@@ -73,9 +76,9 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
     final AccountSettings result = mongoTemplate.findOne(new Query(criteria), AccountSettings.class);
 
     if (result == null) {
-      throw new NotFoundException(
-          String.format("AccountSettings for account [%s] in project [%s], org [%s] type [%s] not found", accountId,
-              orgIdentifier, projectIdentifier, type));
+      log.error("AccountSettings for account {} in project {}, org {}, type {} not found", accountId, orgIdentifier,
+          projectIdentifier, type);
+      throw new NotFoundException(String.format("[%s] Settings for account [%s] not found", type, accountId));
     }
     return result;
   }
@@ -101,5 +104,14 @@ public class AccountSettingCustomRepositoryImpl implements AccountSettingCustomR
           accountSettings.getOrgIdentifier(), accountSettings.getProjectIdentifier(), accountSettings.getType()));
     }
     return existingRecord;
+  }
+
+  @Override
+  public void insertAll(List<AccountSettings> accountSettingsList) {
+    try {
+      mongoTemplate.insertAll(accountSettingsList);
+    } catch (Exception ex) {
+      throw new InvalidRequestException(String.format("Failed to insert default account settings"), ex);
+    }
   }
 }

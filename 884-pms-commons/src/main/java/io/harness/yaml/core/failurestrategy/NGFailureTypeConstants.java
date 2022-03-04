@@ -20,4 +20,5 @@ public interface NGFailureTypeConstants {
   String AUTHORIZATION_ERROR = "Authorization";
   String VERIFICATION_ERROR = "Verification";
   String DELEGATE_PROVISIONING_ERROR = "DelegateProvisioning";
+  String POLICY_EVALUATION_FAILURE = "PolicyEvaluationFailure";
 }

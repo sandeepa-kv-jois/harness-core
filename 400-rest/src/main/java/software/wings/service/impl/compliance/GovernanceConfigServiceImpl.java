@@ -488,6 +488,10 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
           if (oldWindow.checkIfActive()) {
             throw new InvalidRequestException("Cannot update active freeze window");
           }
+        } else if (entry.isApplicable() != oldWindow.isApplicable()) {
+          if (entry.checkWindowExpired()) {
+            throw new InvalidRequestException("Cannot update expired freeze window: " + entry.getName());
+          }
         }
         validateUserGroups(entry.getUserGroups(), accountId);
       }
@@ -532,6 +536,15 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
                     && ((CustomAppFilter) appSelection).getApps().size() != 1)) {
       throw new InvalidRequestException(
           "Application filter should have exactly one app when environment filter type is CUSTOM");
+    }
+    if (deploymentFreeze.getAppSelections()
+            .stream()
+            .filter(selection -> selection.getFilterType() == BlackoutWindowFilterType.CUSTOM)
+            .anyMatch(appSelection
+                -> appSelection.getServiceSelection().getFilterType() == ServiceFilterType.CUSTOM
+                    && ((CustomAppFilter) appSelection).getApps().size() != 1)) {
+      throw new InvalidRequestException(
+          "Application filter should have exactly one app when service filter type is CUSTOM");
     }
   }
 

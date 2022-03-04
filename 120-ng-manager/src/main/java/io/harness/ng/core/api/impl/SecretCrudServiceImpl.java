@@ -34,8 +34,8 @@ import io.harness.eventsframework.producer.Message;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SecretManagementException;
 import io.harness.ng.beans.PageResponse;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.api.SecretCrudService;
@@ -84,20 +84,20 @@ public class SecretCrudServiceImpl implements SecretCrudService {
   private final SecretEntityReferenceHelper secretEntityReferenceHelper;
   private final Producer eventProducer;
   private final NGEncryptedDataService encryptedDataService;
-  private final AccountSettingsHelper accountSettingsHelper;
+  private final NGAccountSettingService accountSettingService;
   private final NGConnectorSecretManagerService ngConnectorSecretManagerService;
 
   @Inject
   public SecretCrudServiceImpl(SecretEntityReferenceHelper secretEntityReferenceHelper, FileUploadLimit fileUploadLimit,
       NGSecretServiceV2 ngSecretService, @Named(ENTITY_CRUD) Producer eventProducer,
-      NGEncryptedDataService encryptedDataService, AccountSettingsHelper accountSettingsHelper,
+      NGEncryptedDataService encryptedDataService, NGAccountSettingService accountSettingService,
       NGConnectorSecretManagerService ngConnectorSecretManagerService) {
     this.fileUploadLimit = fileUploadLimit;
     this.secretEntityReferenceHelper = secretEntityReferenceHelper;
     this.ngSecretService = ngSecretService;
     this.eventProducer = eventProducer;
     this.encryptedDataService = encryptedDataService;
-    this.accountSettingsHelper = accountSettingsHelper;
+    this.accountSettingService = accountSettingService;
     this.ngConnectorSecretManagerService = ngConnectorSecretManagerService;
   }
 
@@ -149,7 +149,7 @@ public class SecretCrudServiceImpl implements SecretCrudService {
     }
 
     boolean isBuiltInSMDisabled =
-        accountSettingsHelper.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
+        accountSettingService.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
 
     if (isBuiltInSMDisabled && checkIfSecretManagerUsedIsHarnessManaged(accountIdentifier, dto)) {
       throw new InvalidRequestException("Built-in Harness Secret Manager cannot be used to create Secret.");
