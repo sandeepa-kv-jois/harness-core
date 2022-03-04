@@ -55,19 +55,18 @@ public class CustomHealthSourceSpecMetricTransformer
                 .sli(SLIDTO.builder().enabled(cvMetricDefinition.getSli().isEnabled()).build())
                 .identifier(cvMetricDefinition.getIdentifier())
                 .riskProfile(riskProfile)
-                .analysis(
-                    (HealthSourceMetricDefinition.AnalysisDTO.builder()
-                            .liveMonitoring(HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder()
-                                                .enabled(cvMetricDefinition.getLiveMonitoring().isEnabled())
-                                                .build())
-                            .deploymentVerification(
-                                HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
-                                    .enabled(cvMetricDefinition.getDeploymentVerification().isEnabled())
-                                    .serviceInstanceMetricPath(
-                                        cvMetricDefinition.getDeploymentVerification().getServiceInstanceMetricPath())
-                                    .build())
-                            .riskProfile(riskProfile)
-                            .build()))
+                .analysis(HealthSourceMetricDefinition.AnalysisDTO.builder()
+                              .liveMonitoring(HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder()
+                                                  .enabled(cvMetricDefinition.getLiveMonitoring().isEnabled())
+                                                  .build())
+                              .deploymentVerification(
+                                  HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
+                                      .enabled(cvMetricDefinition.getDeploymentVerification().isEnabled())
+                                      .serviceInstanceMetricPath(
+                                          cvMetricDefinition.getDeploymentVerification().getServiceInstanceMetricPath())
+                                      .build())
+                              .riskProfile(riskProfile)
+                              .build())
                 .build();
         customHealthSourceSpec.getMetricDefinitions().add(customHealthMetricDefinition);
       });

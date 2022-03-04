@@ -60,7 +60,6 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
             .queryName(queryName)
             .requestDefinition(CustomHealthRequestDefinition.builder()
                                    .method(CustomHealthMethod.GET)
-
                                    .startTimeInfo(TimestampInfo.builder().build())
                                    .endTimeInfo(TimestampInfo.builder().build())
                                    .urlPath(urlPath)
@@ -137,9 +136,9 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
         projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
         existingCVConfigs, metricPackService);
 
-    assertThat((result.getAdded().get(0).toString())).isEqualTo(addedCVConfig.toString());
+    assertThat(result.getAdded().get(0).toString()).isEqualTo(addedCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(1);
-    assertThat((result.getDeleted().size())).isEqualTo(2);
+    assertThat(result.getDeleted().size()).isEqualTo(2);
   }
 
   @Test
@@ -199,10 +198,10 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
         projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
         existingCVConfigs, metricPackService);
 
-    assertThat((result.getUpdated().get(0).toString())).isEqualTo(customHealthLogCVConfig.toString());
+    assertThat(result.getUpdated().get(0).toString()).isEqualTo(customHealthLogCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(0);
     assertThat(result.getUpdated().size()).isEqualTo(1);
-    assertThat((result.getDeleted().size())).isEqualTo(0);
+    assertThat(result.getDeleted().size()).isEqualTo(0);
   }
 
   @Test
@@ -252,9 +251,9 @@ public class CustomHealthSourceLogSpecTest extends CvNextGenTestBase {
         projectIdentifier, environmentRef, serviceRef, monitoredServiceIdentifier, "1234234_iden", "healthsource",
         existingCVConfigs, metricPackService);
 
-    assertThat((result.getDeleted().get(0).toString())).isEqualTo(existingCVConfig.toString());
+    assertThat(result.getDeleted().get(0).toString()).isEqualTo(existingCVConfig.toString());
     assertThat(result.getAdded().size()).isEqualTo(2);
     assertThat(result.getUpdated().size()).isEqualTo(0);
-    assertThat((result.getDeleted().size())).isEqualTo(1);
+    assertThat(result.getDeleted().size()).isEqualTo(1);
   }
 }

@@ -192,6 +192,7 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
         CustomHealthMetricCVConfig.builder()
             .groupName(groupName)
             .category(CVMonitoringCategory.ERRORS)
+            .queryType(HealthSourceQueryType.SERVICE_BASED)
             .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
               { add(metricDefinition2); }
             })
