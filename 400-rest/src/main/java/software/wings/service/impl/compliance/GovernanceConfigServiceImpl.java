@@ -175,7 +175,8 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
 
       User user = UserThreadLocal.get();
       if (null != user) {
-        EmbeddedUser embeddedUser = new EmbeddedUser(user.getUuid(), user.getName(), user.getEmail());
+        EmbeddedUser embeddedUser =
+            new EmbeddedUser(user.getUuid(), user.getName(), user.getEmail(), user.getExternalUserId());
         updateOperations.set(GovernanceConfigKeys.lastUpdatedBy, embeddedUser);
       } else {
         log.error("ThreadLocal User is null when trying to update governance config. accountId={}", accountId);
