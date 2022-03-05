@@ -30,7 +30,6 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import lombok.experimental.UtilityClass;
 
@@ -110,32 +109,35 @@ public class ResourceGroupMapper {
             .identifier(resourceGroup.getIdentifier())
             .name(resourceGroup.getName())
             .color(isBlank(resourceGroup.getColor()) ? HARNESS_BLUE : resourceGroup.getColor())
-            .tags(convertToList((Map<String, String>) resourceGroup.getTags()))
+            .tags(resourceGroup.getTags())
             .description(resourceGroup.getDescription())
+            .harnessManaged(resourceGroup.getHarnessManaged())
             .allowedScopeLevels(
                 resourceGroup.getAllowedScopeLevels() == null ? new HashSet<>() : resourceGroup.getAllowedScopeLevels())
             .build();
 
-    List<ResourceFilter> resourceFilter = new ArrayList<>();
+    List<io.harness.resourcegroup.v2.model.ResourceSelector> resources = new ArrayList<>();
     List<ScopeSelector> includedScopes = new ArrayList<>();
 
     AtomicBoolean includeChildScopes = new AtomicBoolean(false);
+    AtomicBoolean includeAllResources = new AtomicBoolean(resourceGroup.getHarnessManaged() ? true : false);
 
     for (Iterator<ResourceSelector> iterator = resourceGroup.getResourceSelectors().iterator(); iterator.hasNext();) {
       ResourceSelector resourceSelector = iterator.next();
       if (resourceSelector instanceof StaticResourceSelector) {
-        resourceFilter.add(ResourceFilter.builder()
-                               .resourceType(((StaticResourceSelector) resourceSelector).getResourceType())
-                               .identifiers(((StaticResourceSelector) resourceSelector).getIdentifiers())
-                               .build());
+        resources.add(io.harness.resourcegroup.v2.model.ResourceSelector.builder()
+                          .resourceType(((StaticResourceSelector) resourceSelector).getResourceType())
+                          .identifiers(((StaticResourceSelector) resourceSelector).getIdentifiers())
+                          .build());
       } else if (resourceSelector instanceof DynamicResourceSelector) {
-        resourceFilter.add(ResourceFilter.builder()
-                               .resourceType(((DynamicResourceSelector) resourceSelector).getResourceType())
-                               .build());
+        resources.add(io.harness.resourcegroup.v2.model.ResourceSelector.builder()
+                          .resourceType(((DynamicResourceSelector) resourceSelector).getResourceType())
+                          .build());
         if (((DynamicResourceSelector) resourceSelector).getIncludeChildScopes()) {
           includeChildScopes.set(true);
         }
       } else if (resourceSelector instanceof ResourceSelectorByScope) {
+        includeAllResources.set(true);
         if (((ResourceSelectorByScope) resourceSelector).isIncludeChildScopes()) {
           includeChildScopes.set(true);
         }
@@ -149,6 +151,10 @@ public class ResourceGroupMapper {
                            .filter(includeChildScopes.get() ? ScopeFilterType.INCLUDING_CHILD_SCOPES
                                                             : ScopeFilterType.EXCLUDING_CHILD_SCOPES)
                            .build());
+
+    resourceGroupV2.setIncludedScopes(includedScopes);
+    resourceGroupV2.setResourceFilter(
+        ResourceFilter.builder().includeAllResources(includeAllResources.get()).resources(resources).build());
 
     return resourceGroupV2;
   }

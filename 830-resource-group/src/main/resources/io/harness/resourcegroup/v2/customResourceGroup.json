@@ -1,0 +1,22 @@
+{
+  "accountIdentifier" : "kmpySmUISimoRrJL6NL73w",
+  "identifier" : "test_rg_2",
+  "name" : "test rg",
+  "description" : "",
+  "color" : "#0063f7",
+  "tags" : {},
+  "harnessManaged" : false,
+  "includedScopes" : [
+    {
+      "filter" : "EXCLUDING_CHILD_SCOPES",
+      "accountIdentifier" : "kmpySmUISimoRrJL6NL73w"
+    }
+  ],
+  "resourceFilter" : {
+    "resources" : [],
+    "includeAllResources" : false
+  },
+  "allowedScopeLevels" : [
+    "account"
+  ]
+}

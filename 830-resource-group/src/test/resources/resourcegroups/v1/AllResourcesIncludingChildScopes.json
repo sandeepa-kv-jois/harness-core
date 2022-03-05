@@ -1,0 +1,27 @@
+{
+  "accountIdentifier": null,
+  "orgIdentifier": null,
+  "projectIdentifier": null,
+  "identifier": "_all_resources_including_child_scopes",
+  "name": "All Resources Including Child Scopes",
+  "resourceSelectors": [
+    {
+      "type": "ResourceSelectorByScope",
+      "includeChildScopes": true,
+      "scope": null
+    }
+  ],
+  "fullScopeSelected": false,
+  "tags": {},
+  "description": "All the resources in this scope as well as the child scopes are included in this resource group.",
+  "allowedScopeLevels": [
+    "organization",
+    "account"
+  ],
+  "color": "#0063F7",
+  "scope": {
+    "accountIdentifier": null,
+    "orgIdentifier": null,
+    "projectIdentifier": null
+  }
+}

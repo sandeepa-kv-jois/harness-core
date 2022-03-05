@@ -1,0 +1,24 @@
+{
+  "_id" : "620522ef60f7d24b7e7e8510",
+  "identifier" : "_all_resources_including_child_scopes",
+  "name" : "All Resources Including Child Scopes",
+  "description" : "All the resources in this scope as well as the child scopes are included in this resource group.",
+  "color" : "#0063F7",
+  "tags" : [],
+  "harnessManaged" : true,
+  "resourceSelectors" : [
+    {
+      "includeChildScopes" : true,
+      "_class" : "ResourceSelectorByScope"
+    }
+  ],
+  "fullScopeSelected" : false,
+  "allowedScopeLevels" : [
+    "organization",
+    "account"
+  ],
+  "createdAt" : "1644503791840",
+  "lastModifiedAt" : "1644503791840",
+  "version" : "0",
+  "_class" : "resourceGroup"
+}

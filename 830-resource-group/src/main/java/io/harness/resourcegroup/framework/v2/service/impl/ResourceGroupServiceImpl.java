@@ -109,7 +109,8 @@ public class ResourceGroupServiceImpl implements ResourceGroupService {
     Optional<ResourceGroup> resourceGroupOpt =
         getResourceGroup(Scope.of(resourceGroup.getAccountIdentifier(), resourceGroup.getOrgIdentifier(),
                              resourceGroup.getProjectIdentifier()),
-            resourceGroup.getIdentifier(), null);
+            resourceGroup.getIdentifier(),
+            isEmpty(resourceGroup.getAccountIdentifier()) ? ManagedFilter.ONLY_MANAGED : ManagedFilter.ONLY_CUSTOM);
     ResourceGroup resourceGroupV2 = ResourceGroupMapper.fromV1(resourceGroup);
     if (!resourceGroupOpt.isPresent()) {
       return Optional.ofNullable(ResourceGroupMapper.toResponseWrapper(create(resourceGroupV2)));

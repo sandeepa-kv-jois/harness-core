@@ -28,10 +28,7 @@ public class MigrationOfV1ToV2 implements NGMigration {
   @Override
   public void migrate() {
     log.info("[MigrationOfV1ToV2] starting migration....");
-    try {
-      resourceGroupRepository.findAll().forEach(resourceGroup -> { resourceGroupService.upsert(resourceGroup); });
-    } catch (Exception exception) {
-      log.error("Unexpected error occurred during Migration of Resource Groups ", exception);
-    }
+    resourceGroupRepository.findAll().forEach(resourceGroupService::upsert);
+    log.info("[MigrationOfV1ToV2] migration successful....");
   }
 }

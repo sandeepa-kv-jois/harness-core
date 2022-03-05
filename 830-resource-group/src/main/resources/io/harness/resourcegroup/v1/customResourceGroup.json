@@ -1,0 +1,15 @@
+{
+  "_id" : "62148f1d84c3011222a5607f",
+  "accountIdentifier" : "kmpySmUISimoRrJL6NL73w",
+  "identifier" : "test_rg_2",
+  "name" : "test rg",
+  "description" : "",
+  "color" : "#0063f7",
+  "tags" : {},
+  "harnessManaged" : false,
+  "resourceSelectors" : [],
+  "fullScopeSelected" : false,
+  "allowedScopeLevels" : [
+    "account"
+  ]
+}
