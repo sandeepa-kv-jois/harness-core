@@ -786,9 +786,10 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
   }
 
   @Override
-  public ServiceInstanceDashboard getServiceInstanceDashboard(String accountId, String appId, String serviceId) {
+  public ServiceInstanceDashboard getServiceInstanceDashboard(
+      String accountId, String appId, String serviceId, String envId) {
     List<CurrentActiveInstances> currentActiveInstances = getCurrentActiveInstances(accountId, appId, serviceId);
-    List<DeploymentHistory> deploymentHistoryList = getDeploymentHistory(accountId, appId, serviceId);
+    List<DeploymentHistory> deploymentHistoryList = getDeploymentHistory(accountId, appId, serviceId, envId);
     Service service = serviceResourceService.getWithDetails(appId, serviceId);
     notNullCheck("Service not found", service, USER);
     EntitySummary serviceSummary = getEntitySummary(service.getName(), serviceId, EntityType.SERVICE.name());
@@ -979,7 +980,7 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
   }
 
   @VisibleForTesting
-  public List<DeploymentHistory> getDeploymentHistory(String accountId, String appId, String serviceId) {
+  public List<DeploymentHistory> getDeploymentHistory(String accountId, String appId, String serviceId, String envId) {
     List<DeploymentHistory> deploymentExecutionHistoryList = new ArrayList<>();
     Service service = serviceResourceService.getWithDetails(appId, serviceId);
     if (service == null) {
@@ -994,6 +995,10 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
                                                 .addFilter("serviceIds", HAS, serviceId)
                                                 .addOrder(WorkflowExecutionKeys.createdAt, OrderType.DESC)
                                                 .withLimit("10");
+
+    if (isNotEmpty(envId)) {
+      pageRequestBuilder.addFilter("envIds", HAS, envId);
+    }
 
     Optional<Integer> retentionPeriodInDays =
         ((DeploymentHistoryFeature) deploymentHistoryFeature).getRetentionPeriodInDays(accountId);

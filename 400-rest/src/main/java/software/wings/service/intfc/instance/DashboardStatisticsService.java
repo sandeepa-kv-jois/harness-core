@@ -89,10 +89,11 @@ public interface DashboardStatisticsService {
    * Gets the detailed information about the instances provisioned, deployments and pipelines for the given service.
    * @param appId app id
    * @param serviceId service id
+   * @param envId
    * @return service dashboard with cloud instance info
    */
   ServiceInstanceDashboard getServiceInstanceDashboard(
-      @NotEmpty String accountId, @NotEmpty String appId, @NotEmpty String serviceId);
+      @NotEmpty String accountId, @NotEmpty String appId, @NotEmpty String serviceId, String envId);
 
   /**
    * Gets the instance detailed information including the metadata

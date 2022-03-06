@@ -724,7 +724,7 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
                                                  .build();
 
       ServiceInstanceDashboard serviceInstanceDashboard =
-          dashboardService.getServiceInstanceDashboard(ACCOUNT_1_ID, APP_1_ID, SERVICE_1_ID);
+          dashboardService.getServiceInstanceDashboard(ACCOUNT_1_ID, APP_1_ID, SERVICE_1_ID, envId);
       assertThat(serviceInstanceDashboard).isNotNull();
       assertThat(serviceInstanceDashboard.getCurrentActiveInstancesList()).hasSize(1);
       assertThat(serviceInstanceDashboard.getCurrentActiveInstancesList().get(0).getInstanceCount()).isEqualTo(1);
