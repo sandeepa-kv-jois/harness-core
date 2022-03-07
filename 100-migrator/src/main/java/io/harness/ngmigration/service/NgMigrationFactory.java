@@ -22,9 +22,12 @@ public class NgMigrationFactory {
   @Inject EnvironmentMigrationService environmentMigrationService;
   @Inject InfraMigrationService infraMigrationService;
   @Inject ManifestMigrationService manifestMigrationService;
+  @Inject DummyMigrationService dummyMigrationService;
 
   public NgMigrationService getMethod(NGMigrationEntityType type) {
     switch (type) {
+      case DUMMY_HEAD:
+        return dummyMigrationService;
       case PIPELINE:
         return pipelineMigrationService;
       case WORKFLOW:

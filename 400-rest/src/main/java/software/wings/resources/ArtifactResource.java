@@ -15,6 +15,7 @@ import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 import io.harness.rest.RestResponse;
 
+import software.wings.beans.Service;
 import software.wings.beans.alert.AlertType;
 import software.wings.beans.alert.ArtifactCollectionFailedAlert;
 import software.wings.beans.artifact.Artifact;
@@ -27,6 +28,7 @@ import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.ArtifactService;
 import software.wings.service.intfc.ArtifactStreamService;
 import software.wings.service.intfc.PermitService;
+import software.wings.service.intfc.ServiceResourceService;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
@@ -63,6 +65,7 @@ public class ArtifactResource {
   private PermitService permitService;
   private AppService appService;
   private AlertService alertService;
+  private ServiceResourceService serviceResourceService;
 
   /**
    * Instantiates a new artifact resource.
@@ -108,6 +111,12 @@ public class ArtifactResource {
       @QueryParam("accountId") String accountId, @BeanParam PageRequest<Artifact> pageRequest) {
     if (StringUtils.isNotBlank(accountId)) {
       pageRequest.addFilter("accountId", EQ, accountId);
+    } else if (serviceId != null) {
+      Service service = serviceResourceService.get(serviceId);
+      if (service != null) {
+        String accountIdentifier = service.getAccountId();
+        pageRequest.addFilter("accountId", EQ, accountIdentifier);
+      }
     }
     return new RestResponse<>(artifactService.listArtifactsForService(serviceId, pageRequest));
   }

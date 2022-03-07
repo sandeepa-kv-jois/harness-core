@@ -17,13 +17,13 @@ import io.harness.security.encryption.EncryptionConfig;
 import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.InstanaConfig;
 import software.wings.beans.TaskType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.cv.DataCollector;
 import software.wings.delegatetasks.cv.InstanaDataCollector;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.service.impl.analysis.DataCollectionInfoV2;
 import software.wings.service.impl.analysis.MetricsDataCollectionInfo;
 import software.wings.settings.SettingValue;
-import software.wings.sm.StateType;
 
 import com.google.common.base.Preconditions;
 import java.time.Instant;
@@ -86,8 +86,8 @@ public class InstanaDataCollectionInfo extends MetricsDataCollectionInfo {
   }
 
   @Override
-  public StateType getStateType() {
-    return StateType.INSTANA;
+  public DelegateStateType getStateType() {
+    return DelegateStateType.INSTANA;
   }
 
   @Override

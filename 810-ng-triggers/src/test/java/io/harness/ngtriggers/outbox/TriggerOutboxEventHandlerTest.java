@@ -40,10 +40,10 @@ import io.harness.rule.Owner;
 import io.harness.security.SourcePrincipalContextData;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.UserPrincipal;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
@@ -60,7 +60,7 @@ public class TriggerOutboxEventHandlerTest extends CategoryTest {
 
   @Before
   public void setup() throws IOException {
-    objectMapper = NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER;
+    objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     auditClientService = mock(AuditClientService.class);
     eventHandler = spy(new TriggerOutboxEventHandler(auditClientService));
     newYaml = "pipeline:\n"

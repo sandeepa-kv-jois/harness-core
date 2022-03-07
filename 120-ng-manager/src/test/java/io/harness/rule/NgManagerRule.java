@@ -43,7 +43,6 @@ import io.harness.testlib.module.MongoRuleMixin;
 import io.harness.testlib.module.TestMongoModule;
 import io.harness.threading.CurrentThreadExecutor;
 import io.harness.threading.ExecutorModule;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.yaml.YamlSdkModule;
 import io.harness.yaml.schema.beans.YamlSchemaRootClass;
 
@@ -58,6 +57,7 @@ import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import io.dropwizard.jackson.Jackson;
+import io.serializer.HObjectMapper;
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -151,7 +151,7 @@ public class NgManagerRule implements MethodRule, InjectorRuleMixin, MongoRuleMi
       @Singleton
       public ObjectMapper getYamlSchemaObjectMapper() {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+        HObjectMapper.configureObjectMapperForNG(objectMapper);
         objectMapper.registerModule(new PmsBeansJacksonModule());
         return objectMapper;
       }

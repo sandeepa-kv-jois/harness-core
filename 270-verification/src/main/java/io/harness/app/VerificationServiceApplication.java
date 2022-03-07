@@ -99,6 +99,7 @@ import software.wings.service.impl.analysis.AnalysisContext.AnalysisContextKeys;
 import software.wings.service.impl.analysis.MLAnalysisType;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.github.dirkraft.dropwizard.fileassets.FileAssetsBundle;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -199,6 +200,7 @@ public class VerificationServiceApplication extends Application<VerificationServ
         new JsonSubtypeResolver(bootstrap.getObjectMapper().getSubtypeResolver()));
     bootstrap.getObjectMapper().setConfig(
         bootstrap.getObjectMapper().getSerializationConfig().withView(JsonViews.Public.class));
+    bootstrap.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     bootstrap.setMetricRegistry(metricRegistry);
 
     log.info("bootstrapping done.");

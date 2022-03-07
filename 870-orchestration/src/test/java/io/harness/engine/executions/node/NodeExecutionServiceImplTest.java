@@ -18,6 +18,7 @@ import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.spy;
 
@@ -215,7 +216,7 @@ public class NodeExecutionServiceImplTest extends OrchestrationTestBase {
 
     doReturn(Arrays.asList(pipelineNode, stageNode, forkNode, child1, child2, child3))
         .when(service)
-        .fetchNodeExecutionsWithoutOldRetriesAndStatusIn(any(), any());
+        .fetchNodeExecutionsWithoutOldRetriesAndStatusIn(any(), any(), eq(false), any());
 
     List<NodeExecution> stageChildList = service.findAllChildrenWithStatusIn(
         ambiance.getPlanExecutionId(), stageNode.getUuid(), EnumSet.of(Status.RUNNING), true);

@@ -10,9 +10,9 @@ package software.wings.service.impl.prometheus;
 import io.harness.exception.WingsException;
 
 import software.wings.delegatetasks.DelegateCVActivityLogService.Logger;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.analysis.MetricCollectionResponse;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.google.common.collect.TreeBasedTable;
@@ -112,7 +112,7 @@ public class PrometheusMetricDataResponse implements MetricCollectionResponse {
                   .cvConfigId(cvConfigId)
                   .dataCollectionMinute(getDataCollectionMinute(timeStamp, collectionStartTime, is247Task))
                   .timeStamp(timeStamp)
-                  .stateType(StateType.PROMETHEUS)
+                  .stateType(DelegateStateType.PROMETHEUS)
                   .host(host)
                   .groupName(groupName)
                   .build();

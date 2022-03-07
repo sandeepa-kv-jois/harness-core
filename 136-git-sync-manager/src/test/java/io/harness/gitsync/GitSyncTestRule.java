@@ -9,8 +9,8 @@ package io.harness.gitsync;
 
 import static io.harness.connector.ConnectorModule.DEFAULT_CONNECTOR_SERVICE;
 import static io.harness.outbox.TransactionOutboxModule.OUTBOX_TRANSACTION_TEMPLATE;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
 
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 import static org.mockito.Mockito.mock;
 
 import io.harness.Microservice;

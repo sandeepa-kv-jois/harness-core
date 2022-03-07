@@ -490,12 +490,12 @@ function setupClientUtils() {
       cp images/harness-pywinrm/${platform}/$harnessPywinrmVersion/harness-pywinrm ${STORAGE_DIR_LOCATION}/harness-download/snapshot-harness-pywinrm/release/$harnessPywinrmVersion/bin/${platform}/amd64/
     done
 
-    for helmversion in v2.13.1 v3.0.2 v3.1.2; do
+    for helmversion in v2.13.1 v3.1.2 v3.8.0; do
       mkdir -p ${STORAGE_DIR_LOCATION}/harness-download/harness-helm/release/$helmversion/bin/${platform}/amd64/
       cp images/helm/${platform}/$helmversion/helm ${STORAGE_DIR_LOCATION}/harness-download/harness-helm/release/$helmversion/bin/${platform}/amd64/
     done
 
-    for chartmuseumversion in v0.8.2 v0.13.0; do
+    for chartmuseumversion in v0.8.2 v0.12.0; do
       mkdir -p ${STORAGE_DIR_LOCATION}/harness-download/harness-chartmuseum/release/$chartmuseumversion/bin/${platform}/amd64/
       cp images/chartmuseum/${platform}/$chartmuseumversion/chartmuseum ${STORAGE_DIR_LOCATION}/harness-download/harness-chartmuseum/release/$chartmuseumversion/bin/${platform}/amd64/
     done

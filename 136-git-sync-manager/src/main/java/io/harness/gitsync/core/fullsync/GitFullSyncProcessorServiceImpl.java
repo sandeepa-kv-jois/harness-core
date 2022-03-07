@@ -157,7 +157,7 @@ public class GitFullSyncProcessorServiceImpl implements io.harness.gitsync.core.
 
   @Override
   public void performFullSync(GitFullSyncJob fullSyncJob) {
-    log.info("Started full sync for the job {}", fullSyncJob.getMessageId());
+    log.info("Started full sync for the job {} with message Id {}", fullSyncJob.getUuid(), fullSyncJob.getMessageId());
     try {
       SecurityContextBuilder.setContext(new ServicePrincipal(GIT_SYNC_SERVICE.getServiceId()));
       UpdateResult updateResult =

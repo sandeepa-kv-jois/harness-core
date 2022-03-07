@@ -14,6 +14,7 @@ import static io.harness.exception.WingsException.USER;
 
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 import static software.wings.beans.artifact.ArtifactStreamType.AZURE_ARTIFACTS;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 
 import static java.lang.String.format;
 
@@ -88,7 +89,7 @@ public class AzureArtifactsArtifactStream extends ArtifactStream {
   public ArtifactStreamAttributes fetchArtifactStreamAttributes(FeatureFlagService featureFlagService) {
     return ArtifactStreamAttributes.builder()
         .artifactStreamType(getArtifactStreamType())
-        .metadataOnly(isMetadataOnly())
+        .metadataOnly(metadataOnlyBehindFlag(featureFlagService, getAccountId(), isMetadataOnly()))
         .protocolType(protocolType)
         .project(project)
         .feed(feed)

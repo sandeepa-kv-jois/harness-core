@@ -32,7 +32,9 @@ from google.cloud import storage
     "accountId": "o0yschY0RrGZJ2JFGEpvdw",
     "path": "AROAXVZVVGMCF7KFQSJ37:o0yschY0RrGZJ2JFGEpvdw/mg7Qs7PuQxAgqg3aNzau0x/harness_cloud_cost_demo/20210501-20210601" or 
             "AROAY2UX4LR3HUT7WH7DG:NVsV7gjbTZyA3CgSgXNOcg/PGnxKAheSKWY30YHcgSNLg/Harness/20201101-20201201/<versioned>/",
-    "bucket": "awscustomerbillingdata-dev"
+    "bucket": "awscustomerbillingdata-dev",
+    "skipManifestCheck" : false,
+    "keepFiles": false
 }
 """
 
@@ -79,6 +81,7 @@ def main(event, context):
     if not create_dataset_and_tables(jsonData):
         return
     ingest_data_from_csv(jsonData)
+    set_available_columns(jsonData)
     get_unique_accountids(jsonData)
     ingest_data_to_awscur(jsonData)
     ingest_data_to_preagg(jsonData)
@@ -166,11 +169,16 @@ def create_table_from_manifest(jsonData):
             table = client.create_table(bigquery.Table(jsonData["tableId"], schema=schema))
             print_("Created table from blob {} {}.{}.{}".format(blob_to_delete.name, table.project, table.dataset_id,
                                                                 table.table_id))
-            blob_to_delete.delete()
-            print_("Deleted Manifest Json {}".format(blob_to_delete.name))
+            if jsonData.get("keepFiles") is True:
+                print_("keepFiles is true. Not deleting manifest.")
+            else:
+                blob_to_delete.delete()
+                print_("Deleted Manifest Json {}".format(blob_to_delete.name))
         else:
             print_("No Manifest found. No table to create")
-            return False
+            if jsonData.get("skipManifestCheck") in [False, None]:
+                return False
+            return True
     except Exception as e:
         print_("Error while creating table\n {}".format(e), "ERROR")
         return False
@@ -226,11 +234,32 @@ def ingest_data_from_csv(jsonData):
     blobs = storage_client.list_blobs(
         jsonData["bucket"], prefix=jsonData["cleanuppath"]
     )
+    if jsonData.get("keepFiles") is True:
+        print_("keepFiles is true. Not deleting csvs.")
+        return
     print_("Cleaning up all csvs in this path: %s" % jsonData["cleanuppath"])
     for blob in blobs:
         blob.delete()
         print_("Blob {} deleted.".format(blob.name))
 
+def set_available_columns(jsonData):
+    ds = "%s.%s" % (PROJECTID, jsonData["datasetName"])
+    query = """SELECT column_name, data_type
+                FROM %s.INFORMATION_SCHEMA.COLUMNS
+                WHERE table_name="%s";
+                """ % (ds, jsonData["tableName"])
+    try:
+        query_job = client.query(query)
+        results = query_job.result()  # wait for job to complete
+        columns = set()
+        for row in results:
+            columns.add(row.column_name.lower())
+        jsonData["available_columns"] = columns
+        print_("Retrieved available columns: %s" % columns)
+    except Exception as e:
+        print_("Failed to retrieve available columns", "WARN")
+        jsonData["available_columns"] = []
+        raise e
 
 def ingest_data_to_awscur(jsonData):
     ds = "%s.%s" % (PROJECTID, jsonData["datasetName"])
@@ -252,17 +281,23 @@ def ingest_data_to_awscur(jsonData):
         print_("Skipping ingesting tags")
         tags_query = "null AS tags "
 
+    desirable_columns = ["resourceid", "usagestartdate", "productname", "productfamily", "servicecode", "blendedrate", "blendedcost",
+                      "unblendedrate", "unblendedcost", "region", "availabilityzone", "usageaccountid", "instancetype",
+                      "usagetype", "lineitemtype", "effectivecost", "billingentity", "instanceFamily", "marketOption"]
+    available_columns = list(set(desirable_columns) & set(jsonData["available_columns"]))
+    available_columns = ", ".join(f"{w}" for w in available_columns)
+
     query = """
     DELETE FROM `%s` WHERE DATE(usagestartdate) >= '%s' AND DATE(usagestartdate) <= '%s' and usageaccountid IN (%s);
-    INSERT INTO `%s` (resourceid, usagestartdate, productname, productfamily, servicecode, blendedrate, blendedcost, 
-                    unblendedrate, unblendedcost, region, availabilityzone, usageaccountid, instancetype, usagetype, 
-                    lineitemtype, effectivecost, billingentity, instanceFamily, marketOption, tags) 
-    SELECT resourceid, usagestartdate, productname, productfamily, servicecode, blendedrate, blendedcost, 
-                    unblendedrate, unblendedcost, region, availabilityzone, usageaccountid, instancetype, usagetype, 
-                    lineitemtype, effectivecost, billingentity, instanceFamily, marketOption, %s
-                     FROM `%s` table WHERE DATE(usagestartdate) >= '%s' AND DATE(usagestartdate) <= '%s';
+    INSERT INTO `%s` (%s, tags) 
+        SELECT %s, %s 
+        FROM `%s` table 
+        WHERE DATE(usagestartdate) >= '%s' AND DATE(usagestartdate) <= '%s';
      """ % (tableName, date_start, date_end, jsonData["usageaccountid"],
-            tableName, tags_query, jsonData["tableId"], date_start, date_end)
+            tableName, available_columns,
+            available_columns, tags_query,
+            jsonData["tableId"],
+            date_start, date_end)
     # Configure the query job.
     print_(query)
     job_config = bigquery.QueryJobConfig(
@@ -319,18 +354,38 @@ def ingest_data_to_preagg(jsonData):
     date_start = "%s-%s-01" % (year, month)
     date_end = "%s-%s-%s" % (year, month, monthrange(int(year), int(month))[1])
     print_("Loading into %s preAggregated table..." % tableName)
-    query = """DELETE FROM `%s.preAggregated` WHERE DATE(startTime) >= '%s' AND DATE(startTime) <= '%s' AND cloudProvider = "AWS"
-                AND awsUsageAccountId IN (%s);
-               INSERT INTO `%s.preAggregated` (startTime, awsBlendedRate,awsBlendedCost,awsUnblendedRate, awsUnblendedCost, cost,
-                                               awsServicecode, region,awsAvailabilityzone,awsUsageaccountid,awsInstancetype,awsUsagetype,cloudProvider)
-               SELECT TIMESTAMP_TRUNC(usagestartdate, DAY) as startTime, min(blendedrate) AS awsBlendedRate, sum(blendedcost) AS awsBlendedCost,
+
+    insert_columns = """startTime, awsBlendedRate, awsBlendedCost, awsUnblendedRate, awsUnblendedCost, cost,
+                        awsServicecode, region, awsAvailabilityzone, awsUsageaccountid,
+                        awsUsagetype, cloudProvider"""
+
+    select_columns = """TIMESTAMP_TRUNC(usagestartdate, DAY) as startTime, min(blendedrate) AS awsBlendedRate, sum(blendedcost) AS awsBlendedCost,
                     min(unblendedrate) AS awsUnblendedRate, sum(unblendedcost) AS awsUnblendedCost, sum(unblendedcost) AS cost,
                     productname AS awsServicecode, region, availabilityzone AS awsAvailabilityzone, usageaccountid AS awsUsageaccountid,
-                    instancetype AS awsInstancetype, usagetype AS awsUsagetype, "AWS" AS cloudProvider 
-               FROM `%s.awscur_%s` WHERE usageaccountid IN (%s) 
-               GROUP BY awsServicecode, region, awsAvailabilityzone, awsUsageaccountid, awsInstancetype, awsUsagetype, startTime;
-    """ % (ds, date_start, date_end, jsonData["usageaccountid"], ds, ds, jsonData["awsCurTableSuffix"],
-           jsonData["usageaccountid"])
+                    usagetype AS awsUsagetype, "AWS" AS cloudProvider"""
+
+    group_by = """awsServicecode, region, awsAvailabilityzone, awsUsageaccountid, awsUsagetype, startTime"""
+    # Amend query as per columns availability
+    for additionalColumn in ["instancetype"]:
+        if additionalColumn.lower() in jsonData["available_columns"]:
+            insert_columns = insert_columns + ", aws%s" % additionalColumn
+            select_columns = select_columns + ", %s as aws%s" % (additionalColumn, additionalColumn)
+            # Modify groupbys as per columns availability and need
+            if additionalColumn == "instancetype":
+                group_by = group_by + ", aws%s" % additionalColumn
+
+    query = """DELETE FROM `%s.preAggregated` WHERE DATE(startTime) >= '%s' AND DATE(startTime) <= '%s' AND cloudProvider = "AWS"
+                AND awsUsageAccountId IN (%s);
+               INSERT INTO `%s.preAggregated` (%s)
+                   SELECT %s 
+                   FROM `%s.awscur_%s` 
+                   WHERE usageaccountid IN (%s) 
+               GROUP BY %s;
+    """ % (ds, date_start, date_end,
+           jsonData["usageaccountid"],
+           ds, insert_columns,
+           select_columns, ds, jsonData["awsCurTableSuffix"],
+           jsonData["usageaccountid"], group_by)
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter(
@@ -356,19 +411,36 @@ def ingest_data_to_unified(jsonData):
     date_start = "%s-%s-01" % (year, month)
     date_end = "%s-%s-%s" % (year, month, monthrange(int(year), int(month))[1])
     print_("Loading into %s table..." % tableName)
+
+    insert_columns = """product, startTime, 
+                    awsBlendedRate, awsBlendedCost,awsUnblendedRate, 
+                    awsUnblendedCost, cost, awsServicecode, region, 
+                    awsAvailabilityzone, awsUsageaccountid, 
+                    cloudProvider, awsBillingEntity, labels"""
+
+    select_columns = """productname AS product, TIMESTAMP_TRUNC(usagestartdate, DAY) as startTime, 
+                    blendedrate AS awsBlendedRate, blendedcost AS awsBlendedCost, unblendedrate AS awsUnblendedRate, 
+                    unblendedcost AS awsUnblendedCost, unblendedcost AS cost, productname AS awsServicecode, region, 
+                    availabilityzone AS awsAvailabilityzone, usageaccountid AS awsUsageaccountid, 
+                    "AWS" AS cloudProvider, billingentity as awsBillingEntity, tags AS labels"""
+
+    # Amend query as per columns availability
+    for additionalColumn in ["instancetype", "usagetype"]:
+        if additionalColumn.lower() in jsonData["available_columns"]:
+            insert_columns = insert_columns + ", aws%s" % additionalColumn
+            select_columns = select_columns + ", %s as aws%s" % (additionalColumn, additionalColumn)
+
     query = """DELETE FROM `%s` WHERE DATE(startTime) >= '%s' AND DATE(startTime) <= '%s'  AND cloudProvider = "AWS"
                     AND awsUsageAccountId IN (%s);
-               INSERT INTO `%s` (product, startTime,
-                    awsBlendedRate,awsBlendedCost,awsUnblendedRate, awsUnblendedCost, cost, awsServicecode,
-                    region,awsAvailabilityzone,awsUsageaccountid,awsInstancetype,awsUsagetype,cloudProvider, awsBillingEntity, labels)
-               SELECT productname AS product, TIMESTAMP_TRUNC(usagestartdate, DAY) as startTime, blendedrate AS
-                    awsBlendedRate, blendedcost AS awsBlendedCost, unblendedrate AS awsUnblendedRate, unblendedcost AS
-                    awsUnblendedCost, unblendedcost AS cost, productname AS awsServicecode, region, availabilityzone AS
-                    awsAvailabilityzone, usageaccountid AS awsUsageaccountid, instancetype AS awsInstancetype, usagetype
-                    AS awsUsagetype, "AWS" AS cloudProvider, billingentity as awsBillingEntity, tags AS labels 
+               INSERT INTO `%s` (%s)
+               SELECT %s 
                FROM `%s.awscur_%s` 
                WHERE usageaccountid IN (%s);
-     """ % (tableName, date_start, date_end, jsonData["usageaccountid"], tableName, ds, jsonData["awsCurTableSuffix"],
+     """ % (tableName, date_start, date_end,
+                jsonData["usageaccountid"],
+            tableName, insert_columns,
+            select_columns,
+            ds, jsonData["awsCurTableSuffix"],
             jsonData["usageaccountid"])
 
     # Configure the query job.

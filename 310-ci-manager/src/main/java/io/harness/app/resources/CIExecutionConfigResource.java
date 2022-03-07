@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.app.resources;
 
 import static io.harness.account.accesscontrol.AccountAccessControlPermissions.EDIT_ACCOUNT_PERMISSION;
@@ -63,5 +70,22 @@ public class CIExecutionConfigResource {
   public ResponseDTO<List<DeprecatedImageInfo>> getExecutionConfig(
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
     return ResponseDTO.newResponse(configService.getDeprecatedTags(accountIdentifier));
+  }
+
+  @GET
+  @Path("/get-current-config")
+  @ApiOperation(value = "Get account's execution config", nickname = "getCurrentConfig")
+  @NGAccessControlCheck(resourceType = ResourceTypes.ACCOUNT, permission = VIEW_ACCOUNT_PERMISSION)
+  public ResponseDTO<CIExecutionImages> getCurrentConfig(
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
+    return ResponseDTO.newResponse(configService.getCurrentConfig(accountIdentifier));
+  }
+
+  @GET
+  @Path("/get-default-config")
+  @ApiOperation(value = "Get default execution config", nickname = "getDefaultConfig")
+  @NGAccessControlCheck(resourceType = ResourceTypes.ACCOUNT, permission = VIEW_ACCOUNT_PERMISSION)
+  public ResponseDTO<CIExecutionImages> getDefaultConfig() {
+    return ResponseDTO.newResponse(configService.getDefaultConfig());
   }
 }

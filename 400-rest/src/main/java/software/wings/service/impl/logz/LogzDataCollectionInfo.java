@@ -13,10 +13,10 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.config.LogzConfig;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.service.impl.analysis.LogDataCollectionInfo;
 import software.wings.service.impl.elk.ElkQueryType;
-import software.wings.sm.StateType;
 
 import java.util.List;
 import java.util.Set;
@@ -45,8 +45,8 @@ public class LogzDataCollectionInfo extends LogDataCollectionInfo implements Exe
       List<EncryptedDataDetail> encryptedDataDetails, LogzConfig logzConfig, String messageField, String timestampField,
       String timestampFieldFormat, ElkQueryType queryType, int initialDelayMinutes) {
     super(accountId, applicationId, stateExecutionId, cvConfigId, workflowId, workflowExecutionId, serviceId, query,
-        startTime, endTime, startMinute, collectionTime, hostnameField, hosts, StateType.LOGZ, encryptedDataDetails,
-        initialDelayMinutes);
+        startTime, endTime, startMinute, collectionTime, hostnameField, hosts, DelegateStateType.LOGZ,
+        encryptedDataDetails, initialDelayMinutes);
     this.logzConfig = logzConfig;
     this.messageField = messageField;
     this.timestampField = timestampField;

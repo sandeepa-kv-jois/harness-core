@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
 
+import java.util.ArrayList;
 import java.util.List;
 import lombok.Builder;
 import lombok.Setter;
@@ -25,5 +26,5 @@ public class EdgeListInternal {
   List<String> prevIds;
   List<String> nextIds;
 
-  List<String> edges;
+  @Builder.Default List<String> edges = new ArrayList<>();
 }

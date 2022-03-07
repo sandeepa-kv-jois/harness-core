@@ -15,9 +15,9 @@ import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ENTITY
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.RESOURCE_GROUP;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.UPDATE_ACTION;
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
 import static io.harness.rule.OwnerRule.KARAN;
 
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;
@@ -41,15 +41,15 @@ import io.harness.category.element.UnitTests;
 import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
 import io.harness.outbox.OutboxEvent;
-import io.harness.resourcegroup.framework.events.ResourceGroupCreateEvent;
-import io.harness.resourcegroup.framework.events.ResourceGroupDeleteEvent;
-import io.harness.resourcegroup.framework.events.ResourceGroupUpdateEvent;
-import io.harness.resourcegroup.framework.service.impl.ResourceGroupEventHandler;
-import io.harness.resourcegroup.model.DynamicResourceSelector;
-import io.harness.resourcegroup.model.ResourceSelector;
-import io.harness.resourcegroup.model.StaticResourceSelector;
-import io.harness.resourcegroup.remote.dto.ResourceGroupDTO;
-import io.harness.resourcegroup.remote.dto.ResourceGroupRequest;
+import io.harness.resourcegroup.framework.v1.events.ResourceGroupCreateEvent;
+import io.harness.resourcegroup.framework.v1.events.ResourceGroupDeleteEvent;
+import io.harness.resourcegroup.framework.v1.events.ResourceGroupUpdateEvent;
+import io.harness.resourcegroup.framework.v1.service.impl.ResourceGroupEventHandler;
+import io.harness.resourcegroup.v1.model.DynamicResourceSelector;
+import io.harness.resourcegroup.v1.model.ResourceSelector;
+import io.harness.resourcegroup.v1.model.StaticResourceSelector;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupRequest;
 import io.harness.rule.Owner;
 
 import com.fasterxml.jackson.core.JsonProcessingException;

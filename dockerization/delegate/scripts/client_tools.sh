@@ -17,8 +17,10 @@ if [[ ( -z "$DISABLE_CLIENT_TOOLS") || ("$DISABLE_CLIENT_TOOLS" = "false") ]]; t
   && curl -s -L -o client-tools/helm/v2.13.1/helm https://app.harness.io/public/shared/tools/helm/release/v2.13.1/bin/linux/amd64/helm \
   && mkdir -m 777 -p client-tools/helm/v3.1.2 \
   && curl -s -L -o client-tools/helm/v3.1.2/helm https://app.harness.io/public/shared/tools/helm/release/v3.1.2/bin/linux/amd64/helm \
-  && mkdir -m 777 -p client-tools/chartmuseum/v0.13.0 \
-  && curl -s -L -o client-tools/chartmuseum/v0.13.0/chartmuseum https://app.harness.io/public/shared/tools/chartmuseum/release/v0.13.0/bin/linux/amd64/chartmuseum \
+  && mkdir -m 777 -p client-tools/helm/v3.8.0 \
+  && curl -s -L -o client-tools/helm/v3.8.0/helm https://app.harness.io/public/shared/tools/helm/release/v3.8.0/bin/linux/amd64/helm \
+  && mkdir -m 777 -p client-tools/chartmuseum/v0.12.0 \
+  && curl -s -L -o client-tools/chartmuseum/v0.12.0/chartmuseum https://app.harness.io/public/shared/tools/chartmuseum/release/v0.12.0/bin/linux/amd64/chartmuseum \
   && mkdir -m 777 -p client-tools/chartmuseum/v0.8.2 \
   && curl -s -L -o client-tools/chartmuseum/v0.8.2/chartmuseum https://app.harness.io/public/shared/tools/chartmuseum/release/v0.8.2/bin/linux/amd64/chartmuseum \
   && mkdir -m 777 -p client-tools/tf-config-inspect/v1.0/linux/amd64 \

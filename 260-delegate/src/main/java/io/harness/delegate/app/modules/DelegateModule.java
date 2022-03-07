@@ -697,25 +697,20 @@ public class DelegateModule extends AbstractModule {
         1, new ThreadFactoryBuilder().setNameFormat("profile-%d").setPriority(Thread.NORM_PRIORITY).build());
   }
 
-  /*
-   * Creates and return ScheduledExecutorService object, which can be used for fetching task in case of polling.
-   */
-  @Provides
-  @Singleton
-  @Named("rescheduleExecutor")
-  public ScheduledExecutorService rescheduleExecutor() {
-    return new ScheduledThreadPoolExecutor(
-        1, new ThreadFactoryBuilder().setNameFormat("reschedule-%d").setPriority(Thread.MAX_PRIORITY).build());
-  }
-
   @Provides
   @Singleton
   @Named("verificationExecutor")
   public ScheduledExecutorService verificationExecutor() {
-    ScheduledExecutorService verificationExecutor = new ScheduledThreadPoolExecutor(
+    return new ScheduledThreadPoolExecutor(
         2, new ThreadFactoryBuilder().setNameFormat("verification-%d").setPriority(Thread.NORM_PRIORITY).build());
-    Runtime.getRuntime().addShutdownHook(new Thread(verificationExecutor::shutdownNow));
-    return verificationExecutor;
+  }
+
+  @Provides
+  @Singleton
+  @Named("taskPollExecutor")
+  public ScheduledExecutorService taskPollExecutor() {
+    return new ScheduledThreadPoolExecutor(
+        4, new ThreadFactoryBuilder().setNameFormat("task-poll-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
   /*
@@ -770,22 +765,6 @@ public class DelegateModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named("alternativeExecutor")
-  public ExecutorService alternativeExecutor() {
-    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("alternative-%d").setPriority(Thread.MIN_PRIORITY).build());
-  }
-
-  @Provides
-  @Singleton
-  @Named("systemExecutor")
-  public ExecutorService systemExecutor() {
-    return ThreadPool.create(4, 9, 1, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("system-%d").setPriority(Thread.MAX_PRIORITY).build());
-  }
-
-  @Provides
-  @Singleton
   @Named("grpcServiceExecutor")
   public ExecutorService grpcServiceExecutor() {
     return Executors.newFixedThreadPool(
@@ -827,26 +806,10 @@ public class DelegateModule extends AbstractModule {
 
   @Provides
   @Singleton
-  @Named("artifactExecutor")
-  public ExecutorService artifactExecutor() {
-    return ThreadPool.create(10, 40, 1, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("artifact-%d").setPriority(Thread.MIN_PRIORITY).build());
-  }
-
-  @Provides
-  @Singleton
   @Named("timeoutExecutor")
   public ExecutorService timeoutExecutor() {
     return ThreadPool.create(10, 40, 7, TimeUnit.SECONDS,
         new ThreadFactoryBuilder().setNameFormat("timeout-%d").setPriority(Thread.NORM_PRIORITY).build());
-  }
-
-  @Provides
-  @Singleton
-  @Named("taskPollExecutor")
-  public ExecutorService taskPollExecutor() {
-    return ThreadPool.create(4, 10, 3, TimeUnit.SECONDS,
-        new ThreadFactoryBuilder().setNameFormat("task-poll-%d").setPriority(Thread.MAX_PRIORITY).build());
   }
 
   @Provides

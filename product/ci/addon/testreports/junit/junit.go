@@ -8,11 +8,11 @@ package junit
 import (
 	"context"
 	"fmt"
-	"github.com/mattn/go-zglob"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	gojunit "github.com/harness/harness-core/product/ci/addon/gojunit"
 	"github.com/harness/harness-core/product/ci/addon/testreports"
 	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"github.com/mattn/go-zglob"
 	"go.uber.org/zap"
 )
 

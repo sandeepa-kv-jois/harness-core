@@ -175,7 +175,8 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
 
       User user = UserThreadLocal.get();
       if (null != user) {
-        EmbeddedUser embeddedUser = new EmbeddedUser(user.getUuid(), user.getName(), user.getEmail());
+        EmbeddedUser embeddedUser =
+            new EmbeddedUser(user.getUuid(), user.getName(), user.getEmail(), user.getExternalUserId());
         updateOperations.set(GovernanceConfigKeys.lastUpdatedBy, embeddedUser);
       } else {
         log.error("ThreadLocal User is null when trying to update governance config. accountId={}", accountId);
@@ -488,6 +489,10 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
           if (oldWindow.checkIfActive()) {
             throw new InvalidRequestException("Cannot update active freeze window");
           }
+        } else if (entry.isApplicable() != oldWindow.isApplicable()) {
+          if (entry.checkWindowExpired()) {
+            throw new InvalidRequestException("Cannot update expired freeze window: " + entry.getName());
+          }
         }
         validateUserGroups(entry.getUserGroups(), accountId);
       }
@@ -532,6 +537,15 @@ public class GovernanceConfigServiceImpl implements GovernanceConfigService {
                     && ((CustomAppFilter) appSelection).getApps().size() != 1)) {
       throw new InvalidRequestException(
           "Application filter should have exactly one app when environment filter type is CUSTOM");
+    }
+    if (deploymentFreeze.getAppSelections()
+            .stream()
+            .filter(selection -> selection.getFilterType() == BlackoutWindowFilterType.CUSTOM)
+            .anyMatch(appSelection
+                -> appSelection.getServiceSelection().getFilterType() == ServiceFilterType.CUSTOM
+                    && ((CustomAppFilter) appSelection).getApps().size() != 1)) {
+      throw new InvalidRequestException(
+          "Application filter should have exactly one app when service filter type is CUSTOM");
     }
   }
 

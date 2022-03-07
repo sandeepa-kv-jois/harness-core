@@ -26,8 +26,8 @@ import io.harness.ng.core.template.TemplateListType;
 import io.harness.ng.core.template.TemplateSummaryResponseDTO;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 import io.harness.template.TemplateFilterPropertiesDTO;
 import io.harness.template.remote.TemplateResourceClient;
 

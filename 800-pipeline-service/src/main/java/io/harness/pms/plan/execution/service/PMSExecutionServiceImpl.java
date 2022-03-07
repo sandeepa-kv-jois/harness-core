@@ -74,9 +74,6 @@ import org.springframework.data.mongodb.core.query.Update;
 @Slf4j
 @OwnedBy(PIPELINE)
 public class PMSExecutionServiceImpl implements PMSExecutionService {
-  // This is here just for backward compatibility should be removed
-  private static final String INTERNAL_SERVICE_NAME = "pmsInternal";
-
   @Inject private PmsExecutionSummaryRespository pmsExecutionSummaryRespository;
   @Inject private GraphGenerationService graphGenerationService;
   @Inject private OrchestrationService orchestrationService;
@@ -131,7 +128,6 @@ public class PMSExecutionServiceImpl implements PMSExecutionService {
       // Check for pipeline with no filters also - empty pipeline or pipelines with only approval stage
       moduleCriteria.orOperator(Criteria.where(PlanExecutionSummaryKeys.modules).is(Collections.emptyList()),
           // This is here just for backward compatibility should be removed
-          Criteria.where(PlanExecutionSummaryKeys.modules).is(Collections.singletonList(INTERNAL_SERVICE_NAME)),
           Criteria.where(PlanExecutionSummaryKeys.modules).in(ModuleType.PMS.name().toLowerCase()),
           Criteria.where(PlanExecutionSummaryKeys.modules).in(moduleName));
     }

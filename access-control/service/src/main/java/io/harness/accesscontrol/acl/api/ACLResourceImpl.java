@@ -28,6 +28,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.security.SecurityContextBuilder;
+import io.harness.security.annotations.NextGenManagerAuth;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -44,6 +45,7 @@ import org.apache.commons.lang3.StringUtils;
 @ValidateOnExecution
 @Singleton
 @Slf4j
+@NextGenManagerAuth
 @OwnedBy(HarnessTeam.PL)
 public class ACLResourceImpl implements ACLResource {
   private final ACLService aclService;

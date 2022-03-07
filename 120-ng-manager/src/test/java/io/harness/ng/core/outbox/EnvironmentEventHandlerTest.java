@@ -8,9 +8,9 @@
 package io.harness.ng.core.outbox;
 
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
 import static io.harness.rule.OwnerRule.BRIJESH;
 
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertNotNull;
 import static junit.framework.TestCase.assertNull;

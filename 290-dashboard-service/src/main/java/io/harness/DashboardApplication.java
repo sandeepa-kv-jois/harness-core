@@ -24,7 +24,6 @@ import io.harness.security.annotations.NextGenManagerAuth;
 import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.token.remote.TokenClient;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -43,6 +42,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
@@ -128,7 +128,7 @@ public class DashboardApplication extends Application<DashboardServiceConfig> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
   }
 
   private void registerOasResource(DashboardServiceConfig appConfig, Environment environment, Injector injector) {

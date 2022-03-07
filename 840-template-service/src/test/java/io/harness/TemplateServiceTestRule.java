@@ -52,7 +52,6 @@ import io.harness.testlib.module.TestMongoModule;
 import io.harness.threading.CurrentThreadExecutor;
 import io.harness.threading.ExecutorModule;
 import io.harness.time.TimeModule;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Suppliers;
@@ -67,6 +66,7 @@ import com.google.inject.TypeLiteral;
 import com.google.inject.name.Named;
 import io.dropwizard.jackson.Jackson;
 import io.grpc.inprocess.InProcessChannelBuilder;
+import io.serializer.HObjectMapper;
 import java.io.Closeable;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
@@ -147,8 +147,7 @@ public class TemplateServiceTestRule implements InjectorRuleMixin, MethodRule, M
       @Provides
       @Singleton
       OutboxService getOutboxService(OutboxEventRepository outboxEventRepository) {
-        return new OutboxServiceImpl(
-            new OutboxDaoImpl(outboxEventRepository), NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER);
+        return new OutboxServiceImpl(new OutboxDaoImpl(outboxEventRepository), HObjectMapper.NG_DEFAULT_OBJECT_MAPPER);
       }
 
       @Provides
@@ -156,7 +155,7 @@ public class TemplateServiceTestRule implements InjectorRuleMixin, MethodRule, M
       @Singleton
       public ObjectMapper getYamlSchemaObjectMapper() {
         ObjectMapper objectMapper = Jackson.newObjectMapper();
-        NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+        HObjectMapper.configureObjectMapperForNG(objectMapper);
         objectMapper.registerModule(new TemplateServiceJacksonModule());
         return objectMapper;
       }

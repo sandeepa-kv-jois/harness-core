@@ -35,6 +35,7 @@ import io.harness.exception.WingsException;
 import software.wings.beans.APMVerificationConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.MetricType;
 import software.wings.metrics.TimeSeriesMetricDefinition;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
@@ -399,7 +400,7 @@ public class APMVerificationState extends AbstractMetricAnalysisState {
             .options(apmConfig.collectionParams())
             .encryptedDataDetails(apmConfig.encryptedDataDetails(secretManager))
             .hosts(hosts)
-            .stateType(StateType.APM_VERIFICATION)
+            .stateType(DelegateStateType.APM_VERIFICATION)
             .applicationId(context.getAppId())
             .stateExecutionId(context.getStateExecutionInstanceId())
             .workflowId(getWorkflowId(context))

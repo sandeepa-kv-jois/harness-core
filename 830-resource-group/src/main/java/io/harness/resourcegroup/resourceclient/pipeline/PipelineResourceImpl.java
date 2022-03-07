@@ -26,8 +26,8 @@ import io.harness.pms.pipeline.PMSPipelineSummaryResponseDTO;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.inject.Inject;

@@ -28,6 +28,12 @@ import lombok.Data;
 public class StackdriverDataCollectionInfo extends TimeSeriesDataCollectionInfo<GcpConnectorDTO> {
   List<StackDriverMetricDefinition> metricDefinitions;
 
+  public List<StackDriverMetricDefinition> getMetricDefinitions() {
+    if (metricDefinitions == null) {
+      return Collections.emptyList();
+    }
+    return metricDefinitions;
+  }
   @Override
   public Map<String, Object> getDslEnvVariables(GcpConnectorDTO connectorConfigDTO) {
     Map<String, Object> dslEnvVariables = StackdriverUtils.getCommonEnvVariables(connectorConfigDTO, METRIC_SCOPE);
@@ -39,7 +45,7 @@ public class StackdriverDataCollectionInfo extends TimeSeriesDataCollectionInfo<
     Map<String, List<String>> groupByResponseList = new HashMap<>();
     List<String> serviceInstanceFieldList = new ArrayList<>();
     List<String> serviceInstanceResponseFields = new ArrayList<>();
-    metricDefinitions.forEach(metricDefinition -> {
+    getMetricDefinitions().forEach(metricDefinition -> {
       if (this.isCollectHostData() && metricDefinition.getServiceInstanceField() != null) {
         serviceInstanceFieldList.add(metricDefinition.getServiceInstanceField());
         serviceInstanceResponseFields.add(

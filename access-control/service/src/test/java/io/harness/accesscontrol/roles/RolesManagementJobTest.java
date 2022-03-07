@@ -46,11 +46,11 @@ import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.reflection.ReflectionUtils;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import io.serializer.HObjectMapper;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -92,7 +92,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
   @Category(UnitTests.class)
   public void testSave() {
     RolesConfig rolesConfig = (RolesConfig) ReflectionUtils.getFieldValue(rolesManagementJob, ROLES_CONFIG_FIELD);
-    RolesConfig rolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    RolesConfig rolesConfigClone = (RolesConfig) HObjectMapper.clone(rolesConfig);
 
     rolesManagementJob.run();
     validate(rolesConfigClone);
@@ -105,15 +105,15 @@ public class RolesManagementJobTest extends AccessControlTestBase {
     Field f = rolesManagementJob.getClass().getDeclaredField(ROLES_CONFIG_FIELD);
     RolesConfig rolesConfig = (RolesConfig) ReflectionUtils.getFieldValue(rolesManagementJob, ROLES_CONFIG_FIELD);
     ReflectionUtils.setObjectField(rolesConfig.getClass().getDeclaredField(VERSION_FIELD), rolesConfig, 2);
-    RolesConfig latestRolesConfig = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    RolesConfig latestRolesConfig = (RolesConfig) HObjectMapper.clone(rolesConfig);
     RolesConfig currentRolesConfig =
         RolesConfig.builder().version(1).name(latestRolesConfig.getName()).roles(new HashSet<>()).build();
-    RolesConfig currentRolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(currentRolesConfig);
+    RolesConfig currentRolesConfigClone = (RolesConfig) HObjectMapper.clone(currentRolesConfig);
     ReflectionUtils.setObjectField(f, rolesManagementJob, currentRolesConfig);
     rolesManagementJob.run();
     validate(currentRolesConfigClone);
 
-    RolesConfig latestRolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(latestRolesConfig);
+    RolesConfig latestRolesConfigClone = (RolesConfig) HObjectMapper.clone(latestRolesConfig);
     ReflectionUtils.setObjectField(f, rolesManagementJob, latestRolesConfig);
     rolesManagementJob.run();
     validate(latestRolesConfigClone);
@@ -142,7 +142,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
     ReflectionUtils.setObjectField(
         rolesConfig.getClass().getDeclaredField(VERSION_FIELD), rolesConfig, currentVersion + 1);
 
-    RolesConfig rolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    RolesConfig rolesConfigClone = (RolesConfig) HObjectMapper.clone(rolesConfig);
 
     rolesManagementJob.run();
     validate(rolesConfigClone);
@@ -155,7 +155,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
     Field f = rolesManagementJob.getClass().getDeclaredField(ROLES_CONFIG_FIELD);
     RolesConfig currentRolesConfig =
         (RolesConfig) ReflectionUtils.getFieldValue(rolesManagementJob, ROLES_CONFIG_FIELD);
-    RolesConfig latestRolesConfig = (RolesConfig) NGObjectMapperHelper.clone(currentRolesConfig);
+    RolesConfig latestRolesConfig = (RolesConfig) HObjectMapper.clone(currentRolesConfig);
     ReflectionUtils.setObjectField(latestRolesConfig.getClass().getDeclaredField(VERSION_FIELD), latestRolesConfig,
         currentRolesConfig.getVersion() + 1);
     Set<String> allowedScopeLevels = new HashSet<>();
@@ -169,12 +169,12 @@ public class RolesManagementJobTest extends AccessControlTestBase {
                                           .permissions(new HashSet<>())
                                           .build());
 
-    RolesConfig currentRolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(currentRolesConfig);
+    RolesConfig currentRolesConfigClone = (RolesConfig) HObjectMapper.clone(currentRolesConfig);
     rolesManagementJob.run();
     validate(currentRolesConfigClone);
 
     ReflectionUtils.setObjectField(f, rolesManagementJob, latestRolesConfig);
-    RolesConfig latestRolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(latestRolesConfig);
+    RolesConfig latestRolesConfigClone = (RolesConfig) HObjectMapper.clone(latestRolesConfig);
     rolesManagementJob.run();
     validate(latestRolesConfigClone);
   }
@@ -210,7 +210,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
                                    .permissions(permissions)
                                    .build());
 
-    RolesConfig rolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    RolesConfig rolesConfigClone = (RolesConfig) HObjectMapper.clone(rolesConfig);
     rolesManagementJob.run();
     validate(rolesConfigClone);
 
@@ -237,7 +237,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
         role.getPermissions().remove(NEW_PERMISSION);
       }
     });
-    rolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    rolesConfigClone = (RolesConfig) HObjectMapper.clone(rolesConfig);
     rolesManagementJob.run();
     validate(rolesConfigClone);
   }
@@ -260,7 +260,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
                                    .permissions(permissions)
                                    .build());
 
-    RolesConfig rolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    RolesConfig rolesConfigClone = (RolesConfig) HObjectMapper.clone(rolesConfig);
     rolesManagementJob.run();
     validate(rolesConfigClone);
   }
@@ -342,7 +342,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
     ReflectionUtils.setObjectField(
         rolesConfig.getClass().getDeclaredField(VERSION_FIELD), rolesConfig, rolesConfig.getVersion() + 1);
 
-    RolesConfig rolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    RolesConfig rolesConfigClone = (RolesConfig) HObjectMapper.clone(rolesConfig);
     rolesManagementJob.run();
     validate(rolesConfigClone);
     assertEquals(2,
@@ -372,7 +372,7 @@ public class RolesManagementJobTest extends AccessControlTestBase {
                                    .permissions(permissions)
                                    .build());
 
-    RolesConfig rolesConfigClone = (RolesConfig) NGObjectMapperHelper.clone(rolesConfig);
+    RolesConfig rolesConfigClone = (RolesConfig) HObjectMapper.clone(rolesConfig);
     rolesManagementJob.run();
     validate(rolesConfigClone);
     return rolesConfig;

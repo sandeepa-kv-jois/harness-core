@@ -1149,7 +1149,8 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   private void successWhenHelm3PresentInClientTools() throws InterruptedException, IOException, TimeoutException {
     doReturn("/client-tools/helm").when(k8sGlobalConfigService).getHelmPath(V3);
 
-    HelmCommandResponse helmCommandResponse = helmDeployService.ensureHelm3Installed(null);
+    HelmCommandResponse helmCommandResponse =
+        helmDeployService.ensureHelm3Installed(HelmInstallCommandRequest.builder().helmVersion(V3).build());
 
     assertThat(helmCommandResponse.getCommandExecutionStatus()).isEqualTo(SUCCESS);
   }
@@ -1157,7 +1158,8 @@ public class HelmDeployServiceImplTest extends WingsBaseTest {
   private void failureWhenHelm3AbsentInClientTools() throws InterruptedException, IOException, TimeoutException {
     doReturn("").when(k8sGlobalConfigService).getHelmPath(V3);
 
-    HelmCommandResponse helmCommandResponse = helmDeployService.ensureHelm3Installed(null);
+    HelmCommandResponse helmCommandResponse =
+        helmDeployService.ensureHelm3Installed(HelmInstallCommandRequest.builder().helmVersion(V3).build());
 
     assertThat(helmCommandResponse.getCommandExecutionStatus()).isEqualTo(CommandExecutionStatus.FAILURE);
   }

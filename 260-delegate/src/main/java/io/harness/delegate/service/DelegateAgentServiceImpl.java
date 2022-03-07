@@ -119,6 +119,7 @@ import io.harness.delegate.beans.DelegateTaskEvent;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateUnregisterRequest;
+import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.SecretDetail;
 import io.harness.delegate.beans.TaskData;
@@ -136,6 +137,7 @@ import io.harness.delegate.task.TaskLogContext;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.validation.DelegateConnectionResultDetail;
 import io.harness.event.client.impl.tailer.ChronicleEventTailer;
+import io.harness.exception.ExceptionUtils;
 import io.harness.exception.UnexpectedException;
 import io.harness.expression.ExpressionReflectionUtils;
 import io.harness.filesystem.FileIo;
@@ -338,11 +340,10 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   @Inject @Named("watcherMonitorExecutor") private ScheduledExecutorService watcherMonitorExecutor;
   @Inject @Named("upgradeExecutor") private ScheduledExecutorService upgradeExecutor;
   @Inject @Named("inputExecutor") private ScheduledExecutorService inputExecutor;
-  @Inject @Named("rescheduleExecutor") private ScheduledExecutorService rescheduleExecutor;
   @Inject @Named("profileExecutor") private ScheduledExecutorService profileExecutor;
   @Inject @Named("watcherUpgradeExecutor") private ExecutorService watcherUpgradeExecutor;
   @Inject @Named("backgroundExecutor") private ExecutorService backgroundExecutor;
-  @Inject @Named("taskPollExecutor") private ExecutorService taskPollExecutor;
+  @Inject @Named("taskPollExecutor") private ScheduledExecutorService taskPollExecutor;
   @Inject @Named("taskExecutor") private ExecutorService taskExecutor;
   @Inject @Named("timeoutExecutor") private ExecutorService timeoutEnforcement;
   @Inject @Named("grpcServiceExecutor") private ExecutorService grpcServiceExecutor;
@@ -1446,9 +1447,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private void startTaskPolling() {
-    rescheduleExecutor.scheduleAtFixedRate(
-        new Schedulable("Failed to poll for task", () -> taskPollExecutor.submit(this::pollForTask)), 0,
-        POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
+    taskPollExecutor.scheduleAtFixedRate(
+        new Schedulable("Failed to poll for task", () -> pollForTask()), 0, POLL_INTERVAL_SECONDS, TimeUnit.SECONDS);
   }
 
   private void startChroniqleQueueMonitor() {
@@ -2316,13 +2316,13 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           response = delegateAgentManagerClient.sendTaskStatus(delegateId, taskId, accountId, taskResponse).execute();
           if (response != null && response.code() >= 200 && response.code() <= 299) {
             log.info("Task {} response sent to manager", taskId);
-          } else {
-            log.warn("Failed to send response for task {}: {}. {}", taskId, response == null ? "null" : response.code(),
-                attempt < (retries - 1) ? "Retrying." : "Giving up.");
-            if (attempt < retries - 1) {
-              // Do not sleep for last loop round, as we are going to fail.
-              sleep(ofSeconds(FibonacciBackOff.getFibonacciElement(attempt)));
-            }
+            break;
+          }
+          log.warn("Failed to send response for task {}: {}. {}", taskId, response == null ? "null" : response.code(),
+              attempt < (retries - 1) ? "Retrying." : "Giving up.");
+          if (attempt < retries - 1) {
+            // Do not sleep for last loop round, as we are going to fail.
+            sleep(ofSeconds(FibonacciBackOff.getFibonacciElement(attempt)));
           }
         }
       } catch (Exception e) {
@@ -2645,7 +2645,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           secretUuidToValues, delegateTaskPackage.getData().getExpressionFunctorToken());
       applyDelegateExpressionEvaluator(delegateTaskPackage, delegateExpressionEvaluator);
     } catch (Exception e) {
-      sendErrorResponse(delegateTaskPackage);
+      sendErrorResponse(delegateTaskPackage, e);
+      throw e;
     }
   }
 
@@ -2672,12 +2673,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     metricRegistry.recordGaugeValue(TASKS_CURRENTLY_EXECUTING, new String[] {DELEGATE_NAME}, tasksExecutionCount);
   }
 
-  private void sendErrorResponse(DelegateTaskPackage delegateTaskPackage) {
+  private void sendErrorResponse(DelegateTaskPackage delegateTaskPackage, Exception exception) {
     String taskId = delegateTaskPackage.getDelegateTaskId();
-    DelegateTaskResponse taskResponse = DelegateTaskResponse.builder()
-                                            .accountId(delegateTaskPackage.getAccountId())
-                                            .responseCode(DelegateTaskResponse.ResponseCode.FAILED)
-                                            .build();
+    DelegateTaskResponse taskResponse =
+        DelegateTaskResponse.builder()
+            .accountId(delegateTaskPackage.getAccountId())
+            .responseCode(DelegateTaskResponse.ResponseCode.FAILED)
+            .response(ErrorNotifyResponseData.builder().errorMessage(ExceptionUtils.getMessage(exception)).build())
+            .build();
     log.info("Sending error response for task{}", taskId);
     try {
       Response<ResponseBody> resp = null;

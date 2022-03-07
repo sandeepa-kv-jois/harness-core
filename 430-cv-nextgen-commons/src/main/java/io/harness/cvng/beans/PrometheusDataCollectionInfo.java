@@ -24,6 +24,12 @@ public class PrometheusDataCollectionInfo extends TimeSeriesDataCollectionInfo<P
   private String groupName;
   private List<MetricCollectionInfo> metricCollectionInfoList;
 
+  public List<MetricCollectionInfo> getMetricCollectionInfoList() {
+    if (metricCollectionInfoList == null) {
+      return Collections.emptyList();
+    }
+    return metricCollectionInfoList;
+  }
   @Data
   @Builder
   public static class MetricCollectionInfo {
@@ -42,7 +48,7 @@ public class PrometheusDataCollectionInfo extends TimeSeriesDataCollectionInfo<P
     List<String> filterList = new ArrayList<>();
     List<String> serviceInstanceFieldList = new ArrayList<>();
 
-    metricCollectionInfoList.forEach(metricCollectionInfo -> {
+    getMetricCollectionInfoList().forEach(metricCollectionInfo -> {
       queryList.add(metricCollectionInfo.getQuery());
       metricNameList.add(metricCollectionInfo.getMetricName());
       metricIdentifierList.add(metricCollectionInfo.getMetricIdentifier());

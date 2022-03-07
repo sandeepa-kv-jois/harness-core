@@ -1,9 +1,17 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.execution;
 
 import io.harness.beans.steps.CIStepInfoType;
 import io.harness.ci.beans.entities.CIExecutionConfig;
 import io.harness.ci.beans.entities.CIExecutionImages;
 import io.harness.ci.config.CIExecutionServiceConfig;
+import io.harness.ci.config.CIStepConfig;
 import io.harness.ci.config.StepImageConfig;
 import io.harness.repositories.CIExecutionConfigRepository;
 
@@ -65,6 +73,47 @@ public class CIExecutionConfigService {
       image = ciExecutionServiceConfig.getLiteEngineImage();
     }
     return image;
+  }
+
+  public CIExecutionImages getCurrentConfig(String accountId) {
+    Optional<CIExecutionConfig> existingConfig = configRepository.findFirstByAccountIdentifier(accountId);
+    if (existingConfig.isPresent()) {
+      CIExecutionConfig config = existingConfig.get();
+      return CIExecutionImages.builder()
+          .buildAndPushDockerRegistryTag(config.getBuildAndPushDockerRegistryImage())
+          .addonTag(config.getAddOnImage())
+          .liteEngineTag(config.getLiteEngineImage())
+          .gitCloneTag(config.getGitCloneImage())
+          .buildAndPushECRTag(config.getBuildAndPushECRImage())
+          .buildAndPushGCRTag(config.getBuildAndPushGCRImage())
+          .gcsUploadTag(config.getGcsUploadImage())
+          .s3UploadTag(config.getS3UploadImage())
+          .artifactoryUploadTag(config.getArtifactoryUploadTag())
+          .cacheGCSTag(config.getCacheGCSTag())
+          .cacheS3Tag(config.getCacheS3Tag())
+          .securityTag(config.getSecurityImage())
+          .build();
+    } else {
+      return CIExecutionImages.builder().build();
+    }
+  }
+
+  public CIExecutionImages getDefaultConfig() {
+    CIStepConfig config = ciExecutionServiceConfig.getStepConfig();
+    return CIExecutionImages.builder()
+        .buildAndPushDockerRegistryTag(config.getBuildAndPushDockerRegistryConfig().getImage())
+        .addonTag(ciExecutionServiceConfig.getAddonImageTag())
+        .liteEngineTag(ciExecutionServiceConfig.getLiteEngineImage())
+        .gitCloneTag(config.getGitCloneConfig().getImage())
+        .buildAndPushECRTag(config.getBuildAndPushECRConfig().getImage())
+        .buildAndPushGCRTag(config.getBuildAndPushGCRConfig().getImage())
+        .gcsUploadTag(config.getGcsUploadConfig().getImage())
+        .s3UploadTag(config.getS3UploadConfig().getImage())
+        .artifactoryUploadTag(config.getArtifactoryUploadConfig().getImage())
+        .cacheGCSTag(config.getCacheGCSConfig().getImage())
+        .cacheS3Tag(config.getCacheS3Config().getImage())
+        .securityTag(config.getSecurityConfig().getImage())
+        .build();
   }
 
   public List<DeprecatedImageInfo> getDeprecatedTags(String accountId) {
@@ -235,6 +284,14 @@ public class CIExecutionConfigService {
           image = existingConfig.get().getArtifactoryUploadTag();
         } else {
           image = ciExecutionServiceConfig.getStepConfig().getArtifactoryUploadConfig().getImage();
+        }
+        break;
+      case GIT_CLONE:
+        entrypoint = ciExecutionServiceConfig.getStepConfig().getGitCloneConfig().getEntrypoint();
+        if (existingConfig.isPresent()) {
+          image = existingConfig.get().getGitCloneImage();
+        } else {
+          image = ciExecutionServiceConfig.getStepConfig().getGitCloneConfig().getImage();
         }
         break;
       default:

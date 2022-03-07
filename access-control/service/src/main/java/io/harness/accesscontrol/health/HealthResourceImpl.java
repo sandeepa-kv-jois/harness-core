@@ -17,6 +17,7 @@ import io.harness.exception.NoResultFoundException;
 import io.harness.health.HealthException;
 import io.harness.health.HealthService;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.security.annotations.PublicApi;
 
 import com.codahale.metrics.health.HealthCheck;
 import com.google.inject.Inject;
@@ -28,6 +29,7 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 @OwnedBy(HarnessTeam.PL)
+@PublicApi
 public class HealthResourceImpl implements HealthResource {
   private final HealthService healthService;
 

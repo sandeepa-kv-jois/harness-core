@@ -10,6 +10,7 @@ package io.harness.gitsync.common.helper;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.errorhandling.NGErrorHelper;
 import io.harness.exception.DelegateNotAvailableException;
 import io.harness.exception.DelegateServiceDriverException;
 import io.harness.exception.ExceptionUtils;
@@ -35,7 +36,7 @@ public class GitConnectivityExceptionHelper {
         return "Error: " + ExceptionUtils.getMessage(ex);
       }
     } else {
-      return null;
+      return NGErrorHelper.DEFAULT_ERROR_MESSAGE;
     }
   }
 }

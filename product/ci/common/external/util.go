@@ -96,6 +96,10 @@ func GetNudges() []logs.Nudge {
 		logs.NewNudge("Cannot connect to the Docker daemon",
 			"Setup dind if it's not running. If dind is running, privileged should be set to true",
 			errors.New("Could not connect to the docker daemon")),
+		logs.NewNudge("x509",
+			"If you are using self signed certs, Harness allows setting them "+
+				"at a global level on the delegate agent. Visit documentation for more details!",
+			errors.New("Certificate issue")),
 	}
 }
 

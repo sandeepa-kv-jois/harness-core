@@ -88,7 +88,6 @@ import io.harness.service.impl.DelegateAsyncServiceImpl;
 import io.harness.service.impl.DelegateProgressServiceImpl;
 import io.harness.service.impl.DelegateSyncServiceImpl;
 import io.harness.token.remote.TokenClient;
-import io.harness.utils.NGObjectMapperHelper;
 import io.harness.waiter.NotifierScheduledExecutorService;
 import io.harness.waiter.NotifyEvent;
 import io.harness.waiter.NotifyQueuePublisherRegister;
@@ -120,6 +119,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
 import io.swagger.v3.oas.integration.api.OpenAPIConfiguration;
@@ -190,7 +190,7 @@ public class CIManagerApplication extends Application<CIManagerConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
     mapper.registerModule(new PmsBeansJacksonModule());
   }
 

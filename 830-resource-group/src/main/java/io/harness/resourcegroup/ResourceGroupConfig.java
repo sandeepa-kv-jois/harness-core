@@ -9,7 +9,7 @@ package io.harness.resourcegroup;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.resourcegroup.model.ResourceSelector;
+import io.harness.resourcegroup.v1.model.ResourceSelector;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.ArrayList;

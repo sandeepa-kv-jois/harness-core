@@ -43,7 +43,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.parameters.RequestBody;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.DefaultValue;
@@ -62,7 +61,6 @@ import retrofit2.http.Body;
 @Produces({"application/json", "text/yaml", "text/html"})
 @Consumes({"application/json", "text/yaml", "text/html"})
 @AllArgsConstructor(onConstructor = @__({ @Inject }))
-@Tag(name = "Git Sync Entities", description = "This contains a list of APIs specific to Git Sync Entities")
 @io.swagger.v3.oas.annotations.responses.
 ApiResponse(responseCode = BAD_REQUEST_CODE, description = BAD_REQUEST_PARAM_MESSAGE,
     content =

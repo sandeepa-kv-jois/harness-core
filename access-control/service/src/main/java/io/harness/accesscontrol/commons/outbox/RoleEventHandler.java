@@ -11,7 +11,8 @@ import static io.harness.accesscontrol.roles.events.RoleCreateEvent.ROLE_CREATE_
 import static io.harness.accesscontrol.roles.events.RoleDeleteEvent.ROLE_DELETE_EVENT;
 import static io.harness.accesscontrol.roles.events.RoleUpdateEvent.ROLE_UPDATE_EVENT;
 import static io.harness.annotations.dev.HarnessTeam.PL;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
+
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
 import io.harness.ModuleType;
 import io.harness.accesscontrol.roles.events.RoleCreateEvent;

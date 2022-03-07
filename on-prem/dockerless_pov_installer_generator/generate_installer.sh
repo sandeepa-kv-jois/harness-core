@@ -135,7 +135,7 @@ function setupDelegateJars() {
 
     done
 
-    for version in v2.13.1 v3.0.2 v3.1.2; do
+    for version in v2.13.1 v3.1.2 v3.8.0; do
 
       echo "Copying helm ${version} binaries for ${platform}"
 
@@ -149,7 +149,7 @@ function setupDelegateJars() {
 
     done
 
-    for version in v0.8.2 v0.13.0; do
+    for version in v0.8.2 v0.12.0; do
 
       echo "Copying chartmuseum ${version} binaries for ${platform}"
 

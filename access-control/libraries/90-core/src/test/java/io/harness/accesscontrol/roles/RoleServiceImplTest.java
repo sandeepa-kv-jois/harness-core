@@ -40,11 +40,11 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -191,7 +191,7 @@ public class RoleServiceImplTest extends AccessControlCoreTestBase {
                                      .allowedScopeLevels(new HashSet<>())
                                      .build());
     when(permissionService.list(compulsoryPermissionFilter)).thenReturn(compulsoryPermissionList);
-    Role roleClone = (Role) NGObjectMapperHelper.clone(role);
+    Role roleClone = (Role) HObjectMapper.clone(role);
     roleClone.getPermissions().add(compulsoryPermissionAllRoleScopes);
     when(roleDao.create(roleClone)).thenReturn(roleClone);
 
@@ -222,7 +222,7 @@ public class RoleServiceImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testUpdate() {
     Role currentRole = getRole(5, false);
-    Role currentRoleClone = (Role) NGObjectMapperHelper.clone(currentRole);
+    Role currentRoleClone = (Role) HObjectMapper.clone(currentRole);
     Set<String> newPermissions = new HashSet<>();
     for (int i = 0; i < 5; i++) {
       newPermissions.add(randomAlphabetic(10));
@@ -235,7 +235,7 @@ public class RoleServiceImplTest extends AccessControlCoreTestBase {
                           .permissions(newPermissions)
                           .managed(false)
                           .build();
-    Role updatedRole = (Role) NGObjectMapperHelper.clone(roleUpdate);
+    Role updatedRole = (Role) HObjectMapper.clone(roleUpdate);
     updatedRole.setVersion(currentRole.getVersion() + 1);
 
     when(roleDao.get(roleUpdate.getIdentifier(), roleUpdate.getScopeIdentifier(), ManagedFilter.ONLY_CUSTOM))

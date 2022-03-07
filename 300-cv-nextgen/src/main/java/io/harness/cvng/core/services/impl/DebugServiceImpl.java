@@ -87,4 +87,9 @@ public class DebugServiceImpl implements DebugService {
         .sliIdentifierToAnalysisStateMachineMap(sliIdentifierToAnalysisStateMachineMap)
         .build();
   }
+
+  @Override
+  public DataCollectionTask retryDataCollectionTask(ProjectParams projectParams, String identifier) {
+    return dataCollectionTaskService.updateRetry(projectParams, identifier);
+  }
 }

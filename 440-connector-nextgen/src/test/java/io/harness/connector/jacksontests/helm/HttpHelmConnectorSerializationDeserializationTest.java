@@ -24,12 +24,12 @@ import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO.HttpHelmCon
 import io.harness.delegate.beans.connector.helm.HttpHelmUsernamePasswordDTO;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.serializer.HObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Assert;
 import org.junit.Before;
@@ -44,7 +44,7 @@ public class HttpHelmConnectorSerializationDeserializationTest extends CategoryT
   @Before
   public void setup() {
     objectMapper = new ObjectMapper();
-    NGObjectMapperHelper.configureNGObjectMapper(objectMapper);
+    HObjectMapper.configureObjectMapperForNG(objectMapper);
   }
 
   @Test

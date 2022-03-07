@@ -7,9 +7,11 @@
 
 package io.harness.cvng.beans.cvnglog;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public enum CVNGLogType {
-  API_CALL_LOG("ApiCallLog"),
-  EXECUTION_LOG("ExecutionLog");
+  @JsonProperty("ApiCallLog") API_CALL_LOG("ApiCallLog"),
+  @JsonProperty("ExecutionLog") EXECUTION_LOG("ExecutionLog");
 
   private String displayName;
 
@@ -19,5 +21,15 @@ public enum CVNGLogType {
 
   public String getDisplayName() {
     return displayName;
+  }
+
+  public static CVNGLogType toCVNGLogType(String cvngLogType) {
+    if (cvngLogType.equalsIgnoreCase("ApiCallLog")) {
+      return CVNGLogType.API_CALL_LOG;
+    } else if (cvngLogType.equalsIgnoreCase("ExecutionLog")) {
+      return CVNGLogType.EXECUTION_LOG;
+    } else {
+      throw new UnsupportedOperationException("logType should either be ApiCallLog or ExecutionLog");
+    }
   }
 }

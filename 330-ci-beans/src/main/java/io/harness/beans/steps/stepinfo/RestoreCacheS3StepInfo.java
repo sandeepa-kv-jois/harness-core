@@ -80,6 +80,7 @@ public class RestoreCacheS3StepInfo implements PluginCompatibleStep, WithConnect
   @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
   private ParameterField<Boolean> failIfKeyNotFound;
+  @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.ArchiveFormat")
   private ParameterField<ArchiveFormat> archiveFormat;
 

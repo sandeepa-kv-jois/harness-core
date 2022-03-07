@@ -9,12 +9,16 @@ package software.wings.service.impl.yaml.handler.artifactstream;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
+
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ff.FeatureFlagService;
 
 import software.wings.beans.artifact.BambooArtifactStream;
 import software.wings.beans.artifact.BambooArtifactStream.Yaml;
 import software.wings.beans.yaml.ChangeContext;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 /**
@@ -23,13 +27,16 @@ import com.google.inject.Singleton;
 @OwnedBy(CDC)
 @Singleton
 public class BambooArtifactStreamYamlHandler extends ArtifactStreamYamlHandler<Yaml, BambooArtifactStream> {
+  @Inject FeatureFlagService featureFlagService;
+
   @Override
   public Yaml toYaml(BambooArtifactStream bean, String appId) {
     Yaml yaml = Yaml.builder().build();
     super.toYaml(yaml, bean);
     yaml.setArtifactPaths(bean.getArtifactPaths());
     yaml.setPlanName(bean.getJobname());
-    yaml.setMetadataOnly(bean.isMetadataOnly());
+
+    yaml.setMetadataOnly(metadataOnlyBehindFlag(featureFlagService, bean.getAccountId(), bean.isMetadataOnly()));
     return yaml;
   }
 
@@ -39,6 +46,7 @@ public class BambooArtifactStreamYamlHandler extends ArtifactStreamYamlHandler<Y
     Yaml yaml = changeContext.getYaml();
     bean.setArtifactPaths(yaml.getArtifactPaths());
     bean.setJobname(yaml.getPlanName());
+
     bean.setMetadataOnly(yaml.isMetadataOnly());
   }
 

@@ -42,6 +42,7 @@ import io.harness.persistence.HIterator;
 import software.wings.api.SkipStateExecutionData;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.WorkflowExecution;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.dl.WingsPersistence;
 import software.wings.metrics.RiskLevel;
 import software.wings.metrics.Threshold;
@@ -123,8 +124,8 @@ public class MetricDataAnalysisServiceImpl implements MetricDataAnalysisService 
   @Inject private CVConfigurationService cvConfigurationService;
 
   @Override
-  public String getLastSuccessfulWorkflowExecutionIdWithData(
-      StateType stateType, String appId, String workflowId, String serviceId, String infraMappingId, String envId) {
+  public String getLastSuccessfulWorkflowExecutionIdWithData(DelegateStateType stateType, String appId,
+      String workflowId, String serviceId, String infraMappingId, String envId) {
     List<String> successfulExecutions = new ArrayList<>();
     List<WorkflowExecution> executions =
         workflowExecutionService.getLastSuccessfulWorkflowExecutions(appId, workflowId, serviceId);
