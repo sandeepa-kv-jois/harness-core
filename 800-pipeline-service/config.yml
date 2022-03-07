@@ -409,3 +409,7 @@ orchestrationRedisEventsConfig:
     maxTopicSize: ${START_PARTIAL_PLAN_CREATOR_MAX_TOPIC_SIZE:-5000}
 
 allowedParallelStages: ${ALLOWED_PARALLEL_STAGES:-25}
+
+orchestrationLogConfiguration:
+  shouldUseBatching: ${ORCHESTRATION_LOG_SHOULD_USE_BATCHING:-true}
+  orchestrationLogBatchSize: ${ORCHESTRATION_LOG_BATCH_SIZE:-5}

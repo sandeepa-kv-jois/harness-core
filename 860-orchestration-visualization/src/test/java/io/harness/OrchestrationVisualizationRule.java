@@ -22,6 +22,7 @@ import io.harness.callback.DelegateCallbackToken;
 import io.harness.delay.DelayEventListener;
 import io.harness.delegate.DelegateServiceGrpc;
 import io.harness.engine.expressions.AmbianceExpressionEvaluatorProvider;
+import io.harness.event.OrchestrationLogConfiguration;
 import io.harness.eventsframework.EventsFrameworkConfiguration;
 import io.harness.factory.ClosingFactory;
 import io.harness.factory.ClosingFactoryModule;
@@ -229,7 +230,7 @@ public class OrchestrationVisualizationRule implements MethodRule, InjectorRuleM
         EventsFrameworkConfiguration.builder()
             .redisConfig(RedisConfig.builder().redisUrl("dummyRedisUrl").build())
             .build(),
-        ThreadPoolConfig.builder().build()));
+        ThreadPoolConfig.builder().build(), OrchestrationLogConfiguration.builder().build()));
     return modules;
   }
 

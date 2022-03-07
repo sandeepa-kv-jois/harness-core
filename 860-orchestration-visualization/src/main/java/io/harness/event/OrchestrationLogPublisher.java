@@ -47,6 +47,7 @@ public class OrchestrationLogPublisher
   @Inject private OrchestrationEventLogRepository orchestrationEventLogRepository;
   @Inject @Named(EventsFrameworkConstants.ORCHESTRATION_LOG) private Producer producer;
   @Inject @Named("orchestrationLogCache") Cache<String, Long> orchestrationLogCache;
+  @Inject @Named("orchestrationLogConfiguration") OrchestrationLogConfiguration orchestrationLogConfiguration;
 
   @Override
   public void onNodeStatusUpdate(NodeUpdateInfo nodeUpdateInfo) {
@@ -78,19 +79,28 @@ public class OrchestrationLogPublisher
             .build());
     OrchestrationLogEvent orchestrationLogEvent =
         OrchestrationLogEvent.newBuilder().setPlanExecutionId(planExecutionId).build();
-    if (orchestrationLogCache.containsKey(planExecutionId)) {
-      if (orchestrationLogCache.get(planExecutionId) > 5) {
-        producer.send(Message.newBuilder()
-                          .putAllMetadata(ImmutableMap.of("nodeExecutionId", emptyIfNull(nodeExecutionId),
-                              "planExecutionId", planExecutionId, "eventType", eventType.name()))
-                          .setData(orchestrationLogEvent.toByteString())
-                          .build());
-        orchestrationLogCache.put(planExecutionId, 0L);
+    if (orchestrationLogConfiguration.isShouldUseBatching()) {
+      if (orchestrationLogCache.containsKey(planExecutionId)) {
+        if (orchestrationLogCache.get(planExecutionId)
+            >= orchestrationLogConfiguration.getOrchestrationLogBatchSize()) {
+          producer.send(Message.newBuilder()
+                            .putAllMetadata(ImmutableMap.of("nodeExecutionId", emptyIfNull(nodeExecutionId),
+                                "planExecutionId", planExecutionId, "eventType", eventType.name()))
+                            .setData(orchestrationLogEvent.toByteString())
+                            .build());
+          orchestrationLogCache.put(planExecutionId, 0L);
+        } else {
+          orchestrationLogCache.put(planExecutionId, orchestrationLogCache.get(planExecutionId) + 1);
+        }
       } else {
-        orchestrationLogCache.put(planExecutionId, orchestrationLogCache.get(planExecutionId) + 1);
+        orchestrationLogCache.put(planExecutionId, 1L);
       }
     } else {
-      orchestrationLogCache.put(planExecutionId, 1L);
+      producer.send(Message.newBuilder()
+                        .putAllMetadata(ImmutableMap.of("nodeExecutionId", emptyIfNull(nodeExecutionId),
+                            "planExecutionId", planExecutionId, "eventType", eventType.name()))
+                        .setData(orchestrationLogEvent.toByteString())
+                        .build());
     }
   }
 

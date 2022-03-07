@@ -17,6 +17,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.CacheConfig;
 import io.harness.debezium.DebeziumConfig;
 import io.harness.enforcement.client.EnforcementClientConfiguration;
+import io.harness.event.OrchestrationLogConfiguration;
 import io.harness.eventsframework.EventsFrameworkConfiguration;
 import io.harness.gitsync.GitSdkConfiguration;
 import io.harness.grpc.client.GrpcClientConfig;
@@ -122,6 +123,7 @@ public class PipelineServiceConfiguration extends Configuration {
   @JsonProperty("orchestrationRedisEventsConfig") private OrchestrationRedisEventsConfig orchestrationRedisEventsConfig;
   @JsonProperty("allowedParallelStages") private int allowedParallelStages;
   @JsonProperty("debeziumConfig") private DebeziumConfig debeziumConfig;
+  @JsonProperty("orchestrationLogConfiguration") private OrchestrationLogConfiguration orchestrationLogConfiguration;
 
   private String managerServiceSecret;
   private String managerTarget;

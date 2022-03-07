@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.eventsframework.EventsFrameworkConstants.ORCHESTRATION_LOG;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.event.OrchestrationLogConfiguration;
 import io.harness.events.PmsRedissonClientFactory;
 import io.harness.eventsframework.EventsFrameworkConfiguration;
 import io.harness.eventsframework.EventsFrameworkConstants;
@@ -40,19 +41,22 @@ public class OrchestrationVisualizationModule extends AbstractModule {
   private static OrchestrationVisualizationModule instance;
   private final EventsFrameworkConfiguration eventsFrameworkConfiguration;
   private final ThreadPoolConfig visualizationThreadPoolConfig;
+  private final OrchestrationLogConfiguration orchestrationLogConfiguration;
 
-  public static OrchestrationVisualizationModule getInstance(
-      EventsFrameworkConfiguration eventsFrameworkConfiguration, ThreadPoolConfig visualizationThreadPoolConfig) {
+  public static OrchestrationVisualizationModule getInstance(EventsFrameworkConfiguration eventsFrameworkConfiguration,
+      ThreadPoolConfig visualizationThreadPoolConfig, OrchestrationLogConfiguration orchestrationLogConfiguration) {
     if (instance == null) {
-      instance = new OrchestrationVisualizationModule(eventsFrameworkConfiguration, visualizationThreadPoolConfig);
+      instance = new OrchestrationVisualizationModule(
+          eventsFrameworkConfiguration, visualizationThreadPoolConfig, orchestrationLogConfiguration);
     }
     return instance;
   }
 
-  OrchestrationVisualizationModule(
-      EventsFrameworkConfiguration eventsFrameworkConfiguration, ThreadPoolConfig visualizationThreadPoolConfig) {
+  OrchestrationVisualizationModule(EventsFrameworkConfiguration eventsFrameworkConfiguration,
+      ThreadPoolConfig visualizationThreadPoolConfig, OrchestrationLogConfiguration orchestrationLogConfiguration) {
     this.eventsFrameworkConfiguration = eventsFrameworkConfiguration;
     this.visualizationThreadPoolConfig = visualizationThreadPoolConfig;
+    this.orchestrationLogConfiguration = orchestrationLogConfiguration;
   }
 
   @Override
@@ -83,5 +87,12 @@ public class OrchestrationVisualizationModule extends AbstractModule {
         visualizationThreadPoolConfig.getMaxPoolSize(), visualizationThreadPoolConfig.getIdleTime(),
         visualizationThreadPoolConfig.getTimeUnit(),
         new ThreadFactoryBuilder().setNameFormat("OrchestrationVisualizationExecutorService-%d").build());
+  }
+
+  @Provides
+  @Singleton
+  @Named("orchestrationLogConfiguration")
+  public OrchestrationLogConfiguration orchestrationLogConfiguration() {
+    return orchestrationLogConfiguration;
   }
 }
