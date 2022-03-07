@@ -122,7 +122,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
     if (getAccessType() == AccessType.APP_ROLE) {
       if (isBlank(appRoleId)) {
         throw new InvalidRequestException(
-            "You must provide a App Role Id if you are using AppRole Authentication for Vault", INVALID_REQUEST, USER);
+            "You must provide a App Role Id if you are using AppRole Authentication for Vault.", INVALID_REQUEST, USER);
       }
       if (null == secretId || isEmpty(secretId.getIdentifier())) {
         throw new InvalidRequestException(
