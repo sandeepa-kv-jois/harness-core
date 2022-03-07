@@ -112,9 +112,9 @@ public class SettingResourceTest extends WingsBaseTest {
   public void testCustomMaxPageSizeIsEnabled() {
     PageRequest<SettingAttribute> pageRequest = new PageRequest<>();
     doReturn(true).when(featureFlagService).isEnabled(CUSTOM_MAX_PAGE_SIZE, ACCOUNT_ID);
-    doReturn(new PageResponse()).when(settingsService).list(pageRequest, APP_ID, ENV_ID);
-    settingResource.list(
-        APP_ID, APP_ID, ENV_ID, ACCOUNT_ID, new ArrayList<>(), false, false, null, 10000, null, null, pageRequest);
+    doReturn(new PageResponse()).when(settingsService).list(pageRequest, APP_ID, ENV_ID, false);
+    settingResource.list(APP_ID, APP_ID, false, ENV_ID, ACCOUNT_ID, new ArrayList<>(), false, false, null, 10000, null,
+        null, pageRequest);
     assertThat(pageRequest.getLimit()).isEqualTo("1200");
   }
 
@@ -125,9 +125,9 @@ public class SettingResourceTest extends WingsBaseTest {
     PageRequest<SettingAttribute> pageRequest = new PageRequest<>();
     pageRequest.setLimit("50");
     doReturn(true).when(featureFlagService).isEnabled(CUSTOM_MAX_PAGE_SIZE, ACCOUNT_ID);
-    doReturn(new PageResponse()).when(settingsService).list(pageRequest, APP_ID, ENV_ID);
-    settingResource.list(
-        APP_ID, APP_ID, ENV_ID, ACCOUNT_ID, new ArrayList<>(), false, false, null, 10000, null, null, pageRequest);
+    doReturn(new PageResponse()).when(settingsService).list(pageRequest, APP_ID, ENV_ID, false);
+    settingResource.list(APP_ID, APP_ID, false, ENV_ID, ACCOUNT_ID, new ArrayList<>(), false, false, null, 10000, null,
+        null, pageRequest);
     assertThat(pageRequest.getLimit()).isEqualTo("50");
   }
 
@@ -137,9 +137,9 @@ public class SettingResourceTest extends WingsBaseTest {
   public void testCustomMaxPageSizeIsDisabled() {
     PageRequest<SettingAttribute> pageRequest = new PageRequest<>();
     doReturn(false).when(featureFlagService).isEnabled(CUSTOM_MAX_PAGE_SIZE, ACCOUNT_ID);
-    doReturn(new PageResponse()).when(settingsService).list(pageRequest, APP_ID, ENV_ID);
-    settingResource.list(
-        APP_ID, APP_ID, ENV_ID, ACCOUNT_ID, new ArrayList<>(), false, false, null, 10000, null, null, pageRequest);
+    doReturn(new PageResponse()).when(settingsService).list(pageRequest, APP_ID, ENV_ID, false);
+    settingResource.list(APP_ID, APP_ID, false, ENV_ID, ACCOUNT_ID, new ArrayList<>(), false, false, null, 10000, null,
+        null, pageRequest);
     assertThat(pageRequest.getLimit()).isEqualTo(null);
   }
 }

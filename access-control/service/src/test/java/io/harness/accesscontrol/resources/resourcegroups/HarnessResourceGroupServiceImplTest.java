@@ -26,9 +26,9 @@ import io.harness.accesscontrol.scopes.harness.HarnessScopeLevel;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.ng.core.dto.ResponseDTO;
-import io.harness.resourcegroup.remote.dto.ResourceGroupDTO;
-import io.harness.resourcegroupclient.ResourceGroupResponse;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
 import io.harness.resourcegroupclient.remote.ResourceGroupClient;
+import io.harness.resourcegroupclient.remote.v1.ResourceGroupResponse;
 import io.harness.rule.Owner;
 
 import java.io.IOException;

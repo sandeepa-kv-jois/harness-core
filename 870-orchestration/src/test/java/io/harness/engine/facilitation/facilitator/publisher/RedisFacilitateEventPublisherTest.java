@@ -109,7 +109,7 @@ public class RedisFacilitateEventPublisherTest extends OrchestrationTestBase {
     ArgumentCaptor<Ambiance> ambianceArgumentCaptor = ArgumentCaptor.forClass(Ambiance.class);
     verify(eventSender)
         .sendEvent(ambianceArgumentCaptor.capture(), argumentCaptor.capture(), eq(PmsEventCategory.FACILITATOR_EVENT),
-            eq(nodeExecution.module()), eq(true));
+            eq(nodeExecution.getModule()), eq(true));
     ByteString value = argumentCaptor.getValue();
     FacilitatorEvent facilitatorEvent = FacilitatorEvent.parseFrom(value);
     assertThat(facilitatorEvent.getStepParameters()).isEqualTo(nodeExecution.getResolvedStepParametersBytes());

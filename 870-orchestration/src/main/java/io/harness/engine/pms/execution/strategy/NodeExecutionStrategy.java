@@ -27,8 +27,6 @@ import lombok.NonNull;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public interface NodeExecutionStrategy<P extends Node, N extends PmsNodeExecution, M extends PmsNodeExecutionMetadata> {
-  N initiateNode(@NonNull Ambiance ambiance, @NonNull String nodeId, String runtimeId, M metadata);
-
   N runNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata);
 
   default N runNextNode(@NonNull Ambiance ambiance, @NonNull P node, N prevExecution, M metadata) {

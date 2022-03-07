@@ -4,9 +4,20 @@
 # that can be found in the licenses directory at the root of this repository, also available at
 # https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
 
+function check_file_present(){
+     local_file=$1
+     if [ ! -f "$local_file" ]; then
+        echo "ERROR: $LINENO: File $local_file not found. Exiting"
+        exit 1
+     fi
+}
+
 set -e
 
-PROJECTS="ART|BT|CCE|CCM|CDC|CDNG|CDP|CDS|CE|CI|CV|CVNG|CVS|DEL|DOC|DX|ER|FFM|OPA|OPS|PL|SEC|SWAT|GTM|ONP"
+SHDIR=$(dirname "$0")
+PROJFILE="$SHDIR/jira-projects.txt"
+check_file_present $PROJFILE
+PROJECTS=$(<$PROJFILE)
 
 for line in `git branch -r | grep "release/on-prem" |grep ".xx$"| tail -${PREV_BRANCHES_COUNT}`;
         do

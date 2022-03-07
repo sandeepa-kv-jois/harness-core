@@ -37,7 +37,6 @@ import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.apm.APMDataCollectionInfo;
 import software.wings.service.impl.apm.APMMetricInfo;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
 
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableMap;
@@ -85,7 +84,7 @@ public class APMDataCollectionTaskTest extends WingsBaseTest {
     dataCollectionInfo =
         APMDataCollectionInfo.builder()
             .startTime(12312321123L)
-            .stateType(StateType.APM_VERIFICATION)
+            .stateType(DelegateStateType.APM_VERIFICATION)
             .dataCollectionFrequency(2)
             .hosts(ImmutableMap.<String, String>builder()
                        .put("test.host.node1", DEFAULT_GROUP_NAME)

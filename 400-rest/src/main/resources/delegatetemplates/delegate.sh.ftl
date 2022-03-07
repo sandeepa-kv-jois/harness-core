@@ -124,6 +124,9 @@ if [ ! -e config-delegate.yml ]; then
   echo "accountSecret: ${accountSecret}" >> config-delegate.yml
 fi
 test "$(tail -c 1 config-delegate.yml)" && `echo "" >> config-delegate.yml`
+if ! `grep dynamicHandlingOfRequestEnabled config-delegate.yml > /dev/null`; then
+  echo "dynamicHandlingOfRequestEnabled: ${dynamicHandlingOfRequestEnabled}" >> config-delegate.yml
+fi
 if ! `grep managerUrl config-delegate.yml > /dev/null`; then
   echo "managerUrl: ${managerHostAndPort}/api/" >> config-delegate.yml
 fi

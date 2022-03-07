@@ -37,6 +37,7 @@ import io.harness.gitsync.core.dtos.YamlChangeSetDTO;
 import io.harness.gitsync.core.dtos.YamlChangeSetSaveDTO;
 import io.harness.gitsync.core.service.YamlChangeSetService;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
@@ -170,7 +171,11 @@ public class GitBranchSyncServiceImpl implements GitBranchSyncService {
     return filteredFileContents;
   }
 
-  private String getCommitMessage(YamlGitConfigDTO yamlGitConfig, String commitId, String accountIdentifier) {
+  @VisibleForTesting
+  protected String getCommitMessage(YamlGitConfigDTO yamlGitConfig, String commitId, String accountIdentifier) {
+    if (commitId == null) {
+      return null;
+    }
     return scmOrchestratorService
         .processScmRequest(scmClientFacilitatorService
             -> scmClientFacilitatorService.findCommitById(yamlGitConfig, commitId),

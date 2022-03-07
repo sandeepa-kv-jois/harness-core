@@ -9,8 +9,8 @@ template:
     type: Http
     spec:
       url: <+input>
-      method: <+input>.allowedValues(POST, PUT, GET)
+      method: <+input>
       headers: []
       outputVariables: []
-      requestBody: <+input>.regex(^1*)
+      requestBody: <+input>
     timeout: 10s

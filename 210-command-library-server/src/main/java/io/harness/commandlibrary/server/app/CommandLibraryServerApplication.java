@@ -51,6 +51,7 @@ import software.wings.jersey.JsonViews;
 import software.wings.security.ThreadLocalUserProvider;
 
 import com.codahale.metrics.MetricRegistry;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.github.dirkraft.dropwizard.fileassets.FileAssetsBundle;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
@@ -131,6 +132,7 @@ public class CommandLibraryServerApplication extends Application<CommandLibraryS
         new JsonSubtypeResolver(bootstrap.getObjectMapper().getSubtypeResolver()));
     bootstrap.getObjectMapper().setConfig(
         bootstrap.getObjectMapper().getSerializationConfig().withView(JsonViews.Public.class));
+    bootstrap.getObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     bootstrap.setMetricRegistry(metricRegistry);
 
     log.info("Bootstrapping done.");

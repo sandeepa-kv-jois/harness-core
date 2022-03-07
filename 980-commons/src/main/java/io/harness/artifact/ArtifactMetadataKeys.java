@@ -14,4 +14,5 @@ import io.harness.annotations.dev.OwnedBy;
 public interface ArtifactMetadataKeys {
   String IMAGE = "image";
   String TAG = "tag";
+  String ARTIFACT_MANIFEST_URL = "artifactPingUrl";
 }

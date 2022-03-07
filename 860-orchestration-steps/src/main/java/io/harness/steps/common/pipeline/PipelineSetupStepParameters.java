@@ -46,7 +46,7 @@ public class PipelineSetupStepParameters implements StepParameters {
   FlowControlConfig flowControl;
   ParameterField<String> description;
   Map<String, String> tags;
-  NGProperties properties;
+  ParameterField<Map<String, Object>> properties;
   @SkipAutoEvaluation ParameterField<Map<String, Object>> variables;
 
   String executionId;
@@ -62,7 +62,7 @@ public class PipelineSetupStepParameters implements StepParameters {
     this.flowControl = flowControl;
     this.description = description;
     this.tags = CollectionUtils.emptyIfNull(tags);
-    this.properties = properties;
+    this.properties = ParameterField.createValueField(NGVariablesUtils.getMapOfNGProperties(properties));
     this.variables = ParameterField.createValueField(NGVariablesUtils.getMapOfVariables(originalVariables));
     this.executionId = executionId;
     this.sequenceId = sequenceId;

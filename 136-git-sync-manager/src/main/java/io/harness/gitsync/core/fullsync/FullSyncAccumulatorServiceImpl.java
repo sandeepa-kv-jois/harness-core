@@ -190,7 +190,7 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
         gitBranchService.get(gitConfigScope.getAccountId(), repoUrl, fullSyncEventRequest.getBranch());
     if (gitBranch != null) {
       throw new InvalidRequestException(
-          String.format("A branch with name {} already exists in Harness", fullSyncEventRequest.getBranch()));
+          String.format("A branch with name [{}] already exists in Harness", fullSyncEventRequest.getBranch()));
     }
     InfoForGitPush infoForGitPush = InfoForGitPush.builder()
                                         .accountId(gitConfigScope.getAccountId())

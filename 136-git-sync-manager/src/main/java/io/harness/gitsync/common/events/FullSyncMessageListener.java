@@ -10,7 +10,6 @@ package io.harness.gitsync.common.events;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
-import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eventsframework.NgEventLogContext;
 import io.harness.eventsframework.consumer.Message;
@@ -33,7 +32,6 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(DX)
 public class FullSyncMessageListener implements MessageListener {
   private final FullSyncAccumulatorService fullSyncTriggerService;
-  private final AccountClient accountClient;
 
   @Override
   public boolean handleMessage(Message message) {
@@ -42,10 +40,6 @@ public class FullSyncMessageListener implements MessageListener {
     try (AutoLogContext ignore1 = new NgEventLogContext(messageId, OVERRIDE_ERROR)) {
       Map<String, String> metadataMap = message.getMessage().getMetadataMap();
       final String accountId = metadataMap.getOrDefault("accountId", null);
-      if (accountId == null) {
-        log.info("The feature flag for the full sync is not enabled");
-        return true;
-      }
 
       final FullSyncEventRequest fullSyncEventRequest = getFullSyncEventRequest(message);
       fullSyncTriggerService.triggerFullSync(fullSyncEventRequest, messageId);

@@ -6,7 +6,19 @@
 
 set +e
 
-PROJECTS="BT|CCE|CCM|CDC|CDNG|CDP|CE|CI|CV|CVNG|DEL|DOC|DX|ER|OPS|PIE|PL|SEC|SWAT|GTM|FFM|OPA|ONP|LWG|ART"
+function check_file_present(){
+     local_file=$1
+     if [ ! -f "$local_file" ]; then
+        echo "ERROR: $LINENO: File $local_file not found. Exiting"
+        exit 1
+     fi
+}
+
+SHDIR=$(dirname "$0")
+PROJFILE="$SHDIR/jira-projects.txt"
+check_file_present $PROJFILE
+PROJECTS=$(<$PROJFILE)
+
 
 # Check commit message if there's a single commit
 if [ $(git rev-list --count $ghprbActualCommit ^origin/develop)  -eq 1 ]; then
@@ -19,7 +31,13 @@ echo "JIRA Key is : $KEY "
 jira_response=`curl -X GET -H "Content-Type: application/json" https://harness.atlassian.net/rest/api/2/issue/${KEY}?fields=issuetype,customfield_10687,customfield_10709,customfield_10748,customfield_10763,customfield_10785 --user $JIRA_USERNAME:$JIRA_PASSWORD`
 
 issuetype=`echo "${jira_response}" | jq ".fields.issuetype.name" | tr -d '"'`
-if [[ $KEY == BT-* ]]
+# No longer require what changed or phase injected in fields
+# BT-950
+what_changed="n/a"
+phase_injected="n/a"
+## End Change for BT-950
+
+if [[ $KEY == BT-* || $KEY == SPG-* ]]
 then
   bug_resolution="n/a"
   what_changed="n/a"

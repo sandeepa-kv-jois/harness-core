@@ -7,36 +7,39 @@
 
 package io.harness.cvng.core.jobs;
 
-import io.harness.cvng.statemachine.services.api.AnalysisStateMachineService;
-import io.harness.eventsframework.EventsFrameworkConstants;
+import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_EVENT;
+
 import io.harness.eventsframework.api.Consumer;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.schemas.cv.StateMachineTrigger;
+import io.harness.exception.InvalidRequestException;
 import io.harness.queue.QueueController;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import java.util.concurrent.ExecutorService;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class StatemachineEventConsumer extends AbstractStreamConsumer {
   private static final int MAX_WAIT_TIME_SEC = 10;
-  AnalysisStateMachineService stateMachineService;
+  @Inject @Named("stateMachineMessageProcessorExecutor") protected ExecutorService stateMachineMessageProcessorExecutor;
+  @Inject StateMachineMessageProcessor stateMachineMessageProcessor;
 
   @Inject
-  public StatemachineEventConsumer(@Named(EventsFrameworkConstants.SRM_STATEMACHINE_EVENT) Consumer consumer,
-      QueueController queueController, AnalysisStateMachineService stateMachineService) {
+  public StatemachineEventConsumer(@Named(SRM_STATEMACHINE_EVENT) Consumer consumer, QueueController queueController) {
     super(MAX_WAIT_TIME_SEC, consumer, queueController);
-    this.stateMachineService = stateMachineService;
   }
 
   @Override
   protected void processMessage(Message message) {
+    StateMachineTrigger trigger;
     try {
-      StateMachineTrigger trigger = StateMachineTrigger.parseFrom(message.getMessage().getData());
-      stateMachineService.executeStateMachine(trigger.getVerificationTaskId());
+      trigger = StateMachineTrigger.parseFrom(message.getMessage().getData());
+      stateMachineMessageProcessorExecutor.submit(
+          () -> stateMachineMessageProcessor.processAnalysisStateMachine(trigger));
     } catch (Exception ex) {
-      log.error("Exception when consuming event: ", ex);
+      throw new InvalidRequestException("Invalid message for srm_statemachine_event topic  " + message);
     }
   }
 }

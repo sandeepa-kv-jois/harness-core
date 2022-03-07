@@ -63,7 +63,7 @@ public class InterventionWaitAdviserResponseHandler implements AdviserResponseHa
                                .setAmbiance(nodeExecution.getAmbiance())
                                .setStatus(nodeExecution.getStatus())
                                .setStepParameters(nodeExecution.getResolvedStepParametersBytes())
-                               .setServiceName(nodeExecution.module())
+                               .setServiceName(nodeExecution.getModule())
                                .build());
   }
 

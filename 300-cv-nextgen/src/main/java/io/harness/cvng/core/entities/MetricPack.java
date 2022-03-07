@@ -138,6 +138,7 @@ public final class MetricPack implements PersistentEntity, UuidAware, CreatedAtA
     public io.harness.cvng.beans.MetricPackDTO.MetricDefinitionDTO toDTO() {
       return io.harness.cvng.beans.MetricPackDTO.MetricDefinitionDTO.builder()
           .name(name)
+          .metricIdentifier(identifier)
           .path(path)
           .responseJsonPath(responseJsonPath)
           .validationResponseJsonPath(validationResponseJsonPath)

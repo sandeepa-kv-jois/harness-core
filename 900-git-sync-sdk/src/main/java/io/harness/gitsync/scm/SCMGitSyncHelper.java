@@ -10,12 +10,14 @@ package io.harness.gitsync.scm;
 import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
+import static io.harness.gitsync.interceptor.GitSyncConstants.DEFAULT;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
+import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub;
@@ -77,8 +79,8 @@ public class SCMGitSyncHelper {
         throw new InvalidRequestException(String.format(
             "A file with name %s already exists in the remote Git repository", gitBranchInfo.getFilePath()));
       }
-      throw e;
     }
+    throw e;
   }
 
   private FileInfo getFileInfo(
@@ -110,6 +112,12 @@ public class SCMGitSyncHelper {
     if (gitBranchInfo.getLastObjectId() != null) {
       builder.setOldFileSha(StringValue.of(gitBranchInfo.getLastObjectId()));
     }
+
+    if (gitBranchInfo.getResolvedConflictCommitId() != null
+        && !gitBranchInfo.getResolvedConflictCommitId().equals(DEFAULT)) {
+      builder.setCommitId(gitBranchInfo.getResolvedConflictCommitId());
+    }
+
     return builder.build();
   }
 
@@ -133,8 +141,13 @@ public class SCMGitSyncHelper {
           isNotEmpty(pushFileResponse.getError()) ? pushFileResponse.getError() : "Error in doing git push";
       throw new GitSyncException(errorMessage);
     }
-    ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
-        pushFileResponse.getScmResponseCode(), pushFileResponse.getError());
+    try {
+      ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
+          pushFileResponse.getScmResponseCode(), pushFileResponse.getError());
+    } catch (WingsException ex) {
+      ex.setMetadata(ScmErrorMetadataDTO.builder().conflictCommitId(pushFileResponse.getCommitId()).build());
+      throw ex;
+    }
   }
 
   private Principal getPrincipal() {

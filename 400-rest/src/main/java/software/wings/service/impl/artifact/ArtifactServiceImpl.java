@@ -8,6 +8,7 @@
 package software.wings.service.impl.artifact;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.ARTIFACT_STREAM_METADATA_ONLY;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.PageResponse.PageResponseBuilder.aPageResponse;
 import static io.harness.beans.SearchFilter.Operator.EQ;
@@ -319,7 +320,8 @@ public class ArtifactServiceImpl implements ArtifactService {
   }
 
   private void setArtifactStatus(Artifact artifact, ArtifactStream artifactStream) {
-    if (artifactStream.isMetadataOnly() || autoDownloaded.contains(artifactStream.getArtifactStreamType())) {
+    if (metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly())
+        || autoDownloaded.contains(artifactStream.getArtifactStreamType())) {
       artifact.setContentStatus(METADATA_ONLY);
       artifact.setStatus(APPROVED);
       return;
@@ -725,7 +727,8 @@ public class ArtifactServiceImpl implements ArtifactService {
   }
 
   private void deleteArtifactsWithContents(int retentionSize, ArtifactStream artifactStream) {
-    if (artifactStream.isMetadataOnly() || autoDownloaded.contains(artifactStream.getArtifactStreamType())) {
+    if (metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly())
+        || autoDownloaded.contains(artifactStream.getArtifactStreamType())) {
       return;
     }
 
@@ -930,5 +933,14 @@ public class ArtifactServiceImpl implements ArtifactService {
         .filter(ArtifactKeys.uuid, artifactId)
         .get()
         .getArtifactFiles();
+  }
+
+  public static boolean metadataOnlyBehindFlag(
+      FeatureFlagService featureFlagService, String accountId, boolean metadataOnly) {
+    if (featureFlagService.isEnabled(ARTIFACT_STREAM_METADATA_ONLY, accountId)) {
+      return true;
+    } else {
+      return metadataOnly;
+    }
   }
 }

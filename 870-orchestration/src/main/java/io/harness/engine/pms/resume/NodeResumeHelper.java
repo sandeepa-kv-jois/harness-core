@@ -52,14 +52,14 @@ public class NodeResumeHelper {
           childExecutions.stream().map(NodeExecution::getUuid).collect(Collectors.toList()));
       for (NodeExecution ce : childExecutions) {
         StepResponseNotifyData notifyData = StepResponseNotifyData.builder()
-                                                .nodeUuid(ce.nodeId())
-                                                .identifier(ce.identifier())
+                                                .nodeUuid(ce.getNodeId())
+                                                .identifier(ce.getIdentifier())
                                                 .status(ce.getStatus())
                                                 .failureInfo(ce.getFailureInfo())
                                                 .stepOutcomeRefs(refMap.get(ce.getUuid()))
                                                 .adviserResponse(ce.getAdviserResponse())
                                                 .build();
-        byteResponseMap.put(ce.nodeId(), ByteString.copyFrom(kryoSerializer.asDeflatedBytes(notifyData)));
+        byteResponseMap.put(ce.getNodeId(), ByteString.copyFrom(kryoSerializer.asDeflatedBytes(notifyData)));
       }
       return byteResponseMap;
     }

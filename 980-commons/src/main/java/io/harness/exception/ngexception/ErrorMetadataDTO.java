@@ -8,6 +8,7 @@
 package io.harness.exception.ngexception;
 
 import io.harness.exception.ngexception.beans.SampleErrorMetadataDTO;
+import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.exception.ngexception.beans.templateservice.TemplateInputsErrorMetadataDTO;
 
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -19,9 +20,10 @@ import io.swagger.v3.oas.annotations.media.Schema;
 @JsonSubTypes(value =
     {
       @JsonSubTypes.Type(value = SampleErrorMetadataDTO.class, name = "Sample")
-      , @JsonSubTypes.Type(value = TemplateInputsErrorMetadataDTO.class, name = "TemplateInputsErrorMetadata")
+      , @JsonSubTypes.Type(value = TemplateInputsErrorMetadataDTO.class, name = "TemplateInputsErrorMetadata"),
+          @JsonSubTypes.Type(value = ScmErrorMetadataDTO.class, name = "ScmErrorMetadataDTO")
     })
-@Schema(name = "ErrorMetadata", description = "This implements SampleErrorMetadata and TemplateInputsErrorMetadata.")
+@Schema(name = "ErrorMetadata", description = "This implements different error meta data objects")
 public interface ErrorMetadataDTO {
   String getType();
 }

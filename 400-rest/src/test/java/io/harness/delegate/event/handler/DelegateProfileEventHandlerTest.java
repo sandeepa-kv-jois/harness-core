@@ -19,13 +19,11 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.beans.WorkflowType;
 import io.harness.category.element.UnitTests;
-import io.harness.delegate.beans.Delegate;
 import io.harness.delegate.beans.DelegateProfile;
 import io.harness.ff.FeatureFlagService;
 import io.harness.persistence.HPersistence;
@@ -37,10 +35,7 @@ import software.wings.beans.Workflow;
 import software.wings.service.intfc.DelegateService;
 import software.wings.service.intfc.WorkflowExecutionService;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.inject.Inject;
-import java.util.List;
-import java.util.Set;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
@@ -88,44 +83,6 @@ public class DelegateProfileEventHandlerTest extends WingsBaseTest {
     delegateProfileEventHandler.onProfileApplied("accountId", "delegateId", "profileId");
 
     verify(workflowExecutionService, never()).triggerOrchestrationExecution(any(), any(), any(), any(), any());
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testOnProfileAppliedShouldNotExecuteCapabilitiesLogic() {
-    String accountId = generateUuid();
-
-    when(featureFlagService.isEnabled(TRIGGER_PROFILE_SCRIPT_EXECUTION_WF, accountId)).thenReturn(false);
-
-    delegateProfileEventHandler.onProfileApplied("accountId", "delegateId", "profileId");
-
-    verify(workflowExecutionService, never()).triggerOrchestrationExecution(any(), any(), any(), any(), any());
-    verify(delegateService, never()).regenerateCapabilityPermissions(any(), any());
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testOnProfileSelectorsUpdatedShouldNotExecuteCapabilitiesLogic() {
-    String accountId = generateUuid();
-    String profileId = generateUuid();
-
-    delegateProfileEventHandler.onProfileSelectorsUpdated(accountId, profileId);
-
-    verify(delegateService, never()).regenerateCapabilityPermissions(any(), any());
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testOnProfileScopesUpdatedShouldNotExecuteCapabilitiesLogic() {
-    String accountId = generateUuid();
-    String profileId = generateUuid();
-
-    delegateProfileEventHandler.onProfileScopesUpdated(accountId, profileId);
-
-    verify(delegateService, never()).regenerateCapabilityPermissions(any(), any());
   }
 
   @Test
@@ -240,56 +197,5 @@ public class DelegateProfileEventHandlerTest extends WingsBaseTest {
         DelegateProfile.builder().accountId(accountId).startupScript("echo test").build());
 
     verify(workflowExecutionService, never()).triggerOrchestrationExecution(any(), any(), any(), any(), any());
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testOnProfileUpdatedShouldTriggerWorkflow() {
-    String accountId = generateUuid();
-    String updatedProfileId = generateUuid();
-    Workflow workflow = createWorkflow(accountId);
-
-    when(featureFlagService.isEnabled(TRIGGER_PROFILE_SCRIPT_EXECUTION_WF, accountId)).thenReturn(true);
-
-    Delegate delegate1 =
-        Delegate.builder().uuid(generateUuid()).accountId(accountId).delegateProfileId(updatedProfileId).build();
-    Delegate delegate2 =
-        Delegate.builder().uuid(generateUuid()).accountId(accountId).delegateProfileId(updatedProfileId).build();
-
-    persistence.save(delegate1);
-    persistence.save(delegate2);
-
-    delegateProfileEventHandler.onProfileUpdated(
-        DelegateProfile.builder().accountId(accountId).startupScript("echo test 1").build(),
-        DelegateProfile.builder().accountId(accountId).startupScript("echo test 2").uuid(updatedProfileId).build());
-
-    ArgumentCaptor<ExecutionArgs> argumentCaptor = ArgumentCaptor.forClass(ExecutionArgs.class);
-    verify(workflowExecutionService, times(2))
-        .triggerOrchestrationExecution(
-            eq(workflow.getAppId()), eq(null), eq(workflow.getUuid()), argumentCaptor.capture(), eq(null));
-
-    List<ExecutionArgs> executionArgs = argumentCaptor.getAllValues();
-    assertThat(executionArgs.size()).isEqualTo(2);
-
-    assertThat(executionArgs.get(0).getWorkflowType()).isEqualTo(WorkflowType.ORCHESTRATION);
-    assertThat(executionArgs.get(0).getWorkflowVariables()).isNotEmpty();
-    assertThat(executionArgs.get(0).getWorkflowVariables().get(PROFILE_SCRIPT_CONTENT_VAR_NAME))
-        .isEqualTo("echo test 2");
-
-    assertThat(executionArgs.get(1).getWorkflowType()).isEqualTo(WorkflowType.ORCHESTRATION);
-    assertThat(executionArgs.get(1).getWorkflowVariables()).isNotEmpty();
-    assertThat(executionArgs.get(1).getWorkflowVariables().get(PROFILE_SCRIPT_CONTENT_VAR_NAME))
-        .isEqualTo("echo test 2");
-
-    Set<String> delegateIds =
-        ImmutableSet.<String>builder()
-            .add(executionArgs.get(0).getWorkflowVariables().get(MUST_EXECUTE_ON_DELEGATE_VAR_NAME))
-            .add(executionArgs.get(1).getWorkflowVariables().get(MUST_EXECUTE_ON_DELEGATE_VAR_NAME))
-            .build();
-
-    assertThat(delegateIds).containsExactlyInAnyOrder(delegate1.getUuid(), delegate2.getUuid());
-
-    verify(delegateService, never()).regenerateCapabilityPermissions(any(), any());
   }
 }

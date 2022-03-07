@@ -183,6 +183,8 @@ public interface KubernetesContainerService {
 
   void validateCEPermissions(KubernetesConfig kubernetesConfig);
 
+  void validateCredentials(KubernetesConfig kubernetesConfig);
+
   void tryListControllersKubectl(KubernetesConfig kubernetesConfig, boolean useNewKubectlVersion);
 
   String getConfigFileContent(KubernetesConfig config);

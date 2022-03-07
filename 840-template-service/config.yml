@@ -54,7 +54,7 @@ gitSdkConfiguration:
   scmConnectionConfig:
     url: localhost:8091
 
-shouldDeployWithGitSync: false
+shouldDeployWithGitSync: true
 
 cacheConfig:
   cacheBackend: REDIS

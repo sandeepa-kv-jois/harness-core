@@ -7,8 +7,8 @@
 
 package io.harness.aggregator.controllers;
 
+import static io.harness.accesscontrol.aggregator.api.SecondarySyncStatus.SWITCH_TO_PRIMARY_REQUESTED;
 import static io.harness.aggregator.AggregatorConfiguration.ACCESS_CONTROL_SERVICE;
-import static io.harness.aggregator.models.AggregatorSecondarySyncState.SecondarySyncStatus.SWITCH_TO_PRIMARY_REQUESTED;
 import static io.harness.aggregator.models.MongoReconciliationOffset.PRIMARY_COLLECTION;
 import static io.harness.aggregator.models.MongoReconciliationOffset.SECONDARY_COLLECTION;
 

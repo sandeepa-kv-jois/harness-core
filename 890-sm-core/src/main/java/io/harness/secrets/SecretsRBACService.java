@@ -32,7 +32,7 @@ public interface SecretsRBACService {
   boolean hasAccessToAccountScopedSecrets(@NotEmpty String accountId);
 
   List<SecretScopeMetadata> filterSecretsByReadPermission(@NotEmpty String accountId,
-      @NotNull List<SecretScopeMetadata> secretScopeMetadataList, String appId, String envId);
+      @NotNull List<SecretScopeMetadata> secretScopeMetadataList, String appId, String envId, boolean forUsageInNewApp);
 
   void canReplacePermissions(@NotEmpty String accountId, @NotNull SecretScopeMetadata newSecretScopeMetadata,
       @NotNull SecretScopeMetadata oldSecretScopeMetadata, boolean validateReferences);

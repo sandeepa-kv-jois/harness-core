@@ -40,7 +40,7 @@ public class CustomHealthSourceSpecTransformer
             CustomHealthMetricDefinition.builder()
                 .method(definition.getMethod())
                 .urlPath(definition.getUrlPath())
-                .queryType(definition.getQueryType())
+                .queryType(customHealthCVConfig.getQueryType())
                 .groupName(customHealthCVConfig.getGroupName())
                 .metricName(definition.getMetricName())
                 .metricResponseMapping(definition.getMetricResponseMapping())

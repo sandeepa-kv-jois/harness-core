@@ -20,6 +20,7 @@ import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
+import java.util.Arrays;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
 import javax.ws.rs.GET;
@@ -41,16 +42,13 @@ public class ServiceDependencyGraphResource {
   @ApiOperation(value = "get service dependency graph", nickname = "getServiceDependencyGraph")
   public RestResponse<ServiceDependencyGraphDTO> getServiceDependencyGraph(@BeanParam ProjectParams projectParams,
       @QueryParam("environmentIdentifier") String environmentIdentifier,
-      @QueryParam("envIdentifier") String envIdentifier, @QueryParam("serviceIdentifier") String serviceIdentifier,
+      @QueryParam("serviceIdentifier") String serviceIdentifier,
       @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
       @QueryParam("servicesAtRiskFilter") @ApiParam(
           defaultValue = "false") @NotNull final boolean servicesAtRiskFilter) {
-    if (environmentIdentifier == null) {
-      environmentIdentifier = envIdentifier;
-    }
     if (monitoredServiceIdentifier != null) {
       return new RestResponse<>(serviceDependencyGraphService.getDependencyGraph(
-          projectParams, monitoredServiceIdentifier, servicesAtRiskFilter));
+          projectParams, Arrays.asList(monitoredServiceIdentifier), servicesAtRiskFilter));
     } else {
       return new RestResponse<>(serviceDependencyGraphService.getDependencyGraph(
           projectParams, serviceIdentifier, environmentIdentifier, servicesAtRiskFilter));

@@ -10,8 +10,8 @@ package io.harness.accesscontrol.acl.persistence;
 import static io.harness.accesscontrol.acl.persistence.ACL.getAclQueryString;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
-import io.harness.accesscontrol.Principal;
 import io.harness.accesscontrol.acl.PermissionCheck;
+import io.harness.accesscontrol.acl.api.Principal;
 import io.harness.accesscontrol.acl.persistence.repositories.ACLRepository;
 import io.harness.accesscontrol.scopes.core.Scope;
 import io.harness.accesscontrol.scopes.core.ScopeLevel;

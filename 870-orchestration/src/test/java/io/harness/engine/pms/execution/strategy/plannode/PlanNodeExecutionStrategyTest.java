@@ -146,46 +146,6 @@ public class PlanNodeExecutionStrategyTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = PRASHANT)
   @Category(UnitTests.class)
-  public void shouldTestInitiateNode() {
-    String planExecutionId = generateUuid();
-    String planId = generateUuid();
-    String planNodeId = generateUuid();
-    String runtimeId = generateUuid();
-
-    Ambiance ambiance = Ambiance.newBuilder()
-                            .setPlanExecutionId(planExecutionId)
-                            .setPlanId(planId)
-                            .putAllSetupAbstractions(prepareInputArgs())
-                            .build();
-    PlanNode planNode =
-        PlanNode.builder()
-            .name("Test Node")
-            .uuid(planNodeId)
-            .identifier("test")
-            .stepType(TEST_STEP_TYPE)
-            .serviceName("CD")
-            .facilitatorObtainment(
-                FacilitatorObtainment.newBuilder()
-                    .setType(FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build())
-                    .build())
-            .build();
-
-    when(planService.fetchNode(eq(planId), eq(planNodeId))).thenReturn(planNode);
-
-    executionStrategy.initiateNode(ambiance, planNode.getUuid(), runtimeId, null);
-
-    ArgumentCaptor<Ambiance> ambianceCaptor = ArgumentCaptor.forClass(Ambiance.class);
-    verify(executionStrategy).runNode(ambianceCaptor.capture(), eq(planNode), eq(null));
-    Ambiance captured = ambianceCaptor.getValue();
-
-    assertThat(captured.getLevelsCount()).isEqualTo(1);
-    assertThat(captured.getLevels(0).getSetupId()).isEqualTo(planNode.getUuid());
-    assertThat(captured.getLevels(0).getRuntimeId()).isEqualTo(runtimeId);
-  }
-
-  @Test
-  @Owner(developers = PRASHANT)
-  @Category(UnitTests.class)
   public void shouldTestStartExecutionWithCustomFacilitator() {
     String planExecutionId = generateUuid();
     String nodeExecutionId = generateUuid();

@@ -35,10 +35,10 @@ import lombok.experimental.FieldDefaults;
 @ApiModel("GitFullSyncEntityInfoFilterKeys")
 @NoArgsConstructor
 @AllArgsConstructor
-@Schema(name = "GitFullSyncEntityInfoFilter", description = "This contains filters for Git Full Sync")
+@Schema(name = "GitFullSyncEntityInfoFilter", description = "Filter details for Git Full Sync.")
 @OwnedBy(PL)
 public class GitFullSyncEntityInfoFilterDTO {
-  @Schema(description = GitSyncApiConstants.ENTITY_TYPE_PARAM_MESSAGE) List<EntityType> entityTypes;
+  @Schema(description = "List of entity Types to filter on the entities.") List<EntityType> entityTypes;
 
   @Schema(description = GitSyncApiConstants.SYNC_STATUS_PARAM_MESSAGE) GitFullSyncEntityInfo.SyncStatus syncStatus;
 }

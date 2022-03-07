@@ -16,9 +16,7 @@ import io.harness.ng.core.dto.OrganizationDTO;
 import io.harness.ng.core.dto.OrganizationResponse;
 import io.harness.ng.core.entities.Organization;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
-import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(PL)
@@ -53,12 +51,5 @@ public class OrganizationMapper {
         .harnessManaged(Boolean.TRUE.equals(organization.getHarnessManaged()))
         .organization(writeDto(organization))
         .build();
-  }
-
-  @SneakyThrows
-  public static Organization applyUpdateToOrganization(
-      Organization organization, OrganizationDTO updateOrganizationDTO) {
-    String jsonString = new ObjectMapper().writer().writeValueAsString(updateOrganizationDTO);
-    return new ObjectMapper().readerForUpdating(organization).readValue(jsonString);
   }
 }

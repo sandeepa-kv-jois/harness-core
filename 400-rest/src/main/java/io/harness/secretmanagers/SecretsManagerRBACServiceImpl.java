@@ -85,7 +85,7 @@ public class SecretsManagerRBACServiceImpl implements SecretsManagerRBACService 
     Set<String> appsByAccountId = appService.getAppIdsAsSetByAccountId(accountId);
     Map<String, List<Base>> appIdEnvMapForAccount = envService.getAppIdEnvMap(appsByAccountId);
 
-    return usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appId, envId,
+    return usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appId, envId, false,
         scopedEntity.getUsageRestrictions(), restrictionsFromUserPermissions, appEnvMapFromPermissions,
         appIdEnvMapForAccount, scopedEntity.isScopedToAccount());
   }

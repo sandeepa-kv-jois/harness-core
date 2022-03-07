@@ -55,6 +55,7 @@ import io.harness.beans.EmbeddedUser;
 import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 
 import software.wings.api.PhaseElement;
@@ -108,6 +109,7 @@ import org.mockito.Spy;
 @OwnedBy(CDP)
 public class AwsLambdaStateTest extends CategoryTest {
   @Mock private ServiceResourceService serviceResourceService;
+  @Mock private FeatureFlagService featureFlagService;
   @Mock private InfrastructureMappingService infrastructureMappingService;
   @Mock private SettingsService settingsService;
   @Mock private ArtifactStreamService artifactStreamService;
@@ -234,6 +236,8 @@ public class AwsLambdaStateTest extends CategoryTest {
     List<String> aliases = Mockito.mock(List.class);
     doReturn(true).when(aliases).isEmpty();
     on(awsLambdaState).set("aliases", aliases);
+
+    doReturn(true).when(featureFlagService).isEnabled(any(), anyString());
 
     awsLambdaState.execute(mockContext);
     ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);

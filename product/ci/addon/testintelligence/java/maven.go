@@ -42,6 +42,7 @@ func (b *mavenRunner) AutoDetectPackages() ([]string, error) {
 func (m *mavenRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, userArgs, agentConfigPath string, ignoreInstr, runAll bool) (string, error) {
 	// If instrumentation needs to be ignored, we run all the tests without adding the agent config
 	if ignoreInstr {
+		m.log.Infow("ignoring instrumentation and not attaching Java agent")
 		return strings.TrimSpace(fmt.Sprintf("%s %s", mavenCmd, userArgs)), nil
 	}
 

@@ -20,7 +20,6 @@ import io.harness.engine.pms.data.OutcomeException;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.engine.pms.data.SweepingOutputException;
-import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.expression.LateBindingMap;
@@ -119,13 +118,9 @@ public class NodeExecutionMap extends LateBindingMap {
     if (nodeExecution == null) {
       return Optional.empty();
     }
-    List<NodeExecution> allChildren = nodeExecutionsCache.findAllChildren(nodeExecution.getUuid());
-    List<NodeExecution> childrenNodesWithoutCurrentNodeList =
-        allChildren.stream()
-            .filter(node -> StatusUtils.finalStatuses().contains(node.getStatus()))
-            .collect(Collectors.toList());
-    Status status =
-        OrchestrationUtils.calculateStatus(childrenNodesWithoutCurrentNodeList, ambiance.getPlanExecutionId());
+    List<NodeExecution> allChildren = nodeExecutionsCache.findAllTerminalChildren(nodeExecution.getUuid());
+    List<Status> childStatuses = allChildren.stream().map(NodeExecution::getStatus).collect(Collectors.toList());
+    Status status = StatusUtils.calculateStatus(childStatuses, ambiance.getPlanExecutionId());
     return Optional.of(status.name());
   }
 
@@ -205,7 +200,7 @@ public class NodeExecutionMap extends LateBindingMap {
         return stepParameters;
       }
     }
-    Node node = nodeExecutionsCache.fetchNode(nodeExecution.nodeId());
+    Node node = nodeExecutionsCache.fetchNode(nodeExecution.getNodeId());
     return NodeExecutionUtils.extractAndProcessObject(node.getStepParameters().toJson());
   }
 

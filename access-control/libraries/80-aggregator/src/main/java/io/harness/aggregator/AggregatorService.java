@@ -7,10 +7,10 @@
 
 package io.harness.aggregator;
 
+import static io.harness.accesscontrol.aggregator.api.SecondarySyncStatus.SECONDARY_SYNC_REQUESTED;
+import static io.harness.accesscontrol.aggregator.api.SecondarySyncStatus.SECONDARY_SYNC_RUNNING;
+import static io.harness.accesscontrol.aggregator.api.SecondarySyncStatus.SWITCH_TO_PRIMARY_REQUESTED;
 import static io.harness.aggregator.AggregatorConfiguration.ACCESS_CONTROL_SERVICE;
-import static io.harness.aggregator.models.AggregatorSecondarySyncState.SecondarySyncStatus.SECONDARY_SYNC_REQUESTED;
-import static io.harness.aggregator.models.AggregatorSecondarySyncState.SecondarySyncStatus.SECONDARY_SYNC_RUNNING;
-import static io.harness.aggregator.models.AggregatorSecondarySyncState.SecondarySyncStatus.SWITCH_TO_PRIMARY_REQUESTED;
 
 import io.harness.aggregator.controllers.AggregatorController;
 import io.harness.aggregator.models.AggregatorSecondarySyncState;
@@ -29,7 +29,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
-
 @Slf4j
 @Singleton
 @OwnedBy(HarnessTeam.PL)

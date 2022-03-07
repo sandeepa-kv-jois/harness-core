@@ -14,9 +14,9 @@ import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.ExposeInternalException;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
@@ -33,6 +33,7 @@ import io.harness.cvng.core.beans.monitoredService.MonitoredServiceListItemDTO;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceWithHealthSources;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
@@ -301,6 +302,25 @@ public class MonitoredServiceResource {
                                                             .projectIdentifier(projectIdentifier)
                                                             .build();
     return ResponseDTO.newResponse(monitoredServiceService.get(serviceEnvironmentParams));
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
+  @Path("{identifier}/scores")
+  @ApiOperation(value = "get monitored service scores", nickname = "getMonitoredServiceScores")
+  public ResponseDTO<HealthScoreDTO> getMonitoredServiceScore(@NotNull @QueryParam("accountId") String accountId,
+      @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
+      @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
+      @NotNull @PathParam("identifier") String identifier) {
+    MonitoredServiceParams serviceEnvironmentParams = MonitoredServiceParams.builder()
+                                                          .accountIdentifier(accountId)
+                                                          .orgIdentifier(orgIdentifier)
+                                                          .projectIdentifier(projectIdentifier)
+                                                          .monitoredServiceIdentifier(identifier)
+                                                          .build();
+    return ResponseDTO.newResponse(
+        monitoredServiceService.getCurrentAndDependentServicesScore(serviceEnvironmentParams));
   }
 
   @GET

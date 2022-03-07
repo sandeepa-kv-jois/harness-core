@@ -37,7 +37,6 @@ import software.wings.service.impl.cloudwatch.CloudWatchDelegateServiceImpl;
 import software.wings.service.impl.cloudwatch.CloudWatchMetric;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.analysis.ClusterLevel;
-import software.wings.sm.StateType;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.google.common.collect.Table.Cell;
@@ -80,13 +79,13 @@ public class CloudWatchDataCollectionTask extends AbstractDelegateDataCollection
     log.info("metric collection - dataCollectionInfo: {}", dataCollectionInfo);
     return DataCollectionTaskResult.builder()
         .status(DataCollectionTaskStatus.SUCCESS)
-        .stateType(StateType.CLOUD_WATCH)
+        .stateType(DelegateStateType.CLOUD_WATCH)
         .build();
   }
 
   @Override
-  protected StateType getStateType() {
-    return StateType.CLOUD_WATCH;
+  protected DelegateStateType getStateType() {
+    return DelegateStateType.CLOUD_WATCH;
   }
 
   @Override

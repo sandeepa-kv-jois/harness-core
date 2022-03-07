@@ -65,6 +65,6 @@ public interface SecretService {
   PageResponse<EncryptedData> listSecretsScopedToAccount(
       @NotEmpty String accountId, @NotNull PageRequest<EncryptedData> pageRequest);
 
-  List<SecretMetadata> filterSecretIdsByReadPermission(
-      Set<String> secretIds, String accountId, String appIdFromRequest, String envIdFromRequest);
+  List<SecretMetadata> filterSecretIdsByReadPermission(Set<String> secretIds, String accountId, String appIdFromRequest,
+      String envIdFromRequest, boolean forUsageInNewApp);
 }

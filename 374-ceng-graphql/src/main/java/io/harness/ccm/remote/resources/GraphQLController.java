@@ -29,6 +29,7 @@ import graphql.schema.GraphQLSchema;
 import graphql.schema.idl.SchemaPrinter;
 import io.leangen.graphql.GraphQLSchemaGenerator;
 import io.leangen.graphql.metadata.strategy.value.gson.GsonValueMapperFactory;
+import io.serializer.HObjectMapper;
 import io.swagger.annotations.Api;
 import java.io.IOException;
 import java.util.Collections;
@@ -59,7 +60,7 @@ import org.springframework.stereotype.Service;
 @OwnedBy(CE)
 public class GraphQLController {
   private final GraphQL graphQL;
-  private static final ObjectMapper objectMapper = new ObjectMapper();
+  private static final ObjectMapper objectMapper = HObjectMapper.get();
   private static final SchemaPrinter schemaPrinter = new SchemaPrinter();
   private static final DataLoaderRegistry registry = new DataLoaderRegistry();
   private static String schemaAsString;

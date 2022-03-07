@@ -7,6 +7,8 @@
 
 package io.harness.cvng.beans;
 
+import io.harness.delegate.beans.connector.cv.Connector;
+
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import java.util.Collections;
 import java.util.Map;

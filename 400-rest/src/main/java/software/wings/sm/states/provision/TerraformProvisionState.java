@@ -89,6 +89,7 @@ import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.serializer.JsonUtils;
 import io.harness.tasks.ResponseData;
 
+import software.wings.api.PhaseElement;
 import software.wings.api.ScriptStateExecutionData;
 import software.wings.api.TerraformApplyMarkerParam;
 import software.wings.api.TerraformExecutionData;
@@ -478,6 +479,20 @@ public abstract class TerraformProvisionState extends State {
                                    .name(TerraformOutputVariables.SWEEPING_OUTPUT_NAME)
                                    .value(terraformOutputVariables)
                                    .build());
+
+    PhaseElement phaseElement = context.getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
+
+    if (phaseElement != null && isNotEmpty(phaseElement.getInfraDefinitionId())
+        && phaseElement.getServiceElement() != null && isNotEmpty(phaseElement.getServiceElement().getUuid())) {
+      sweepingOutputService.save(
+          context.prepareSweepingOutputBuilder(SweepingOutputInstance.Scope.PIPELINE)
+              .name(String
+                        .format("%s_%s_%s", TerraformOutputVariables.SWEEPING_OUTPUT_NAME,
+                            phaseElement.getInfraDefinitionId(), phaseElement.getServiceElement().getUuid())
+                        .replaceAll("-", "_"))
+              .value(terraformOutputVariables)
+              .build());
+    }
   }
 
   private void saveUserInputs(ExecutionContext context, TerraformExecutionData terraformExecutionData,

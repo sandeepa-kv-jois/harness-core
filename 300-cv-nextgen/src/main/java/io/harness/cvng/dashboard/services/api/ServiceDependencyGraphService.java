@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.dashboard.beans.ServiceDependencyGraphDTO;
 
+import java.util.List;
 import javax.annotation.Nullable;
 import lombok.NonNull;
 
@@ -22,5 +23,5 @@ public interface ServiceDependencyGraphService {
   ServiceDependencyGraphDTO getDependencyGraph(@NonNull ProjectParams projectParams, @Nullable String serviceIdentifier,
       @Nullable String environmentIdentifier, @NonNull boolean servicesAtRiskFilter);
   ServiceDependencyGraphDTO getDependencyGraph(@NonNull ProjectParams projectParams,
-      @Nullable String monitoredServiceIdentifier, @NonNull boolean servicesAtRiskFilter);
+      @Nullable List<String> monitoredServiceIdentifiers, @NonNull boolean servicesAtRiskFilter);
 }

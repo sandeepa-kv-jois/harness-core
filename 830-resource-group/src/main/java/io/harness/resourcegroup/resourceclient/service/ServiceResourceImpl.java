@@ -24,8 +24,8 @@ import io.harness.eventsframework.entity_crud.EntityChangeDTO;
 import io.harness.ng.core.service.dto.ServiceResponse;
 import io.harness.remote.client.NGRestUtils;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 import io.harness.service.remote.ServiceResourceClient;
 
 import com.google.common.collect.ImmutableMap;

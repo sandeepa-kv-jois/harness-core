@@ -48,7 +48,6 @@ import java.util.concurrent.ExecutorService;
 import lombok.Getter;
 import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @Singleton
@@ -67,13 +66,7 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
   @Getter private final Subject<OrchestrationEndObserver> orchestrationEndSubject = new Subject<>();
 
   @Override
-  public PlanExecution initiateNode(
-      @NonNull Ambiance ambiance, @NonNull String nodeId, String runtimeId, PlanExecutionMetadata metadata) {
-    throw new UnsupportedOperationException("Trigger Node via event is not supported for plan Execution");
-  }
-
-  @Override
-  public PlanExecution runNode(@NotNull Ambiance ambiance, @NotNull Plan plan, PlanExecutionMetadata metadata) {
+  public PlanExecution runNode(@NonNull Ambiance ambiance, @NonNull Plan plan, PlanExecutionMetadata metadata) {
     String accountId = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.accountId);
     String orgIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.orgIdentifier);
     String projectIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.projectIdentifier);

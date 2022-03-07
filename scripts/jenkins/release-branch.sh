@@ -33,7 +33,18 @@ function check_branch_name(){
     fi
 }
 
-PROJECTS="BT|CCE|CCM|CDC|CDNG|CDP|CDS|CE|CI|CV|CVNG|CVS|DEL|DOC|DX|ER|FFM|OPA|OPS|PIE|PL|SEC|SWAT|GTM|ONP"
+function check_file_present(){
+     local_file=$1
+     if [ ! -f "$local_file" ]; then
+        echo "ERROR: Line $LINENO: File $local_file not found. Exiting..."
+        exit 1
+     fi
+}
+
+SHDIR=$(dirname "$0")
+PROJFILE="$SHDIR/jira-projects.txt"
+check_file_present $PROJFILE
+PROJECTS=$(<$PROJFILE)
 
 #RELEASE TYPE is required to increment tag accordingly.
 check_empty_output "$RELEASE_TYPE" "Release Type is not defined."

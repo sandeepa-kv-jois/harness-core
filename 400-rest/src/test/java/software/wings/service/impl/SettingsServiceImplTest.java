@@ -377,33 +377,33 @@ public class SettingsServiceImplTest extends WingsBaseTest {
     Map<String, SecretState> secretIdsStateMap = mock(Map.class);
     when(settingServiceHelper.hasReferencedSecrets(eq(helmConnector))).thenReturn(false);
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(secretIdsStateMap, never()).containsKey(any());
     verify(usageRestrictionsService, times(1))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
 
     when(settingServiceHelper.hasReferencedSecrets(eq(helmConnector))).thenReturn(true);
     when(settingServiceHelper.getUsedSecretIds(helmConnector)).thenReturn(null);
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(secretIdsStateMap, never()).containsKey(any());
     verify(usageRestrictionsService, times(2))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
 
     when(settingServiceHelper.getUsedSecretIds(helmConnector)).thenReturn(Collections.emptySet());
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(secretIdsStateMap, never()).containsKey(any());
     verify(usageRestrictionsService, times(3))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
 
     when(settingServiceHelper.getUsedSecretIds(helmConnector)).thenReturn(Collections.singleton(PASSWORD));
     when(secretIdsStateMap.containsKey(eq(PASSWORD))).thenReturn(true);
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(secretIdsStateMap, times(1)).containsKey(any());
     verify(usageRestrictionsService, times(3))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
   }
   @Test
   @Owner(developers = OwnerRule.YOGESH)
@@ -420,31 +420,31 @@ public class SettingsServiceImplTest extends WingsBaseTest {
     Map<String, SecretState> secretIdsStateMap = mock(Map.class);
     when(settingServiceHelper.hasReferencedSecrets(eq(helmConnector))).thenReturn(false);
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(secretIdsStateMap, never()).containsKey(any());
     verify(usageRestrictionsService, times(1))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
 
     when(settingServiceHelper.hasReferencedSecrets(eq(helmConnector))).thenReturn(true);
     when(settingServiceHelper.getUsedSecretIds(helmConnector)).thenReturn(null);
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(secretIdsStateMap, never()).containsKey(any());
     verify(usageRestrictionsService, times(2))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
 
     when(settingServiceHelper.getUsedSecretIds(helmConnector)).thenReturn(Collections.emptySet());
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(secretIdsStateMap, never()).containsKey(any());
     verify(usageRestrictionsService, times(3))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
 
     when(settingServiceHelper.getUsedSecretIds(helmConnector)).thenReturn(Collections.singleton(PASSWORD));
     settingsService.isFilteredSettingAttribute(
-        null, null, ACCOUNT_ID, null, null, false, null, null, helmConnector, secretIdsStateMap);
+        null, null, ACCOUNT_ID, false, null, null, false, null, null, helmConnector, secretIdsStateMap);
     verify(usageRestrictionsService, times(3))
-        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), any(), any(), any(), any(), anyBoolean());
+        .hasAccess(eq(ACCOUNT_ID), eq(false), any(), any(), anyBoolean(), any(), any(), any(), any(), anyBoolean());
   }
 
   @Test

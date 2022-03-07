@@ -18,6 +18,7 @@ import static io.harness.cvng.core.entities.DeploymentDataCollectionTask.MAX_RET
 import static io.harness.cvng.core.services.CVNextGenConstants.DATA_COLLECTION_DELAY;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ABHIJITH;
+import static io.harness.rule.OwnerRule.ARPITJ;
 import static io.harness.rule.OwnerRule.KAMAL;
 import static io.harness.rule.OwnerRule.KANHAIYA;
 import static io.harness.rule.OwnerRule.NEMANJA;
@@ -47,6 +48,7 @@ import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.beans.job.TestVerificationJobDTO;
 import io.harness.cvng.beans.job.VerificationJobDTO;
 import io.harness.cvng.client.VerificationManagerService;
+import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
@@ -721,6 +723,28 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
         dataCollectionTaskService.getDataCollectionTask(dataCollectionTask2.getUuid());
     // Assert that aborted task is not queued
     assertThat(dataCollectionTask2FromDb.getStatus()).isEqualTo(ABORTED);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testUpdateRetry() throws IllegalAccessException {
+    DataCollectionTask dataCollectionTask = createAndSave(QUEUED);
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
+    Clock clock = Clock.fixed(this.clock.instant().plus(Duration.ofHours(3)), ZoneOffset.UTC);
+    FieldUtils.writeField(dataCollectionTaskService, "clock", clock, true);
+
+    dataCollectionTaskService.updateRetry(projectParams, dataCollectionTask.getUuid());
+    DataCollectionTask newTask = hPersistence.get(DataCollectionTask.class, dataCollectionTask.getUuid());
+
+    assertThat(newTask.getRetryCount()).isEqualTo(0);
+    assertThat(newTask.getValidAfter())
+        .isEqualTo(
+            CVNGTestConstants.FIXED_TIME_FOR_TESTS.instant().plus(3, ChronoUnit.HOURS).plus(300, ChronoUnit.SECONDS));
   }
 
   @Test

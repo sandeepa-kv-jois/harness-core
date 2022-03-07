@@ -28,11 +28,15 @@ import io.harness.pms.sdk.core.steps.executables.SyncExecutable;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
+import io.harness.pms.sdk.core.steps.io.StepResponse.StepOutcome;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.steps.StepSpecTypeConstants;
 import io.harness.steps.policy.PolicyStepConstants;
 import io.harness.steps.policy.PolicyStepSpecParameters;
 import io.harness.steps.policy.custom.CustomPolicyStepSpec;
+import io.harness.steps.policy.step.outcome.PolicyStepOutcome;
+import io.harness.steps.policy.step.outcome.PolicyStepOutcomeMapper;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -91,11 +95,18 @@ public class PolicyStep implements SyncExecutable<StepElementParameters> {
       return PolicyStepHelper.buildFailureStepResponse(ErrorCode.HTTP_RESPONSE_EXCEPTION,
           "Unexpected error occurred while evaluating Policies.", FailureType.APPLICATION_FAILURE);
     }
+    PolicyStepOutcome outcome = PolicyStepOutcomeMapper.toOutcome(opaEvaluationResponseHolder);
+    StepOutcome stepOutcome = StepOutcome.builder()
+                                  .group(StepCategory.STEP.name())
+                                  .name(YAMLFieldNameConstants.OUTPUT)
+                                  .outcome(outcome)
+                                  .build();
+
     if (opaEvaluationResponseHolder.getStatus().equals(OpaConstants.OPA_STATUS_ERROR)) {
       return PolicyStepHelper.buildFailureStepResponse(ErrorCode.POLICY_EVALUATION_FAILURE,
-          "Some Policies were not adhered to.", FailureType.POLICY_EVALUATION_FAILURE);
+          "Some Policies were not adhered to.", FailureType.POLICY_EVALUATION_FAILURE, stepOutcome);
     }
-    return StepResponse.builder().status(Status.SUCCEEDED).build();
+    return StepResponse.builder().status(Status.SUCCEEDED).stepOutcome(stepOutcome).build();
   }
 
   @Override

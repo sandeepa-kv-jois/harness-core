@@ -23,4 +23,5 @@ public class NGTemplateConstants {
   public static final String SPEC = "spec";
   public static final String IDENTIFIER = "identifier";
   public static final String NAME = "name";
+  public static final String STABLE_VERSION = "__STABLE__";
 }

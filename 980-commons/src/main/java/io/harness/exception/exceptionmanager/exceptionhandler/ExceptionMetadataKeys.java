@@ -12,10 +12,13 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public enum ExceptionMetadataKeys {
+  REPO_NAME,
+  REPO_TYPE,
   IMAGE_NAME,
   IMAGE_TAG,
+  IMAGE_TAG_REGEX,
   URL,
   CONNECTOR,
   REGION,
-  GIT_REPO_URL
+  DOCKER_PULL_COMMAND
 }

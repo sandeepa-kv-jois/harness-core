@@ -14,15 +14,19 @@ import static io.harness.rule.OwnerRule.UJJAWAL;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.NgManagerTestBase;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.Scope;
 import io.harness.category.element.UnitTests;
 import io.harness.ng.core.api.UserGroupService;
 import io.harness.ng.core.dto.GatewayAccountRequestDTO;
 import io.harness.ng.core.invites.api.InviteService;
 import io.harness.ng.core.user.UserInfo;
+import io.harness.ng.core.user.UserMembershipUpdateSource;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
 import io.harness.ng.core.user.service.NgUserService;
 import io.harness.rule.Owner;
@@ -128,7 +132,8 @@ public class NGScimUserServiceImplTest extends NgManagerTestBase {
   public void testScim_IfUserIsNotPartOfAccountAlready_ItShouldAddToAccount() {
     ScimUser scimUser = new ScimUser();
     Account account = new Account();
-    account.setUuid(generateUuid());
+    final String accountId = generateUuid();
+    account.setUuid(accountId);
     account.setAccountName("account_name");
 
     scimUser.setUserName("username@harness.io");
@@ -163,5 +168,8 @@ public class NGScimUserServiceImplTest extends NgManagerTestBase {
     assertThat(response.getStatus()).isEqualTo(201);
     assertThat(response.getEntity()).isNotNull();
     assertThat(((ScimUser) response.getEntity()).getUserName()).isEqualTo(userInfo.getEmail());
+    verify(ngUserService, times(1))
+        .addUserToScope(
+            userMetadataDTO.getUuid(), Scope.of(accountId, null, null), null, null, UserMembershipUpdateSource.SYSTEM);
   }
 }

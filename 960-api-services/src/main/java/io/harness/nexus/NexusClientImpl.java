@@ -9,16 +9,19 @@ package io.harness.nexus;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.nexus.NexusHelper.isNexusVersion2;
 
 import static java.util.Collections.emptyMap;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifacts.beans.BuildDetailsInternal;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.HintException;
 import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.NexusRegistryException;
 import io.harness.exception.WingsException;
 
 import software.wings.utils.RepositoryFormat;
@@ -28,6 +31,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.net.UnknownHostException;
 import java.time.Duration;
+import java.util.List;
 import java.util.Map;
 import javax.xml.stream.XMLStreamException;
 import lombok.extern.slf4j.Slf4j;
@@ -46,7 +50,7 @@ public class NexusClientImpl {
 
   public Map<String, String> getRepositories(NexusRequest nexusConfig, String repositoryFormat) {
     try {
-      boolean isNexusTwo = nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x");
+      boolean isNexusTwo = isNexusVersion2(nexusConfig);
       return HTimeLimiter.callInterruptible21(timeLimiter, Duration.ofSeconds(20L), () -> {
         if (isNexusTwo) {
           if (RepositoryFormat.docker.name().equals(repositoryFormat)) {
@@ -80,7 +84,7 @@ public class NexusClientImpl {
   }
 
   public boolean isRunning(NexusRequest nexusConfig) {
-    if (nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x")) {
+    if (isNexusVersion2(nexusConfig)) {
       return getRepositories(nexusConfig, null) != null;
     } else {
       try {
@@ -104,6 +108,44 @@ public class NexusClientImpl {
         NexusHelper.checkSSLHandshakeException(e);
         return true;
       }
+    }
+  }
+
+  public List<BuildDetailsInternal> getArtifactsVersions(
+      NexusRequest nexusConfig, String repositoryName, String port, String artifactName, String repoFormat) {
+    if (isNexusVersion2(nexusConfig)) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Please check your Nexus connector and/or artifact configuration. Please use the 3.x connector version.",
+          "Nexus 2.x connector does not support docker artifact type.",
+          new NexusRegistryException(
+              String.format("Currently Nexus connector version [%s] is not allowed.", nexusConfig.getVersion())));
+    } else {
+      return nexusThreeService.getArtifactsVersions(nexusConfig, repositoryName, port, artifactName, repoFormat);
+    }
+  }
+
+  public List<BuildDetailsInternal> getBuildDetails(NexusRequest nexusConfig, String repository, String port,
+      String artifactName, String repositoryFormat, String tag) {
+    if (isNexusVersion2(nexusConfig)) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Please check your Nexus connector and/or artifact configuration. Please use the 3.x connector version.",
+          "Nexus 2.x connector does not support docker artifact type.",
+          new NexusRegistryException(
+              String.format("Currently Nexus connector version [%s] is not allowed.", nexusConfig.getVersion())));
+    } else {
+      return nexusThreeService.getBuildDetails(nexusConfig, repository, port, artifactName, repositoryFormat, tag);
+    }
+  }
+
+  public boolean verifyArtifactManifestUrl(NexusRequest nexusConfig, String artifactManifestUrl) {
+    if (isNexusVersion2(nexusConfig)) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Please check your Nexus connector and/or artifact configuration. Please use the 3.x connector version.",
+          "Nexus 2.x connector does not support docker artifact type.",
+          new NexusRegistryException(
+              String.format("Currently Nexus connector version [%s] is not allowed.", nexusConfig.getVersion())));
+    } else {
+      return nexusThreeService.verifyArtifactManifestUrl(nexusConfig, artifactManifestUrl);
     }
   }
 }

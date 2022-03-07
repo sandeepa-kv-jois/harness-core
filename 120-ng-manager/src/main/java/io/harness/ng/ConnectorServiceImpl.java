@@ -67,6 +67,7 @@ import io.harness.ng.core.activityhistory.NGActivityType;
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.perpetualtask.PerpetualTaskId;
 import io.harness.repositories.ConnectorRepository;
+import io.harness.telemetry.helpers.ConnectorInstrumentationHelper;
 import io.harness.utils.FullyQualifiedIdentifierHelper;
 
 import com.google.common.collect.ImmutableMap;
@@ -77,6 +78,7 @@ import com.google.protobuf.StringValue;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import javax.validation.constraints.NotNull;
 import lombok.extern.slf4j.Slf4j;
@@ -98,6 +100,7 @@ public class ConnectorServiceImpl implements ConnectorService {
   private final HarnessManagedConnectorHelper harnessManagedConnectorHelper;
   private final NGErrorHelper ngErrorHelper;
   private final GitSyncSdkService gitSyncSdkService;
+  private final ConnectorInstrumentationHelper instrumentationHelper;
 
   @Inject
   public ConnectorServiceImpl(@Named(DEFAULT_CONNECTOR_SERVICE) ConnectorService defaultConnectorService,
@@ -106,7 +109,7 @@ public class ConnectorServiceImpl implements ConnectorService {
       ConnectorRepository connectorRepository, @Named(EventsFrameworkConstants.ENTITY_CRUD) Producer eventProducer,
       ExecutorService executorService, ConnectorErrorMessagesHelper connectorErrorMessagesHelper,
       HarnessManagedConnectorHelper harnessManagedConnectorHelper, NGErrorHelper ngErrorHelper,
-      GitSyncSdkService gitSyncSdkService) {
+      GitSyncSdkService gitSyncSdkService, ConnectorInstrumentationHelper instrumentationHelper) {
     this.defaultConnectorService = defaultConnectorService;
     this.secretManagerConnectorService = secretManagerConnectorService;
     this.connectorActivityService = connectorActivityService;
@@ -118,6 +121,7 @@ public class ConnectorServiceImpl implements ConnectorService {
     this.harnessManagedConnectorHelper = harnessManagedConnectorHelper;
     this.ngErrorHelper = ngErrorHelper;
     this.gitSyncSdkService = gitSyncSdkService;
+    this.instrumentationHelper = instrumentationHelper;
   }
 
   private ConnectorService getConnectorService(ConnectorType connectorType) {
@@ -164,9 +168,9 @@ public class ConnectorServiceImpl implements ConnectorService {
       if (connectorHeartbeatTaskId != null || isHarnessManagedSecretManager || !isDefaultBranchConnector
           || !executeOnDelegate) {
         ConnectorResponseDTO connectorResponse;
-        if (GitContextHelper.isUpdateToNewBranch()) {
-          connectorResponse = getConnectorService(connectorInfo.getConnectorType())
-                                  .create(connector, accountIdentifier, ChangeType.MODIFY);
+        if (gitChangeType != null) {
+          connectorResponse =
+              getConnectorService(connectorInfo.getConnectorType()).create(connector, accountIdentifier, gitChangeType);
         } else {
           connectorResponse =
               getConnectorService(connectorInfo.getConnectorType()).create(connector, accountIdentifier);
@@ -184,6 +188,8 @@ public class ConnectorServiceImpl implements ConnectorService {
                 connectorHeartbeatTaskId.getId());
           }
         }
+        CompletableFuture.runAsync(
+            () -> instrumentationHelper.sendConnectorCreateEvent(connector.getConnectorInfo(), accountIdentifier));
         return connectorResponse;
       } else {
         throw new InvalidRequestException("Connector could not be created because we could not create the heartbeat");
@@ -371,11 +377,17 @@ public class ConnectorServiceImpl implements ConnectorService {
               getConnectorService(connector.getType())
                   .delete(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier);
           if (!isDefaultBranchConnector) {
+            CompletableFuture.runAsync(()
+                                           -> instrumentationHelper.sendConnectorDeleteEvent(orgIdentifier,
+                                               projectIdentifier, connectorIdentifier, accountIdentifier));
             return true;
           }
           if (isConnectorDeleted) {
             publishEvent(accountIdentifier, orgIdentifier, projectIdentifier, connectorIdentifier, connector.getType(),
                 EventsFrameworkMetadataConstants.DELETE_ACTION);
+            CompletableFuture.runAsync(()
+                                           -> instrumentationHelper.sendConnectorDeleteEvent(orgIdentifier,
+                                               projectIdentifier, connectorIdentifier, accountIdentifier));
             return true;
           } else {
             PerpetualTaskId perpetualTaskId = connectorHeartbeatService.createConnectorHeatbeatTask(

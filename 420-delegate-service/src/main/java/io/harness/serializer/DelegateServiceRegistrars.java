@@ -7,7 +7,6 @@
 
 package io.harness.serializer;
 
-import io.harness.accesscontrol.serializer.AccessControlClientRegistrars;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.serializer.kryo.CgOrchestrationBeansKryoRegistrar;
 import io.harness.serializer.kryo.CommonEntitiesKryoRegistrar;

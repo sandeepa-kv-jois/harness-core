@@ -18,16 +18,22 @@ import lombok.experimental.FieldDefaults;
 
 @Data
 @Builder
-@Schema(name = "GitFullSyncConfigRequest", description = "This contains details to trigger Full Sync")
+@Schema(name = "GitFullSyncConfigRequest", description = "Details required to trigger Git Full Sync.")
 @FieldDefaults(level = AccessLevel.PRIVATE)
 public class GitFullSyncConfigRequestDTO {
-  @Schema(description = "Branch on which Entities will be pushed") @NotNull String branch;
+  @Schema(description =
+              "Name of the branch to which the entities will be pushed and from which pull request will be created.")
+  @NotNull
+  String branch;
   @Schema(description = GitSyncApiConstants.REPOID_PARAM_MESSAGE) @NotNull String repoIdentifier;
-  @Schema(description = "Root Folder Path where entities will be pushed") @NotNull String rootFolder;
-  @Schema(description = "Checks the new Branch") boolean isNewBranch;
-  @Schema(description = GitSyncApiConstants.DEFAULT_BRANCH_PARAM_MESSAGE) String baseBranch;
-  @Schema(description = "This checks whether to create a pull request. Its default value is False")
+  @Schema(description = "Path of the root folder inside which the entities will be pushed.") @NotNull String rootFolder;
+  @Schema(description = "Either true to create a new branch, or false to push entities to a existing branch."
+          + "Default: false.")
+  boolean isNewBranch;
+  @Schema(description = "Name of the branch from which new branch will be forked out.") String baseBranch;
+  @Schema(description = "If true a pull request will be created from branch to target branch."
+          + "Default: false.")
   boolean createPullRequest;
-  @Schema(description = "Target Branch for pull request") String targetBranch;
-  @Schema(description = "PR Title") String prTitle;
+  @Schema(description = "Name of the branch to which pull request will be merged.") String targetBranch;
+  @Schema(description = "Title of the pull request.") String prTitle;
 }

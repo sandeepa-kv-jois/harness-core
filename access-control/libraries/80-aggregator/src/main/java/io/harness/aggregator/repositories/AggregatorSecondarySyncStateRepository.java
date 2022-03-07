@@ -7,9 +7,9 @@
 
 package io.harness.aggregator.repositories;
 
+import io.harness.accesscontrol.aggregator.api.SecondarySyncStatus;
 import io.harness.aggregator.models.AggregatorSecondarySyncState;
 import io.harness.aggregator.models.AggregatorSecondarySyncState.AggregatorSecondarySyncStateKeys;
-import io.harness.aggregator.models.AggregatorSecondarySyncState.SecondarySyncStatus;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 

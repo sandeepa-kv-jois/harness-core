@@ -93,7 +93,7 @@ public class CodebasePlanCreator {
       CodeBase ciCodeBase, ExecutionSource executionSource, String facilitatorType, String codeBaseId) {
     CodeBaseTaskStepParameters codeBaseTaskStepParameters = CodeBaseTaskStepParameters.builder()
                                                                 .connectorRef(ciCodeBase.getConnectorRef())
-                                                                .repoName(ciCodeBase.getRepoName())
+                                                                .repoName(ciCodeBase.getRepoName().getValue())
                                                                 .executionSource(executionSource)
                                                                 .build();
 

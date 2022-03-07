@@ -11,7 +11,7 @@ import static io.harness.NGConstants.HARNESS_BLUE;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.resourcegroup.remote.dto.ResourceGroupDTO;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
 
 import lombok.experimental.UtilityClass;
 

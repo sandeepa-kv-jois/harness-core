@@ -52,7 +52,6 @@ import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.impl.newrelic.NewRelicWebTransactions;
 import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.service.intfc.newrelic.NewRelicDelegateService;
-import software.wings.sm.StateType;
 
 import com.google.common.collect.Table.Cell;
 import com.google.common.collect.TreeBasedTable;
@@ -102,13 +101,13 @@ public class NewRelicDataCollectionTask extends AbstractDelegateDataCollectionTa
     log.info("metric collection - dataCollectionInfo: {}", dataCollectionInfo);
     return DataCollectionTaskResult.builder()
         .status(DataCollectionTaskStatus.SUCCESS)
-        .stateType(StateType.NEW_RELIC)
+        .stateType(DelegateStateType.NEW_RELIC)
         .build();
   }
 
   @Override
-  protected StateType getStateType() {
-    return StateType.NEW_RELIC;
+  protected DelegateStateType getStateType() {
+    return DelegateStateType.NEW_RELIC;
   }
 
   @Override

@@ -8,8 +8,6 @@
 package io.harness.engine.pms.execution.strategy;
 
 import io.harness.engine.OrchestrationEngine;
-import io.harness.engine.executions.plan.PlanService;
-import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.event.handlers.SdkResponseProcessor;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PmsNodeExecutionMetadata;
@@ -29,24 +27,9 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public abstract class AbstractNodeExecutionStrategy<P extends Node, M extends PmsNodeExecutionMetadata>
     implements NodeExecutionStrategy<P, NodeExecution, M> {
-  @Inject private PlanService planService;
   @Inject private OrchestrationEngine orchestrationEngine;
   @Inject private SdkResponseProcessorFactory sdkResponseProcessorFactory;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
-
-  @Override
-  public NodeExecution initiateNode(@NonNull Ambiance ambiance, @NonNull String nodeId, String runtimeId, M metadata) {
-    try {
-      P node = planService.fetchNode(ambiance.getPlanId(), nodeId);
-      Ambiance clonedAmbiance =
-          AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(runtimeId, node));
-      return runNode(clonedAmbiance, node, metadata);
-    } catch (Exception ex) {
-      log.error("Error happened while triggering node", ex);
-      handleError(ambiance, ex);
-      return null;
-    }
-  }
 
   @Override
   public NodeExecution runNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata) {
@@ -54,6 +37,10 @@ public abstract class AbstractNodeExecutionStrategy<P extends Node, M extends Pm
       String parentId = AmbianceUtils.obtainParentRuntimeId(ambiance);
       String notifyId = parentId == null ? null : AmbianceUtils.obtainCurrentRuntimeId(ambiance);
       return createAndRunNodeExecution(ambiance, node, metadata, notifyId, parentId, null);
+    } catch (Exception ex) {
+      log.error("Exception happened while running Node", ex);
+      handleError(ambiance, ex);
+      return null;
     }
   }
 
@@ -63,6 +50,10 @@ public abstract class AbstractNodeExecutionStrategy<P extends Node, M extends Pm
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
       return createAndRunNodeExecution(
           ambiance, node, metadata, prevExecution.getNotifyId(), prevExecution.getParentId(), prevExecution.getUuid());
+    } catch (Exception ex) {
+      log.error("Exception happened while running next Node", ex);
+      handleError(ambiance, ex);
+      return null;
     }
   }
 

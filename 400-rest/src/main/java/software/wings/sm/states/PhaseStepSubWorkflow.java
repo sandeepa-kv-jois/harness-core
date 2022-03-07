@@ -197,8 +197,19 @@ public class PhaseStepSubWorkflow extends SubWorkflowState {
         } catch (Exception ignored) {
         }
         if (evaluated == null) {
-          // Provisioner Outputs not available yet to resolve infra definition
-          return;
+          try {
+            evaluated = context.evaluateExpression(
+                String
+                    .format("${%s_%s_%s}", infrastructureProvisioner.variableKey(), phaseElement.getInfraDefinitionId(),
+                        phaseElement.getServiceElement().getUuid())
+                    .replaceAll("-", "_"));
+          } catch (Exception ignored) {
+          }
+
+          if (evaluated == null) {
+            // Provisioner Outputs not available yet to resolve infra definition
+            return;
+          }
         }
       }
 

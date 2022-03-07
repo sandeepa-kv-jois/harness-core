@@ -32,6 +32,8 @@ import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
 import io.harness.steps.policy.PolicyStepSpecParameters;
 import io.harness.steps.policy.custom.CustomPolicyStepSpec;
+import io.harness.steps.policy.step.outcome.PolicyStepOutcome;
+import io.harness.steps.policy.step.outcome.PolicyStepOutcomeMapper;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -50,7 +52,7 @@ import retrofit2.Call;
 
 @RunWith(PowerMockRunner.class)
 @OwnedBy(PIPELINE)
-@PrepareForTest({SafeHttpCall.class})
+@PrepareForTest({SafeHttpCall.class, PolicyStepOutcomeMapper.class})
 public class PolicyStepTest extends CategoryTest {
   @InjectMocks PolicyStep policyStep;
   @Mock OpaServiceClient opaServiceClient;
@@ -67,6 +69,7 @@ public class PolicyStepTest extends CategoryTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     PowerMockito.mockStatic(SafeHttpCall.class);
+    PowerMockito.mockStatic(PolicyStepOutcomeMapper.class);
     ambiance = Ambiance.newBuilder()
                    .putSetupAbstractions("accountId", accountId)
                    .putSetupAbstractions("orgIdentifier", orgId)
@@ -198,6 +201,8 @@ public class PolicyStepTest extends CategoryTest {
 
     OpaEvaluationResponseHolder evaluationResponse = OpaEvaluationResponseHolder.builder().status("error").build();
     when(SafeHttpCall.executeWithErrorMessage(request)).thenReturn(evaluationResponse);
+    when(PolicyStepOutcomeMapper.toOutcome(evaluationResponse))
+        .thenReturn(PolicyStepOutcome.builder().status("error").build());
     StepResponse stepResponse = policyStep.executeSync(ambiance, stepParameters, null, null);
     assertThat(stepResponse.getStatus()).isEqualTo(Status.FAILED);
     assertThat(stepResponse.getFailureInfo().getFailureData(0).getMessage())
@@ -224,6 +229,8 @@ public class PolicyStepTest extends CategoryTest {
 
     OpaEvaluationResponseHolder evaluationResponse = OpaEvaluationResponseHolder.builder().status("pass").build();
     when(SafeHttpCall.executeWithErrorMessage(request)).thenReturn(evaluationResponse);
+    when(PolicyStepOutcomeMapper.toOutcome(evaluationResponse))
+        .thenReturn(PolicyStepOutcome.builder().status("pass").build());
     StepResponse stepResponse = policyStep.executeSync(ambiance, stepParameters, null, null);
     assertThat(stepResponse.getStatus()).isEqualTo(Status.SUCCEEDED);
   }

@@ -18,6 +18,7 @@ import static io.harness.ng.core.invites.dto.InviteOperationResponse.USER_ALREAD
 import static io.harness.rule.OwnerRule.DEEPAK;
 import static io.harness.rule.OwnerRule.MOHIT;
 import static io.harness.rule.OwnerRule.NANDAN;
+import static io.harness.rule.OwnerRule.PRATEEK;
 import static io.harness.rule.OwnerRule.RAJ;
 import static io.harness.rule.OwnerRule.VIKAS_M;
 import static io.harness.rule.OwnerRule.VOJIN;
@@ -553,6 +554,57 @@ public class UserServiceImplTest extends WingsBaseTest {
     assertThat(userList.get(1).getName()).isEqualTo("pqr");
 
     userList = userServiceImpl.listUsers(pageRequest, "ACCOUNT_ID", "fgh", 0, 30, false, true);
+    assertThat(userList.size()).isEqualTo(0);
+  }
+
+  @Test
+  @Owner(developers = PRATEEK)
+  @Category(UnitTests.class)
+  public void shouldSearchUsersNotDisabled() {
+    Account account = anAccount().withUuid("ACCOUNT_ID").build();
+    wingsPersistence.save(account);
+    User user1 = User.Builder.anUser()
+                     .uuid(UUIDGenerator.generateUuid())
+                     .accounts(Collections.singletonList(account))
+                     .email("aBc@harness.io")
+                     .name("pqr")
+                     .build();
+    user1.setDisabled(false);
+    wingsPersistence.save(user1);
+
+    PageRequest pageRequest = mock(PageRequest.class);
+    MultivaluedMap<String, String> map = new MultivaluedHashMap<>();
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(pageRequest.getUriInfo()).thenReturn(uriInfo);
+    when(uriInfo.getQueryParameters(true)).thenReturn(map);
+
+    List<User> userList = userServiceImpl.listUsers(pageRequest, "ACCOUNT_ID", "ab", 0, 30, false, true);
+    assertThat(userList.size()).isEqualTo(1);
+    assertThat(userList.get(0).getName()).isEqualTo("pqr");
+  }
+
+  @Test
+  @Owner(developers = PRATEEK)
+  @Category(UnitTests.class)
+  public void shouldNotSearchUsersDisabled() {
+    Account account = anAccount().withUuid("ACCOUNT_ID").build();
+    wingsPersistence.save(account);
+    User user1 = User.Builder.anUser()
+                     .uuid(UUIDGenerator.generateUuid())
+                     .accounts(Collections.singletonList(account))
+                     .email("aBc@harness.io")
+                     .name("pqr")
+                     .build();
+    user1.setDisabled(true);
+    wingsPersistence.save(user1);
+
+    PageRequest pageRequest = mock(PageRequest.class);
+    MultivaluedMap<String, String> map = new MultivaluedHashMap<>();
+    UriInfo uriInfo = mock(UriInfo.class);
+    when(pageRequest.getUriInfo()).thenReturn(uriInfo);
+    when(uriInfo.getQueryParameters(true)).thenReturn(map);
+
+    List<User> userList = userServiceImpl.listUsers(pageRequest, "ACCOUNT_ID", "ab", 0, 30, false, true);
     assertThat(userList.size()).isEqualTo(0);
   }
 

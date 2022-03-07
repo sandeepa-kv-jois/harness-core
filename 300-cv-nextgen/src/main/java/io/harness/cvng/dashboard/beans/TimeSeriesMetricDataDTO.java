@@ -26,6 +26,7 @@ public class TimeSeriesMetricDataDTO implements Comparable<TimeSeriesMetricDataD
   String orgIdentifier;
   String environmentIdentifier;
   String serviceIdentifier;
+  String monitoredServiceIdentifier;
   TimeSeriesMetricType metricType;
   DataSourceType dataSourceType;
   CVMonitoringCategory category;

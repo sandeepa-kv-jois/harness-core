@@ -128,7 +128,6 @@ import io.harness.delegate.beans.K8sPermissionType;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.TaskGroup;
 import io.harness.delegate.beans.executioncapability.CapabilityType;
-import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.HttpConnectionExecutionCapability;
 import io.harness.delegate.beans.executioncapability.SelectorCapability;
 import io.harness.delegate.service.intfc.DelegateRingService;
@@ -3227,124 +3226,6 @@ public class DelegateServiceTest extends WingsBaseTest {
                 .ram(16384)
                 .cpu(4)
                 .build());
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testIsDelegateInCapabilityScope() {
-    String accountId = generateUuid();
-    String delegateId = generateUuid();
-
-    CapabilityTaskSelectionDetails taskSelectionDetails = buildCapabilityTaskSelectionDetails();
-
-    when(assignDelegateService.canAssign(eq(delegateId), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-             eq(taskSelectionDetails.getTaskGroup()), any(List.class),
-             eq(taskSelectionDetails.getTaskSetupAbstractions())))
-        .thenReturn(true);
-
-    // Test with all arguments
-    assertThat(delegateService.isDelegateInCapabilityScope(accountId, delegateId, taskSelectionDetails)).isTrue();
-
-    ArgumentCaptor<List> captor = ArgumentCaptor.forClass(List.class);
-    verify(assignDelegateService)
-        .canAssign(eq(delegateId), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-            eq(taskSelectionDetails.getTaskGroup()), captor.capture(),
-            eq(taskSelectionDetails.getTaskSetupAbstractions()));
-
-    List<ExecutionCapability> selectorCapabilities = captor.getValue();
-    assertThat(selectorCapabilities).hasSize(2);
-
-    // Test with partial arguments
-    taskSelectionDetails.setTaskSelectors(null);
-    taskSelectionDetails.setTaskSetupAbstractions(null);
-    taskSelectionDetails.setTaskGroup(null);
-
-    delegateService.isDelegateInCapabilityScope(accountId, delegateId, taskSelectionDetails);
-
-    captor = ArgumentCaptor.forClass(List.class);
-    verify(assignDelegateService)
-        .canAssign(eq(delegateId), eq(accountId), eq(null), eq(null), eq(null), eq(null), captor.capture(), eq(null));
-
-    selectorCapabilities = captor.getValue();
-    assertThat(selectorCapabilities).isEmpty();
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testIsDelegateStillInScope() {
-    String accountId = generateUuid();
-    String delegateId = generateUuid();
-    String capabilityId = generateUuid();
-
-    // Test no task selection details case
-    when(capabilityService.getAllCapabilityTaskSelectionDetails(accountId, capabilityId)).thenReturn(null);
-    assertThat(delegateService.isDelegateStillInScope(accountId, delegateId, capabilityId)).isTrue();
-
-    // Test delegate in scope case
-    CapabilityTaskSelectionDetails taskSelectionDetails = buildCapabilityTaskSelectionDetails();
-    when(capabilityService.getAllCapabilityTaskSelectionDetails(accountId, capabilityId))
-        .thenReturn(Collections.singletonList(taskSelectionDetails));
-    when(assignDelegateService.canAssign(eq(delegateId), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-             eq(taskSelectionDetails.getTaskGroup()), any(List.class),
-             eq(taskSelectionDetails.getTaskSetupAbstractions())))
-        .thenReturn(true);
-
-    assertThat(delegateService.isDelegateStillInScope(accountId, delegateId, capabilityId)).isTrue();
-
-    // Test delegate out of scope case
-    taskSelectionDetails.setAccountId(accountId);
-    taskSelectionDetails.setBlocked(false);
-    persistence.save(taskSelectionDetails);
-
-    when(assignDelegateService.canAssign(anyString(), eq(accountId), eq("app1"), eq("env1"), eq("infra1"),
-             eq(taskSelectionDetails.getTaskGroup()), any(List.class),
-             eq(taskSelectionDetails.getTaskSetupAbstractions())))
-        .thenReturn(false);
-    when(capabilityService.getNotDeniedCapabilityPermissions(accountId, capabilityId))
-        .thenReturn(Collections.singletonList(
-            buildCapabilitySubjectPermission(accountId, generateUuid(), capabilityId, PermissionResult.ALLOWED)));
-
-    assertThat(delegateService.isDelegateStillInScope(accountId, delegateId, capabilityId)).isFalse();
-
-    CapabilityTaskSelectionDetails updatedTaskSelectionDetails =
-        persistence.get(CapabilityTaskSelectionDetails.class, taskSelectionDetails.getUuid());
-    assertThat(updatedTaskSelectionDetails).isNotNull();
-    assertThat(updatedTaskSelectionDetails.isBlocked()).isTrue();
-  }
-
-  @Test
-  @Owner(developers = MARKO)
-  @Category(UnitTests.class)
-  public void testRegenerateCapabilityPermissions() {
-    String accountId = generateUuid();
-    String delegateId = generateUuid();
-
-    CapabilityRequirement capabilityRequirement1 = buildCapabilityRequirement();
-    capabilityRequirement1.setAccountId(accountId);
-    CapabilityRequirement capabilityRequirement2 = buildCapabilityRequirement();
-    capabilityRequirement2.setAccountId(accountId);
-
-    when(capabilityService.getAllCapabilityRequirements(accountId))
-        .thenReturn(Arrays.asList(capabilityRequirement1, capabilityRequirement2));
-
-    CapabilityTaskSelectionDetails taskSelectionDetails = buildCapabilityTaskSelectionDetails();
-    when(capabilityService.getAllCapabilityTaskSelectionDetails(accountId, capabilityRequirement2.getUuid()))
-        .thenReturn(Collections.singletonList(taskSelectionDetails));
-    when(assignDelegateService.canAssign(any(), any(), any(), any(), any(), any(), any(), any())).thenReturn(false);
-    when(capabilityService.getNotDeniedCapabilityPermissions(accountId, capabilityRequirement2.getUuid()))
-        .thenReturn(Collections.emptyList());
-    when(capabilityService.getAllCapabilityPermissions(accountId, capabilityRequirement1.getUuid(), null))
-        .thenReturn(Collections.emptyList());
-
-    delegateService.regenerateCapabilityPermissions(accountId, delegateId);
-
-    verify(capabilityService)
-        .deleteCapabilitySubjectPermission(accountId, delegateId, capabilityRequirement2.getUuid());
-    verify(capabilityService)
-        .addCapabilityPermissions(
-            eq(capabilityRequirement1), any(List.class), eq(PermissionResult.UNCHECKED), eq(true));
   }
 
   @Test

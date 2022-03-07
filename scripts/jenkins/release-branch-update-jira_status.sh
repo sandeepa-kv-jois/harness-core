@@ -4,7 +4,9 @@
 # that can be found in the licenses directory at the root of this repository, also available at
 # https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
 
-PROJECTS="BT|CCE|CCM|CDC|CDNG|CDP|CDS|CE|CI|CV|CVNG|CVS|DEL|DOC|DX|ER|FFM|OPA|OPS|PL|SEC|SWAT|GTM|ONP"
+SHDIR=`dirname "$0"`
+PROJECTS=$(<$SHDIR/jira-projects.txt)
+
 KEYS=$(git log --pretty=oneline --abbrev-commit |\
       awk "/${PREVIOUS_CUT_COMMIT_MESSAGE}/ {exit} {print}" |\
       grep -o -iE '('$PROJECTS')-[0-9]+' | sort | uniq)

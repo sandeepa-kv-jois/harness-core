@@ -11,7 +11,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.account.AccountClient;
 import io.harness.migration.NGMigration;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.dto.AccountDTO;
 import io.harness.remote.client.RestClientUtils;
 
@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class NGAccountSettingsMigration implements NGMigration {
-  @Inject AccountSettingsHelper accountSettingsHelper;
+  @Inject NGAccountSettingService accountSettingService;
   @Inject AccountClient accountClient;
   @Override
   public void migrate() {
@@ -32,7 +32,7 @@ public class NGAccountSettingsMigration implements NGMigration {
 
     if (isNotEmpty(accountIdsToBeInserted)) {
       for (String accountId : accountIdsToBeInserted) {
-        accountSettingsHelper.setUpDefaultAccountSettings(accountId);
+        accountSettingService.setUpDefaultAccountSettings(accountId);
       }
     }
   }

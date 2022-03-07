@@ -45,21 +45,22 @@ public interface SettingsService extends OwnedByAccount, OwnedBySettingAttribute
    * @param req the req
    * @param appIdFromRequest
    * @param envIdFromRequest
+   * @param forUsageInNewApp
    * @return the page response
    */
   PageResponse<SettingAttribute> list(
-      PageRequest<SettingAttribute> req, String appIdFromRequest, String envIdFromRequest);
+      PageRequest<SettingAttribute> req, String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp);
 
   PageResponse<SettingAttribute> list(PageRequest<SettingAttribute> req, String appIdFromRequest,
       String envIdFromRequest, String accountId, boolean gitSshConfigOnly, boolean withArtifactStreamCount,
-      String artifactStreamSearchString, int maxArtifactStreams, ArtifactType artifactType);
+      String artifactStreamSearchString, int maxArtifactStreams, ArtifactType artifactType, boolean forUsageInNewApp);
 
   List<SettingAttribute> listAllSettingAttributesByType(String accountId, String type);
 
   List<SettingAttribute> list(String accountId, SettingAttribute.SettingCategory category);
 
-  List<SettingAttribute> getFilteredSettingAttributes(
-      List<SettingAttribute> inputSettingAttributes, String appIdFromRequest, String envIdFromRequest);
+  List<SettingAttribute> getFilteredSettingAttributes(List<SettingAttribute> inputSettingAttributes,
+      String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp);
 
   @ValidationGroups(Create.class) SettingAttribute save(@Valid SettingAttribute settingAttribute);
 

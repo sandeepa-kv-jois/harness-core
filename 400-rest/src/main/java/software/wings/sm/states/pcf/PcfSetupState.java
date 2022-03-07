@@ -32,6 +32,7 @@ import static io.harness.validation.Validator.notNullCheck;
 import static software.wings.beans.TaskType.CUSTOM_MANIFEST_FETCH_TASK;
 import static software.wings.beans.TaskType.GIT_FETCH_FILES_TASK;
 import static software.wings.beans.TaskType.PCF_COMMAND_TASK;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -474,10 +475,7 @@ public class PcfSetupState extends State {
         }
         return artifact.getArtifactFileMetadata().get(0).getUrl();
       case ARTIFACTORY:
-        String artifactUrl = artifactStreamAttributes.getMetadata().get(URL);
-        return "."
-            + artifactUrl.substring(artifactUrl.lastIndexOf(artifactStreamAttributes.getJobName())
-                + artifactStreamAttributes.getJobName().length());
+        return artifactStreamAttributes.getMetadata().get("artifactPath");
       default:
         return artifactStreamAttributes.getMetadata().get(URL);
     }
@@ -511,7 +509,8 @@ public class PcfSetupState extends State {
       case ARTIFACTORY:
       case NEXUS:
       case S3:
-        return artifactStream.isMetadataOnly();
+        return metadataOnlyBehindFlag(
+            featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly());
       default:
         return false;
     }

@@ -53,7 +53,6 @@ delegateProfiles {"name": "unique_identification", "unique": true} {"accountId":
 delegateScopes {"name": "createdAt_1", "background": true} {"createdAt": 1}
 delegateScopes {"name": "uniqueName", "unique": true} {"accountId": 1, "name": 1}
 delegateTokens {"name": "byAccountAndName", "unique": true} {"accountId": 1, "name": 1}
-delegateTokens {"name": "byAccountAndNgAndOwner", "background": true} {"accountId": 1, "isNg": 1, "owner": 1}
 delegateTokens {"name": "byAccountAndNgAndOwnerAndStatus", "background": true} {"accountId": 1, "isNg": 1, "owner": 1, "status": 1}
 delegateTokens {"name": "byAccountAndStatus", "background": true} {"accountId": 1, "status": 1}
 delegateTokens {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
@@ -104,18 +103,26 @@ interrupts {"name": "state_type_monitoring_createdAt_idx", "background": true} {
 interrupts {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 kmsTransitionEvent2 {"name": "earliestGet_1", "background": true, "expireAfterSeconds": 86400} {"earliestGet": 1}
 kmsTransitionEvent2 {"name": "next4", "background": true} {"topic": 1, "earliestGet": 1}
+newRelicMetricRecords {"name": "accountId_1", "background": true} {"accountId": 1}
+newRelicMetricRecords {"name": "appId_1", "background": true} {"appId": 1}
+newRelicMetricRecords {"name": "createdAt_1", "background": true} {"createdAt": 1}
+newRelicMetricRecords {"name": "cvConfigId_1", "background": true} {"cvConfigId": 1}
+newRelicMetricRecords {"name": "serviceGuardIndex", "background": true} {"cvConfigId": 1, "dataCollectionMinute": -1}
+newRelicMetricRecords {"name": "stateExIdx", "background": true} {"stateExecutionId": 1, "groupName": 1, "dataCollectionMinute": -1}
+newRelicMetricRecords {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
+newRelicMetricRecords {"name": "workflowExIdx", "background": true} {"workflowExecutionId": 1, "groupName": 1, "dataCollectionMinute": -1}
 nodeExecutions {"name": "createdAt_1", "background": true} {"createdAt": 1}
 nodeExecutions {"name": "parentId_status_idx", "background": true} {"parentId": 1, "status": 1, "oldRetry": 1}
+nodeExecutions {"name": "planExecutionId_identifier_idx", "background": true} {"ambiance.planExecutionId": 1, "identifier": 1}
 nodeExecutions {"name": "planExecutionId_mode_status_oldRetry_idx", "background": true} {"ambiance.planExecutionId": 1, "mode": 1, "status": 1, "oldRetry": 1}
+nodeExecutions {"name": "planExecutionId_nodeId_idx", "background": true} {"ambiance.planExecutionId": 1, "nodeId": 1}
 nodeExecutions {"name": "planExecutionId_oldRetry_idx", "background": true} {"ambiance.planExecutionId": 1, "oldRetry": 1}
 nodeExecutions {"name": "planExecutionId_parentId_createdAt_idx", "background": true} {"ambiance.planExecutionId": 1, "parentId": 1, "createdAt": -1}
 nodeExecutions {"name": "planExecutionId_parentId_status_oldRetry_idx", "background": true} {"ambiance.planExecutionId": 1, "parentId": 1, "status": 1, "oldRetry": 1}
-nodeExecutions {"name": "planExecutionId_planNodeId_idx", "background": true} {"ambiance.planExecutionId": 1, "planNode.uuid": 1}
-nodeExecutions {"name": "planExecutionId_planNodeIdentifier_idx", "background": true} {"ambiance.planExecutionId": 1, "planNode.identifier": 1}
 nodeExecutions {"name": "planExecutionId_stageFqn_idx", "background": true} {"ambiance.planExecutionId": 1, "planNode.stageFqn": 1}
 nodeExecutions {"name": "planExecutionId_status_idx", "background": true} {"ambiance.planExecutionId": 1, "status": 1}
-nodeExecutions {"name": "planExecutionId_status_planNodeStepCategory_createdAt_idx", "background": true} {"ambiance.planExecutionId": 1, "status": 1, "planNode.stepType.stepCategory": 1, "createdAt": 1}
-nodeExecutions {"name": "planExecutionId_stepCategory_planNodeIdentifier_idx", "background": true} {"ambiance.planExecutionId": 1, "planNode.stepType.stepCategory": 1, "planNode.identifier": 1}
+nodeExecutions {"name": "planExecutionId_status_stepCategory_createdAt_idx", "background": true} {"ambiance.planExecutionId": 1, "status": 1, "stepType.stepCategory": 1, "createdAt": 1}
+nodeExecutions {"name": "planExecutionId_stepCategory_identifier_idx", "background": true} {"ambiance.planExecutionId": 1, "stepType.stepCategory": 1, "identifier": 1}
 nodeExecutions {"name": "previous_id_idx", "background": true} {"previousId": 1}
 nodeExecutions {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 nodeExecutionsInfo {"name": "nodeExecutionId_unique_idx", "unique": true} {"nodeExecutionId": 1}

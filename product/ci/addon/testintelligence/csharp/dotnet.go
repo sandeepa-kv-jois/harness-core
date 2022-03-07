@@ -16,6 +16,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+
 	"github.com/harness/harness-core/commons/go/lib/exec"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	"github.com/harness/harness-core/product/ci/ti-service/types"
@@ -47,6 +48,7 @@ func (b *dotnetRunner) AutoDetectPackages() ([]string, error) {
 
 func (b *dotnetRunner) GetCmd(ctx context.Context, tests []types.RunnableTest, userArgs, agentConfigPath string, ignoreInstr, runAll bool) (string, error) {
 	if ignoreInstr {
+		b.log.Infow("ignoring instrumentation and not attaching agent")
 		return fmt.Sprintf("%s %s", dotnetCmd, userArgs), nil
 	}
 

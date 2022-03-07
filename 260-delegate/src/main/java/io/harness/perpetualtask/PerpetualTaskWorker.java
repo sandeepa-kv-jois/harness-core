@@ -33,6 +33,7 @@ import com.google.protobuf.util.Durations;
 import com.google.protobuf.util.Timestamps;
 import io.grpc.Status;
 import io.grpc.StatusRuntimeException;
+import java.security.SecureRandom;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -204,8 +205,8 @@ public class PerpetualTaskWorker {
         runningTaskMap.computeIfAbsent(task.getTaskId(), k -> {
           log.info("Starting perpetual task with id: {}.", task.getTaskId().getId());
           ScheduledFuture<?> taskHandle = perpetualTaskTimeoutExecutor.scheduleWithFixedDelay(
-              new Schedulable("Throwable while executing perpetual task", perpetualTaskLifecycleManager::startTask), 0,
-              intervalSeconds, TimeUnit.SECONDS);
+              new Schedulable("Throwable while executing perpetual task", perpetualTaskLifecycleManager::startTask),
+              new SecureRandom().nextInt(120), intervalSeconds, TimeUnit.SECONDS);
 
           PerpetualTaskHandle perpetualTaskHandle = new PerpetualTaskHandle(taskHandle, perpetualTaskLifecycleManager);
 

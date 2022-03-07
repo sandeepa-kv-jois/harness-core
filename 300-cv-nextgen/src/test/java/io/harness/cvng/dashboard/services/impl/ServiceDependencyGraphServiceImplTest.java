@@ -289,8 +289,8 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
     hPersistence.save(heatMap);
 
-    ServiceDependencyGraphDTO graphDTO = serviceDependencyGraphService.getDependencyGraph(
-        context.getProjectParams(), context.getMonitoredServiceParams().getMonitoredServiceIdentifier(), false);
+    ServiceDependencyGraphDTO graphDTO = serviceDependencyGraphService.getDependencyGraph(context.getProjectParams(),
+        Arrays.asList(context.getMonitoredServiceParams().getMonitoredServiceIdentifier()), false);
 
     assertThat(graphDTO).isNotNull();
     assertThat(graphDTO.getNodes().size()).isEqualTo(1);
@@ -327,8 +327,8 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
     hPersistence.save(heatMap);
 
-    ServiceDependencyGraphDTO graphDTO = serviceDependencyGraphService.getDependencyGraph(
-        context.getProjectParams(), context.getMonitoredServiceParams().getMonitoredServiceIdentifier(), false);
+    ServiceDependencyGraphDTO graphDTO = serviceDependencyGraphService.getDependencyGraph(context.getProjectParams(),
+        Arrays.asList(context.getMonitoredServiceParams().getMonitoredServiceIdentifier()), false);
 
     assertThat(graphDTO).isNotNull();
     assertThat(graphDTO.getNodes().size()).isEqualTo(2);

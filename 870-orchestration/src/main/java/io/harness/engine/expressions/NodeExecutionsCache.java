@@ -18,6 +18,7 @@ import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.plan.Node;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
+import io.harness.pms.execution.utils.StatusUtils;
 
 import com.google.common.collect.Sets;
 import java.util.Collections;
@@ -100,9 +101,10 @@ public class NodeExecutionsCache {
 
   // Should not change the fields to be included as its only used by NodeExecutionMap, if you change it may not use
   // index of NodeExecution collection
-  public List<NodeExecution> findAllChildren(String parentId) {
-    return nodeExecutionService.findAllChildren(ambiance.getPlanExecutionId(), parentId, false,
-        Sets.newHashSet(NodeExecutionKeys.parentId), Sets.newHashSet(NodeExecutionKeys.id));
+  public List<NodeExecution> findAllTerminalChildren(String parentId) {
+    return nodeExecutionService.findAllChildrenWithStatusIn(ambiance.getPlanExecutionId(), parentId,
+        StatusUtils.finalStatuses(), false, true, Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status),
+        Collections.emptySet());
   }
 
   public synchronized Node fetchNode(String nodeId) {

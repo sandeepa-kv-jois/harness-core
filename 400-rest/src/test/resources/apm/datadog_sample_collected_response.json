@@ -1,4 +1,6 @@
 [ {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523567760000,
   "dataCollectionMinute" : 0,
@@ -8,10 +10,10 @@
   "values" : {
     "System Mem Used" : 9.4828544E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568600000,
   "dataCollectionMinute" : 0,
@@ -21,10 +23,10 @@
   "values" : {
     "System Mem Used" : 9.65042176E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568720000,
   "dataCollectionMinute" : 0,
@@ -34,10 +36,10 @@
   "values" : {
     "System Mem Used" : 9.62767872E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523567880000,
   "dataCollectionMinute" : 0,
@@ -47,10 +49,10 @@
   "values" : {
     "System Mem Used" : 9.55660288E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568840000,
   "dataCollectionMinute" : 0,
@@ -60,10 +62,10 @@
   "values" : {
     "System Mem Used" : 9.63493888E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569680000,
   "dataCollectionMinute" : 0,
@@ -73,10 +75,10 @@
   "values" : {
     "System Mem Used" : 9.48542464E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569800000,
   "dataCollectionMinute" : 0,
@@ -86,10 +88,10 @@
   "values" : {
     "System Mem Used" : 9.49467136E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569500000,
   "dataCollectionMinute" : 0,
@@ -99,10 +101,10 @@
   "values" : {
     "System Load 1" : 0.0
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569560000,
   "dataCollectionMinute" : 0,
@@ -112,10 +114,10 @@
   "values" : {
     "System Load 1" : 0.0
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569920000,
   "dataCollectionMinute" : 0,
@@ -125,10 +127,10 @@
   "values" : {
     "System Mem Used" : 9.49476352E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568480000,
   "dataCollectionMinute" : 0,
@@ -138,10 +140,10 @@
   "values" : {
     "System Load 1" : 0.39250000566244125
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523567880000,
   "dataCollectionMinute" : 0,
@@ -151,10 +153,10 @@
   "values" : {
     "System Load 1" : 0.057499999180436134
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569320000,
   "dataCollectionMinute" : 0,
@@ -164,10 +166,10 @@
   "values" : {
     "System Load 1" : 0.057499999180436134
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569740000,
   "dataCollectionMinute" : 0,
@@ -177,10 +179,10 @@
   "values" : {
     "System Load 1" : 0.06249999860301614
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569920000,
   "dataCollectionMinute" : 0,
@@ -190,10 +192,10 @@
   "values" : {
     "System Load 1" : 0.07249999977648258
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568960000,
   "dataCollectionMinute" : 0,
@@ -203,10 +205,10 @@
   "values" : {
     "System Mem Used" : 9.6339968E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523567820000,
   "dataCollectionMinute" : 0,
@@ -216,10 +218,10 @@
   "values" : {
     "System Load 1" : 0.15499999932944775
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568060000,
   "dataCollectionMinute" : 0,
@@ -229,10 +231,10 @@
   "values" : {
     "System Load 1" : 0.23250000132247806
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569980000,
   "dataCollectionMinute" : 0,
@@ -242,10 +244,10 @@
   "values" : {
     "System Load 1" : 0.0274999993853271
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523570040000,
   "dataCollectionMinute" : 0,
@@ -255,10 +257,10 @@
   "values" : {
     "System Mem Used" : 9.49420032E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569260000,
   "dataCollectionMinute" : 0,
@@ -268,10 +270,10 @@
   "values" : {
     "System Mem Used" : 9.63743744E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568120000,
   "dataCollectionMinute" : 0,
@@ -281,10 +283,10 @@
   "values" : {
     "System Mem Used" : 9.63390464E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569020000,
   "dataCollectionMinute" : 0,
@@ -294,10 +296,10 @@
   "values" : {
     "System Mem Used" : 9.6344576E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568060000,
   "dataCollectionMinute" : 0,
@@ -307,10 +309,10 @@
   "values" : {
     "System Mem Used" : 9.61449984E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569140000,
   "dataCollectionMinute" : 0,
@@ -320,10 +322,10 @@
   "values" : {
     "System Load 1" : 0.032500000204890966
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569560000,
   "dataCollectionMinute" : 0,
@@ -333,10 +335,10 @@
   "values" : {
     "System Mem Used" : 9.48268032E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569260000,
   "dataCollectionMinute" : 0,
@@ -346,10 +348,10 @@
   "values" : {
     "System Load 1" : 0.1074999999254942
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569380000,
   "dataCollectionMinute" : 0,
@@ -359,10 +361,10 @@
   "values" : {
     "System Load 1" : 0.019999999552965164
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569320000,
   "dataCollectionMinute" : 0,
@@ -372,10 +374,10 @@
   "values" : {
     "System Mem Used" : 9.63902464E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569080000,
   "dataCollectionMinute" : 0,
@@ -385,10 +387,10 @@
   "values" : {
     "System Load 1" : 0.014999999664723873
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568360000,
   "dataCollectionMinute" : 0,
@@ -398,10 +400,10 @@
   "values" : {
     "System Mem Used" : 9.63953664E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568420000,
   "dataCollectionMinute" : 0,
@@ -411,10 +413,10 @@
   "values" : {
     "System Mem Used" : 9.64064256E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568780000,
   "dataCollectionMinute" : 0,
@@ -424,10 +426,10 @@
   "values" : {
     "System Mem Used" : 9.62912256E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569620000,
   "dataCollectionMinute" : 0,
@@ -437,10 +439,10 @@
   "values" : {
     "System Mem Used" : 9.48250624E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569860000,
   "dataCollectionMinute" : 0,
@@ -450,10 +452,10 @@
   "values" : {
     "System Mem Used" : 9.49459968E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523567820000,
   "dataCollectionMinute" : 0,
@@ -463,10 +465,10 @@
   "values" : {
     "System Mem Used" : 9.52567808E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568660000,
   "dataCollectionMinute" : 0,
@@ -476,10 +478,10 @@
   "values" : {
     "System Mem Used" : 9.65174272E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569020000,
   "dataCollectionMinute" : 0,
@@ -489,10 +491,10 @@
   "values" : {
     "System Load 1" : 0.04499999945983291
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568900000,
   "dataCollectionMinute" : 0,
@@ -502,10 +504,10 @@
   "values" : {
     "System Load 1" : 0.19999999925494194
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569740000,
   "dataCollectionMinute" : 0,
@@ -515,10 +517,10 @@
   "values" : {
     "System Mem Used" : 9.48302848E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569620000,
   "dataCollectionMinute" : 0,
@@ -528,10 +530,10 @@
   "values" : {
     "System Load 1" : 0.0
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569680000,
   "dataCollectionMinute" : 0,
@@ -541,10 +543,10 @@
   "values" : {
     "System Load 1" : 0.04749999940395355
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568900000,
   "dataCollectionMinute" : 0,
@@ -554,10 +556,10 @@
   "values" : {
     "System Mem Used" : 9.64005888E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523567940000,
   "dataCollectionMinute" : 0,
@@ -567,10 +569,10 @@
   "values" : {
     "System Mem Used" : 9.5768064E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523567760000,
   "dataCollectionMinute" : 0,
@@ -580,10 +582,10 @@
   "values" : {
     "System Load 1" : 0.1699999999254942
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569440000,
   "dataCollectionMinute" : 0,
@@ -593,10 +595,10 @@
   "values" : {
     "System Load 1" : 0.004999999888241291
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523567940000,
   "dataCollectionMinute" : 0,
@@ -606,10 +608,10 @@
   "values" : {
     "System Load 1" : 0.09999999962747097
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569200000,
   "dataCollectionMinute" : 0,
@@ -619,10 +621,10 @@
   "values" : {
     "System Load 1" : 0.09750000154599547
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523570100000,
   "dataCollectionMinute" : 0,
@@ -632,10 +634,10 @@
   "values" : {
     "System Mem Used" : 9.4969856E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569800000,
   "dataCollectionMinute" : 0,
@@ -645,10 +647,10 @@
   "values" : {
     "System Load 1" : 0.1875000037252903
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568180000,
   "dataCollectionMinute" : 0,
@@ -658,10 +660,10 @@
   "values" : {
     "System Load 1" : 0.057499999180436134
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523569860000,
   "dataCollectionMinute" : 0,
@@ -671,10 +673,10 @@
   "values" : {
     "System Load 1" : 0.09499999787658453
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569980000,
   "dataCollectionMinute" : 0,
@@ -684,10 +686,10 @@
   "values" : {
     "System Mem Used" : 9.4942208E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568240000,
   "dataCollectionMinute" : 0,
@@ -697,10 +699,10 @@
   "values" : {
     "System Mem Used" : 9.62797568E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523570100000,
   "dataCollectionMinute" : 0,
@@ -710,10 +712,10 @@
   "values" : {
     "System Load 1" : 0.0
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569200000,
   "dataCollectionMinute" : 0,
@@ -723,10 +725,10 @@
   "values" : {
     "System Mem Used" : 9.639168E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569140000,
   "dataCollectionMinute" : 0,
@@ -736,10 +738,10 @@
   "values" : {
     "System Mem Used" : 9.63769344E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568000000,
   "dataCollectionMinute" : 0,
@@ -749,10 +751,10 @@
   "values" : {
     "System Mem Used" : 9.59731712E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568240000,
   "dataCollectionMinute" : 0,
@@ -762,10 +764,10 @@
   "values" : {
     "System Load 1" : 0.06250000046566129
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568360000,
   "dataCollectionMinute" : 0,
@@ -775,10 +777,10 @@
   "values" : {
     "System Load 1" : 0.26000000163912773
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523570040000,
   "dataCollectionMinute" : 0,
@@ -788,10 +790,10 @@
   "values" : {
     "System Load 1" : 0.007499999832361937
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568000000,
   "dataCollectionMinute" : 0,
@@ -801,10 +803,10 @@
   "values" : {
     "System Load 1" : 0.057499999180436134
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568120000,
   "dataCollectionMinute" : 0,
@@ -814,10 +816,10 @@
   "values" : {
     "System Load 1" : 0.15499999932944775
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568600000,
   "dataCollectionMinute" : 0,
@@ -827,10 +829,10 @@
   "values" : {
     "System Load 1" : 0.14749999810010195
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568720000,
   "dataCollectionMinute" : 0,
@@ -840,10 +842,10 @@
   "values" : {
     "System Load 1" : 0.1899999976158142
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569440000,
   "dataCollectionMinute" : 0,
@@ -853,10 +855,10 @@
   "values" : {
     "System Mem Used" : 9.56479488E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568300000,
   "dataCollectionMinute" : 0,
@@ -866,10 +868,10 @@
   "values" : {
     "System Mem Used" : 9.64310016E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568480000,
   "dataCollectionMinute" : 0,
@@ -879,10 +881,10 @@
   "values" : {
     "System Mem Used" : 9.64283392E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568300000,
   "dataCollectionMinute" : 0,
@@ -892,10 +894,10 @@
   "values" : {
     "System Load 1" : 0.2174999974668026
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568540000,
   "dataCollectionMinute" : 0,
@@ -905,10 +907,10 @@
   "values" : {
     "System Mem Used" : 9.64944896E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568420000,
   "dataCollectionMinute" : 0,
@@ -918,10 +920,10 @@
   "values" : {
     "System Load 1" : 0.4050000011920929
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568780000,
   "dataCollectionMinute" : 0,
@@ -931,10 +933,10 @@
   "values" : {
     "System Load 1" : 0.09249999839812517
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568540000,
   "dataCollectionMinute" : 0,
@@ -944,10 +946,10 @@
   "values" : {
     "System Load 1" : 0.1425000000745058
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568660000,
   "dataCollectionMinute" : 0,
@@ -957,10 +959,10 @@
   "values" : {
     "System Load 1" : 0.11249999888241291
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569080000,
   "dataCollectionMinute" : 0,
@@ -970,10 +972,10 @@
   "values" : {
     "System Mem Used" : 9.6355328E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523568180000,
   "dataCollectionMinute" : 0,
@@ -983,10 +985,10 @@
   "values" : {
     "System Mem Used" : 9.65295104E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569380000,
   "dataCollectionMinute" : 0,
@@ -996,10 +998,10 @@
   "values" : {
     "System Mem Used" : 9.6109056E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.mem.used",
   "timeStamp" : 1523569500000,
   "dataCollectionMinute" : 0,
@@ -1009,10 +1011,10 @@
   "values" : {
     "System Mem Used" : 9.50339584E8
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568960000,
   "dataCollectionMinute" : 0,
@@ -1022,10 +1024,10 @@
   "values" : {
     "System Load 1" : 0.11999999918043613
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 }, {
+  "createdAt" : 0,
+  "lastUpdatedAt" : 0,
   "name" : "system.load.1",
   "timeStamp" : 1523568840000,
   "dataCollectionMinute" : 0,
@@ -1035,7 +1037,5 @@
   "values" : {
     "System Load 1" : 0.06749999988824129
   },
-  "deeplinkMetadata" : { },
-  "createdAt" : 0,
-  "lastUpdatedAt" : 0
+  "deeplinkMetadata" : { }
 } ]

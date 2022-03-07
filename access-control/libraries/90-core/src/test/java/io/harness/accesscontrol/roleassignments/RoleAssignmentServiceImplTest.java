@@ -36,9 +36,9 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
 import io.harness.reflection.ReflectionUtils;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
+import io.serializer.HObjectMapper;
 import java.lang.reflect.Field;
 import java.util.ArrayList;
 import java.util.List;
@@ -78,7 +78,7 @@ public class RoleAssignmentServiceImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testCreate() {
     RoleAssignment roleAssignment = getRoleAssignment();
-    RoleAssignment roleAssignmentClone = (RoleAssignment) NGObjectMapperHelper.clone(roleAssignment);
+    RoleAssignment roleAssignmentClone = (RoleAssignment) HObjectMapper.clone(roleAssignment);
     ValidationResult validResult = ValidationResult.VALID;
     ArgumentCaptor<RoleAssignmentValidationRequest> roleAssignmentValidationRequestArgumentCaptor =
         ArgumentCaptor.forClass(RoleAssignmentValidationRequest.class);
@@ -158,7 +158,7 @@ public class RoleAssignmentServiceImplTest extends AccessControlCoreTestBase {
                                                .disabled(true)
                                                .version(17L)
                                                .build();
-    RoleAssignment currentRoleAssignmentClone = (RoleAssignment) NGObjectMapperHelper.clone(currentRoleAssignment);
+    RoleAssignment currentRoleAssignmentClone = (RoleAssignment) HObjectMapper.clone(currentRoleAssignment);
     RoleAssignment roleAssignmentUpdate =
         RoleAssignment.builder()
             .identifier(currentRoleAssignment.getIdentifier())
@@ -169,9 +169,9 @@ public class RoleAssignmentServiceImplTest extends AccessControlCoreTestBase {
             .resourceGroupIdentifier(currentRoleAssignment.getResourceGroupIdentifier())
             .disabled(false)
             .build();
-    RoleAssignment updatedRoleAssignment = (RoleAssignment) NGObjectMapperHelper.clone(roleAssignmentUpdate);
+    RoleAssignment updatedRoleAssignment = (RoleAssignment) HObjectMapper.clone(roleAssignmentUpdate);
     updatedRoleAssignment.setVersion(currentRoleAssignment.getVersion() + 1);
-    RoleAssignment updatedRoleAssignmentClone = (RoleAssignment) NGObjectMapperHelper.clone(updatedRoleAssignment);
+    RoleAssignment updatedRoleAssignmentClone = (RoleAssignment) HObjectMapper.clone(updatedRoleAssignment);
 
     when(roleAssignmentDao.get(roleAssignmentUpdate.getIdentifier(), roleAssignmentUpdate.getScopeIdentifier()))
         .thenReturn(Optional.of(currentRoleAssignment));
@@ -210,7 +210,7 @@ public class RoleAssignmentServiceImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testUpdateInvalidUpdate() throws IllegalAccessException {
     RoleAssignment currentRoleAssignment = getRoleAssignment();
-    RoleAssignment currentRoleAssignmentClone = (RoleAssignment) NGObjectMapperHelper.clone(currentRoleAssignment);
+    RoleAssignment currentRoleAssignmentClone = (RoleAssignment) HObjectMapper.clone(currentRoleAssignment);
     RoleAssignment roleAssignmentUpdate =
         RoleAssignment.builder()
             .identifier(currentRoleAssignment.getIdentifier())

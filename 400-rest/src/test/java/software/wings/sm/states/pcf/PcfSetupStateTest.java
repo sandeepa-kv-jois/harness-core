@@ -27,6 +27,7 @@ import static io.harness.rule.OwnerRule.ANIL;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.TMACARI;
+import static io.harness.rule.OwnerRule.VAIBHAV_KUMAR;
 
 import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.Environment.Builder.anEnvironment;
@@ -140,6 +141,7 @@ import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.Artifact.ArtifactMetadataKeys;
 import software.wings.beans.artifact.ArtifactStream;
+import software.wings.beans.artifact.ArtifactStreamAttributes;
 import software.wings.beans.artifact.DockerArtifactStream;
 import software.wings.beans.artifact.JenkinsArtifactStream;
 import software.wings.beans.command.CommandType;
@@ -174,6 +176,7 @@ import software.wings.service.intfc.StateExecutionService;
 import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.sweepingoutput.SweepingOutputService;
+import software.wings.settings.SettingVariableTypes;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.ExecutionResponse;
@@ -404,6 +407,41 @@ public class PcfSetupStateTest extends WingsBaseTest {
     doReturn("artifact-name").when(pcfSetupState).artifactFileNameForSource(any(), any());
     doReturn("artifact-path").when(pcfSetupState).artifactPathForSource(any(), any());
     doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());
+  }
+
+  @Test
+  @Owner(developers = VAIBHAV_KUMAR)
+  @Category(UnitTests.class)
+  public void testArtifactPathForSource() {
+    when(pcfSetupState.artifactPathForSource(any(), any())).thenCallRealMethod();
+
+    // Case1: when jobName occurs as a substring inside artifactPath
+    String path = "harness-internal/harness-internal/20211208.2.zip";
+    String jobName1 = "harness-internal";
+    String url1 = "https://harness.jfrog.io/artifactory/harness-internal/harness-internal/20211208.2.zip";
+    Map<String, String> metadata = new HashMap<String, String>() {
+      {
+        put("artifactPath", path);
+        put("url", url1);
+      }
+    };
+
+    Artifact artifact = new Artifact();
+    ArtifactStreamAttributes artifactStreamAttributes = ArtifactStreamAttributes.builder()
+                                                            .artifactStreamType(SettingVariableTypes.ARTIFACTORY.name())
+                                                            .jobName(jobName1)
+                                                            .metadata(metadata)
+                                                            .build();
+    String result = pcfSetupState.artifactPathForSource(artifact, artifactStreamAttributes);
+    assertThat(result).isEqualTo(path);
+
+    // Case2: when there is no overlap between jobName and artifactPath
+    String jobName2 = "test";
+    String url2 = "https://harness.jfrog.io/artifactory/test/harness-internal/20211208.2.zip";
+    artifactStreamAttributes.setJobName(jobName2);
+    metadata.put("url", url2);
+    result = pcfSetupState.artifactPathForSource(artifact, artifactStreamAttributes);
+    assertThat(result).isEqualTo(path);
   }
 
   @Test

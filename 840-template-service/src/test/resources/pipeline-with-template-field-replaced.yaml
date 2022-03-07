@@ -33,8 +33,7 @@ pipeline:
               type: "Http"
               spec:
                 url: "https://www.google.com"
-                method: "POST.allowedValues(POST, PUT, GET)"
+                method: "GET"
                 headers: []
                 outputVariables: []
-                requestBody: "11.regex(^1*)"
               timeout: "10s"

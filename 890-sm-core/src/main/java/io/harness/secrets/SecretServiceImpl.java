@@ -728,8 +728,8 @@ public class SecretServiceImpl implements SecretService {
   }
 
   @Override
-  public List<SecretMetadata> filterSecretIdsByReadPermission(
-      Set<String> secretIds, String accountId, String appIdFromRequest, String envIdFromRequest) {
+  public List<SecretMetadata> filterSecretIdsByReadPermission(Set<String> secretIds, String accountId,
+      String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp) {
     Set<SecretScopeMetadata> secretScopeMetadataSet = new HashSet<>();
     buildSecretScopeMetadataSet(accountId, secretIds, secretScopeMetadataSet);
     Set<String> foundInDatabase =
@@ -738,12 +738,13 @@ public class SecretServiceImpl implements SecretService {
     Set<String> notFoundInDatabase = new HashSet<>(secretIds);
     notFoundInDatabase.removeAll(foundInDatabase);
     // collect readable secret Ids
-    Set<String> readableSecretIds = secretsRBACService
-                                        .filterSecretsByReadPermission(accountId,
-                                            new ArrayList<>(secretScopeMetadataSet), appIdFromRequest, envIdFromRequest)
-                                        .stream()
-                                        .map(SecretScopeMetadata::getSecretId)
-                                        .collect(Collectors.toSet());
+    Set<String> readableSecretIds =
+        secretsRBACService
+            .filterSecretsByReadPermission(accountId, new ArrayList<>(secretScopeMetadataSet), appIdFromRequest,
+                envIdFromRequest, forUsageInNewApp)
+            .stream()
+            .map(SecretScopeMetadata::getSecretId)
+            .collect(Collectors.toSet());
     // collect not readable Secret Ids
     Set<String> notReadableSecretIds = new HashSet<>(secretIds);
     notReadableSecretIds.removeAll(notFoundInDatabase);
@@ -888,7 +889,7 @@ public class SecretServiceImpl implements SecretService {
             .collect(Collectors.toList());
 
     List<SecretScopeMetadata> filteredEntities = secretsRBACService.filterSecretsByReadPermission(
-        accountId, secretScopeMetadataList, appIdFromRequest, envIdFromRequest);
+        accountId, secretScopeMetadataList, appIdFromRequest, envIdFromRequest, false);
 
     filteredEntities.forEach(filteredEntity -> {
       EncryptedData encryptedData = (EncryptedData) filteredEntity.getSecretScopes();

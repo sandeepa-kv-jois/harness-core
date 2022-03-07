@@ -30,11 +30,11 @@ import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.serializer.HObjectMapper;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -81,7 +81,7 @@ public class ResourceGroupServiceImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testUpsert() {
     ResourceGroup currentResourceGroup = getResourceGroup(5, false);
-    ResourceGroup currentResourceGroupClone = (ResourceGroup) NGObjectMapperHelper.clone(currentResourceGroup);
+    ResourceGroup currentResourceGroupClone = (ResourceGroup) HObjectMapper.clone(currentResourceGroup);
     Set<String> newResourceSelectors = new HashSet<>();
     for (int i = 0; i < 5; i++) {
       newResourceSelectors.add(randomAlphabetic(10));
@@ -94,7 +94,7 @@ public class ResourceGroupServiceImplTest extends AccessControlCoreTestBase {
                                             .resourceSelectors(newResourceSelectors)
                                             .managed(false)
                                             .build();
-    ResourceGroup updatedResourceGroup = (ResourceGroup) NGObjectMapperHelper.clone(resourceGroupUpdate);
+    ResourceGroup updatedResourceGroup = (ResourceGroup) HObjectMapper.clone(resourceGroupUpdate);
     updatedResourceGroup.setVersion(currentResourceGroup.getVersion() + 1);
 
     when(resourceGroupDao.get(
@@ -115,7 +115,7 @@ public class ResourceGroupServiceImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testUpsertNotFound() {
     ResourceGroup resourceGroupUpdate = getResourceGroup(5, false);
-    ResourceGroup updatedResourceGroup = (ResourceGroup) NGObjectMapperHelper.clone(resourceGroupUpdate);
+    ResourceGroup updatedResourceGroup = (ResourceGroup) HObjectMapper.clone(resourceGroupUpdate);
 
     when(resourceGroupDao.get(
              resourceGroupUpdate.getIdentifier(), resourceGroupUpdate.getScopeIdentifier(), ManagedFilter.ONLY_CUSTOM))
@@ -135,7 +135,7 @@ public class ResourceGroupServiceImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testUpsertScopeLevelsUpdated() {
     ResourceGroup currentResourceGroup = getResourceGroup(5, true);
-    ResourceGroup currentResourceGroupClone = (ResourceGroup) NGObjectMapperHelper.clone(currentResourceGroup);
+    ResourceGroup currentResourceGroupClone = (ResourceGroup) HObjectMapper.clone(currentResourceGroup);
     Set<String> newResourceSelectors = new HashSet<>();
     for (int i = 0; i < 5; i++) {
       newResourceSelectors.add(randomAlphabetic(10));
@@ -148,7 +148,7 @@ public class ResourceGroupServiceImplTest extends AccessControlCoreTestBase {
                                             .resourceSelectors(newResourceSelectors)
                                             .managed(true)
                                             .build();
-    ResourceGroup updatedResourceGroup = (ResourceGroup) NGObjectMapperHelper.clone(resourceGroupUpdate);
+    ResourceGroup updatedResourceGroup = (ResourceGroup) HObjectMapper.clone(resourceGroupUpdate);
     updatedResourceGroup.setVersion(currentResourceGroup.getVersion() + 1);
 
     when(resourceGroupDao.get(

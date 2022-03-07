@@ -42,4 +42,5 @@ public class K8sRollingDeployRequest implements K8sDeployRequest {
   CommandUnitsProgress commandUnitsProgress;
   boolean useLatestKustomizeVersion;
   boolean useNewKubectlVersion;
+  boolean skipAddingTrackSelectorToDeployment;
 }

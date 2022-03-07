@@ -7,8 +7,8 @@
 
 package software.wings.service.impl.datadog;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
-import software.wings.sm.StateType;
 import software.wings.sm.states.DatadogState.Metric;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -41,7 +41,7 @@ public class DataDogSetupTestNodeData extends SetupTestNodeData {
   public DataDogSetupTestNodeData(String appId, String settingId, String instanceName, boolean isServiceLevel,
       Instance instanceElement, String hostExpression, String workflowId, String guid, long fromTime, long toTime,
       String datadogServiceName, Map<String, String> dockerMetrics, Map<String, String> ecsMetrics,
-      Map<String, Set<Metric>> customMetricsMap, StateType stateType, String metrics, String query,
+      Map<String, Set<Metric>> customMetricsMap, DelegateStateType stateType, String metrics, String query,
       String hostNameField, Map<String, Set<Metric>> customMetrics, String deploymentType) {
     super(appId, settingId, instanceName, isServiceLevel, instanceElement, hostExpression, workflowId, guid, stateType,
         fromTime, toTime);

@@ -9,13 +9,9 @@ package io.harness.engine.pms.resume.publisher;
 
 import static io.harness.rule.OwnerRule.SAHIL;
 
-import static org.assertj.core.api.Assertions.assertThat;
-
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.execution.NodeExecution;
-import io.harness.pms.execution.utils.NodeProjectionUtils;
-import io.harness.reflection.ReflectionUtils;
 import io.harness.rule.Owner;
 
 import org.junit.Before;
@@ -41,17 +37,13 @@ public class ResumeMetadataTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testIfStepParametersSentAreResolvedOne() {
     NodeExecution nodeExecution = PowerMockito.mock(NodeExecution.class);
-
     ResumeMetadata.fromNodeExecution(nodeExecution);
-
-    assertThat(ReflectionUtils.getAllDeclaredAndInheritedFields(ResumeMetadata.class).size())
-        .isEqualTo(NodeProjectionUtils.fieldsForResume.size());
-    Mockito.verify(nodeExecution).getMode();
     Mockito.verify(nodeExecution).getUuid();
+    Mockito.verify(nodeExecution).getMode();
     Mockito.verify(nodeExecution).getAmbiance();
     Mockito.verify(nodeExecution).getResolvedStepParametersBytes();
     Mockito.verify(nodeExecution).obtainLatestExecutableResponse();
-    Mockito.verify(nodeExecution).module();
+    Mockito.verify(nodeExecution).getModule();
     Mockito.verifyNoMoreInteractions(nodeExecution);
   }
 }

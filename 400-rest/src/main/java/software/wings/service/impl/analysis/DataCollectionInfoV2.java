@@ -14,10 +14,10 @@ import io.harness.security.encryption.EncryptionConfig;
 
 import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.TaskType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.cv.DataCollector;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.settings.SettingValue;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
@@ -63,7 +63,7 @@ public abstract class DataCollectionInfoV2 implements TaskParameters, ExecutionC
     return hosts;
   }
   @JsonIgnore public abstract TaskType getTaskType();
-  @JsonIgnore public abstract StateType getStateType();
+  @JsonIgnore public abstract DelegateStateType getStateType();
   @JsonIgnore
   public abstract Class<? extends DataCollector<? extends DataCollectionInfoV2>> getDataCollectorImplClass();
   @JsonIgnore public abstract Optional<String> getUrlForValidation();

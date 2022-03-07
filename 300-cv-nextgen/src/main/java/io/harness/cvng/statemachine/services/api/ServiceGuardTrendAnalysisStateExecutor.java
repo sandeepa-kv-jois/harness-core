@@ -89,11 +89,7 @@ public class ServiceGuardTrendAnalysisStateExecutor extends AnalysisStateExecuto
     if (analysisState.getRetryCount() >= getMaxRetry()) {
       analysisState.setStatus(AnalysisStatus.FAILED);
     } else {
-      analysisState.setRetryCount(analysisState.getRetryCount() + 1);
-      log.info("In service guard trend analysis state, for Inputs {}, cleaning up worker task. Old taskID: {}",
-          analysisState.getInputs(), analysisState.getWorkerTaskId());
-      analysisState.setWorkerTaskId(null);
-      execute(analysisState);
+      return handleRerun(analysisState);
     }
     return analysisState;
   }

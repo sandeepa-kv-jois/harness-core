@@ -7,6 +7,7 @@ Var timeSeriesList = []
 while Var:index != Var:totalMetrics {
 
     Var metricNameStr = Env:metricNames[Var:index]
+    Var metricIdentifierStr = Env:metricIdentifiers[Var:index]
     Var urlPath = Env:urlPaths[Var:index]
     Var dataCollectionURL = concat(Env:baseUrl, Var:urlPath)
     Var startTimePlaceholder = Env:startTimePlaceholders[Var:index]
@@ -60,9 +61,8 @@ while Var:index != Var:totalMetrics {
         while Var:innerIndex != Var:totalMetricValues {
            Var metricVal = Var:metricValArr[Var:innerIndex]
            Var timestamp = Var:timestampArr[Var:innerIndex]
-           Var metricIdentifier = null
            if Var:metricVal != Var:nullObj {
-              Var tsRecord = new TimeseriesRecord(txnName=Env:groupName, metricIdentifier=Var:metricIdentifier, metricName=Var:metricNameStr, metricValue=Var:metricVal, timestamp=Var:timestamp, host=Var:serviceInstance)
+              Var tsRecord = new TimeseriesRecord(txnName=Env:groupName, metricIdentifier=Var:metricIdentifierStr, metricName=Var:metricNameStr, metricValue=Var:metricVal, timestamp=Var:timestamp, host=Var:serviceInstance)
               Var:timeSeriesList.append(Var:tsRecord)
            }
            innerIndex = Var:innerIndex + Var:one

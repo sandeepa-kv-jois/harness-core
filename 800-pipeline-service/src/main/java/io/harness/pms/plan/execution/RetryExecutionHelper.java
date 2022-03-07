@@ -20,13 +20,18 @@ import io.harness.engine.executions.retry.RetryInfo;
 import io.harness.engine.executions.retry.RetryLatestExecutionResponseDto;
 import io.harness.engine.executions.retry.RetryStageInfo;
 import io.harness.exception.InvalidRequestException;
+import io.harness.execution.PlanExecutionMetadata;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.plan.Node;
 import io.harness.plan.Plan;
 import io.harness.pms.execution.ExecutionStatus;
 import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
+import io.harness.pms.pipeline.PipelineEntity;
+import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
+import io.harness.pms.plan.execution.service.PMSExecutionService;
+import io.harness.pms.plan.utils.PlanResourceUtility;
 import io.harness.repositories.executions.PmsExecutionSummaryRespository;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -42,6 +47,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -56,6 +62,8 @@ public class RetryExecutionHelper {
   private final NodeExecutionService nodeExecutionService;
   private final PlanExecutionMetadataService planExecutionMetadataService;
   private final PmsExecutionSummaryRespository pmsExecutionSummaryRespository;
+  private final PMSPipelineService pmsPipelineService;
+  private final PMSExecutionService pmsExecutionService;
 
   public List<String> fetchOnlyFailedStages(List<RetryStageInfo> info, List<String> retryStagesIdentifier) {
     List<String> onlyFailedStage = new ArrayList<>();
@@ -92,6 +100,55 @@ public class RetryExecutionHelper {
     return false;
   }
 
+  public RetryInfo validateRetry(String accountId, String orgIdentifier, String projectIdentifier,
+      String pipelineIdentifier, String planExecutionId) {
+    Optional<PipelineEntity> updatedPipelineEntity =
+        pmsPipelineService.get(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, false);
+
+    if (!updatedPipelineEntity.isPresent()) {
+      return RetryInfo.builder()
+          .isResumable(false)
+          .errorMessage(
+              String.format("Pipeline with the given ID: %s does not exist or has been deleted", pipelineIdentifier))
+          .build();
+    }
+
+    // Checking if this is the latest execution
+    PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity =
+        pmsExecutionService.getPipelineExecutionSummaryEntity(
+            accountId, orgIdentifier, projectIdentifier, planExecutionId, false);
+    if (!pipelineExecutionSummaryEntity.isLatestExecution()) {
+      return RetryInfo.builder()
+          .isResumable(false)
+          .errorMessage(
+              "This execution is not the latest of all retried execution. You can only retry the latest execution.")
+          .build();
+    }
+
+    boolean inTimeLimit =
+        PlanResourceUtility.validateInTimeLimitForRetry(pipelineExecutionSummaryEntity.getCreatedAt());
+    if (!inTimeLimit) {
+      return RetryInfo.builder()
+          .isResumable(false)
+          .errorMessage("Execution is more than 30 days old. Cannot retry")
+          .build();
+    }
+
+    String updatedPipeline = updatedPipelineEntity.get().getYaml();
+
+    Optional<PlanExecutionMetadata> byPlanExecutionId =
+        planExecutionMetadataService.findByPlanExecutionId(planExecutionId);
+    if (!byPlanExecutionId.isPresent()) {
+      return RetryInfo.builder()
+          .isResumable(false)
+          .errorMessage("No Plan Execution exists for id " + planExecutionId)
+          .build();
+    }
+    PlanExecutionMetadata planExecutionMetadata = byPlanExecutionId.get();
+    String executedPipeline = planExecutionMetadata.getYaml();
+    return getRetryStages(updatedPipeline, executedPipeline, planExecutionId);
+  }
+
   public boolean validateRetry(String updatedYaml, String executedYaml) {
     // compare fqn
     if (isEmpty(updatedYaml) || isEmpty(executedYaml)) {
@@ -124,8 +181,7 @@ public class RetryExecutionHelper {
     return true;
   }
 
-  public RetryInfo getRetryStages(
-      String updatedYaml, String executedYaml, String planExecutionId, String pipelineIdentifier) {
+  public RetryInfo getRetryStages(String updatedYaml, String executedYaml, String planExecutionId) {
     if (isEmpty(planExecutionId)) {
       return null;
     }
@@ -161,10 +217,6 @@ public class RetryExecutionHelper {
 
   public List<RetryStageInfo> getStageDetails(String planExecutionId) {
     return nodeExecutionService.getStageDetailFromPlanExecutionId(planExecutionId);
-  }
-
-  public String getYamlFromExecutionId(String planExecutionId) {
-    return planExecutionMetadataService.getYamlFromPlanExecutionId(planExecutionId);
   }
 
   public String retryProcessedYaml(String previousProcessedYaml, String currentProcessedYaml, List<String> retryStages,

@@ -8,6 +8,8 @@
 package io.harness.steps.policy.step;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
+import static io.harness.pms.sdk.core.steps.io.StepResponse.StepOutcome;
+import static io.harness.pms.sdk.core.steps.io.StepResponse.builder;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
@@ -65,6 +67,18 @@ public class PolicyStepHelper {
                                   .addFailureTypes(failureType)
                                   .build();
     FailureInfo failureInfo = FailureInfo.newBuilder().addFailureData(failureData).build();
-    return StepResponse.builder().status(Status.FAILED).failureInfo(failureInfo).build();
+    return builder().status(Status.FAILED).failureInfo(failureInfo).build();
+  }
+
+  public StepResponse buildFailureStepResponse(
+      ErrorCode errorCode, String message, FailureType failureType, StepOutcome stepOutcome) {
+    FailureData failureData = FailureData.newBuilder()
+                                  .setCode(errorCode.name())
+                                  .setLevel(Level.ERROR.name())
+                                  .setMessage(message)
+                                  .addFailureTypes(failureType)
+                                  .build();
+    FailureInfo failureInfo = FailureInfo.newBuilder().addFailureData(failureData).build();
+    return builder().status(Status.FAILED).failureInfo(failureInfo).stepOutcome(stepOutcome).build();
   }
 }

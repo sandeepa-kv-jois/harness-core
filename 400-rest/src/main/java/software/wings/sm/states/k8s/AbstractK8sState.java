@@ -29,6 +29,7 @@ import static io.harness.validation.Validator.notNullCheck;
 import static software.wings.api.InstanceElement.Builder.anInstanceElement;
 import static software.wings.beans.appmanifest.ManifestFile.VALUES_YAML_KEY;
 import static software.wings.beans.appmanifest.StoreType.HelmChartRepo;
+import static software.wings.beans.appmanifest.StoreType.Remote;
 import static software.wings.delegatetasks.GitFetchFilesTask.GIT_FETCH_FILES_TASK_ASYNC_TIMEOUT;
 import static software.wings.sm.ExecutionContextImpl.PHASE_PARAM;
 import static software.wings.sm.InstanceStatusSummary.InstanceStatusSummaryBuilder.anInstanceStatusSummary;
@@ -573,6 +574,10 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
       addNonEmptyValuesToList(K8sValuesLocation.Environment, valuesFiles.get(K8sValuesLocation.Environment), result);
     }
 
+    if (valuesFiles.containsKey(K8sValuesLocation.Step)) {
+      addNonEmptyValuesToList(K8sValuesLocation.Step, valuesFiles.get(K8sValuesLocation.Step), result);
+    }
+
     // OpenShift takes in reverse order
     if (openShiftManagerService.isOpenShiftManifestConfig(context)) {
       Collections.reverse(result);
@@ -713,6 +718,10 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
     return ((K8sStateExecutionData) context.getStateExecutionData()).getActivityId();
   }
 
+  public GitFileConfig getStepRemoteOverrideGitConfig() {
+    return null;
+  }
+
   public ExecutionResponse executeWrapperWithManifest(
       K8sStateExecutor k8sStateExecutor, ExecutionContext context, long timeoutInMillis) {
     try {
@@ -728,6 +737,7 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
 
       Activity activity;
       Map<K8sValuesLocation, ApplicationManifest> appManifestMap;
+
       if (openShiftManagerService.isOpenShiftManifestConfig(context)) {
         ocTemplateSource = true;
         appManifestMap = applicationManifestUtils.getOverrideApplicationManifests(context, AppManifestKind.OC_PARAMS);
@@ -747,6 +757,17 @@ public abstract class AbstractK8sState extends State implements K8sStateExecutor
         kustomizeSource = applicationManifestUtils.isKustomizeSource(context);
         valuesInCustomSource = isValuesInCustomSource(appManifestMap);
       }
+
+      if (getStepRemoteOverrideGitConfig() != null) {
+        appManifestMap.put(K8sValuesLocation.Step,
+            ApplicationManifest.builder()
+                .gitFileConfig(getStepRemoteOverrideGitConfig())
+                .kind(AppManifestKind.VALUES)
+                .storeType(Remote)
+                .build());
+        valuesInGit = true;
+      }
+
       activity =
           createK8sActivity(context, k8sStateExecutor.commandName(), k8sStateExecutor.stateType(), activityService,
               k8sStateExecutor.commandUnitList(

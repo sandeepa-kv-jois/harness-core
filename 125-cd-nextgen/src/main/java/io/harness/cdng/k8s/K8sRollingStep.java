@@ -129,6 +129,7 @@ public class K8sRollingStep extends TaskChainExecutableWithRollbackAndRbac imple
             .commandUnitsProgress(UnitProgressDataMapper.toCommandUnitsProgress(unitProgressData))
             .useLatestKustomizeVersion(k8sStepHelper.isUseLatestKustomizeVersion(accountId))
             .useNewKubectlVersion(k8sStepHelper.isUseNewKubectlVersion(accountId))
+            .skipAddingTrackSelectorToDeployment(k8sStepHelper.isSkipAddingTrackSelectorToDeployment(accountId))
             .build();
 
     k8sStepHelper.publishReleaseNameStepDetails(ambiance, releaseName);

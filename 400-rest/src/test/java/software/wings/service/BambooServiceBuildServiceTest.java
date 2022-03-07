@@ -51,7 +51,7 @@ public class BambooServiceBuildServiceTest extends WingsBaseTest {
   @Category(UnitTests.class)
   @Ignore("TODO: please provide clear motivation why this test is ignored")
   public void shouldFetchBambooSettings() {
-    PageResponse<SettingAttribute> settingAttributes = settingsService.list(new PageRequest<>(), null, null);
+    PageResponse<SettingAttribute> settingAttributes = settingsService.list(new PageRequest<>(), null, null, false);
     SettingAttribute settingAttribute = settingsService.get("YcsuxTFqR6uH093foR_K5w-bamboo");
     log.info(settingAttribute.toString());
   }

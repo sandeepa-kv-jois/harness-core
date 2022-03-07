@@ -9,9 +9,11 @@ package io.harness.engine;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategy;
 import io.harness.engine.pms.execution.strategy.NodeExecutionStrategyFactory;
 import io.harness.engine.utils.OrchestrationUtils;
+import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.PmsNodeExecution;
 import io.harness.execution.PmsNodeExecutionMetadata;
 import io.harness.plan.Node;
@@ -21,6 +23,7 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.events.SdkResponseEventProto;
 import io.harness.pms.contracts.facilitators.FacilitatorResponseProto;
 import io.harness.pms.contracts.steps.io.StepResponseProto;
+import io.harness.pms.execution.utils.AmbianceUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -39,6 +42,7 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Singleton
 public class OrchestrationEngine {
+  @Inject private PlanService planService;
   @Inject private NodeExecutionStrategyFactory strategyFactory;
 
   public <T extends PmsNodeExecution> T runNode(
@@ -49,8 +53,10 @@ public class OrchestrationEngine {
 
   public <T extends PmsNodeExecution> T initiateNode(@NonNull Ambiance ambiance, @NonNull String nodeId,
       @NonNull String runtimeId, PmsNodeExecutionMetadata metadata) {
-    NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(OrchestrationUtils.currentNodeType(ambiance));
-    return (T) strategy.initiateNode(ambiance, nodeId, runtimeId, metadata);
+    Node node = planService.fetchNode(ambiance.getPlanId(), nodeId);
+    Ambiance clonedAmbiance = AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(runtimeId, node));
+    NodeExecutionStrategy strategy = strategyFactory.obtainStrategy(node.getNodeType());
+    return (T) strategy.runNode(clonedAmbiance, node, metadata);
   }
 
   public <T extends PmsNodeExecution> T runNextNode(

@@ -17,8 +17,8 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.ScalyrConfig;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.service.intfc.scalyr.ScalyrService;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 
 import com.google.inject.Inject;
 import java.util.Collections;
@@ -36,21 +36,25 @@ public class ScalyrServiceImplTest extends WingsBaseTest {
     String messageField = generateUuid();
     String timestampField = generateUuid();
 
-    final Map<String, Map<String, ResponseMapper>> logCollectionMapping =
+    final Map<String, Map<String, CustomLogResponseMapper>> logCollectionMapping =
         scalyrService.createLogCollectionMapping(hostnameField, messageField, timestampField);
 
     assertThat(logCollectionMapping.size()).isEqualTo(1);
-    final Map<String, ResponseMapper> responseMap = logCollectionMapping.get(ScalyrConfig.QUERY_URL);
+    final Map<String, CustomLogResponseMapper> responseMap = logCollectionMapping.get(ScalyrConfig.QUERY_URL);
     assertThat(responseMap.get("host"))
-        .isEqualTo(
-            ResponseMapper.builder().fieldName("host").jsonPath(Collections.singletonList(hostnameField)).build());
+        .isEqualTo(CustomLogResponseMapper.builder()
+                       .fieldName("host")
+                       .jsonPath(Collections.singletonList(hostnameField))
+                       .build());
     assertThat(responseMap.get("timestamp"))
-        .isEqualTo(ResponseMapper.builder()
+        .isEqualTo(CustomLogResponseMapper.builder()
                        .fieldName("timestamp")
                        .jsonPath(Collections.singletonList(timestampField))
                        .build());
     assertThat(responseMap.get("logMessage"))
-        .isEqualTo(
-            ResponseMapper.builder().fieldName("logMessage").jsonPath(Collections.singletonList(messageField)).build());
+        .isEqualTo(CustomLogResponseMapper.builder()
+                       .fieldName("logMessage")
+                       .jsonPath(Collections.singletonList(messageField))
+                       .build());
   }
 }

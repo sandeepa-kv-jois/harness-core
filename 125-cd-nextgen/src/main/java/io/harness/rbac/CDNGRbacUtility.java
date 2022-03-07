@@ -7,10 +7,10 @@
 
 package io.harness.rbac;
 
-import static io.harness.accesscontrol.clients.ResourceScope.ResourceScopeBuilder;
+import static io.harness.accesscontrol.acl.api.ResourceScope.ResourceScopeBuilder;
 
-import io.harness.accesscontrol.clients.PermissionCheckDTO;
-import io.harness.accesscontrol.clients.ResourceScope;
+import io.harness.accesscontrol.acl.api.PermissionCheckDTO;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;

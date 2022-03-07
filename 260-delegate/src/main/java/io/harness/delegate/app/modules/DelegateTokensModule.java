@@ -23,7 +23,7 @@ public class DelegateTokensModule extends AbstractModule {
     bind(DelegateServiceTokenHelper.class)
         .toInstance(DelegateServiceTokenHelper.builder()
                         .serviceTokenGenerator(new ServiceTokenGenerator())
-                        .accountSecret(configuration.getAccountSecret())
+                        .accountSecret(configuration.getDelegateToken())
                         .build());
   }
 }

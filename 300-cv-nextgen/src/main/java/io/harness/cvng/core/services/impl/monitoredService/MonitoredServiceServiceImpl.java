@@ -548,6 +548,15 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .get();
   }
 
+  private MonitoredService getMonitoredService(MonitoredServiceParams monitoredServiceParams) {
+    return hPersistence.createQuery(MonitoredService.class)
+        .filter(MonitoredServiceKeys.accountId, monitoredServiceParams.getAccountIdentifier())
+        .filter(MonitoredServiceKeys.orgIdentifier, monitoredServiceParams.getOrgIdentifier())
+        .filter(MonitoredServiceKeys.projectIdentifier, monitoredServiceParams.getProjectIdentifier())
+        .filter(MonitoredServiceKeys.identifier, monitoredServiceParams.getMonitoredServiceIdentifier())
+        .get();
+  }
+
   private List<MonitoredService> getMonitoredServices(
       ProjectParams projectParams, List<String> environmentIdentifiers) {
     return hPersistence.createQuery(MonitoredService.class)
@@ -675,13 +684,13 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   }
 
   @Override
-  public List<MonitoredService> list(@NonNull ProjectParams projectParams, @NonNull List<String> identifiers) {
+  public List<MonitoredService> list(@NonNull ProjectParams projectParams, List<String> identifiers) {
     Query<MonitoredService> query =
         hPersistence.createQuery(MonitoredService.class)
             .filter(MonitoredServiceKeys.accountId, projectParams.getAccountIdentifier())
             .filter(MonitoredServiceKeys.orgIdentifier, projectParams.getOrgIdentifier())
             .filter(MonitoredServiceKeys.projectIdentifier, projectParams.getProjectIdentifier());
-    if (!identifiers.isEmpty()) {
+    if (isNotEmpty(identifiers)) {
       query.field(MonitoredServiceKeys.identifier).in(identifiers);
     }
 
@@ -978,23 +987,31 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
     MonitoredService monitoredService = getMonitoredService(serviceEnvironmentParams);
     return getMonitoredServiceHistorialTrend(monitoredService, serviceEnvironmentParams, duration, endTime);
   }
-
+  @Override
+  public HealthScoreDTO getCurrentAndDependentServicesScore(MonitoredServiceParams monitoredServiceParams) {
+    MonitoredService monitoredService = getMonitoredService(monitoredServiceParams);
+    return getCurrentAndDependentServicesScore(monitoredServiceParams, monitoredService);
+  }
   @Override
   public HealthScoreDTO getCurrentAndDependentServicesScore(ServiceEnvironmentParams serviceEnvironmentParams) {
-    List<Pair<String, String>> serviceEnvIdentifiers = new ArrayList<>(Arrays.asList(
-        Pair.of(serviceEnvironmentParams.getServiceIdentifier(), serviceEnvironmentParams.getEnvironmentIdentifier())));
     MonitoredService monitoredService = getMonitoredService(serviceEnvironmentParams);
+    return getCurrentAndDependentServicesScore(serviceEnvironmentParams, monitoredService);
+  }
+  public HealthScoreDTO getCurrentAndDependentServicesScore(
+      ProjectParams projectParams, MonitoredService monitoredService) {
+    List<Pair<String, String>> serviceEnvIdentifiers = new ArrayList<>(
+        Arrays.asList(Pair.of(monitoredService.getServiceIdentifier(), monitoredService.getEnvironmentIdentifier())));
     Set<ServiceDependencyDTO> dependentServiceDTOS = serviceDependencyService.getDependentServicesForMonitoredService(
-        serviceEnvironmentParams, monitoredService.getIdentifier());
+        projectParams, monitoredService.getIdentifier());
     dependentServiceDTOS.forEach(dependentServiceDTO -> {
       MonitoredService dependentMonitoredService =
-          getMonitoredService(serviceEnvironmentParams, dependentServiceDTO.getMonitoredServiceIdentifier());
+          getMonitoredService(projectParams, dependentServiceDTO.getMonitoredServiceIdentifier());
       serviceEnvIdentifiers.add(Pair.of(
           dependentMonitoredService.getServiceIdentifier(), dependentMonitoredService.getEnvironmentIdentifier()));
     });
-    List<RiskData> allServiceRiskScoreList = heatMapService.getLatestRiskScoreForAllServicesList(
-        serviceEnvironmentParams.getAccountIdentifier(), serviceEnvironmentParams.getOrgIdentifier(),
-        serviceEnvironmentParams.getProjectIdentifier(), serviceEnvIdentifiers);
+    List<RiskData> allServiceRiskScoreList =
+        heatMapService.getLatestRiskScoreForAllServicesList(projectParams.getAccountIdentifier(),
+            projectParams.getOrgIdentifier(), projectParams.getProjectIdentifier(), serviceEnvIdentifiers);
     List<RiskData> dependentRiskScoreList = allServiceRiskScoreList.subList(1, allServiceRiskScoreList.size());
     RiskData minDependentRiskScore = null;
     if (!dependentRiskScoreList.isEmpty()) {
@@ -1061,20 +1078,29 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
             .serviceIdentifier(monitoredService.getServiceIdentifier())
             .environmentIdentifier(monitoredService.getEnvironmentIdentifier())
             .build();
+    MonitoredServiceParams monitoredServiceParams =
+        MonitoredServiceParams.builderWithServiceEnvParams(serviceEnvironmentParams)
+            .monitoredServiceIdentifier(monitoredServiceIdentifier)
+            .build();
     PageParams pageParams = PageParams.builder().page(0).size(10).build();
     LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter =
         LiveMonitoringLogAnalysisFilter.builder()
             .clusterTypes(Arrays.asList(LogAnalysisTag.UNKNOWN, LogAnalysisTag.UNEXPECTED))
             .build();
-    long logAnomalousCount =
-        logDashboardService
-            .getAllLogsData(serviceEnvironmentParams, timeRangeParams, liveMonitoringLogAnalysisFilter, pageParams)
-            .getTotalItems();
+    long logAnomalousCount = logDashboardService
+                                 .getAllLogsData(MonitoredServiceParams.builder()
+                                                     .accountIdentifier(projectParams.getAccountIdentifier())
+                                                     .projectIdentifier(projectParams.getProjectIdentifier())
+                                                     .orgIdentifier(projectParams.getOrgIdentifier())
+                                                     .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                     .build(),
+                                     timeRangeParams, liveMonitoringLogAnalysisFilter, pageParams)
+                                 .getTotalItems();
     TimeSeriesAnalysisFilter timeSeriesAnalysisFilter =
         TimeSeriesAnalysisFilter.builder().anomalousMetricsOnly(true).build();
     long timeSeriesAnomalousCount =
         timeSeriesDashboardService
-            .getTimeSeriesMetricData(serviceEnvironmentParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams)
+            .getTimeSeriesMetricData(monitoredServiceParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams)
             .getTotalItems();
     return AnomaliesSummaryDTO.builder()
         .logsAnomalies(logAnomalousCount)

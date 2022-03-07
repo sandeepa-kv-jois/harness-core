@@ -197,10 +197,16 @@ public class ChangeEventServiceImpl implements ChangeEventService {
   }
   @Override
   public ChangeTimeline getTimeline(ProjectParams projectParams, List<String> serviceIdentifiers,
-      List<String> environmentIdentifiers, String searchText, List<ChangeCategory> changeCategories,
-      List<ChangeSourceType> changeSourceTypes, Instant startTime, Instant endTime, Integer pointCount) {
-    List<String> monitoredServiceIdentifiers = monitoredServiceService.getMonitoredServiceIdentifiers(
-        projectParams, serviceIdentifiers, environmentIdentifiers);
+      List<String> environmentIdentifiers, List<String> monitoredServiceIdentifiers, String searchText,
+      List<ChangeCategory> changeCategories, List<ChangeSourceType> changeSourceTypes, Instant startTime,
+      Instant endTime, Integer pointCount) {
+    if (isNotEmpty(monitoredServiceIdentifiers)) {
+      Preconditions.checkState(isEmpty(serviceIdentifiers) && isEmpty(environmentIdentifiers),
+          "serviceIdentifier, envIdentifier filter can not be used with monitoredServiceIdentifier filter");
+    } else {
+      monitoredServiceIdentifiers = monitoredServiceService.getMonitoredServiceIdentifiers(
+          projectParams, serviceIdentifiers, environmentIdentifiers);
+    }
     return getTimeline(projectParams, monitoredServiceIdentifiers, searchText, changeCategories, changeSourceTypes,
         startTime, endTime, pointCount);
   }

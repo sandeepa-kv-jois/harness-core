@@ -21,6 +21,7 @@ import io.harness.time.Timestamp;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.WorkflowExecution;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
 import software.wings.service.impl.datadog.DataDogSetupTestNodeData;
 import software.wings.sm.StateExecutionInstance;
@@ -66,7 +67,7 @@ public class MLServiceUtilsTest extends WingsBaseTest {
                                                       .k8s(InstanceDetails.K8s.builder().ip("123.123.123.123").build())
                                                       .build())
                                  .build())
-            .stateType(StateType.DATA_DOG)
+            .stateType(DelegateStateType.DATA_DOG)
             .guid(generateUuid())
             .build();
     assertThat(mlServiceUtils.getHostName(nodeData)).isEqualTo("123.123.123.123");

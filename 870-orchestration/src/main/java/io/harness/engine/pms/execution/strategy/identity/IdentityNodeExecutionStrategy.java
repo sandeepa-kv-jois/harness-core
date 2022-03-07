@@ -87,6 +87,8 @@ public class IdentityNodeExecutionStrategy
                                   .identifier(node.getIdentifier())
                                   .stepType(node.getStepType())
                                   .nodeId(node.getUuid())
+                                  .stageFqn(node.getStageFqn())
+                                  .group(node.getGroup())
                                   .notifyId(notifyId)
                                   .parentId(parentId)
                                   .previousId(previousId)

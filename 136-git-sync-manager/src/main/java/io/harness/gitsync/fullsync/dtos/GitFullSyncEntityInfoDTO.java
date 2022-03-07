@@ -24,7 +24,8 @@ import lombok.experimental.FieldDefaults;
 @Data
 @Builder
 @FieldDefaults(level = AccessLevel.PRIVATE)
-@Schema(name = "FullSyncEntityInfo", description = "This contains full sync details of a Git Sync Entity")
+@Schema(name = "GitFullSyncEntityInfo",
+    description = "This contains the details of a Git Full Sync Entity with its Sync status")
 @OwnedBy(PL)
 public class GitFullSyncEntityInfoDTO {
   @Schema(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) String accountIdentifier;
@@ -33,12 +34,12 @@ public class GitFullSyncEntityInfoDTO {
   @Schema(description = GitSyncApiConstants.FILEPATH_PARAM_MESSAGE) String filePath;
   @Schema(description = GitSyncApiConstants.ENTITY_TYPE_PARAM_MESSAGE) EntityType entityType;
   @Schema(description = GitSyncApiConstants.SYNC_STATUS_PARAM_MESSAGE) GitFullSyncEntityInfo.SyncStatus syncStatus;
-  @Schema(description = "Name of the Entity") String name;
-  @Schema(description = "Identifier of the Entity") String identifier;
+  @Schema(description = "Name of the Entity.") String name;
+  @Schema(description = "Identifier of the Entity.") String identifier;
   @Schema(description = GitSyncApiConstants.BRANCH_PARAM_MESSAGE) String branch;
   @Schema(description = GitSyncApiConstants.REPO_NAME_PARAM_MESSAGE) String repoName;
   @Schema(description = GitSyncApiConstants.REPO_URL_PARAM_MESSAGE) String repoUrl;
   @Schema(description = GitSyncApiConstants.FOLDER_PATH_PARAM_MESSAGE) String rootFolder;
-  @Schema(description = "This is the number of Full Sync retry attempts") long retryCount;
-  @Schema(description = "Contains the error while syncing the entity") String errorMessage;
+  @Schema(description = "This is the number of full sync retry attempts.") long retryCount;
+  @Schema(description = "Contains the error details while syncing the entity to Git.") String errorMessage;
 }

@@ -15,9 +15,9 @@ import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
 import io.harness.accesscontrol.ResourceIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.executions.retry.RetryHistoryResponseDto;
@@ -30,7 +30,6 @@ import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.pms.annotations.PipelineServiceAuth;
-import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.ngpipeline.inputset.beans.resource.MergeInputSetRequestDTOPMS;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineResourceConstants;
@@ -39,7 +38,6 @@ import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 import io.harness.pms.plan.execution.beans.dto.InterruptDTO;
 import io.harness.pms.plan.execution.beans.dto.RunStageRequestDTO;
 import io.harness.pms.plan.execution.service.PMSExecutionService;
-import io.harness.pms.plan.utils.PlanResourceUtility;
 import io.harness.pms.preflight.PreFlightDTO;
 import io.harness.pms.preflight.service.PreflightService;
 import io.harness.pms.rbac.PipelineRbacPermissions;
@@ -348,46 +346,9 @@ public class PlanExecutionResource {
       @NotEmpty String pipelineIdentifier,
       @NotNull @PathParam(NGCommonEntityConstants.PLAN_KEY) @Parameter(
           description = "planExecutionId of the execution we want to retry") String planExecutionId,
-      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) throws IOException {
-    Optional<PipelineEntity> updatedPipelineEntity =
-        pmsPipelineService.get(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, false);
-
-    if (!updatedPipelineEntity.isPresent()) {
-      return ResponseDTO.newResponse(
-          RetryInfo.builder()
-              .isResumable(false)
-              .errorMessage(String.format(
-                  "Pipeline with the given ID: %s does not exist or has been deleted", pipelineIdentifier))
-              .build());
-    }
-
-    // Checking if this is the latest execution
-    PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity =
-        pmsExecutionService.getPipelineExecutionSummaryEntity(
-            accountId, orgIdentifier, projectIdentifier, planExecutionId, false);
-    if (!pipelineExecutionSummaryEntity.isLatestExecution()) {
-      return ResponseDTO.newResponse(
-          RetryInfo.builder()
-              .isResumable(false)
-              .errorMessage(
-                  "This execution is not the latest of all retried execution. You can only retry the latest execution.")
-              .build());
-    }
-
-    boolean inTimeLimit =
-        PlanResourceUtility.validateInTimeLimitForRetry(pipelineExecutionSummaryEntity.getCreatedAt());
-    if (!inTimeLimit) {
-      return ResponseDTO.newResponse(RetryInfo.builder()
-                                         .isResumable(false)
-                                         .errorMessage("Execution is more than 30 days old. Cannot retry")
-                                         .build());
-    }
-
-    String updatedPipeline = updatedPipelineEntity.get().getYaml();
-
-    String executedPipeline = retryExecutionHelper.getYamlFromExecutionId(planExecutionId);
-    return ResponseDTO.newResponse(
-        retryExecutionHelper.getRetryStages(updatedPipeline, executedPipeline, planExecutionId, pipelineIdentifier));
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    return ResponseDTO.newResponse(retryExecutionHelper.validateRetry(
+        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, planExecutionId));
   }
 
   @POST
@@ -683,36 +644,10 @@ public class PlanExecutionResource {
       throw new InvalidRequestException("You need to select the stage to retry!!");
     }
 
-    Optional<PipelineEntity> updatedPipelineEntity =
-        pmsPipelineService.get(accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, false);
-
-    // checking if pipeline exists or not
-    if (!updatedPipelineEntity.isPresent()) {
-      throw new InvalidRequestException(
-          String.format("Pipeline with the given ID: %s does not exist or has been deleted", pipelineIdentifier));
-    }
-
-    PipelineExecutionSummaryEntity pipelineExecutionSummaryEntity =
-        pmsExecutionService.getPipelineExecutionSummaryEntity(
-            accountId, orgIdentifier, projectIdentifier, previousExecutionId, false);
-
-    // only latest execution can be retried
-    if (!pipelineExecutionSummaryEntity.isLatestExecution()) {
-      throw new InvalidRequestException(
-          "This execution is not the latest of all retried execution. You can only retry the latest execution.");
-    }
-
-    if (!StatusUtils.getRetryableFailedStatuses().contains(
-            pipelineExecutionSummaryEntity.getStatus().getEngineStatus())) {
-      throw new InvalidRequestException(
-          "Retrying is applicable only for failed pipeline. You can only retry when executed pipeline is either of these statuses - Failed, Aborted, Expired, Rejected");
-    }
-
-    // validate time limit for retry stages: time limit is 30 days
-    boolean inTimeLimit =
-        PlanResourceUtility.validateInTimeLimitForRetry(pipelineExecutionSummaryEntity.getCreatedAt());
-    if (!inTimeLimit) {
-      throw new InvalidRequestException("Execution is more than 30 days old. Cannot retry");
+    RetryInfo retryInfo = retryExecutionHelper.validateRetry(
+        accountId, orgIdentifier, projectIdentifier, pipelineIdentifier, previousExecutionId);
+    if (!retryInfo.isResumable()) {
+      throw new InvalidRequestException(retryInfo.getErrorMessage());
     }
 
     PlanExecutionResponseDto planExecutionResponseDto = pipelineExecutor.retryPipelineWithInputSetPipelineYaml(

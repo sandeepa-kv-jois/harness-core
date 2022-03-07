@@ -32,8 +32,6 @@ import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 import io.harness.pms.contracts.plan.PlanCreationBlobResponse;
 import io.harness.pms.contracts.plan.RerunInfo;
 import io.harness.pms.contracts.plan.RetryExecutionInfo;
-import io.harness.pms.contracts.plan.TriggerType;
-import io.harness.pms.contracts.plan.TriggeredBy;
 import io.harness.pms.exception.PmsExceptionUtils;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
 import io.harness.pms.helpers.PrincipalInfoHelper;
@@ -52,7 +50,6 @@ import io.harness.pms.pipeline.yaml.BasicPipeline;
 import io.harness.pms.plan.creation.PlanCreatorMergeService;
 import io.harness.pms.plan.execution.beans.ExecArgs;
 import io.harness.pms.plan.execution.beans.StagesExecutionInfo;
-import io.harness.pms.plan.execution.beans.TriggerFlowPlanDetails;
 import io.harness.pms.rbac.validator.PipelineRbacService;
 import io.harness.pms.stages.StagesExpressionExtractor;
 import io.harness.pms.yaml.YamlUtils;
@@ -109,19 +106,10 @@ public class ExecutionHelper {
     return pipelineEntityOptional.get();
   }
 
-  public ExecutionTriggerInfo buildTriggerInfo(
-      TriggerFlowPlanDetails triggerFlowPlanDetails, String originalExecutionId) {
-    if (triggerFlowPlanDetails == null) {
-      return buildTriggerInfoForManualFlow(originalExecutionId);
-    } else {
-      return buildTriggerInfoForTriggerFlow(
-          triggerFlowPlanDetails.getTriggerType(), triggerFlowPlanDetails.getTriggeredBy());
-    }
-  }
-
-  public ExecutionTriggerInfo buildTriggerInfoForManualFlow(String originalExecutionId) {
+  public ExecutionTriggerInfo buildTriggerInfo(String originalExecutionId) {
     ExecutionTriggerInfo.Builder triggerInfoBuilder =
-        buildTriggerInfoBasicInfo(MANUAL, triggeredByHelper.getFromSecurityContext());
+        ExecutionTriggerInfo.newBuilder().setTriggerType(MANUAL).setTriggeredBy(
+            triggeredByHelper.getFromSecurityContext());
 
     if (originalExecutionId == null) {
       return triggerInfoBuilder.setIsRerun(false).build();
@@ -147,19 +135,10 @@ public class ExecutionHelper {
         .build();
   }
 
-  public ExecutionTriggerInfo buildTriggerInfoForTriggerFlow(TriggerType triggerType, TriggeredBy triggeredBy) {
-    return buildTriggerInfoBasicInfo(triggerType, triggeredBy).setIsRerun(false).build();
-  }
-
-  public ExecutionTriggerInfo.Builder buildTriggerInfoBasicInfo(TriggerType triggerType, TriggeredBy triggeredBy) {
-    return ExecutionTriggerInfo.newBuilder().setTriggerType(triggerType).setTriggeredBy(triggeredBy);
-  }
-
   @SneakyThrows
   public ExecArgs buildExecutionArgs(PipelineEntity pipelineEntity, String moduleType, String mergedRuntimeInputYaml,
       List<String> stagesToRun, Map<String, String> expressionValues, ExecutionTriggerInfo triggerInfo,
-      String originalExecutionId, RetryExecutionParameters retryExecutionParameters,
-      TriggerFlowPlanDetails triggerFlowPlanDetails) {
+      String originalExecutionId, RetryExecutionParameters retryExecutionParameters) {
     final String executionId = generateUuid();
 
     boolean isRetry = retryExecutionParameters.isRetry();
@@ -183,7 +162,7 @@ public class ExecutionHelper {
         stagesExecutionInfo.getPipelineYamlToRun());
 
     PlanExecutionMetadata planExecutionMetadata = obtainPlanExecutionMetadata(mergedRuntimeInputYaml, executionId,
-        stagesExecutionInfo, originalExecutionId, retryExecutionParameters, expandedJson, triggerFlowPlanDetails);
+        stagesExecutionInfo, originalExecutionId, retryExecutionParameters, expandedJson);
     pipelineEnforcementService.validateExecutionEnforcementsBasedOnStage(
         pipelineEntity.getAccountId(), YamlUtils.extractPipelineField(planExecutionMetadata.getProcessedYaml()));
     BasicPipeline basicPipeline = YamlUtils.read(planExecutionMetadata.getYaml(), BasicPipeline.class);
@@ -249,8 +228,7 @@ public class ExecutionHelper {
 
   private PlanExecutionMetadata obtainPlanExecutionMetadata(String mergedRuntimeInputYaml, String executionId,
       StagesExecutionInfo stagesExecutionInfo, String originalExecutionId,
-      RetryExecutionParameters retryExecutionParameters, String expandedPipelineJson,
-      TriggerFlowPlanDetails triggerFlowPlanDetails) {
+      RetryExecutionParameters retryExecutionParameters, String expandedPipelineJson) {
     boolean isRetry = retryExecutionParameters.isRetry();
     String pipelineYaml = stagesExecutionInfo.getPipelineYamlToRun();
     PlanExecutionMetadata.Builder planExecutionMetadataBuilder =
@@ -261,10 +239,6 @@ public class ExecutionHelper {
             .expandedPipelineJson(expandedPipelineJson)
             .stagesExecutionMetadata(stagesExecutionInfo.toStagesExecutionMetadata())
             .allowStagesExecution(stagesExecutionInfo.isAllowStagesExecution());
-    if (triggerFlowPlanDetails != null) {
-      planExecutionMetadataBuilder.triggerJsonPayload(triggerFlowPlanDetails.getPayload())
-          .triggerPayload(triggerFlowPlanDetails.getTriggerPayload());
-    }
     String currentProcessedYaml;
     try {
       currentProcessedYaml = YamlUtils.injectUuid(pipelineYaml);

@@ -10,6 +10,7 @@ package io.harness.accesscontrol;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.exception.WingsException.ExecutionContext.MANAGER;
 
+import io.harness.accesscontrol.commons.exceptions.AccessDeniedErrorDTO;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.eraro.ErrorCode;
 import io.harness.logging.ExceptionLogger;

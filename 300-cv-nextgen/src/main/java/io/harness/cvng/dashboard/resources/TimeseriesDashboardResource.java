@@ -10,8 +10,9 @@ package io.harness.cvng.dashboard.resources;
 import io.harness.annotations.ExposeInternalException;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.PageParams;
-import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
+import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.filterParams.TimeSeriesAnalysisFilter;
 import io.harness.cvng.dashboard.beans.TimeSeriesMetricDataDTO;
@@ -28,6 +29,7 @@ import io.swagger.annotations.ApiOperation;
 import java.time.Instant;
 import java.util.List;
 import javax.validation.constraints.NotNull;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.Path;
@@ -113,21 +115,21 @@ public class TimeseriesDashboardResource {
   @ExceptionMetered
   @ApiOperation(value = "get all time series data in a given time range", nickname = "getTimeSeriesMetricData")
   public RestResponse<PageResponse<TimeSeriesMetricDataDTO>> getTimeSeriesMetricData(
-      @NotNull @QueryParam("accountId") String accountId, @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
-      @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @NotNull @QueryParam("serviceIdentifier") String serviceIdentifier,
-      @NotNull @QueryParam("environmentIdentifier") String environmentIdentifier,
+      @BeanParam ProjectParams projectParams, @QueryParam("serviceIdentifier") String serviceIdentifier,
+      @QueryParam("environmentIdentifier") String environmentIdentifier,
+      @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
       @NotNull @QueryParam("startTime") Long startTimeMillis, @NotNull @QueryParam("endTime") Long endTimeMillis,
       @QueryParam("anomalous") @DefaultValue("false") boolean anomalous, @QueryParam("filter") String filter,
       @QueryParam("healthSources") List<String> healthSourceIdentifiers,
       @QueryParam("page") @DefaultValue("0") int page, @QueryParam("size") @DefaultValue("10") int size) {
-    ServiceEnvironmentParams serviceEnvironmentParams = ServiceEnvironmentParams.builder()
-                                                            .accountIdentifier(accountId)
-                                                            .orgIdentifier(orgIdentifier)
-                                                            .projectIdentifier(projectIdentifier)
-                                                            .serviceIdentifier(serviceIdentifier)
-                                                            .environmentIdentifier(environmentIdentifier)
-                                                            .build();
+    MonitoredServiceParams monitoredServiceParams = MonitoredServiceParams.builder()
+                                                        .accountIdentifier(projectParams.getAccountIdentifier())
+                                                        .orgIdentifier(projectParams.getOrgIdentifier())
+                                                        .projectIdentifier(projectParams.getProjectIdentifier())
+                                                        .serviceIdentifier(serviceIdentifier)
+                                                        .environmentIdentifier(environmentIdentifier)
+                                                        .monitoredServiceIdentifier(monitoredServiceIdentifier)
+                                                        .build();
     TimeRangeParams timeRangeParams = TimeRangeParams.builder()
                                           .startTime(Instant.ofEpochMilli(startTimeMillis))
                                           .endTime(Instant.ofEpochMilli(endTimeMillis))
@@ -140,6 +142,6 @@ public class TimeseriesDashboardResource {
                                                             .build();
 
     return new RestResponse<>(timeSeriesDashboardService.getTimeSeriesMetricData(
-        serviceEnvironmentParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams));
+        monitoredServiceParams, timeRangeParams, timeSeriesAnalysisFilter, pageParams));
   }
 }

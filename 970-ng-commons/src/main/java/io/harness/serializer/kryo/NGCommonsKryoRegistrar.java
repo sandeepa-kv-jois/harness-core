@@ -15,6 +15,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.InputSetValidatorType;
 import io.harness.connector.ConnectivityStatus;
 import io.harness.connector.ConnectorValidationResult;
+import io.harness.cvng.beans.appd.AppDynamicsApplication;
+import io.harness.cvng.beans.appd.AppDynamicsTier;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.FilterCreatorException;
 import io.harness.exception.JsonSchemaValidationException;
@@ -86,5 +88,8 @@ public class NGCommonsKryoRegistrar implements KryoRegistrar {
     kryo.register(PlanCreatorException.class, 970007);
     kryo.register(ServiceAccountDTO.class, 970008);
     kryo.register(SchemaCacheKey.class, 970009);
+
+    kryo.register(AppDynamicsApplication.class, 9020);
+    kryo.register(AppDynamicsTier.class, 9021);
   }
 }
