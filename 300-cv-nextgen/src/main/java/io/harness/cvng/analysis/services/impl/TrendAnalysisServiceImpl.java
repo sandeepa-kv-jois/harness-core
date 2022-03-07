@@ -348,10 +348,10 @@ public class TrendAnalysisServiceImpl implements TrendAnalysisService {
       ServiceGuardTimeSeriesAnalysisDTO analysisDTO, Instant startTime, Instant endTime) {
     List<TimeSeriesRiskSummary.TransactionMetricRisk> metricRiskList = new ArrayList<>();
     analysisDTO.getTxnMetricAnalysisData().forEach(
-        (txnName, metricMap) -> metricMap.forEach((metricName, metricData) -> {
+        (txnName, metricMap) -> metricMap.forEach((metricIdentifier, metricData) -> {
           TimeSeriesRiskSummary.TransactionMetricRisk metricRisk = TimeSeriesRiskSummary.TransactionMetricRisk.builder()
                                                                        .transactionName(txnName)
-                                                                       .metricName(metricName)
+                                                                       .metricIdentifier(metricIdentifier)
                                                                        .metricRisk(metricData.getRisk().getValue())
                                                                        .metricScore(metricData.getScore())
                                                                        .lastSeenTime(metricData.getLastSeenTime())
@@ -372,11 +372,11 @@ public class TrendAnalysisServiceImpl implements TrendAnalysisService {
     Map<String, Map<String, MetricSum>> cumulativeSumsMap = new HashMap<>();
     analysisDTO.getTxnMetricAnalysisData().forEach((txnName, metricMap) -> {
       cumulativeSumsMap.put(txnName, new HashMap<>());
-      metricMap.forEach((metricName, metricSums) -> {
-        TimeSeriesCumulativeSums.MetricSum sums = metricSums.getCumulativeSums();
-        if (sums != null) {
-          sums.setMetricName(metricName);
-          cumulativeSumsMap.get(txnName).put(metricName, sums);
+      metricMap.forEach((metricIdentifier, metricSums) -> {
+        if (metricSums.getCumulativeSums() != null) {
+          TimeSeriesCumulativeSums.MetricSum sums = metricSums.getCumulativeSums().toMetricSum();
+          sums.setMetricIdentifier(metricIdentifier);
+          cumulativeSumsMap.get(txnName).put(metricIdentifier, sums);
         }
       });
     });
@@ -397,8 +397,8 @@ public class TrendAnalysisServiceImpl implements TrendAnalysisService {
     analysisDTO.getTxnMetricAnalysisData().forEach((txnName, metricMap) -> {
       shortTermHistoryMap.put(txnName, new HashMap<>());
       metricMap.forEach(
-          (metricName,
-              txnMetricData) -> shortTermHistoryMap.get(txnName).put(metricName, txnMetricData.getShortTermHistory()));
+          (metricIdentifier, txnMetricData)
+              -> shortTermHistoryMap.get(txnName).put(metricIdentifier, txnMetricData.getShortTermHistory()));
     });
 
     return TimeSeriesShortTermHistory.builder()

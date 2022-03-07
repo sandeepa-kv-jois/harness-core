@@ -5,7 +5,7 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.resourcegroup.v1.model;
+package io.harness.resourcegroup.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
@@ -18,4 +18,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
       @JsonSubTypes.Type(value = ResourceSelectorByScope.class, name = "ResourceSelectorByScope")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
+/*This class cannot be moved since it is missing type alias*/
 public interface ResourceSelector {}

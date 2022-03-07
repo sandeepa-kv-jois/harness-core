@@ -236,6 +236,15 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
         .asList(new FindOptions().limit(count));
   }
 
+  @Override
+  public List<DataCollectionTask> getAllDataCollectionTasks(String accountId, String verificationTaskId) {
+    return hPersistence.createQuery(DataCollectionTask.class)
+        .filter(DataCollectionTaskKeys.accountId, accountId)
+        .filter(DataCollectionTaskKeys.verificationTaskId, verificationTaskId)
+        .order(Sort.descending(DataCollectionTaskKeys.startTime))
+        .asList();
+  }
+
   private void markDependentTasksFailed(DataCollectionTask task) {
     if (task instanceof DeploymentDataCollectionTask) {
       verificationJobInstanceService.logProgress(

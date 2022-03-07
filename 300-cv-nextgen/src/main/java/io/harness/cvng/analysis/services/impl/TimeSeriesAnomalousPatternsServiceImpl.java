@@ -12,7 +12,7 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.persistence.HQuery.excludeAuthority;
 
 import io.harness.cvng.analysis.beans.ServiceGuardTimeSeriesAnalysisDTO;
-import io.harness.cvng.analysis.beans.TimeSeriesAnomalies;
+import io.harness.cvng.analysis.beans.TimeSeriesAnomaliesDTO;
 import io.harness.cvng.analysis.entities.TimeSeriesAnomalousPatterns;
 import io.harness.cvng.analysis.entities.TimeSeriesAnomalousPatterns.TimeSeriesAnomalousPatternsKeys;
 import io.harness.cvng.analysis.services.api.TimeSeriesAnomalousPatternsService;
@@ -68,7 +68,7 @@ public class TimeSeriesAnomalousPatternsServiceImpl implements TimeSeriesAnomalo
   }
 
   @Override
-  public Map<String, Map<String, List<TimeSeriesAnomalies>>> getLongTermAnomalies(String verificationTaskId) {
+  public Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> getLongTermAnomalies(String verificationTaskId) {
     log.info("Fetching longterm anomalies for config: {}", verificationTaskId);
     TimeSeriesAnomalousPatterns anomalousPatterns =
         hPersistence.createQuery(TimeSeriesAnomalousPatterns.class)
@@ -82,12 +82,12 @@ public class TimeSeriesAnomalousPatternsServiceImpl implements TimeSeriesAnomalo
   }
 
   private TimeSeriesAnomalousPatterns buildAnomalies(ServiceGuardTimeSeriesAnalysisDTO analysisDTO) {
-    Map<String, Map<String, List<TimeSeriesAnomalies>>> anomaliesMap = new HashMap<>();
+    Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> anomaliesMap = new HashMap<>();
     analysisDTO.getTxnMetricAnalysisData().forEach((txnName, metricMap) -> {
       anomaliesMap.put(txnName, new HashMap<>());
       metricMap.forEach(
-          (metricName,
-              txnMetricData) -> anomaliesMap.get(txnName).put(metricName, txnMetricData.getAnomalousPatterns()));
+          (metricIdentifier,
+              txnMetricData) -> anomaliesMap.get(txnName).put(metricIdentifier, txnMetricData.getAnomalousPatterns()));
     });
 
     return TimeSeriesAnomalousPatterns.builder()

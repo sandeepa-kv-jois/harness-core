@@ -27,7 +27,7 @@ import io.harness.ng.beans.PageRequest;
 import io.harness.resourcegroup.framework.v1.service.Resource;
 import io.harness.resourcegroup.framework.v1.service.ResourceGroupService;
 import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
-import io.harness.resourcegroup.v1.model.StaticResourceSelector;
+import io.harness.resourcegroup.model.StaticResourceSelector;
 import io.harness.resourcegroup.v1.remote.dto.ManagedFilter;
 import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
 import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
