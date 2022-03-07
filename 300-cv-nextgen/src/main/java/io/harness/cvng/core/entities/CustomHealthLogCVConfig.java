@@ -14,7 +14,6 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition.CustomHealthLogDefinitionKeys;
 import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
-import io.harness.cvng.core.beans.CustomHealthRequestDefinition.CustomHealthDefinitionKeys;
 
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
@@ -48,12 +47,7 @@ public class CustomHealthLogCVConfig extends LogCVConfig {
     checkNotNull(
         serviceInstanceJsonPath, generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.serviceInstanceJsonPath));
     checkNotNull(timestampJsonPath, generateErrorMessageFromParam(CustomHealthLogDefinitionKeys.timestampJsonPath));
-    checkNotNull(requestDefinition.getUrlPath(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.urlPath));
-    checkNotNull(requestDefinition.getMethod(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.method));
-    checkNotNull(
-        requestDefinition.getStartTimeInfo(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.startTimeInfo));
-    checkNotNull(
-        requestDefinition.getEndTimeInfo(), generateErrorMessageFromParam(CustomHealthDefinitionKeys.endTimeInfo));
+    requestDefinition.validateParams();
   }
 
   @Override

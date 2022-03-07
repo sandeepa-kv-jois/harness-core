@@ -13,6 +13,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.beans.customhealth.TimestampInfo;
 import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
@@ -44,6 +45,8 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
             .requestDefinition(CustomHealthRequestDefinition.builder()
                                    .method(CustomHealthMethod.GET)
                                    .urlPath("https://dd.com")
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .endTimeInfo(TimestampInfo.builder().build())
                                    .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
@@ -104,6 +107,8 @@ public class CustomHealthMetricCVConfigTest extends CategoryTest {
             .requestDefinition(CustomHealthRequestDefinition.builder()
                                    .method(CustomHealthMethod.GET)
                                    .urlPath("https://dd.com")
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .endTimeInfo(TimestampInfo.builder().build())
                                    .build())
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")

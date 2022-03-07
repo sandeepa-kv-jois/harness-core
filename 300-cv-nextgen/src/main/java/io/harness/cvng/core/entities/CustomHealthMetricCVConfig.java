@@ -74,16 +74,11 @@ public class CustomHealthMetricCVConfig extends MetricCVConfig {
 
     for (int metricDefinitionIndex = 0; metricDefinitionIndex < metricDefinitions.size(); metricDefinitionIndex++) {
       CustomHealthCVConfigMetricDefinition metricDefinition = metricDefinitions.get(metricDefinitionIndex);
-      CustomHealthRequestDefinition customHealthDefinition = metricDefinition.getRequestDefinition();
+      CustomHealthRequestDefinition requestDefinition = metricDefinition.getRequestDefinition();
 
       checkNotNull(metricDefinition.getMetricName(),
           generateErrorMessageFromParam("metricName") + " for index " + metricDefinitionIndex);
-      checkNotNull(customHealthDefinition.getMethod(),
-          generateErrorMessageFromParam(CustomHealthRequestDefinition.CustomHealthDefinitionKeys.method) + " for index "
-              + metricDefinitionIndex);
-      checkNotNull(customHealthDefinition.getUrlPath(),
-          generateErrorMessageFromParam(CustomHealthRequestDefinition.CustomHealthDefinitionKeys.urlPath)
-              + " for index " + metricDefinitionIndex);
+      requestDefinition.validateParams();
 
       AnalysisInfo.SLI sliDTO = metricDefinition.getSli();
       AnalysisInfo.DeploymentVerification deploymentVerification = metricDefinition.getDeploymentVerification();
