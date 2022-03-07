@@ -18,7 +18,9 @@ import java.util.Arrays;
 @OwnedBy(HarnessTeam.CDP)
 public enum InfrastructureType {
   @JsonProperty(InfrastructureKind.KUBERNETES_DIRECT) KUBERNETES_DIRECT(InfrastructureKind.KUBERNETES_DIRECT),
-  @JsonProperty(InfrastructureKind.KUBERNETES_GCP) KUBERNETES_GCP(InfrastructureKind.KUBERNETES_GCP);
+  @JsonProperty(InfrastructureKind.KUBERNETES_GCP) KUBERNETES_GCP(InfrastructureKind.KUBERNETES_GCP),
+  @JsonProperty(InfrastructureKind.PDC) PDC(InfrastructureKind.PDC);
+
   private final String displayName;
 
   InfrastructureType(String displayName) {

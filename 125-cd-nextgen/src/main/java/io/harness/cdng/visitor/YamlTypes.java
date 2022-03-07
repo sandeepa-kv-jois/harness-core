@@ -81,4 +81,8 @@ public interface YamlTypes {
   String DELEGATE_SELECTORS = "delegateSelectors";
 
   String COMMAND_FLAGS_WRAPPER = "commandFlags";
+  String SSH_KEY_REF = "sshKeyRef";
+  String HOSTS = "hosts";
+  String ATTRIBUTE_FILTERS = "attributeFilters";
+  String HOST_FILTERS = "hostFilters";
 }

@@ -111,6 +111,10 @@ public class InfraVariableCreator {
           addVariablesForKubernetesGcpInfra(infraDefNode, yamlPropertiesMap);
           break;
 
+        case InfrastructureKind.PDC:
+          addVariablesForPhysicalDataCenterInfra(infraDefNode, yamlPropertiesMap);
+          break;
+
         default:
           throw new InvalidRequestException("Invalid infra definition type");
       }
@@ -139,6 +143,21 @@ public class InfraVariableCreator {
     addVariableForYamlType(YamlTypes.NAMESPACE, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.RELEASE_NAME, infraSpecNode, yamlPropertiesMap);
     addVariableForYamlType(YamlTypes.CLUSTER, infraSpecNode, yamlPropertiesMap);
+  }
+
+  private static void addVariablesForPhysicalDataCenterInfra(
+      YamlField infraDefNode, Map<String, YamlProperties> yamlPropertiesMap) {
+    YamlField infraSpecNode = infraDefNode.getNode().getField(YamlTypes.SPEC);
+    if (infraSpecNode == null) {
+      return;
+    }
+
+    addVariableForYamlType(YamlTypes.SSH_KEY_REF, infraSpecNode, yamlPropertiesMap);
+    addVariableForYamlType(YamlTypes.HOSTS, infraSpecNode, yamlPropertiesMap);
+    addVariableForYamlType(YamlTypes.CONNECTOR_REF, infraSpecNode, yamlPropertiesMap);
+    addVariableForYamlType(YamlTypes.ATTRIBUTE_FILTERS, infraSpecNode, yamlPropertiesMap);
+    addVariableForYamlType(YamlTypes.HOST_FILTERS, infraSpecNode, yamlPropertiesMap);
+    addVariableForYamlType(YamlTypes.DELEGATE_SELECTORS, infraSpecNode, yamlPropertiesMap);
   }
 
   private void addVariableForYamlType(

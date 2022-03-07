@@ -62,6 +62,7 @@ io.harness.cdng.provision.terraform.TerraformApplyOutcome
 io.harness.steps.approval.step.harness.HarnessApprovalStepInfo
 io.harness.steps.http.HttpOutcome
 io.harness.cdng.infra.yaml.K8SDirectInfrastructure
+io.harness.cdng.infra.yaml.PdcInfrastructure
 io.harness.advisers.rollback.OnFailRollbackParameters
 io.harness.ngpipeline.artifact.bean.GcrArtifactOutcome
 io.harness.cdng.infra.beans.K8sDirectInfraMapping
