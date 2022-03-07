@@ -227,6 +227,10 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
         "[GRAPH_ERROR]: Trying to build orchestration graph from scratch for planExecutionId [%s]", planExecutionId));
     PlanExecution planExecution = planExecutionService.get(planExecutionId);
     List<NodeExecution> nodeExecutions = nodeExecutionService.fetchNodeExecutionsWithoutOldRetries(planExecutionId);
+    List<NodeExecution> nodeExecutionWithNullParams =
+        nodeExecutions.stream()
+            .filter(nodeExecution -> nodeExecution.getResolvedStepParameters() == null)
+            .collect(Collectors.toList());
     if (isEmpty(nodeExecutions)) {
       throw new InvalidRequestException("No nodes found for planExecutionId [" + planExecutionId + "]");
     }

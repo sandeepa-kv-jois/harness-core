@@ -27,6 +27,7 @@ import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.contracts.visualisation.log.OrchestrationLogEvent;
 import io.harness.pms.execution.utils.AmbianceUtils;
+import io.harness.pms.sdk.PmsSdkInstance;
 import io.harness.repositories.orchestrationEventLog.OrchestrationEventLogRepository;
 
 import com.google.common.collect.ImmutableMap;
@@ -36,6 +37,7 @@ import com.google.inject.name.Named;
 import java.sql.Date;
 import java.time.Duration;
 import java.time.OffsetDateTime;
+import javax.cache.Cache;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @Singleton
@@ -44,6 +46,7 @@ public class OrchestrationLogPublisher
                NodeExecutionStartObserver {
   @Inject private OrchestrationEventLogRepository orchestrationEventLogRepository;
   @Inject @Named(EventsFrameworkConstants.ORCHESTRATION_LOG) private Producer producer;
+  @Inject @Named("orchestrationLogCache") Cache<String, Long> orchestrationLogCache;
 
   @Override
   public void onNodeStatusUpdate(NodeUpdateInfo nodeUpdateInfo) {
@@ -63,7 +66,6 @@ public class OrchestrationLogPublisher
         OrchestrationEventType.NODE_EXECUTION_UPDATE);
   }
 
-  // Todo: Introduce batching over here
   private void createAndHandleEventLog(
       String planExecutionId, String nodeExecutionId, OrchestrationEventType eventType) {
     orchestrationEventLogRepository.save(
@@ -76,12 +78,20 @@ public class OrchestrationLogPublisher
             .build());
     OrchestrationLogEvent orchestrationLogEvent =
         OrchestrationLogEvent.newBuilder().setPlanExecutionId(planExecutionId).build();
-
-    producer.send(Message.newBuilder()
-                      .putAllMetadata(ImmutableMap.of("nodeExecutionId", emptyIfNull(nodeExecutionId),
-                          "planExecutionId", planExecutionId, "eventType", eventType.name()))
-                      .setData(orchestrationLogEvent.toByteString())
-                      .build());
+    if (orchestrationLogCache.containsKey(planExecutionId)) {
+      if (orchestrationLogCache.get(planExecutionId) > 5) {
+        producer.send(Message.newBuilder()
+                          .putAllMetadata(ImmutableMap.of("nodeExecutionId", emptyIfNull(nodeExecutionId),
+                              "planExecutionId", planExecutionId, "eventType", eventType.name()))
+                          .setData(orchestrationLogEvent.toByteString())
+                          .build());
+        orchestrationLogCache.put(planExecutionId, 0L);
+      } else {
+        orchestrationLogCache.put(planExecutionId, orchestrationLogCache.get(planExecutionId) + 1);
+      }
+    } else {
+      orchestrationLogCache.put(planExecutionId, 1L);
+    }
   }
 
   @Override
