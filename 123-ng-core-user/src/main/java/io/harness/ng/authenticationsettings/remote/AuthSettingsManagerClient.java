@@ -92,6 +92,9 @@ public interface AuthSettingsManagerClient {
   @DELETE(API_PREFIX + "sso/delete-saml-idp-metadata")
   Call<RestResponse<SSOConfig>> deleteSAMLMetadata(@Query("accountId") String accountIdentifier);
 
+  @GET(API_PREFIX + "sso/get-oauth-settings-id")
+  Call<RestResponse<String>> getSAMLMetadataId(@Query("accountId") String accountIdentifier);
+
   @GET(API_PREFIX + "sso/saml-login-test")
   Call<RestResponse<LoginTypeResponse>> getSAMLLoginTest(@Query("accountId") @NotEmpty String accountIdentifier);
 

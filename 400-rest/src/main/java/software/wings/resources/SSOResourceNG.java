@@ -29,12 +29,14 @@ import io.harness.secretmanagers.SecretManagerConfigService;
 import io.harness.security.annotations.NextGenManagerAuth;
 
 import software.wings.beans.sso.OauthSettings;
+import software.wings.beans.sso.SamlSettings;
 import software.wings.security.annotations.AuthRule;
 import software.wings.security.authentication.LoginTypeResponse;
 import software.wings.security.authentication.LoginTypeResponse.LoginTypeResponseBuilder;
 import software.wings.security.authentication.SSOConfig;
 import software.wings.security.saml.SamlClientService;
 import software.wings.service.intfc.SSOService;
+import software.wings.service.intfc.SSOSettingService;
 import software.wings.service.intfc.security.SecretManager;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -66,10 +68,12 @@ import org.hibernate.validator.constraints.NotBlank;
 @TargetModule(HarnessModule._950_NG_AUTHENTICATION_SERVICE)
 public class SSOResourceNG {
   private SSOService ssoService;
+  private SSOSettingService ssoSettingService;
 
   @Inject
-  public SSOResourceNG(SSOService ssoService) {
+  public SSOResourceNG(SSOService ssoService, SSOSettingService ssoSettingService) {
     this.ssoService = ssoService;
+    this.ssoSettingService = ssoSettingService;
   }
   @Inject private SamlClientService samlClientService;
   @Inject private SecretManagerConfigService secretManagerConfigService;
@@ -111,6 +115,18 @@ public class SSOResourceNG {
   @ExceptionMetered
   public RestResponse<SSOConfig> deleteOauthSettings(@QueryParam("accountId") String accountId) {
     return new RestResponse<>(ssoService.deleteOauthConfiguration(accountId));
+  }
+
+  @GET
+  @Path("get-oauth-settings-id")
+  @Timed
+  @ExceptionMetered
+  public RestResponse<String> getOauthSettingId(@QueryParam("accountId") String accountId) {
+    SamlSettings samlSettings = ssoSettingService.getSamlSettingsByAccountId(accountId);
+    if (samlSettings == null) {
+      return new RestResponse<>(null);
+    }
+    return new RestResponse<>(samlSettings.getUuid());
   }
 
   @POST

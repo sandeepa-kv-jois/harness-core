@@ -29,6 +29,7 @@ import io.harness.ng.authenticationsettings.dtos.mechanisms.SAMLSettings;
 import io.harness.ng.authenticationsettings.dtos.mechanisms.UsernamePasswordSettings;
 import io.harness.ng.authenticationsettings.remote.AuthSettingsManagerClient;
 import io.harness.ng.core.account.AuthenticationMechanism;
+import io.harness.ng.core.api.UserGroupService;
 import io.harness.ng.core.user.TwoFactorAdminOverrideSettings;
 
 import software.wings.beans.loginSettings.LoginSettings;
@@ -60,6 +61,7 @@ import okhttp3.RequestBody;
 public class AuthenticationSettingsServiceImpl implements AuthenticationSettingsService {
   private final AuthSettingsManagerClient managerClient;
   private final EnforcementClientService enforcementClientService;
+  @Inject UserGroupService userGroupService;
 
   @Override
   public AuthenticationSettingsResponse getAuthenticationSettings(String accountIdentifier) {
@@ -239,6 +241,14 @@ public class AuthenticationSettingsServiceImpl implements AuthenticationSettings
 
   @Override
   public SSOConfig deleteSAMLMetadata(@NotNull @AccountIdentifier String accountIdentifier) {
+    String ssoId = getResponse(managerClient.getSAMLMetadataId(accountIdentifier));
+    if (ssoId == null) {
+      throw new InvalidRequestException("No Saml Metadata found for this account");
+    }
+    if (!userGroupService.getUserGroupsBySsoId(accountIdentifier, ssoId).isEmpty()) {
+      throw new InvalidRequestException(
+          "Deleting Saml provider with linked user groups is not allowed. Unlink the user groups first.");
+    }
     return getResponse(managerClient.deleteSAMLMetadata(accountIdentifier));
   }
 
