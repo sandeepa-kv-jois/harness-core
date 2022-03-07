@@ -49,13 +49,9 @@ public class GraphUpdateDispatcher implements Runnable {
         log.debug("Successfully acked the messageIds: {}", messageIds);
         return;
       }
-      String messageIdToRetain = messageIds.get(0);
+      messageIds.remove(messageIds.size() - 1);
       log.info("Graph update failed not acking the following message id {} from : {}", messageIds.get(0), messageIds);
-      messageIds.forEach(messageId -> {
-        if (!messageId.equals(messageIdToRetain)) {
-          consumer.acknowledge(messageId);
-        }
-      });
+      messageIds.forEach(consumer::acknowledge);
     }
   }
 
