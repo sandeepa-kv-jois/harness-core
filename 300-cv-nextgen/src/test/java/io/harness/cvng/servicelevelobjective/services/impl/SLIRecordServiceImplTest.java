@@ -336,7 +336,7 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
   }
 
   private void insertDummySLIRecords(int numOfGoodRecords, int numOfBadReocrds, Instant timeStamp, String sliId,
-      String verificationTaskId, int sliVersion, ) {
+      String verificationTaskId, int sliVersion) {
     List<SLIState> sliStateList = new ArrayList<>();
 
     for (int i = 0; i < numOfGoodRecords; i++) {
