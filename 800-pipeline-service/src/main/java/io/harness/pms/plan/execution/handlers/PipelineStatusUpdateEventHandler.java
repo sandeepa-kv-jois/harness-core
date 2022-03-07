@@ -43,7 +43,6 @@ public class PipelineStatusUpdateEventHandler implements PlanStatusUpdateObserve
   private final PlanExecutionService planExecutionService;
   private final PmsExecutionSummaryRespository pmsExecutionSummaryRepository;
   private OrchestrationEventEmitter eventEmitter;
-  private final Boolean skipStatusUpdateHandler = Boolean.valueOf(System.getenv().get("skipStatusUpdateHandler"));
 
   @Inject
   public PipelineStatusUpdateEventHandler(PlanExecutionService planExecutionService,
@@ -75,9 +74,6 @@ public class PipelineStatusUpdateEventHandler implements PlanStatusUpdateObserve
 
   @Override
   public void onEnd(Ambiance ambiance) {
-    if (skipStatusUpdateHandler) {
-      return;
-    }
     Optional<PipelineExecutionSummaryEntity> pipelineExecutionSummaryEntity =
         pmsExecutionSummaryRepository
             .findByAccountIdAndOrgIdentifierAndProjectIdentifierAndPlanExecutionIdAndPipelineDeletedNot(

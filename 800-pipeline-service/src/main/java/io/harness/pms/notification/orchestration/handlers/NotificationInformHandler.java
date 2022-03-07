@@ -28,7 +28,6 @@ import java.util.concurrent.ExecutorService;
 public class NotificationInformHandler implements AsyncInformObserver, NotificationObserver, OrchestrationEndObserver {
   @Inject @Named("PipelineExecutorService") ExecutorService executorService;
   @Inject NotificationHelper notificationHelper;
-  private final Boolean skipNotificationHandler = Boolean.valueOf(System.getenv().get("skipNotificationHandler"));
 
   @Override
   public void onSuccess(Ambiance ambiance) {
@@ -58,9 +57,6 @@ public class NotificationInformHandler implements AsyncInformObserver, Notificat
 
   @Override
   public void onEnd(Ambiance ambiance) {
-    if (skipNotificationHandler) {
-      return;
-    }
     try (AutoLogContext autoLogContext = AmbianceUtils.autoLogContext(ambiance)) {
       notificationHelper.sendNotification(ambiance, PipelineEventType.PIPELINE_END, null, null);
     }

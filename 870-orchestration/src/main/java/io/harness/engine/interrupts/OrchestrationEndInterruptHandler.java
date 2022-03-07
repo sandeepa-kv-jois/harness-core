@@ -25,13 +25,9 @@ import lombok.extern.slf4j.Slf4j;
 public class OrchestrationEndInterruptHandler implements AsyncInformObserver, OrchestrationEndObserver {
   @Inject private InterruptService interruptService;
   @Inject @Named("EngineExecutorService") ExecutorService executorService;
-  private final Boolean skipInterruptHandler = Boolean.valueOf(System.getenv().get("skipInterruptHandler"));
 
   @Override
   public void onEnd(Ambiance ambiance) {
-    if (skipInterruptHandler) {
-      return;
-    }
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
       long closedInterrupts = interruptService.closeActiveInterrupts(ambiance.getPlanExecutionId());
       if (closedInterrupts < 0) {
