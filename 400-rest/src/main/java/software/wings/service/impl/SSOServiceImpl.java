@@ -365,6 +365,11 @@ public class SSOServiceImpl implements SSOService {
   }
 
   @Override
+  public SamlSettings getSamlSettings(@NotBlank String accountId) {
+    return ssoSettingService.getSamlSettingsByAccountId(accountId);
+  }
+
+  @Override
   public LdapTestResponse validateLdapConnectionSettings(
       @NotNull LdapSettings ldapSettings, @NotBlank final String accountId) {
     boolean temporaryEncryption = !populateEncryptedFields(ldapSettings);

@@ -247,7 +247,7 @@ public class AuthenticationSettingsServiceImpl implements AuthenticationSettings
     }
     if (!userGroupService.getUserGroupsBySsoId(accountIdentifier, ssoId).isEmpty()) {
       throw new InvalidRequestException(
-          "Deleting Saml provider with linked user groups is not allowed. Unlink the user groups first.");
+          "Deleting Saml provider with linked user groups is not allowed. Unlink the user groups first");
     }
     return getResponse(managerClient.deleteSAMLMetadata(accountIdentifier));
   }

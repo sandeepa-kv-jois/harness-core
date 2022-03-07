@@ -36,7 +36,6 @@ import software.wings.security.authentication.LoginTypeResponse.LoginTypeRespons
 import software.wings.security.authentication.SSOConfig;
 import software.wings.security.saml.SamlClientService;
 import software.wings.service.intfc.SSOService;
-import software.wings.service.intfc.SSOSettingService;
 import software.wings.service.intfc.security.SecretManager;
 
 import com.codahale.metrics.annotation.ExceptionMetered;
@@ -68,12 +67,10 @@ import org.hibernate.validator.constraints.NotBlank;
 @TargetModule(HarnessModule._950_NG_AUTHENTICATION_SERVICE)
 public class SSOResourceNG {
   private SSOService ssoService;
-  private SSOSettingService ssoSettingService;
 
   @Inject
-  public SSOResourceNG(SSOService ssoService, SSOSettingService ssoSettingService) {
+  public SSOResourceNG(SSOService ssoService) {
     this.ssoService = ssoService;
-    this.ssoSettingService = ssoSettingService;
   }
   @Inject private SamlClientService samlClientService;
   @Inject private SecretManagerConfigService secretManagerConfigService;
@@ -118,11 +115,11 @@ public class SSOResourceNG {
   }
 
   @GET
-  @Path("get-oauth-settings-id")
+  @Path("get-saml-settings-id")
   @Timed
   @ExceptionMetered
   public RestResponse<String> getOauthSettingId(@QueryParam("accountId") String accountId) {
-    SamlSettings samlSettings = ssoSettingService.getSamlSettingsByAccountId(accountId);
+    SamlSettings samlSettings = ssoService.getSamlSettings(accountId);
     if (samlSettings == null) {
       return new RestResponse<>(null);
     }

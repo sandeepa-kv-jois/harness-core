@@ -18,6 +18,7 @@ import software.wings.beans.sso.LdapGroupResponse;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.LdapTestResponse;
 import software.wings.beans.sso.OauthSettings;
+import software.wings.beans.sso.SamlSettings;
 import software.wings.helpers.ext.ldap.LdapResponse;
 import software.wings.security.authentication.SSOConfig;
 
@@ -58,6 +59,8 @@ public interface SSOService {
   LdapSettings getLdapSettings(@NotBlank String accountId);
 
   LdapSettings deleteLdapSettings(@NotBlank String accountId);
+
+  SamlSettings getSamlSettings(@NotBlank String accountId);
 
   LdapTestResponse validateLdapConnectionSettings(@NotNull LdapSettings ldapSettings, @NotBlank String accountId);
 
