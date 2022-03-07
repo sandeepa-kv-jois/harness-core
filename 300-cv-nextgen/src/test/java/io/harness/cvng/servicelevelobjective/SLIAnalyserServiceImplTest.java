@@ -7,6 +7,7 @@
 
 package io.harness.cvng.servicelevelobjective;
 
+import static io.harness.rule.OwnerRule.ARPITJ;
 import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -96,6 +97,19 @@ public class SLIAnalyserServiceImplTest extends CvNextGenTestBase {
     assertThat(SLIState.NO_DATA).isEqualTo(sliState);
   }
 
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testRatioAnalyser_BadEventSuccess() {
+    ServiceLevelIndicatorDTO serviceLevelIndicatorDTO = createBadEventRatioServiceLevelIndicator();
+    Map<String, Double> requestMap = new HashMap<>();
+    requestMap.put("metric1", 4.0);
+    requestMap.put("metric2", 50.0);
+    SLIState sliState =
+        ratioAnalyserService.analyse(requestMap, (RatioSLIMetricSpec) serviceLevelIndicatorDTO.getSpec().getSpec());
+    assertThat(SLIState.GOOD).isEqualTo(sliState);
+  }
+
   private ServiceLevelIndicatorDTO createRatioServiceLevelIndicator() {
     return ServiceLevelIndicatorDTO.builder()
         .identifier("sliIndicator")
@@ -105,6 +119,24 @@ public class SLIAnalyserServiceImplTest extends CvNextGenTestBase {
                   .type(SLIMetricType.RATIO)
                   .spec(RatioSLIMetricSpec.builder()
                             .eventType(RatioSLIMetricEventType.GOOD)
+                            .metric1("metric1")
+                            .metric2("metric2")
+                            .thresholdValue(90.0)
+                            .thresholdType(ThresholdType.GREATER_THAN)
+                            .build())
+                  .build())
+        .build();
+  }
+
+  private ServiceLevelIndicatorDTO createBadEventRatioServiceLevelIndicator() {
+    return ServiceLevelIndicatorDTO.builder()
+        .identifier("sliIndicator")
+        .name("sliName")
+        .type(ServiceLevelIndicatorType.LATENCY)
+        .spec(ServiceLevelIndicatorSpec.builder()
+                  .type(SLIMetricType.RATIO)
+                  .spec(RatioSLIMetricSpec.builder()
+                            .eventType(RatioSLIMetricEventType.BAD)
                             .metric1("metric1")
                             .metric2("metric2")
                             .thresholdValue(90.0)

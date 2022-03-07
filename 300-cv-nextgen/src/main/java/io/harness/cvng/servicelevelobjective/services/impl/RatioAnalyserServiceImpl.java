@@ -7,6 +7,7 @@
 
 package io.harness.cvng.servicelevelobjective.services.impl;
 
+import io.harness.cvng.servicelevelobjective.beans.slimetricspec.RatioSLIMetricEventType;
 import io.harness.cvng.servicelevelobjective.beans.slimetricspec.RatioSLIMetricSpec;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIState;
 import io.harness.cvng.servicelevelobjective.services.api.SLIAnalyserService;
@@ -23,6 +24,9 @@ public class RatioAnalyserServiceImpl implements SLIAnalyserService<RatioSLIMetr
       return SLIState.NO_DATA;
     }
     double metricValue = (metricValue1 / metricValue2) * 100;
+    if (sliSpec.getEventType().equals(RatioSLIMetricEventType.BAD)) {
+      metricValue = (1 - (metricValue1 / metricValue2)) * 100;
+    }
     if (sliSpec.getThresholdType().compute(metricValue, sliSpec.getThresholdValue())) {
       return SLIState.GOOD;
     } else {
