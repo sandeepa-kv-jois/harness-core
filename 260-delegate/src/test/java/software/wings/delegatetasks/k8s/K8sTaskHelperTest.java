@@ -21,6 +21,7 @@ import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.NAMAN_TALAYCHA;
 import static io.harness.rule.OwnerRule.SAHIL;
+import static io.harness.rule.OwnerRule.TATHAGAT;
 import static io.harness.rule.OwnerRule.TMACARI;
 import static io.harness.rule.OwnerRule.YOGESH;
 
@@ -34,6 +35,7 @@ import static software.wings.beans.appmanifest.StoreType.OC_TEMPLATES;
 import static software.wings.beans.appmanifest.StoreType.Remote;
 import static software.wings.utils.WingsTestConstants.LONG_TIMEOUT_INTERVAL;
 
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -67,6 +69,7 @@ import io.harness.delegate.k8s.beans.K8sHandlerConfig;
 import io.harness.delegate.k8s.kustomize.KustomizeTaskHelper;
 import io.harness.delegate.k8s.openshift.OpenShiftDelegateService;
 import io.harness.delegate.service.ExecutionConfigOverrideFromFileOnDelegate;
+import io.harness.delegate.task.helm.CustomManifestFetchTaskHelper;
 import io.harness.delegate.task.helm.HelmChartInfo;
 import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.k8s.K8sTaskHelperBase;
@@ -169,6 +172,7 @@ public class K8sTaskHelperTest extends CategoryTest {
   @Mock private ExecutionConfigOverrideFromFileOnDelegate delegateLocalConfigService;
   @Mock private ScmFetchFilesHelper scmFetchFilesHelper;
   @Mock private ContainerDeploymentDelegateHelper containerDeploymentDelegateHelper;
+  @Mock private CustomManifestFetchTaskHelper customManifestFetchTaskHelper;
 
   private static final String REPO_URL = "helm-url";
   private String resourcePath = "k8s";
@@ -468,6 +472,41 @@ public class K8sTaskHelperTest extends CategoryTest {
     assertThat(helper.fetchManifestFilesAndWriteToDirectory(
                    delegateManifestConfig, manifestDirectory, executionLogCallback, 50000))
         .isFalse();
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testFetchBoundCustomSource() throws Exception {
+    reset(customManifestService);
+    final String tempParentDir = "temp/repository/k8s/source/tempParentDir";
+    final String tempDirPath = format("%s/temp-files", tempParentDir);
+    final String manifestDirectory = "repository/k8s/source/manifest-files";
+    doReturn("").when(mockK8sTaskHelperBase).getManifestFileNamesInLogFormat(anyString());
+    CustomManifestSource customManifestSource = CustomManifestSource.builder()
+                                                    .script("script")
+                                                    .filePaths(singletonList("file1"))
+                                                    .zippedManifestFileId("fileId")
+                                                    .build();
+    K8sDelegateManifestConfig delegateManifestConfig = K8sDelegateManifestConfig.builder()
+                                                           .manifestStoreTypes(CUSTOM)
+                                                           .customManifestSource(customManifestSource)
+                                                           .customManifestEnabled(true)
+                                                           .build();
+
+    delegateManifestConfig.setBindValuesAndManifestFetchTask(true);
+    FileIo.createDirectoryIfDoesNotExist(manifestDirectory);
+    FileIo.createDirectoryIfDoesNotExist(tempDirPath);
+    Files.createFile(Paths.get(tempDirPath, "test.yaml"));
+
+    doReturn(tempParentDir).when(customManifestService).getWorkingDirectory();
+    assertThat(helper.fetchManifestFilesAndWriteToDirectory(
+                   delegateManifestConfig, manifestDirectory, executionLogCallback, 50000))
+        .isTrue();
+    File file = new File(manifestDirectory);
+    assertThat(file.exists()).isTrue();
+    assertThat(file.list()).hasSize(1);
+    assertThat(file.list()).contains("test.yaml");
   }
 
   private List<ManifestFile> convertFileDataToManifestFiles(List<FileData> fileDataList) {

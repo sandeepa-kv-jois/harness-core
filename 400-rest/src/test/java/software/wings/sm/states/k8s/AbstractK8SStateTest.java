@@ -30,6 +30,7 @@ import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.Environment.Builder.anEnvironment;
 import static software.wings.beans.GcpKubernetesInfrastructureMapping.Builder.aGcpKubernetesInfrastructureMapping;
 import static software.wings.beans.SettingAttribute.Builder.aSettingAttribute;
+import static software.wings.beans.TaskType.CUSTOM_MANIFEST_FETCH_TASK;
 import static software.wings.beans.appmanifest.AppManifestKind.K8S_MANIFEST;
 import static software.wings.beans.appmanifest.ManifestFile.VALUES_YAML_KEY;
 import static software.wings.beans.appmanifest.StoreType.CUSTOM;
@@ -952,8 +953,10 @@ public class AbstractK8SStateTest extends WingsBaseTest {
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.FAILED);
     verify(activityService, times(1)).updateStatus(ACTIVITY_ID, APP_ID, ExecutionStatus.FAILED);
 
-    CustomManifestValuesFetchResponse successfulFetchResponse =
-        CustomManifestValuesFetchResponse.builder().commandExecutionStatus(SUCCESS).build();
+    CustomManifestValuesFetchResponse successfulFetchResponse = CustomManifestValuesFetchResponse.builder()
+                                                                    .commandExecutionStatus(SUCCESS)
+                                                                    .zippedManifestFileId("ZIP_FILE_ID")
+                                                                    .build();
     response.put(ACTIVITY_ID, successfulFetchResponse);
 
     Map<K8sValuesLocation, Collection<String>> valuesMap = new HashMap<>();
@@ -964,6 +967,7 @@ public class AbstractK8SStateTest extends WingsBaseTest {
     abstractK8SState.handleAsyncResponseWrapper(k8sStateExecutor, context, response);
     k8sStateExecutionData = (K8sStateExecutionData) context.getStateExecutionData();
     assertThat(k8sStateExecutionData.getValuesFiles().get(K8sValuesLocation.ServiceOverride)).containsExactly("values");
+    assertThat(k8sStateExecutionData.getZippedManifestFileId()).isEqualTo("ZIP_FILE_ID");
     verify(applicationManifestUtils, times(1))
         .getValuesFilesFromCustomFetchValuesResponse(context, appManifestMap, successfulFetchResponse, VALUES_YAML_KEY);
   }
@@ -1327,6 +1331,52 @@ public class AbstractK8SStateTest extends WingsBaseTest {
     assertThat(queuedTask.getData().getParameters()[0]).isSameAs(mockParams);
     assertThat(queuedTask.getSetupAbstractions().get(Cd1SetupFields.SERVICE_TEMPLATE_ID_FIELD))
         .isEqualTo(serviceTemplateId);
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testExecuteCustomBindManifestFetchTask() {
+    CustomManifestValuesFetchParams mockParams = CustomManifestValuesFetchParams.builder().build();
+    CustomSourceConfig customSourceConfig =
+        CustomSourceConfig.builder().path("FILE_PATH").script("CUSTOM_SCRIPT").build();
+    Map<K8sValuesLocation, ApplicationManifest> appManifestMap = ImmutableMap.of(K8sValuesLocation.Service,
+        ApplicationManifest.builder().customSourceConfig(customSourceConfig).storeType(CUSTOM).build());
+    K8sStateExecutor k8sStateExecutor = mock(K8sStateExecutor.class);
+    DirectKubernetesInfrastructureMapping infrastructureMapping =
+        DirectKubernetesInfrastructureMapping.builder().build();
+    infrastructureMapping.setUuid(INFRA_MAPPING_ID);
+    String serviceTemplateId = "serviceTemplateId";
+
+    doReturn(true).when(featureFlagService).isEnabled(FeatureName.CUSTOM_MANIFEST, ACCOUNT_ID);
+    doReturn(true)
+        .when(featureFlagService)
+        .isEnabled(FeatureName.BIND_CUSTOM_VALUE_AND_MANIFEST_FETCH_TASK, ACCOUNT_ID);
+
+    doReturn(infrastructureMapping).when(infrastructureMappingService).get(APP_ID, null);
+    doReturn(Activity.builder().uuid(ACTIVITY_ID).build()).when(activityService).save(any(Activity.class));
+    doReturn(appManifestMap).when(applicationManifestUtils).getApplicationManifests(context, AppManifestKind.VALUES);
+    doReturn(mockParams)
+        .when(applicationManifestUtils)
+        .createCustomManifestValuesFetchParams(context, appManifestMap, VALUES_YAML_KEY);
+    doReturn(serviceTemplateId).when(serviceTemplateHelper).fetchServiceTemplateId(infrastructureMapping);
+    ExecutionResponse executionResponse = abstractK8SState.executeWrapperWithManifest(k8sStateExecutor, context, 90000);
+
+    ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);
+    verify(delegateService, times(1)).queueTask(captor.capture());
+    DelegateTask queuedTask = captor.getValue();
+    assertThat(queuedTask.isSelectionLogsTrackingEnabled())
+        .isEqualTo(abstractK8SState.isSelectionLogsTrackingForTasksEnabled());
+    assertThat(queuedTask.getData()).isNotNull();
+    assertThat(queuedTask.getData().getParameters()).isNotEmpty();
+    assertThat(queuedTask.getData().getParameters()[0]).isSameAs(mockParams);
+    assertThat(mockParams.getCustomManifestSource()).isNotNull();
+    assertThat(mockParams.getCustomManifestSource().getFilePaths()).containsExactly("FILE_PATH");
+    assertThat(mockParams.getCustomManifestSource().getScript()).isEqualTo("CUSTOM_SCRIPT");
+    assertThat(queuedTask.getSetupAbstractions().get(Cd1SetupFields.SERVICE_TEMPLATE_ID_FIELD))
+        .isEqualTo(serviceTemplateId);
+    assertThat(((K8sStateExecutionData) executionResponse.getStateExecutionData()).getCurrentTaskType())
+        .isEqualTo(CUSTOM_MANIFEST_FETCH_TASK);
   }
 
   @Test
