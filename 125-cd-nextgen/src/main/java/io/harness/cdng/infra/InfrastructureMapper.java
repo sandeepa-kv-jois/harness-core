@@ -16,16 +16,19 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
+import io.harness.cdng.infra.beans.PdcInfrastructureOutcome;
 import io.harness.cdng.infra.yaml.Infrastructure;
 import io.harness.cdng.infra.yaml.InfrastructureKind;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
+import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.common.ParameterFieldHelper;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.steps.environment.EnvironmentOutcome;
 
+import java.util.List;
 import javax.annotation.Nonnull;
 import lombok.experimental.UtilityClass;
 import org.apache.commons.lang3.tuple.Pair;
@@ -61,6 +64,20 @@ public class InfrastructureMapper {
                 service, environmentOutcome, k8sGcpInfrastructure.getInfrastructureKeyValues()))
             .build();
 
+      case InfrastructureKind.PDC:
+        PdcInfrastructure pdcInfrastructure = (PdcInfrastructure) infrastructure;
+        validatePdcInfrastructure(pdcInfrastructure);
+        return PdcInfrastructureOutcome.builder()
+            .sshKeyRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getSshKeyRef()))
+            .hosts(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHosts()))
+            .connectorRef(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getConnectorRef()))
+            .hostFilters(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getHostFilters()))
+            .attributeFilters(ParameterFieldHelper.getParameterFieldValue(pdcInfrastructure.getAttributeFilters()))
+            .environment(environmentOutcome)
+            .infrastructureKey(
+                InfrastructureKey.generate(service, environmentOutcome, pdcInfrastructure.getInfrastructureKeyValues()))
+            .build();
+
       default:
         throw new InvalidArgumentsException(format("Unknown Infrastructure Kind : [%s]", infrastructure.getKind()));
     }
@@ -93,7 +110,27 @@ public class InfrastructureMapper {
     }
   }
 
+  private void validatePdcInfrastructure(PdcInfrastructure infrastructure) {
+    if (!hasValueOrExpression(infrastructure.getSshKeyRef())) {
+      throw new InvalidArgumentsException(Pair.of("sshKeyRef", "cannot be empty"));
+    }
+
+    if (!notEmptyOrExpression(infrastructure.getHosts()) && !hasValueOrExpression(infrastructure.getConnectorRef())) {
+      throw new InvalidArgumentsException(Pair.of("sshKeyRef", "cannot be empty"),
+          Pair.of("connectorRef", "cannot be empty"),
+          new IllegalArgumentException("sshKeyRef and connectorRef are not defined"));
+    }
+  }
+
   private boolean hasValueOrExpression(ParameterField<String> parameterField) {
+    if (ParameterField.isNull(parameterField)) {
+      return false;
+    }
+
+    return parameterField.isExpression() || !isEmpty(ParameterFieldHelper.getParameterFieldValue(parameterField));
+  }
+
+  private <T> boolean notEmptyOrExpression(ParameterField<List<T>> parameterField) {
     if (ParameterField.isNull(parameterField)) {
       return false;
     }
