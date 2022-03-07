@@ -15,11 +15,11 @@ import io.harness.expression.ExpressionEvaluator;
 
 import software.wings.annotation.EncryptableSetting;
 import software.wings.audit.ResourceType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.jersey.JsonViews;
 import software.wings.security.UsageRestrictions;
 import software.wings.service.impl.newrelic.NewRelicUrlProvider;
 import software.wings.settings.SettingValue;
-import software.wings.sm.StateType;
 import software.wings.stencils.DefaultValue;
 import software.wings.stencils.EnumData;
 import software.wings.yaml.setting.VerificationProviderYaml;
@@ -64,7 +64,7 @@ public class NewRelicConfig extends SettingValue implements EncryptableSetting, 
    * Instantiates a new New Relic dynamics config.
    */
   public NewRelicConfig() {
-    super(StateType.NEW_RELIC.name());
+    super(DelegateStateType.NEW_RELIC.name());
   }
 
   public NewRelicConfig(

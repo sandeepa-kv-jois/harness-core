@@ -14,7 +14,7 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.NewRelicConfig;
-import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
+import software.wings.delegatetasks.utils.CapablityUtility;
 import software.wings.service.impl.analysis.TimeSeriesMlAnalysisType;
 
 import java.util.List;
@@ -53,6 +53,6 @@ public class NewRelicDataCollectionInfo implements TaskParameters, ExecutionCapa
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return CapabilityHelper.generateDelegateCapabilities(newRelicConfig, encryptedDataDetails, maskingEvaluator);
+    return CapablityUtility.generateDelegateCapabilities(newRelicConfig, encryptedDataDetails, maskingEvaluator);
   }
 }
