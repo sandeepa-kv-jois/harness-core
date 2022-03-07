@@ -10,8 +10,8 @@ package software.wings.delegatetasks;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.threading.Morpheus.sleep;
 
-import static software.wings.common.VerificationConstants.DATA_COLLECTION_RETRY_SLEEP;
-import static software.wings.common.VerificationConstants.DURATION_TO_ASK_MINUTES;
+import static software.wings.delegatetasks.cv.CVConstants.DATA_COLLECTION_RETRY_SLEEP;
+import static software.wings.delegatetasks.cv.CVConstants.DURATION_TO_ASK_MINUTES;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
@@ -40,7 +40,6 @@ import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.service.intfc.appdynamics.AppdynamicsDelegateService;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.Table.Cell;
@@ -73,7 +72,6 @@ public class AppdynamicsDataCollectionTask extends AbstractDelegateDataCollectio
 
   @Inject private AppdynamicsDelegateService appdynamicsDelegateService;
 
-  @Inject private MetricDataStoreService metricStoreService;
   @Inject private EncryptionService encryptionService;
 
   private static final Set<String> REJECTED_METRICS_24X7 =
@@ -94,7 +92,7 @@ public class AppdynamicsDataCollectionTask extends AbstractDelegateDataCollectio
     log.info("metric collection - dataCollectionInfo: {}", dataCollectionInfo);
     return DataCollectionTaskResult.builder()
         .status(DataCollectionTaskStatus.SUCCESS)
-        .stateType(StateType.APP_DYNAMICS)
+        .stateType(DelegateStateType.APP_DYNAMICS)
         .build();
   }
 
@@ -104,8 +102,8 @@ public class AppdynamicsDataCollectionTask extends AbstractDelegateDataCollectio
   }
 
   @Override
-  protected StateType getStateType() {
-    return StateType.APP_DYNAMICS;
+  protected DelegateStateType getStateType() {
+    return DelegateStateType.APP_DYNAMICS;
   }
 
   @Override

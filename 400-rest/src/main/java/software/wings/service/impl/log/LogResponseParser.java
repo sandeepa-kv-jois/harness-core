@@ -15,9 +15,9 @@ import io.harness.time.Timestamp;
 
 import software.wings.delegatetasks.CustomDataCollectionUtils;
 import software.wings.delegatetasks.cv.DataCollectionException;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.impl.apm.VerificationResponseParser;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 
 import com.google.common.collect.Multimap;
 import java.text.ParseException;
@@ -48,13 +48,13 @@ public class LogResponseParser {
     private Set<String> hostList;
     private boolean shouldDoHostBasedFiltering;
     private boolean fixedHostName;
-    private Map<String, ResponseMapper> responseMappers;
+    private Map<String, CustomLogResponseMapper> responseMappers;
   }
 
   public List<LogElement> extractLogs(LogResponseData data) {
     Map<String, LogElement> resultMap = new HashMap<>();
     VerificationResponseParser logsResponseParser = new VerificationResponseParser();
-    for (ResponseMapper responseMapper : data.getResponseMappers().values()) {
+    for (CustomLogResponseMapper responseMapper : data.getResponseMappers().values()) {
       if (!isEmpty(responseMapper.getJsonPath()) && !isEmpty(responseMapper.getJsonPath().get(0))) {
         logsResponseParser.put(responseMapper.getJsonPath().get(0).split("\\."), responseMapper.getFieldName(),
             responseMapper.getRegexs());

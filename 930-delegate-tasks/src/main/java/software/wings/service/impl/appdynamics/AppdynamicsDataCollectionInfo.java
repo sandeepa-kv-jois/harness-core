@@ -14,7 +14,7 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.AppDynamicsConfig;
-import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
+import software.wings.delegatetasks.utils.CapablityUtility;
 import software.wings.service.impl.analysis.TimeSeriesMlAnalysisType;
 
 import java.util.List;
@@ -32,7 +32,6 @@ import lombok.NoArgsConstructor;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-
 public class AppdynamicsDataCollectionInfo implements TaskParameters, ExecutionCapabilityDemander {
   private AppDynamicsConfig appDynamicsConfig;
   private String applicationId;
@@ -53,6 +52,6 @@ public class AppdynamicsDataCollectionInfo implements TaskParameters, ExecutionC
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
-    return CapabilityHelper.generateDelegateCapabilities(appDynamicsConfig, encryptedDataDetails, maskingEvaluator);
+    return CapablityUtility.generateDelegateCapabilities(appDynamicsConfig, encryptedDataDetails, maskingEvaluator);
   }
 }

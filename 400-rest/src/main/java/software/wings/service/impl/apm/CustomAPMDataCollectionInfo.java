@@ -19,6 +19,7 @@ import io.harness.security.encryption.EncryptionConfig;
 import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.APMVerificationConfig;
 import software.wings.beans.TaskType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.cv.CustomAPMDataCollector;
 import software.wings.delegatetasks.cv.DataCollector;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
@@ -26,7 +27,6 @@ import software.wings.service.impl.analysis.DataCollectionInfoV2;
 import software.wings.service.impl.analysis.MetricsDataCollectionInfo;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.settings.SettingValue;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.Preconditions;
@@ -78,8 +78,8 @@ public class CustomAPMDataCollectionInfo extends MetricsDataCollectionInfo {
   }
 
   @Override
-  public StateType getStateType() {
-    return StateType.APM_VERIFICATION;
+  public DelegateStateType getStateType() {
+    return DelegateStateType.APM_VERIFICATION;
   }
 
   @Override

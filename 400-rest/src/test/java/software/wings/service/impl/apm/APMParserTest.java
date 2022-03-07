@@ -385,7 +385,6 @@ public class APMParserTest extends WingsBaseTest {
     records.forEach(record -> record.setValidUntil(null));
     String output =
         Resources.toString(APMParserTest.class.getResource("/apm/insights-variation-1-collected.json"), Charsets.UTF_8);
-
     assertThat(JsonUtils.asJson(records)).isEqualTo(output);
   }
 

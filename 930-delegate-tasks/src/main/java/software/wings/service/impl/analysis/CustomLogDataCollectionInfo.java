@@ -9,7 +9,7 @@ package software.wings.service.impl.analysis;
 
 import static io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator.HttpCapabilityDetailsLevel.QUERY;
 
-import static software.wings.common.VerificationConstants.DELAY_MINUTES;
+import static software.wings.delegatetasks.cv.CVConstants.DELAY_MINUTES;
 
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.capability.EncryptedDataDetailsCapabilityHelper;
@@ -17,9 +17,9 @@ import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import software.wings.sm.StateType;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
-import software.wings.utils.Utils;
+import software.wings.delegatetasks.DelegateStateType;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
+import software.wings.delegatetasks.utils.UrlUtility;
 
 import com.google.common.collect.Maps;
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class CustomLogDataCollectionInfo extends LogDataCollectionInfo {
   private String baseUrl;
   private String validationUrl;
   private String dataUrl;
-  private Map<String, Map<String, ResponseMapper>> logResponseDefinition;
+  private Map<String, Map<String, CustomLogResponseMapper>> logResponseDefinition;
   private Map<String, String> headers;
   private Map<String, String> options;
   private Map<String, Object> body;
@@ -55,12 +55,13 @@ public class CustomLogDataCollectionInfo extends LogDataCollectionInfo {
 
   @Builder
   public CustomLogDataCollectionInfo(String baseUrl, String validationUrl, String dataUrl,
-      Map<String, Map<String, ResponseMapper>> responseDefinition, Map<String, String> headers,
+      Map<String, Map<String, CustomLogResponseMapper>> responseDefinition, Map<String, String> headers,
       Map<String, String> options, Map<String, Object> body, int collectionFrequency, String accountId,
       String applicationId, String stateExecutionId, String cvConfidId, String workflowId, String workflowExecutionId,
       String serviceId, String query, long startTime, long endTime, int startMinute, int collectionTime,
-      String hostnameField, Set<String> hosts, StateType stateType, List<EncryptedDataDetail> encryptedDataDetails,
-      int initialDelayMinutes, String hostnameSeparator, boolean shouldDoHostBasedFiltering, boolean fixedHostName) {
+      String hostnameField, Set<String> hosts, DelegateStateType stateType,
+      List<EncryptedDataDetail> encryptedDataDetails, int initialDelayMinutes, String hostnameSeparator,
+      boolean shouldDoHostBasedFiltering, boolean fixedHostName) {
     super(accountId, applicationId, stateExecutionId, cvConfidId, workflowId, workflowExecutionId, serviceId, query,
         startTime, endTime, startMinute, collectionTime, hostnameField, hosts, stateType, encryptedDataDetails,
         initialDelayMinutes);
@@ -81,7 +82,7 @@ public class CustomLogDataCollectionInfo extends LogDataCollectionInfo {
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {
     List<ExecutionCapability> executionCapabilities = new ArrayList<>();
     executionCapabilities.add(HttpConnectionExecutionCapabilityGenerator.buildHttpConnectionExecutionCapability(
-        Utils.appendPathToBaseUrl(getBaseUrl(), getValidationUrl()), QUERY, maskingEvaluator));
+        UrlUtility.appendPathToBaseUrl(getBaseUrl(), getValidationUrl()), QUERY, maskingEvaluator));
     executionCapabilities.addAll(EncryptedDataDetailsCapabilityHelper.fetchExecutionCapabilitiesForEncryptedDataDetails(
         encryptedDataDetails, maskingEvaluator));
     return executionCapabilities;

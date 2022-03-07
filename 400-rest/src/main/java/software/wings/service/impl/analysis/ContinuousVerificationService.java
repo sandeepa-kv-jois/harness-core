@@ -14,6 +14,7 @@ import io.harness.beans.PageResponse;
 import software.wings.beans.User;
 import software.wings.beans.WorkflowExecution;
 import software.wings.beans.alert.cv.ContinuousVerificationAlertData;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.sm.StateExecutionData;
 import software.wings.sm.StateType;
 import software.wings.verification.CVConfiguration;
@@ -63,7 +64,7 @@ public interface ContinuousVerificationService {
       long startTime, long endTime, CVConfiguration cvConfiguration, long historyStartTime);
 
   VerificationNodeDataSetupResponse getDataForNode(
-      String accountId, String serverConfigId, Object fetchConfig, StateType type);
+      String accountId, String serverConfigId, Object fetchConfig, DelegateStateType type);
 
   boolean notifyVerificationState(String correlationId, VerificationDataAnalysisResponse response);
 

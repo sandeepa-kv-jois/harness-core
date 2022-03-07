@@ -13,7 +13,7 @@ import static io.harness.persistence.GoogleDataStoreAware.addFieldIfNotEmpty;
 import static io.harness.persistence.GoogleDataStoreAware.readLong;
 import static io.harness.persistence.GoogleDataStoreAware.readString;
 
-import static software.wings.common.VerificationConstants.ML_RECORDS_TTL_MONTHS;
+import static software.wings.delegatetasks.cv.CVConstants.ML_RECORDS_TTL_MONTHS;
 
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.IgnoreUnusedIndex;
@@ -23,12 +23,19 @@ import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.mongo.index.SortCompoundMongoIndex;
 import io.harness.persistence.AccountAccess;
+import io.harness.persistence.CreatedAtAware;
+import io.harness.persistence.CreatedByAware;
 import io.harness.persistence.GoogleDataStoreAware;
+import io.harness.persistence.PersistentEntity;
+import io.harness.persistence.UpdatedAtAware;
+import io.harness.persistence.UpdatedByAware;
+import io.harness.persistence.UuidAware;
+import io.harness.persistence.ValidUntilAccess;
 import io.harness.serializer.JsonUtils;
+import io.harness.validation.Update;
 
-import software.wings.beans.Base;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.intfc.analysis.ClusterLevel;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -46,6 +53,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -54,6 +62,7 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.FieldNameConstants;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
+import org.mongodb.morphia.annotations.Id;
 import org.mongodb.morphia.annotations.Transient;
 
 /**
@@ -68,7 +77,9 @@ import org.mongodb.morphia.annotations.Transient;
 @IgnoreUnusedIndex
 @Entity(value = "newRelicMetricRecords", noClassnameStored = true)
 @HarnessEntity(exportable = false)
-public class NewRelicMetricDataRecord extends Base implements GoogleDataStoreAware, AccountAccess {
+public class NewRelicMetricDataRecord
+    implements PersistentEntity, UuidAware, CreatedAtAware, CreatedByAware, UpdatedAtAware, UpdatedByAware,
+               AccountAccess, GoogleDataStoreAware, ValidUntilAccess {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(SortCompoundMongoIndex.builder()
@@ -90,9 +101,25 @@ public class NewRelicMetricDataRecord extends Base implements GoogleDataStoreAwa
                 .build())
         .build();
   }
+  @Deprecated public static final String ID_KEY2 = "_id";
+
+  @Id @NotNull(groups = {Update.class}) @SchemaIgnore private String uuid;
+  @FdIndex @NotNull @SchemaIgnore protected String appId;
+  @SchemaIgnore private EmbeddedUser createdBy;
+  @SchemaIgnore @FdIndex private long createdAt;
+
+  @SchemaIgnore private EmbeddedUser lastUpdatedBy;
+  @SchemaIgnore @NotNull private long lastUpdatedAt;
+
+  /**
+   * TODO: Add isDeleted boolean field to enable soft delete. @swagat
+   */
+
+  @JsonIgnore @SchemaIgnore @Transient private transient String entityYamlPath;
+
   @Transient public static String DEFAULT_GROUP_NAME = "default";
 
-  @NotEmpty private StateType stateType;
+  @NotEmpty private DelegateStateType stateType;
 
   @NotEmpty private String name;
 
@@ -140,11 +167,17 @@ public class NewRelicMetricDataRecord extends Base implements GoogleDataStoreAwa
 
   @Builder
   public NewRelicMetricDataRecord(String uuid, String appId, EmbeddedUser createdBy, long createdAt,
-      EmbeddedUser lastUpdatedBy, long lastUpdatedAt, String entityYamlPath, StateType stateType, String name,
+      EmbeddedUser lastUpdatedBy, long lastUpdatedAt, String entityYamlPath, DelegateStateType stateType, String name,
       String workflowId, String workflowExecutionId, String serviceId, String cvConfigId, String stateExecutionId,
       long timeStamp, int dataCollectionMinute, String host, ClusterLevel level, String tag, String groupName,
       Map<String, Double> values, Map<String, String> deeplinkMetadata, String accountId) {
-    super(uuid, appId, createdBy, createdAt, lastUpdatedBy, lastUpdatedAt, entityYamlPath);
+    this.uuid = uuid;
+    this.appId = appId;
+    this.createdBy = createdBy;
+    this.createdAt = createdAt;
+    this.lastUpdatedBy = lastUpdatedBy;
+    this.lastUpdatedAt = lastUpdatedAt;
+    this.entityYamlPath = entityYamlPath;
     this.stateType = stateType;
     this.name = name;
     this.workflowId = workflowId;
@@ -206,7 +239,7 @@ public class NewRelicMetricDataRecord extends Base implements GoogleDataStoreAwa
     final NewRelicMetricDataRecord dataRecord =
         NewRelicMetricDataRecord.builder()
             .appId(readString(entity, "appId"))
-            .stateType(StateType.valueOf(readString(entity, "stateType")))
+            .stateType(DelegateStateType.valueOf(readString(entity, "stateType")))
             .name(readString(entity, "name"))
             .workflowId(readString(entity, "workflowId"))
             .workflowExecutionId(readString(entity, "workflowExecutionId"))

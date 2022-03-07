@@ -10,7 +10,7 @@ package software.wings.service.impl.analysis;
 import io.harness.delegate.beans.DelegateMetaInfo;
 import io.harness.delegate.beans.DelegateTaskNotifyResponseData;
 
-import software.wings.sm.StateType;
+import software.wings.delegatetasks.DelegateStateType;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 public class DataCollectionTaskResult implements DelegateTaskNotifyResponseData {
   private DataCollectionTaskStatus status;
   private String errorMessage;
-  private StateType stateType;
+  private DelegateStateType stateType;
   private DelegateMetaInfo delegateMetaInfo;
 
   // State specific results.....

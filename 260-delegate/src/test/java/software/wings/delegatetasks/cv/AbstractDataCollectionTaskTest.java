@@ -36,11 +36,11 @@ import software.wings.delegatetasks.DelegateCVActivityLogService;
 import software.wings.delegatetasks.DelegateCVActivityLogService.Logger;
 import software.wings.delegatetasks.DelegateCVTaskService;
 import software.wings.delegatetasks.DelegateLogService;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.DataCollectionInfoV2;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.analysis.DataCollectionTaskResult.DataCollectionTaskStatus;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Injector;
@@ -136,7 +136,7 @@ public class AbstractDataCollectionTaskTest extends CategoryTest {
 
     DataCollectionTaskResult taskResult = (DataCollectionTaskResult) responseData;
     assertThat(DataCollectionTaskStatus.SUCCESS).isEqualTo(taskResult.getStatus());
-    assertThat(StateType.SPLUNKV2).isEqualTo(taskResult.getStateType());
+    assertThat(DelegateStateType.SPLUNKV2).isEqualTo(taskResult.getStateType());
     assertThat(taskResult.getErrorMessage()).isNull();
     verify(cvTaskService)
         .updateCVTaskStatus(dataCollectionInfo.getAccountId(), dataCollectionInfo.getCvTaskId(), taskResult);
@@ -158,7 +158,7 @@ public class AbstractDataCollectionTaskTest extends CategoryTest {
     verify(dataCollector, times(2)).init(any(), eq(dataCollectionInfo));
     verify(abstractDataCollectionTask, times(1)).collectAndSaveData(dataCollectionInfo);
     assertThat(taskResult.getStatus()).isEqualTo(DataCollectionTaskStatus.SUCCESS);
-    assertThat(taskResult.getStateType()).isEqualTo(StateType.SPLUNKV2);
+    assertThat(taskResult.getStateType()).isEqualTo(DelegateStateType.SPLUNKV2);
     assertThat(taskResult.getErrorMessage()).isEqualTo("error message from test");
   }
 
@@ -178,7 +178,7 @@ public class AbstractDataCollectionTaskTest extends CategoryTest {
     verify(abstractDataCollectionTask, times(0)).collectAndSaveData(dataCollectionInfo);
     DataCollectionTaskResult taskResult = (DataCollectionTaskResult) responseData;
     assertThat(DataCollectionTaskStatus.FAILURE).isEqualTo(taskResult.getStatus());
-    assertThat(StateType.SPLUNKV2).isEqualTo(taskResult.getStateType());
+    assertThat(DelegateStateType.SPLUNKV2).isEqualTo(taskResult.getStateType());
     assertThat("error message from test").isEqualTo(taskResult.getErrorMessage());
   }
 
@@ -198,7 +198,7 @@ public class AbstractDataCollectionTaskTest extends CategoryTest {
     verify(abstractDataCollectionTask, times(3)).collectAndSaveData(dataCollectionInfo);
     DataCollectionTaskResult taskResult = (DataCollectionTaskResult) responseData;
     assertThat(taskResult.getStatus()).isEqualTo(DataCollectionTaskStatus.FAILURE);
-    assertThat(taskResult.getStateType()).isEqualTo(StateType.SPLUNKV2);
+    assertThat(taskResult.getStateType()).isEqualTo(DelegateStateType.SPLUNKV2);
     assertThat(taskResult.getErrorMessage()).isEqualTo("error message from test");
     verify(cvTaskService)
         .updateCVTaskStatus(dataCollectionInfo.getAccountId(), dataCollectionInfo.getCvTaskId(), taskResult);
@@ -234,7 +234,7 @@ public class AbstractDataCollectionTaskTest extends CategoryTest {
   }
 
   private DataCollectionInfoV2 createDataCollectionInfo() {
-    StateType stateType = StateType.SPLUNKV2;
+    DelegateStateType stateType = DelegateStateType.SPLUNKV2;
     DataCollectionInfoV2 dataCollectionInfoV2 = mock(DataCollectionInfoV2.class);
     when(dataCollectionInfoV2.getStateType()).thenReturn(stateType);
     when(dataCollectionInfoV2.getEncryptableSetting()).thenReturn(Optional.empty());

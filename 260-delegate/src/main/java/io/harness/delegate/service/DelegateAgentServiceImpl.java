@@ -119,6 +119,7 @@ import io.harness.delegate.beans.DelegateTaskEvent;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateUnregisterRequest;
+import io.harness.delegate.beans.ErrorNotifyResponseData;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.beans.SecretDetail;
 import io.harness.delegate.beans.TaskData;
@@ -136,6 +137,7 @@ import io.harness.delegate.task.TaskLogContext;
 import io.harness.delegate.task.TaskParameters;
 import io.harness.delegate.task.validation.DelegateConnectionResultDetail;
 import io.harness.event.client.impl.tailer.ChronicleEventTailer;
+import io.harness.exception.ExceptionUtils;
 import io.harness.exception.UnexpectedException;
 import io.harness.expression.ExpressionReflectionUtils;
 import io.harness.filesystem.FileIo;
@@ -2643,7 +2645,8 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
           secretUuidToValues, delegateTaskPackage.getData().getExpressionFunctorToken());
       applyDelegateExpressionEvaluator(delegateTaskPackage, delegateExpressionEvaluator);
     } catch (Exception e) {
-      sendErrorResponse(delegateTaskPackage);
+      sendErrorResponse(delegateTaskPackage, e);
+      throw e;
     }
   }
 
@@ -2670,12 +2673,14 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
     metricRegistry.recordGaugeValue(TASKS_CURRENTLY_EXECUTING, new String[] {DELEGATE_NAME}, tasksExecutionCount);
   }
 
-  private void sendErrorResponse(DelegateTaskPackage delegateTaskPackage) {
+  private void sendErrorResponse(DelegateTaskPackage delegateTaskPackage, Exception exception) {
     String taskId = delegateTaskPackage.getDelegateTaskId();
-    DelegateTaskResponse taskResponse = DelegateTaskResponse.builder()
-                                            .accountId(delegateTaskPackage.getAccountId())
-                                            .responseCode(DelegateTaskResponse.ResponseCode.FAILED)
-                                            .build();
+    DelegateTaskResponse taskResponse =
+        DelegateTaskResponse.builder()
+            .accountId(delegateTaskPackage.getAccountId())
+            .responseCode(DelegateTaskResponse.ResponseCode.FAILED)
+            .response(ErrorNotifyResponseData.builder().errorMessage(ExceptionUtils.getMessage(exception)).build())
+            .build();
     log.info("Sending error response for task{}", taskId);
     try {
       Response<ResponseBody> resp = null;

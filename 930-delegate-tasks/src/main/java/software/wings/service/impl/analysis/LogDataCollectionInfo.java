@@ -11,7 +11,7 @@ import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander
 import io.harness.delegate.task.TaskParameters;
 import io.harness.security.encryption.EncryptedDataDetail;
 
-import software.wings.sm.StateType;
+import software.wings.delegatetasks.DelegateStateType;
 
 import com.google.api.client.util.Lists;
 import java.util.HashSet;
@@ -36,13 +36,13 @@ public abstract class LogDataCollectionInfo
   private int collectionTime;
   private String hostnameField;
   private Set<String> hosts;
-  private StateType stateType;
+  private DelegateStateType stateType;
   private int initialDelayMinutes;
   List<EncryptedDataDetail> encryptedDataDetails;
 
   public LogDataCollectionInfo(String accountId, String applicationId, String stateExecutionId, String cvConfigId,
       String workflowId, String workflowExecutionId, String serviceId, String query, long startTime, long endTime,
-      int startMinute, int collectionTime, String hostnameField, Set<String> hosts, StateType stateType,
+      int startMinute, int collectionTime, String hostnameField, Set<String> hosts, DelegateStateType stateType,
       List<EncryptedDataDetail> encryptedDataDetails, int initialDelayMinutes) {
     super(accountId, applicationId, stateExecutionId, cvConfigId, workflowId, workflowExecutionId, serviceId);
     this.query = query;

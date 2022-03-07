@@ -656,13 +656,18 @@ public class DelegateTaskServiceClassicImpl implements DelegateTaskServiceClassi
     Object[] params = task.getData().getParameters();
     switch (type) {
       case HOST_VALIDATION:
-        HostValidationTaskParameters hostValidationTaskParameters =
-            HostValidationTaskParameters.builder()
-                .hostNames((List<String>) params[2])
-                .connectionSetting((SettingAttribute) params[3])
-                .encryptionDetails((List<EncryptedDataDetail>) params[4])
-                .executionCredential((ExecutionCredential) params[5])
-                .build();
+        HostValidationTaskParameters hostValidationTaskParameters;
+        if (params.length == 1 && params[0] instanceof HostValidationTaskParameters) {
+          hostValidationTaskParameters = (HostValidationTaskParameters) params[0];
+        } else {
+          hostValidationTaskParameters = HostValidationTaskParameters.builder()
+                                             .hostNames((List<String>) params[2])
+                                             .connectionSetting((SettingAttribute) params[3])
+                                             .encryptionDetails((List<EncryptedDataDetail>) params[4])
+                                             .executionCredential((ExecutionCredential) params[5])
+                                             .build();
+        }
+
         newParams = new ArrayList<>(Arrays.asList(hostValidationTaskParameters));
         task.getData().setParameters(newParams.toArray());
         return;

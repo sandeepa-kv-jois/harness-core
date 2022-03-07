@@ -37,7 +37,7 @@ what_changed="n/a"
 phase_injected="n/a"
 ## End Change for BT-950
 
-if [[ $KEY == BT-* ]]
+if [[ $KEY == BT-* || $KEY == SPG-* ]]
 then
   bug_resolution="n/a"
   what_changed="n/a"

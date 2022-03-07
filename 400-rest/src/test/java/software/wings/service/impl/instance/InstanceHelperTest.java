@@ -11,7 +11,6 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.ANKIT;
-import static io.harness.rule.OwnerRule.GEORGE;
 import static io.harness.rule.OwnerRule.RAMA;
 import static io.harness.rule.OwnerRule.ROHIT_KUMAR;
 
@@ -183,6 +182,7 @@ public class InstanceHelperTest extends WingsBaseTest {
   @InjectMocks @Inject private AzureInstanceHandler azureInstanceHandler;
   @InjectMocks @Inject private SpotinstAmiInstanceHandler spotinstAmiInstanceHandler;
   @InjectMocks @Inject private AwsLambdaInstanceHandler awsLambdaInstanceHandler;
+  @InjectMocks @Inject private PdcInstanceHandler pdcInstanceHandler;
   @InjectMocks @Inject private CustomDeploymentInstanceHandler customDeploymentInstanceHandler;
   @InjectMocks @Inject private AzureVMSSInstanceHandler azureVMSSInstanceHandler;
   @InjectMocks @Inject private AzureWebAppInstanceHandler azureWebAppInstanceHandler;
@@ -913,20 +913,6 @@ public class InstanceHelperTest extends WingsBaseTest {
   }
 
   @Test
-  @Owner(developers = GEORGE)
-  @Category(UnitTests.class)
-  public void testIsSupported() throws Exception {
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.PHYSICAL_DATA_CENTER_SSH)).isFalse();
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.PHYSICAL_DATA_CENTER_WINRM)).isFalse();
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.AWS_AWS_LAMBDA)).isTrue();
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.AWS_ECS)).isTrue();
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.AWS_AMI)).isTrue();
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.AWS_AWS_CODEDEPLOY)).isTrue();
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.GCP_KUBERNETES)).isTrue();
-    assertThat(instanceHelper.isSupported(InfrastructureMappingType.AWS_SSH)).isTrue();
-  }
-
-  @Test
   @Owner(developers = ADWAIT)
   @Category(UnitTests.class)
   public void testGetPrivateDnsName() throws Exception {
@@ -971,8 +957,8 @@ public class InstanceHelperTest extends WingsBaseTest {
   public void testManualSyncSuccess() throws Exception {
     InstanceHandlerFactory instanceHandlerFactory = spy(new InstanceHandlerFactory(containerInstanceHandler,
         awsInstanceHandler, awsAmiInstanceHandler, awsCodeDeployInstanceHandler, pcfInstanceHandler,
-        azureInstanceHandler, spotinstAmiInstanceHandler, awsLambdaInstanceHandler, customDeploymentInstanceHandler,
-        azureVMSSInstanceHandler, azureWebAppInstanceHandler));
+        azureInstanceHandler, spotinstAmiInstanceHandler, awsLambdaInstanceHandler, pdcInstanceHandler,
+        customDeploymentInstanceHandler, azureVMSSInstanceHandler, azureWebAppInstanceHandler));
     FieldUtils.writeField(instanceHelper, "instanceHandlerFactory", instanceHandlerFactory, true);
 
     doReturn(new InstanceHandler() {
@@ -1033,8 +1019,8 @@ public class InstanceHelperTest extends WingsBaseTest {
   public void testManualSyncFailure() throws Exception {
     InstanceHandlerFactory instanceHandlerFactory = spy(new InstanceHandlerFactory(containerInstanceHandler,
         awsInstanceHandler, awsAmiInstanceHandler, awsCodeDeployInstanceHandler, pcfInstanceHandler,
-        azureInstanceHandler, spotinstAmiInstanceHandler, awsLambdaInstanceHandler, customDeploymentInstanceHandler,
-        azureVMSSInstanceHandler, azureWebAppInstanceHandler));
+        azureInstanceHandler, spotinstAmiInstanceHandler, awsLambdaInstanceHandler, pdcInstanceHandler,
+        customDeploymentInstanceHandler, azureVMSSInstanceHandler, azureWebAppInstanceHandler));
     FieldUtils.writeField(instanceHelper, "instanceHandlerFactory", instanceHandlerFactory, true);
 
     doReturn(new InstanceHandler() {
