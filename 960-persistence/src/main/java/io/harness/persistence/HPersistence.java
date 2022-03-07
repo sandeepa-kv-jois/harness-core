@@ -33,8 +33,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.dao.OptimisticLockingFailureException;
 
 public interface HPersistence extends HealthMonitor {
+  String ANALYTICS_STORE_NAME = "analytic";
   Store DEFAULT_STORE = Store.builder().name("default").build();
-  Store ANALYTIC_STORE = Store.builder().name("analytic").build();
+  Store ANALYTIC_STORE = Store.builder().name(ANALYTICS_STORE_NAME).build();
 
   static Logger logger() {
     return LoggerFactory.getLogger(HPersistence.class);
@@ -91,8 +92,15 @@ public interface HPersistence extends HealthMonitor {
     }));
   }
 
-  default AdvancedDatastore getAnalyticsDatastore(Class cls) {
-    return getDatastore(ANALYTIC_STORE);
+  default AdvancedDatastore getDefaultAnalyticsDatastore(Class cls) {
+    return getDatastore(getClassStores().computeIfAbsent(cls, klass -> {
+      return Arrays.stream(cls.getDeclaredAnnotations())
+          .filter(annotation -> annotation.annotationType().equals(StoreIn.class))
+          .map(annotation -> ((StoreIn) annotation).value())
+          .map(name -> Store.builder().name(name).build())
+          .findFirst()
+          .orElseGet(() -> ANALYTIC_STORE);
+    }));
   }
 
   /**

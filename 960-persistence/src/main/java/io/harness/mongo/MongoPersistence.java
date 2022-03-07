@@ -187,7 +187,7 @@ public class MongoPersistence implements HPersistence {
   }
 
   public <T extends PersistentEntity> Query<T> createAnalyticsQuery(Class<T> cls) {
-    return getAnalyticsDatastore(cls).createQuery(cls);
+    return getDefaultAnalyticsDatastore(cls).createQuery(cls);
   }
 
   @Override
