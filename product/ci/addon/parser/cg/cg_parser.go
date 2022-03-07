@@ -15,8 +15,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/pkg/errors"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
+	"github.com/pkg/errors"
 )
 
 //Parser reads callgraph file, processes it to extract

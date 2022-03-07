@@ -33,6 +33,7 @@ import software.wings.beans.Application;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SplunkConfig;
 import software.wings.beans.TemplateExpression;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.RiskLevel;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
 import software.wings.service.impl.analysis.AnalysisContext;
@@ -354,7 +355,7 @@ public class SplunkV2StateTest extends APMStateVerificationTestBase {
     SplunkDataCollectionInfoV2 splunkDataCollectionInfoV2 =
         (software.wings.service.impl.splunk.SplunkDataCollectionInfoV2) splunkState.createDataCollectionInfo(
             executionContext, Sets.newHashSet("host1", "host2"));
-    assertThat(StateType.SPLUNKV2).isEqualTo(splunkDataCollectionInfoV2.getStateType());
+    assertThat(DelegateStateType.SPLUNKV2).isEqualTo(splunkDataCollectionInfoV2.getStateType());
     assertThat(splunkDataCollectionInfoV2.getSplunkConfig()).isNull();
     assertThat(splunkDataCollectionInfoV2.getStateExecutionId())
         .isEqualTo(executionContext.getStateExecutionInstanceId());
@@ -396,7 +397,7 @@ public class SplunkV2StateTest extends APMStateVerificationTestBase {
     SplunkDataCollectionInfoV2 splunkDataCollectionInfoV2 =
         (software.wings.service.impl.splunk.SplunkDataCollectionInfoV2) splunkState.createDataCollectionInfo(
             executionContext, Sets.newHashSet("host1", "host2"));
-    assertThat(StateType.SPLUNKV2).isEqualTo(splunkDataCollectionInfoV2.getStateType());
+    assertThat(DelegateStateType.SPLUNKV2).isEqualTo(splunkDataCollectionInfoV2.getStateType());
     assertThat(splunkDataCollectionInfoV2.getSplunkConfig()).isNull();
     assertThat(splunkDataCollectionInfoV2.getStateExecutionId())
         .isEqualTo(executionContext.getStateExecutionInstanceId());
@@ -431,7 +432,7 @@ public class SplunkV2StateTest extends APMStateVerificationTestBase {
     SplunkDataCollectionInfoV2 splunkDataCollectionInfoV2 =
         (SplunkDataCollectionInfoV2) spyState.createDataCollectionInfo(
             executionContext, Sets.newHashSet("host1", "host2"));
-    assertThat(StateType.SPLUNKV2).isEqualTo(splunkDataCollectionInfoV2.getStateType());
+    assertThat(DelegateStateType.SPLUNKV2).isEqualTo(splunkDataCollectionInfoV2.getStateType());
     assertThat(splunkDataCollectionInfoV2.getSplunkConfig()).isNull();
     assertThat(splunkDataCollectionInfoV2.getStateExecutionId())
         .isEqualTo(executionContext.getStateExecutionInstanceId());

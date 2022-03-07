@@ -93,9 +93,8 @@ public class BudgetCostServiceImpl implements BudgetCostService {
             .maxStartTime(1000 * BudgetUtils.getStartOfCurrentDay() - BudgetUtils.ONE_DAY_MILLIS)
             .build();
     double costTillNow = getActualCost(accountId, perspectiveId, startOfPeriod, period);
-    return costTillNow
-        + viewsQueryHelper.getRoundedDoubleValue(
-            costTillNow + viewsQueryHelper.getForecastCost(costDataForForecast, Instant.ofEpochMilli(endTime)));
+    return viewsQueryHelper.getRoundedDoubleValue(
+        costTillNow + viewsQueryHelper.getForecastCost(costDataForForecast, Instant.ofEpochMilli(endTime)));
   }
 
   @Override

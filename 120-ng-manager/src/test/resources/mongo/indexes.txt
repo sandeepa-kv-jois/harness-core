@@ -448,6 +448,7 @@ infrastructureProvisioner {"name": "accountIdCreatedAtIdx", "background": true} 
 infrastructureProvisioner {"name": "accountId_1", "background": true} {"accountId": 1}
 infrastructureProvisioner {"name": "appId_1", "background": true} {"appId": 1}
 infrastructureProvisioner {"name": "createdAt_1", "background": true} {"createdAt": 1}
+instance {"name": "accountId_computeProviderId_instanceInfoNamespace_instanceInfoPodName_createdAt", "background": true} {"accountId": 1, "computeProviderId": 1, "instanceInfo.namespace": 1, "instanceInfo.podName": 1, "createdAt": -1}
 instance {"name": "appId_1", "background": true} {"appId": 1}
 instance {"name": "createdAt_1", "background": true} {"createdAt": 1}
 instance {"name": "instance_index1", "background": true} {"appId": 1, "isDeleted": 1, "deletedAt": 1}

@@ -7,11 +7,8 @@
 
 package io.harness.cvng.cdng.beans;
 
-import io.harness.annotation.RecasterAlias;
-import io.harness.annotations.dev.HarnessTeam;
-import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.verificationjob.entities.VerificationJob.VerificationJobBuilder;
-import io.harness.pms.sdk.core.steps.io.StepParameters;
+import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.pms.yaml.ParameterField;
 
 import com.google.common.base.Preconditions;
@@ -24,9 +21,7 @@ import org.springframework.data.annotation.TypeAlias;
 @Builder
 @AllArgsConstructor
 @TypeAlias("verifyStepParameters")
-@OwnedBy(HarnessTeam.CV)
-@RecasterAlias("io.harness.cvng.cdng.beans.CVNGStepParameter")
-public class CVNGStepParameter implements StepParameters {
+public class CVNGStepParameter implements SpecParameters {
   ParameterField<String> serviceIdentifier;
   ParameterField<String> envIdentifier;
   ParameterField<String> deploymentTag;

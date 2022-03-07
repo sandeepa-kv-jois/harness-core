@@ -14,6 +14,7 @@ import static io.harness.rule.OwnerRule.UTSAV;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -22,6 +23,7 @@ import static org.mockito.Mockito.when;
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.ccm.commons.beans.HarnessServiceInfo;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 
 import software.wings.service.intfc.instance.CloudToHarnessMappingService;
@@ -40,12 +42,15 @@ public class HarnessServiceInfoFetcherTest extends CategoryTest {
   private HarnessServiceInfoFetcher harnessServiceInfoFetcher;
   private K8sLabelServiceInfoFetcher k8sLabelServiceInfoFetcher;
   private CloudToHarnessMappingService cloudToHarnessMappingService;
+  private FeatureFlagService featureFlagService;
 
   @Before
   public void setUp() throws Exception {
     cloudToHarnessMappingService = mock(CloudToHarnessMappingService.class);
     k8sLabelServiceInfoFetcher = mock(K8sLabelServiceInfoFetcher.class);
-    harnessServiceInfoFetcher = new HarnessServiceInfoFetcher(k8sLabelServiceInfoFetcher, cloudToHarnessMappingService);
+    featureFlagService = mock(FeatureFlagService.class);
+    harnessServiceInfoFetcher =
+        new HarnessServiceInfoFetcher(k8sLabelServiceInfoFetcher, cloudToHarnessMappingService, featureFlagService);
   }
 
   @Test
@@ -71,6 +76,7 @@ public class HarnessServiceInfoFetcherTest extends CategoryTest {
     ImmutableMap<String, String> labels = ImmutableMap.of(RELEASE_NAME, "value1");
     HarnessServiceInfo harnessServiceInfo = new HarnessServiceInfo(
         "svc-id", "app-id", "cloud-provider-id", "env-id", "infra-mapping-id", "deployment-summary-id");
+    when(featureFlagService.isEnabled(any(), anyString())).thenReturn(false);
     when(cloudToHarnessMappingService.getHarnessServiceInfo(ACCOUNT_ID, SETTING_ID, NAMESPACE, POD_NAME))
         .thenReturn(Optional.empty());
     when(k8sLabelServiceInfoFetcher.fetchHarnessServiceInfoFromCache(ACCOUNT_ID, labels))

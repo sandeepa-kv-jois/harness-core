@@ -9,8 +9,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/minio/minio-go/v6"
 	"github.com/harness/harness-core/commons/go/lib/utils"
+	"github.com/minio/minio-go/v6"
 	"go.uber.org/zap"
 )
 

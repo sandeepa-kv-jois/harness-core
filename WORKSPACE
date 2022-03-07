@@ -4332,7 +4332,7 @@ plain_artifacts = [
     "com.bugsnag:bugsnag:3.6.2",
     "com.carrotsearch:hppc:0.8.1",
     "com.coveo:saml-client:3.0.2",
-    "com.cronutils:cron-utils:9.0.1",
+    "com.cronutils:cron-utils:9.1.6",
     "com.datadoghq:java-dogstatsd-client:2.3",
     "com.deftlabs:mongo-java-distributed-lock:0.1.7",
     "com.eclipsesource.j2v8:j2v8_macosx_x86_64:4.6.0",

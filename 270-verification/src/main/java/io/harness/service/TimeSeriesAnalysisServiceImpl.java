@@ -571,7 +571,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
         results.getResponse()
             .stream()
             .filter(dataRecord
-                -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
+                -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                    && dataRecord.getServiceId().equals(serviceId)
                     && (dataRecord.getGroupName().equals(groupName)
                         || dataRecord.getGroupName().equals(DEFAULT_GROUP_NAME))
                     && (ClusterLevel.H0 != dataRecord.getLevel() && ClusterLevel.HF != dataRecord.getLevel()))
@@ -614,7 +615,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
           results.getResponse()
               .stream()
               .filter(dataRecord
-                  -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
+                  -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                      && dataRecord.getServiceId().equals(serviceId)
 
                       && (ClusterLevel.H0 != dataRecord.getLevel() && ClusterLevel.HF != dataRecord.getLevel()))
               .collect(Collectors.toList());
@@ -708,8 +710,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
     List<TimeSeriesDataRecord> dataRecords =
         results.stream()
             .filter(dataRecord
-                -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
-                    && ClusterLevel.HF == dataRecord.getLevel())
+                -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                    && dataRecord.getServiceId().equals(serviceId) && ClusterLevel.HF == dataRecord.getLevel())
             .collect(Collectors.toList());
     List<NewRelicMetricDataRecord> rv =
         TimeSeriesDataRecord.getNewRelicDataRecordsFromTimeSeriesDataRecords(dataRecords);
@@ -742,8 +744,8 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
     List<TimeSeriesDataRecord> dataRecords =
         results.stream()
             .filter(dataRecord
-                -> dataRecord.getStateType() == stateType && dataRecord.getServiceId().equals(serviceId)
-                    && ClusterLevel.H0 == dataRecord.getLevel())
+                -> dataRecord.getStateType() == stateType.getDelegateStateType()
+                    && dataRecord.getServiceId().equals(serviceId) && ClusterLevel.H0 == dataRecord.getLevel())
             .collect(Collectors.toList());
     List<NewRelicMetricDataRecord> rv =
         TimeSeriesDataRecord.getNewRelicDataRecordsFromTimeSeriesDataRecords(dataRecords);

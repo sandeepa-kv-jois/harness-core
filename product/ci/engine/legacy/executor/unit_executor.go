@@ -12,7 +12,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/pkg/errors"
 	statuspb "github.com/harness/harness-core/910-delegate-task-grpc-service/src/main/proto/io/harness/task/service"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	"github.com/harness/harness-core/commons/go/lib/logs"
@@ -24,6 +23,7 @@ import (
 	"github.com/harness/harness-core/product/ci/engine/output"
 	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"github.com/harness/harness-core/product/ci/engine/status"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	grpcstatus "google.golang.org/grpc/status"
 )

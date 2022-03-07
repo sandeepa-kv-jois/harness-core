@@ -7,8 +7,8 @@
 
 package software.wings.service.impl.splunk;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import javax.validation.constraints.NotNull;
@@ -34,7 +34,7 @@ public class SplunkSetupTestNodeData extends SetupTestNodeData {
       Instance instanceElement, String hostExpression, String workflowId, long fromTime, long toTime, String query,
       String hostNameField, String guid, boolean isAdvancedQuery) {
     super(appId, settingId, instanceName, isServiceLevel, instanceElement, hostExpression, workflowId, guid,
-        StateType.SPLUNKV2, fromTime, toTime);
+        DelegateStateType.SPLUNKV2, fromTime, toTime);
     this.query = query;
     this.hostNameField = hostNameField;
     this.isAdvancedQuery = isAdvancedQuery;

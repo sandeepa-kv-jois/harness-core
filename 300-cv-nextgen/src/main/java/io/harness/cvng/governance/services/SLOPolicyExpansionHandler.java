@@ -12,7 +12,6 @@ import static io.harness.cvng.governance.beans.ExpansionKeysConstants.ENVIRONMEN
 import static io.harness.cvng.governance.beans.ExpansionKeysConstants.INFRASTRUCTURE;
 import static io.harness.cvng.governance.beans.ExpansionKeysConstants.SERVICE_CONFIG;
 import static io.harness.cvng.governance.beans.ExpansionKeysConstants.SERVICE_REF;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.cvng.core.beans.monitoredService.MonitoredServiceResponse;
 import io.harness.cvng.core.beans.params.ProjectParams;
@@ -20,9 +19,8 @@ import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.cvng.governance.beans.SLOPolicyDTO;
 import io.harness.cvng.governance.beans.SLOPolicyExpandedValue;
-import io.harness.cvng.servicelevelobjective.beans.SLODashboardWidget.SLOGraphData;
-import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
-import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
+import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
+import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.pms.contracts.governance.ExpansionPlacementStrategy;
 import io.harness.pms.contracts.governance.ExpansionRequestMetadata;
 import io.harness.pms.sdk.core.governance.ExpandedValue;
@@ -31,12 +29,12 @@ import io.harness.pms.sdk.core.governance.JsonExpansionHandler;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.inject.Inject;
+import java.util.Collections;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 
 public class SLOPolicyExpansionHandler implements JsonExpansionHandler {
-  @Inject ServiceLevelObjectiveService serviceLevelObjectiveService;
+  @Inject SLOHealthIndicatorService sloHealthIndicatorService;
   @Inject MonitoredServiceService monitoredServiceService;
 
   @Override
@@ -58,23 +56,19 @@ public class SLOPolicyExpansionHandler implements JsonExpansionHandler {
         SLOPolicyDTO.builder().statusOfMonitoredService(SLOPolicyDTO.MonitoredServiceStatus.NOT_CONFIGURED).build();
     if (Objects.nonNull(monitoredServiceResponse)
         && Objects.nonNull(monitoredServiceResponse.getMonitoredServiceDTO())) {
-      List<ServiceLevelObjective> serviceLevelObjectiveList =
-          serviceLevelObjectiveService.getByMonitoredServiceIdentifier(
-              projectParams, monitoredServiceResponse.getMonitoredServiceDTO().getIdentifier());
-      if (isNotEmpty(serviceLevelObjectiveList)) {
-        double sloErrorBudgetRemainingPercentage = 100D;
-        Map<ServiceLevelObjective, SLOGraphData> serviceLevelObjectiveSLOGraphDataMap =
-            serviceLevelObjectiveService.getSLOGraphData(serviceLevelObjectiveList);
-        for (Map.Entry<ServiceLevelObjective, SLOGraphData> entry : serviceLevelObjectiveSLOGraphDataMap.entrySet()) {
-          if (sloErrorBudgetRemainingPercentage > entry.getValue().getErrorBudgetRemainingPercentage()) {
-            sloErrorBudgetRemainingPercentage = entry.getValue().getErrorBudgetRemainingPercentage();
-          }
+      List<SLOHealthIndicator> sloHealthIndicatorList = sloHealthIndicatorService.getByMonitoredServiceIdentifiers(
+          projectParams, Collections.singletonList(monitoredServiceResponse.getMonitoredServiceDTO().getIdentifier()));
+      double sloErrorBudgetRemainingPercentage = 100D;
+
+      for (SLOHealthIndicator sloHealthIndicator : sloHealthIndicatorList) {
+        if (sloErrorBudgetRemainingPercentage > sloHealthIndicator.getErrorBudgetRemainingPercentage()) {
+          sloErrorBudgetRemainingPercentage = sloHealthIndicator.getErrorBudgetRemainingPercentage();
         }
-        sloPolicyDTO = SLOPolicyDTO.builder()
-                           .sloErrorBudgetRemainingPercentage(sloErrorBudgetRemainingPercentage)
-                           .statusOfMonitoredService(SLOPolicyDTO.MonitoredServiceStatus.CONFIGURED)
-                           .build();
       }
+      sloPolicyDTO = SLOPolicyDTO.builder()
+                         .sloErrorBudgetRemainingPercentage(sloErrorBudgetRemainingPercentage)
+                         .statusOfMonitoredService(SLOPolicyDTO.MonitoredServiceStatus.CONFIGURED)
+                         .build();
     }
     ExpandedValue value = SLOPolicyExpandedValue.builder().sloPolicyDTO(sloPolicyDTO).build();
 

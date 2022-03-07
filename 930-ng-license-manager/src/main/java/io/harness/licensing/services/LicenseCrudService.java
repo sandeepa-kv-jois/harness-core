@@ -20,4 +20,5 @@ public interface LicenseCrudService {
   ModuleLicenseDTO getModuleLicenseById(String identifier);
   ModuleLicenseDTO createModuleLicense(ModuleLicenseDTO moduleLicense);
   ModuleLicenseDTO updateModuleLicense(ModuleLicenseDTO moduleLicense);
+  void deleteModuleLicense(String id);
 }

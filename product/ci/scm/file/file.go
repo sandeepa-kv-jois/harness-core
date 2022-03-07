@@ -316,7 +316,7 @@ func FindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchReq
 		log.Errorw("FindFilesInBranch failure, bad ref/branch", "provider", gitclient.GetProvider(*fileRequest.GetProvider()), "slug", fileRequest.GetSlug(), "ref", ref, "filepath", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
 		return nil, err
 	}
-	
+
 	files, response, err := client.Contents.List(ctx, fileRequest.GetSlug(), fileRequest.GetPath(), ref, getCustomListOptsFindFilesInBranch(ctx, fileRequest))
 	if err != nil {
 		log.Errorw("FindFilesInBranch failure", "provider", gitclient.GetProvider(*fileRequest.GetProvider()), "slug", fileRequest.GetSlug(), "ref", ref, "filepath", fileRequest.GetPath(), "elapsed_time_ms", utils.TimeSince(start), zap.Error(err))
@@ -327,7 +327,7 @@ func FindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchReq
 	out = &pb.FindFilesInBranchResponse{
 		File: convertContentList(files),
 		Pagination: &pb.PageResponse{
-			Next: int32(response.Page.Next),
+			Next:    int32(response.Page.Next),
 			NextUrl: response.Page.NextURL,
 		},
 	}
@@ -418,9 +418,9 @@ func parseCrudResponse(ctx context.Context, client *scm.Client, body io.Reader, 
 		// Bitbucket doesn't work on blobId concept for a file, thus it will  always be empty
 		// We try to find out the latest commit on the file, which is most-likely the commit done by SCM itself
 		// It works on best-effort basis
-		request := &pb.GetLatestCommitOnFileRequest {
-			Slug: request.Slug,
-			Branch: request.Branch,
+		request := &pb.GetLatestCommitOnFileRequest{
+			Slug:     request.Slug,
+			Branch:   request.Branch,
 			Provider: &p,
 			FilePath: request.FilePath,
 		}
@@ -434,7 +434,7 @@ func parseCrudResponse(ctx context.Context, client *scm.Client, body io.Reader, 
 	}
 }
 
-func getCustomListOptsFindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchRequest) (scm.ListOptions) {
+func getCustomListOptsFindFilesInBranch(ctx context.Context, fileRequest *pb.FindFilesInBranchRequest) scm.ListOptions {
 	opts := &scm.ListOptions{Page: int(fileRequest.GetPagination().GetPage())}
 	switch fileRequest.GetProvider().GetHook().(type) {
 	case *pb.Provider_BitbucketCloud:
@@ -447,7 +447,7 @@ func getCustomListOptsFindFilesInBranch(ctx context.Context, fileRequest *pb.Fin
 }
 
 type requestContext struct {
-	Slug string
-	Branch string
+	Slug     string
+	Branch   string
 	FilePath string
 }

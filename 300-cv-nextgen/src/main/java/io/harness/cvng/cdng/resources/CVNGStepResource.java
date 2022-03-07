@@ -13,6 +13,8 @@ import io.harness.cvng.analysis.beans.LogAnalysisClusterChartDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterDTO;
 import io.harness.cvng.analysis.beans.LogAnalysisClusterWithCountDTO;
 import io.harness.cvng.analysis.beans.TransactionMetricInfoSummaryPageDTO;
+import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
+import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.cdng.beans.InputSetTemplateRequest;
 import io.harness.cvng.cdng.beans.InputSetTemplateResponse;
 import io.harness.cvng.cdng.services.api.CVNGStepService;
@@ -32,6 +34,7 @@ import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
+import io.swagger.annotations.ApiParam;
 import java.util.List;
 import java.util.Set;
 import javax.validation.constraints.NotNull;
@@ -157,6 +160,22 @@ public class CVNGStepResource {
   public RestResponse<List<String>> getNodeNames(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
       @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId) {
     return new RestResponse(stepTaskService.getNodeNames(accountId, callBackId));
+  }
+
+  @GET
+  @Path("/{verifyStepExecutionId}/logs")
+  @Timed
+  @ExceptionMetered
+  @ApiOperation(value = "get metrics for given activity", nickname = "getVerifyStepLogs")
+  public RestResponse<PageResponse<CVNGLogDTO>> getLogs(@NotEmpty @NotNull @QueryParam("accountId") String accountId,
+      @NotEmpty @NotNull @PathParam("verifyStepExecutionId") String callBackId,
+      @NotEmpty @NotNull @QueryParam("logType") String logType,
+      @QueryParam("healthSources") List<String> healthSourceIdentifiers,
+      @QueryParam("errorLogsOnly") @ApiParam(defaultValue = "false") boolean errorLogsOnly,
+      @BeanParam PageParams pageParams) {
+    CVNGLogType cvngLogType = CVNGLogType.toCVNGLogType(logType);
+    return new RestResponse(stepTaskService.getCVNGLogs(
+        accountId, callBackId, cvngLogType, healthSourceIdentifiers, errorLogsOnly, pageParams));
   }
 
   /**

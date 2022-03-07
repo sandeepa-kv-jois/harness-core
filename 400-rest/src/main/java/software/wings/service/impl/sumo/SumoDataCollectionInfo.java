@@ -13,9 +13,9 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.SumoConfig;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.service.impl.analysis.LogDataCollectionInfo;
-import software.wings.sm.StateType;
 
 import java.util.List;
 import java.util.Set;
@@ -37,8 +37,8 @@ public class SumoDataCollectionInfo extends LogDataCollectionInfo implements Exe
       int startMinute, int collectionTime, String hostnameField, Set<String> hosts,
       List<EncryptedDataDetail> encryptedDataDetails, SumoConfig sumoConfig, int initialDelayMinutes) {
     super(accountId, applicationId, stateExecutionId, cvConfigId, workflowId, workflowExecutionId, serviceId, query,
-        startTime, endTime, startMinute, collectionTime, hostnameField, hosts, StateType.SUMO, encryptedDataDetails,
-        initialDelayMinutes);
+        startTime, endTime, startMinute, collectionTime, hostnameField, hosts, DelegateStateType.SUMO,
+        encryptedDataDetails, initialDelayMinutes);
     this.sumoConfig = sumoConfig;
   }
 

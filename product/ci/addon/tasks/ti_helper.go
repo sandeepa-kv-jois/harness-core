@@ -15,7 +15,6 @@ import (
 
 	"github.com/ghodss/yaml"
 	grpc_retry "github.com/grpc-ecosystem/go-grpc-middleware/retry"
-	"github.com/pkg/errors"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	"github.com/harness/harness-core/product/ci/addon/testreports"
 	"github.com/harness/harness-core/product/ci/addon/testreports/junit"
@@ -24,6 +23,7 @@ import (
 	grpcclient "github.com/harness/harness-core/product/ci/engine/grpc/client"
 	pb "github.com/harness/harness-core/product/ci/engine/proto"
 	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 

@@ -10,6 +10,7 @@ package io.harness.cvng;
 import static io.harness.AuthorizationServiceHeader.CV_NEXT_GEN;
 import static io.harness.cvng.beans.change.ChangeSourceType.HARNESS_CD;
 import static io.harness.cvng.cdng.services.impl.CVNGNotifyEventListener.CVNG_ORCHESTRATION;
+import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_EVENT;
 
 import io.harness.AccessControlClientModule;
 import io.harness.annotations.dev.HarnessTeam;
@@ -96,6 +97,8 @@ import io.harness.cvng.core.jobs.OrganizationChangeEventMessageProcessor;
 import io.harness.cvng.core.jobs.ProjectChangeEventMessageProcessor;
 import io.harness.cvng.core.jobs.StateMachineEventPublisherService;
 import io.harness.cvng.core.jobs.StateMachineEventPublisherServiceImpl;
+import io.harness.cvng.core.jobs.StateMachineMessageProcessor;
+import io.harness.cvng.core.jobs.StateMachineMessageProcessorImpl;
 import io.harness.cvng.core.services.CVNextGenConstants;
 import io.harness.cvng.core.services.api.AppDynamicsService;
 import io.harness.cvng.core.services.api.CVConfigService;
@@ -726,6 +729,8 @@ public class CVServiceModule extends AbstractModule {
         .to(HarnessCDCurrentGenChangeEventTransformer.class)
         .in(Scopes.SINGLETON);
 
+    bind(StateMachineMessageProcessor.class).to(StateMachineMessageProcessorImpl.class);
+
     MapBinder<SLIMetricType, SLIAnalyserService> sliAnalyserServiceMapBinder =
         MapBinder.newMapBinder(binder(), SLIMetricType.class, SLIAnalyserService.class);
     sliAnalyserServiceMapBinder.addBinding(SLIMetricType.RATIO).to(RatioAnalyserServiceImpl.class).in(Scopes.SINGLETON);
@@ -836,6 +841,20 @@ public class CVServiceModule extends AbstractModule {
         new ThreadFactoryBuilder().setNameFormat("cvngParallelExecutor-%d").setPriority(Thread.MIN_PRIORITY).build());
     Runtime.getRuntime().addShutdownHook(new Thread(() -> cvngParallelExecutor.shutdownNow()));
     return cvngParallelExecutor;
+  }
+
+  @Provides
+  @Singleton
+  @Named("stateMachineMessageProcessorExecutor")
+  public ExecutorService stateMachineMessageProcessorExecutor() {
+    ExecutorService stateMachineMessageProcessorExecutor =
+        ThreadPool.create(4, CVNextGenConstants.SRM_STATEMACHINE_MAX_THREADS, 5, TimeUnit.SECONDS,
+            new ThreadFactoryBuilder()
+                .setNameFormat(SRM_STATEMACHINE_EVENT + "_thread_pool")
+                .setPriority(Thread.MIN_PRIORITY)
+                .build());
+    Runtime.getRuntime().addShutdownHook(new Thread(() -> stateMachineMessageProcessorExecutor.shutdownNow()));
+    return stateMachineMessageProcessorExecutor;
   }
 
   @Provides

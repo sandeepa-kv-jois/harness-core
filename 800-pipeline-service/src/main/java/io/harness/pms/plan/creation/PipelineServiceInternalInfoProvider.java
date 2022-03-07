@@ -54,6 +54,8 @@ import io.harness.steps.jira.JiraStepVariableCreator;
 import io.harness.steps.jira.create.JiraCreateStepPlanCreator;
 import io.harness.steps.jira.update.JiraUpdateStepPlanCreator;
 import io.harness.steps.policy.step.PolicyStepPlanCreator;
+import io.harness.steps.servicenow.create.ServiceNowCreateStepPlanCreator;
+import io.harness.steps.servicenow.update.ServiceNowUpdateStepPlanCreator;
 import io.harness.steps.shellscript.ShellScriptStepPlanCreator;
 import io.harness.steps.shellscript.ShellScriptStepVariableCreator;
 
@@ -91,6 +93,8 @@ public class PipelineServiceInternalInfoProvider implements PipelineServiceInfoP
     planCreators.add(new BarrierStepPlanCreator());
     planCreators.add(new FlagConfigurationStepPlanCreator());
     planCreators.add(new PolicyStepPlanCreator());
+    planCreators.add(new ServiceNowCreateStepPlanCreator());
+    planCreators.add(new ServiceNowUpdateStepPlanCreator());
     injectorUtils.injectMembers(planCreators);
     return planCreators;
   }

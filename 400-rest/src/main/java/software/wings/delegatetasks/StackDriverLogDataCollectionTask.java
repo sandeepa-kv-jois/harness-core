@@ -30,7 +30,6 @@ import software.wings.service.impl.analysis.DataCollectionTaskResult.DataCollect
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.impl.stackdriver.StackDriverLogDataCollectionInfo;
 import software.wings.service.intfc.stackdriver.StackDriverDelegateService;
-import software.wings.sm.StateType;
 
 import com.google.api.services.logging.v2.model.LogEntry;
 import com.google.inject.Inject;
@@ -63,8 +62,8 @@ public class StackDriverLogDataCollectionTask extends AbstractDelegateDataCollec
   }
 
   @Override
-  protected StateType getStateType() {
-    return StateType.STACK_DRIVER_LOG;
+  protected DelegateStateType getStateType() {
+    return DelegateStateType.STACK_DRIVER_LOG;
   }
 
   @Override
@@ -73,7 +72,7 @@ public class StackDriverLogDataCollectionTask extends AbstractDelegateDataCollec
     log.info("metric collection - dataCollectionInfo: {}", dataCollectionInfo);
     return DataCollectionTaskResult.builder()
         .status(DataCollectionTaskResult.DataCollectionTaskStatus.SUCCESS)
-        .stateType(StateType.STACK_DRIVER_LOG)
+        .stateType(DelegateStateType.STACK_DRIVER_LOG)
         .build();
   }
 
@@ -188,11 +187,11 @@ public class StackDriverLogDataCollectionTask extends AbstractDelegateDataCollec
               + " application: " + dataCollectionInfo.getApplicationId()
               + " stateExecutionId: " + dataCollectionInfo.getStateExecutionId() + " minute: " + logCollectionMinute);
 
-          boolean response = logAnalysisStoreService.save(StateType.STACK_DRIVER_LOG, dataCollectionInfo.getAccountId(),
-              dataCollectionInfo.getApplicationId(), dataCollectionInfo.getCvConfigId(),
-              dataCollectionInfo.getStateExecutionId(), dataCollectionInfo.getWorkflowId(),
-              dataCollectionInfo.getWorkflowExecutionId(), dataCollectionInfo.getServiceId(), delegateTaskId,
-              logElements);
+          boolean response = logAnalysisStoreService.save(DelegateStateType.STACK_DRIVER_LOG,
+              dataCollectionInfo.getAccountId(), dataCollectionInfo.getApplicationId(),
+              dataCollectionInfo.getCvConfigId(), dataCollectionInfo.getStateExecutionId(),
+              dataCollectionInfo.getWorkflowId(), dataCollectionInfo.getWorkflowExecutionId(),
+              dataCollectionInfo.getServiceId(), delegateTaskId, logElements);
           if (!response) {
             if (++retry == RETRIES) {
               taskResult.setStatus(DataCollectionTaskResult.DataCollectionTaskStatus.FAILURE);

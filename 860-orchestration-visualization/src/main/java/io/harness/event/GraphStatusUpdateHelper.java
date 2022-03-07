@@ -77,8 +77,10 @@ public class GraphStatusUpdateHelper {
         orchestrationAdjacencyListGenerator.addVertex(orchestrationGraph.getAdjacencyList(), nodeExecution);
       }
     } catch (Exception e) {
-      log.error(
-          "[PMS_GRAPH]  [{}] event failed for [{}] for plan [{}]", eventType, nodeExecutionId, planExecutionId, e);
+      log.error(String.format("[GRAPH_ERROR]  [%s] event failed for [%s] for plan [%s]", eventType, nodeExecutionId,
+                    planExecutionId),
+          e);
+      throw e;
     }
     return orchestrationGraph;
   }

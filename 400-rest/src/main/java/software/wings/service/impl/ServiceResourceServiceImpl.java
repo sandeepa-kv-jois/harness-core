@@ -2914,6 +2914,10 @@ public class ServiceResourceServiceImpl implements ServiceResourceService, DataP
 
   private HelmVersion getHelmVersionWithDefault(Service service) {
     if (service.getHelmVersion() != null) {
+      if (service.getHelmVersion() == HelmVersion.V3
+          && featureFlagService.isEnabled(FeatureName.HELM_VERSION_3_8_0, service.getAccountId())) {
+        return HelmVersion.V380;
+      }
       return service.getHelmVersion();
     } else {
       return getDefaultHelmVersion(service.getDeploymentType());

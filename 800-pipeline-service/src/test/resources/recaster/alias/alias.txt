@@ -84,3 +84,9 @@ io.harness.plancreator.steps.internal.FlagConfigurationStepNode
 io.harness.steps.policy.PolicyStepInfo
 io.harness.steps.policy.PolicyStepNode
 io.harness.steps.policy.custom.CustomPolicyStepSpec
+io.harness.steps.servicenow.create.ServiceNowCreateSpecParameters
+io.harness.steps.servicenow.create.ServiceNowCreateStepNode
+io.harness.steps.servicenow.create.ServiceNowCreateStepInfo
+io.harness.steps.servicenow.update.ServiceNowUpdateSpecParameters
+io.harness.steps.servicenow.update.ServiceNowUpdateStepNode
+io.harness.steps.servicenow.update.ServiceNowUpdateStepInfo

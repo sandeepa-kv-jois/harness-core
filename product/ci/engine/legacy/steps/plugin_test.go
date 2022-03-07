@@ -10,14 +10,14 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	caddon "github.com/harness/harness-core/product/ci/addon/grpc/client"
 	amgrpc "github.com/harness/harness-core/product/ci/addon/grpc/client/mocks"
 	addonpb "github.com/harness/harness-core/product/ci/addon/proto"
 	"github.com/harness/harness-core/product/ci/engine/output"
 	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -110,7 +110,7 @@ func TestPluginExecuteServerErr(t *testing.T) {
 		return mClient, nil
 	}
 
-	executor := NewPluginStep(step, tmpPath,nil, log.Sugar())
+	executor := NewPluginStep(step, tmpPath, nil, log.Sugar())
 	_, numRetries, err := executor.Run(ctx)
 	assert.NotNil(t, err)
 	assert.Equal(t, numRetries, int32(1))

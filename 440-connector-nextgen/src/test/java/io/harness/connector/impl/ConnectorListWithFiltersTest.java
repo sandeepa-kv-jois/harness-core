@@ -64,8 +64,8 @@ import io.harness.filter.FilterType;
 import io.harness.filter.dto.FilterDTO;
 import io.harness.filter.service.FilterService;
 import io.harness.git.model.ChangeType;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.services.OrganizationService;
 import io.harness.ng.core.services.ProjectService;
 import io.harness.outbox.api.OutboxService;
@@ -98,7 +98,7 @@ public class ConnectorListWithFiltersTest extends ConnectorsTestBase {
   @Inject @InjectMocks @Spy DefaultConnectorServiceImpl connectorService;
   @Inject ConnectorRepository connectorRepository;
   @Inject FilterService filterService;
-  @Mock AccountSettingsHelper accountSettingsHelper;
+  @Mock NGAccountSettingService accountSettingService;
   String accountIdentifier = "accountIdentifier";
   String orgIdentifier = "orgIdentifier";
   String projectIdentifier = "projectIdentifier";
@@ -112,7 +112,7 @@ public class ConnectorListWithFiltersTest extends ConnectorsTestBase {
     MockitoAnnotations.initMocks(this);
     doNothing().when(connectorService).assurePredefined(any(), any());
     doReturn(true)
-        .when(accountSettingsHelper)
+        .when(accountSettingService)
         .getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
   }
   private ConnectorInfoDTO getConnector(String name, String identifier, String description) {

@@ -77,6 +77,7 @@ public class ManagerRegistrars {
           .addAll(CvNextGenCommonsRegistrars.morphiaRegistrars)
           .addAll(VerificationCommonsRegistrars.morphiaRegistrars)
           .addAll(DelegateTasksBeansRegistrars.morphiaRegistrars)
+          .addAll(DelegateTaskRegistrars.morphiaRegistrars)
           .addAll(FeatureFlagBeansRegistrars.morphiaRegistrars)
           .addAll(NGCommonsRegistrars.morphiaRegistrars)
           .addAll(NGCoreRegistrars.morphiaRegistrars)

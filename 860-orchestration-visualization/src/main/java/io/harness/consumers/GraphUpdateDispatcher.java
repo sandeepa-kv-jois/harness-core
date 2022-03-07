@@ -46,7 +46,7 @@ public class GraphUpdateDispatcher implements Runnable {
       boolean shouldAck = graphGenerationService.updateGraph(planExecutionId);
       if (shouldAck) {
         messageIds.forEach(consumer::acknowledge);
-        log.info("Successfully acked the messageIds: {}", messageIds);
+        log.debug("Successfully acked the messageIds: {}", messageIds);
         return;
       }
       log.info("Graph update failed not acking: {}", messageIds);
