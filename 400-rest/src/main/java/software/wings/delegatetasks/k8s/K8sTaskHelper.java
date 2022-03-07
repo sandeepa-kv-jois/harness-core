@@ -377,20 +377,22 @@ public class K8sTaskHelper {
 
   private boolean downloadZippedManifestFilesFormCustomSource(K8sDelegateManifestConfig delegateManifestConfig,
       String manifestFilesDirectory, ExecutionLogCallback executionLogCallback) {
-    String workingDirectory = null;
+    String tempWorkingDir = null;
     try {
-      workingDirectory = customManifestService.getWorkingDirectory();
+      tempWorkingDir = customManifestService.getWorkingDirectory();
 
       CustomManifestSource customManifestSource = delegateManifestConfig.getCustomManifestSource();
       handleIncorrectConfiguration(delegateManifestConfig);
       customManifestFetchTaskHelper.downloadAndUnzipCustomSourceManifestFiles(
-          workingDirectory, customManifestSource.getZippedManifestFileId(), customManifestSource.getAccountId());
-      File file = new File(workingDirectory);
+          tempWorkingDir, customManifestSource.getZippedManifestFileId(), customManifestSource.getAccountId());
+      File file = new File(tempWorkingDir);
       if (isEmpty(file.list())) {
         throw new InvalidRequestException("No manifest files found under working directory", USER);
       }
-      File customFilePath = file.listFiles(pathname -> !file.isHidden())[0];
-      copyManifestFilesToWorkingDir(customFilePath, new File(manifestFilesDirectory));
+      // preparing legacy directory structure for manifests and values yamls
+      File customManifestFolderPath = file.listFiles(pathname -> !file.isHidden())[0];
+      copyManifestFilesToWorkingDir(customManifestFolderPath, new File(manifestFilesDirectory));
+
       executionLogCallback.saveExecutionLog(color("Successfully fetched following files:", White, Bold));
       executionLogCallback.saveExecutionLog(k8sTaskHelperBase.getManifestFileNamesInLogFormat(manifestFilesDirectory));
       executionLogCallback.saveExecutionLog("Done.", INFO, CommandExecutionStatus.SUCCESS);
