@@ -124,7 +124,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
         throw new InvalidRequestException(
             "You must provide a App Role Id if you are using AppRole Authentication for Vault", INVALID_REQUEST, USER);
       }
-      if (secretId.isNull()) {
+      if (null == secretId || isEmpty(secretId.getIdentifier())) {
         throw new InvalidRequestException(
             "You must provide the secretId if you are using AppRole Authentication for Vault", INVALID_REQUEST, USER);
       }
@@ -138,8 +138,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
     }
 
     if (renewalIntervalMinutes <= 0) {
-      throw new InvalidRequestException(
-          String.format("Invalid value for renewal interval: %s", renewalIntervalMinutes), INVALID_REQUEST, USER);
+      throw new InvalidRequestException(String.format("Invalid value for renewal interval"), INVALID_REQUEST, USER);
     }
     if (isReadOnly && isDefault) {
       throw new InvalidRequestException("Read only secret manager cannot be set as default", INVALID_REQUEST, USER);
