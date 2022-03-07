@@ -9,8 +9,8 @@ package software.wings.service.impl.stackdriver;
 
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
-import software.wings.sm.StateType;
 import software.wings.verification.stackdriver.StackDriverMetricDefinition;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -53,7 +53,7 @@ public class StackDriverSetupTestNodeData extends SetupTestNodeData {
       String query, String hostnameField, String messageField, boolean isLogConfiguration,
       List<StackDriverMetricDefinition> metricDefinitions) {
     super(appId, settingId, instanceName, isServiceLevel, instanceElement, hostExpression, workflowId, guid,
-        StateType.STACK_DRIVER, fromTime, toTime);
+        DelegateStateType.STACK_DRIVER, fromTime, toTime);
     this.loadBalancerMetrics = loadBalancerMetrics;
     this.podMetrics = podMetrics;
     this.query = query;

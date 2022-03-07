@@ -25,6 +25,8 @@ import io.harness.exception.WingsException;
 import software.wings.beans.BugsnagConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
+import software.wings.delegatetasks.DelegateStateType;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategyProvider;
 import software.wings.service.impl.analysis.AnalysisTolerance;
@@ -34,7 +36,6 @@ import software.wings.service.impl.analysis.DataCollectionCallback;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.StateType;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 import software.wings.stencils.DefaultValue;
 import software.wings.stencils.EnumData;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
@@ -204,7 +205,7 @@ public class BugsnagState extends AbstractLogAnalysisState {
             .encryptedDataDetails(
                 secretManager.getEncryptionDetails(config, context.getAppId(), context.getWorkflowExecutionId()))
             .hosts(hosts)
-            .stateType(StateType.BUG_SNAG)
+            .stateType(DelegateStateType.BUG_SNAG)
             .applicationId(context.getAppId())
             .stateExecutionId(context.getStateExecutionInstanceId())
             .workflowId(getWorkflowId(context))
@@ -252,9 +253,9 @@ public class BugsnagState extends AbstractLogAnalysisState {
     return delegateService.queueTask(delegateTask);
   }
 
-  public static Map<String, Map<String, ResponseMapper>> constructLogDefinitions(
+  public static Map<String, Map<String, CustomLogResponseMapper>> constructLogDefinitions(
       String projectId, String releaseStage) {
-    Map<String, Map<String, ResponseMapper>> logDefinition = new HashMap<>();
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinition = new HashMap<>();
     if (isEmpty(projectId)) {
       throw new WingsException("ProjectID is empty in Bugsnag State. Unable to fetch data");
     }
@@ -263,26 +264,21 @@ public class BugsnagState extends AbstractLogAnalysisState {
       eventsUrl += "&filters[app.release_stage][][type]=eq&filters[app.release_stage][][value]=" + releaseStage;
     }
     logDefinition.put(eventsUrl, new HashMap<>());
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     List<String> pathList = new ArrayList<>();
     pathList.add("[*].received_at");
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
-            .fieldName("timestamp")
-            .jsonPath(pathList)
-            .timestampFormat("")
-            .build());
+        CustomLogResponseMapper.builder().fieldName("timestamp").jsonPath(pathList).timestampFormat("").build());
     List<String> pathList2 = new ArrayList<>();
     pathList2.add("[*].context");
     pathList2.add("[*].request");
     pathList2.add("[*].metaData");
     pathList2.add("[*].exceptions[0]");
-    responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder().fieldName("logMessage").jsonPath(pathList2).build());
+    responseMappers.put(
+        "logMessage", CustomLogResponseMapper.builder().fieldName("logMessage").jsonPath(pathList2).build());
     List<String> pathList3 = new ArrayList<>();
     pathList3.add("[*].device.browserName");
-    responseMappers.put(
-        "host", CustomLogVerificationState.ResponseMapper.builder().fieldName("host").jsonPath(pathList3).build());
+    responseMappers.put("host", CustomLogResponseMapper.builder().fieldName("host").jsonPath(pathList3).build());
     logDefinition.put(eventsUrl, responseMappers);
     return logDefinition;
   }

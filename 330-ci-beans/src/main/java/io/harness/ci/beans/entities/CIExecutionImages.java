@@ -7,14 +7,12 @@
 
 package io.harness.ci.beans.entities;
 
-import com.google.inject.Singleton;
 import lombok.Builder;
 import lombok.Data;
 import org.hibernate.validator.constraints.NotBlank;
 
 @Data
 @Builder
-@Singleton
 public class CIExecutionImages {
   @NotBlank String addonTag;
   @NotBlank String liteEngineTag;

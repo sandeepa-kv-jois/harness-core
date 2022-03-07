@@ -13,9 +13,9 @@ import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.ElkConfig;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.service.impl.analysis.LogDataCollectionInfo;
-import software.wings.sm.StateType;
 
 import java.util.List;
 import java.util.Set;
@@ -46,8 +46,8 @@ public class ElkDataCollectionInfo extends LogDataCollectionInfo implements Exec
       List<EncryptedDataDetail> encryptedDataDetails, ElkConfig elkConfig, String indices, String messageField,
       String timestampField, String timestampFieldFormat, ElkQueryType queryType, int initialDelayMinutes) {
     super(accountId, applicationId, stateExecutionId, cvConfigId, workflowId, workflowExecutionId, serviceId, query,
-        startTime, endTime, startMinute, collectionTime, hostnameField, hosts, StateType.ELK, encryptedDataDetails,
-        initialDelayMinutes);
+        startTime, endTime, startMinute, collectionTime, hostnameField, hosts, DelegateStateType.ELK,
+        encryptedDataDetails, initialDelayMinutes);
     this.elkConfig = elkConfig;
     this.indices = indices;
     this.messageField = messageField;

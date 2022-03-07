@@ -71,4 +71,21 @@ public class CIExecutionConfigResource {
       @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
     return ResponseDTO.newResponse(configService.getDeprecatedTags(accountIdentifier));
   }
+
+  @GET
+  @Path("/get-current-config")
+  @ApiOperation(value = "Get account's execution config", nickname = "getCurrentConfig")
+  @NGAccessControlCheck(resourceType = ResourceTypes.ACCOUNT, permission = VIEW_ACCOUNT_PERMISSION)
+  public ResponseDTO<CIExecutionImages> getCurrentConfig(
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
+    return ResponseDTO.newResponse(configService.getCurrentConfig(accountIdentifier));
+  }
+
+  @GET
+  @Path("/get-default-config")
+  @ApiOperation(value = "Get default execution config", nickname = "getDefaultConfig")
+  @NGAccessControlCheck(resourceType = ResourceTypes.ACCOUNT, permission = VIEW_ACCOUNT_PERMISSION)
+  public ResponseDTO<CIExecutionImages> getDefaultConfig() {
+    return ResponseDTO.newResponse(configService.getDefaultConfig());
+  }
 }

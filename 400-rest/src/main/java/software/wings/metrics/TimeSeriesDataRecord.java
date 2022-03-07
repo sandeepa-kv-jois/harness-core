@@ -33,12 +33,12 @@ import io.harness.persistence.UpdatedAtAware;
 import io.harness.persistence.UuidAware;
 
 import software.wings.common.VerificationConstants;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.impl.verification.generated.TimeSeriesMetricRecordProto.MetricDeeplinks;
 import software.wings.service.impl.verification.generated.TimeSeriesMetricRecordProto.MetricValues;
 import software.wings.service.impl.verification.generated.TimeSeriesMetricRecordProto.TxnMetricValues;
 import software.wings.service.intfc.analysis.ClusterLevel;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -114,7 +114,7 @@ public class TimeSeriesDataRecord
 
   @Id private String uuid;
 
-  private StateType stateType; // could be null for older values
+  private DelegateStateType stateType; // could be null for older values
 
   private String workflowId;
 
@@ -279,7 +279,7 @@ public class TimeSeriesDataRecord
 
     final String stateType = readString(entity, TimeSeriesMetricRecordKeys.stateType);
     if (isNotEmpty(stateType)) {
-      dataRecord.setStateType(StateType.valueOf(stateType));
+      dataRecord.setStateType(DelegateStateType.valueOf(stateType));
     }
 
     return dataRecord;

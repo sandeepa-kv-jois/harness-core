@@ -7,7 +7,7 @@
 
 package software.wings.beans;
 
-import io.harness.cvng.beans.Connector;
+import io.harness.delegate.beans.connector.cv.Connector;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator;
@@ -16,10 +16,10 @@ import io.harness.expression.ExpressionEvaluator;
 
 import software.wings.annotation.EncryptableSetting;
 import software.wings.audit.ResourceType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.jersey.JsonViews;
 import software.wings.security.UsageRestrictions;
 import software.wings.settings.SettingValue;
-import software.wings.sm.StateType;
 import software.wings.yaml.setting.VerificationProviderYaml;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -63,7 +63,7 @@ public class AppDynamicsConfig
    * Instantiates a new App dynamics config.
    */
   public AppDynamicsConfig() {
-    super(StateType.APP_DYNAMICS.name());
+    super(DelegateStateType.APP_DYNAMICS.name());
   }
 
   private AppDynamicsConfig(String username, String accountname, char[] password, String controllerUrl,

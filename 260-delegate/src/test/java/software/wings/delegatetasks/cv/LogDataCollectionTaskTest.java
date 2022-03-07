@@ -32,11 +32,11 @@ import io.harness.time.Timestamp;
 
 import software.wings.WingsBaseTest;
 import software.wings.delegatetasks.DelegateCVActivityLogService.Logger;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.LogAnalysisStoreService;
 import software.wings.service.impl.analysis.LogDataCollectionInfoV2;
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.intfc.analysis.ClusterLevel;
-import software.wings.sm.StateType;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -227,7 +227,7 @@ public class LogDataCollectionTaskTest extends WingsBaseTest {
   }
 
   public LogDataCollectionInfoV2 createLogDataCollectionInfo() {
-    StateType stateType = StateType.SPLUNKV2;
+    DelegateStateType stateType = DelegateStateType.SPLUNKV2;
     LogDataCollectionInfoV2 dataCollectionInfoV2 = mock(LogDataCollectionInfoV2.class);
     when(dataCollectionInfoV2.getStateType()).thenReturn(stateType);
     Instant now = Instant.now();

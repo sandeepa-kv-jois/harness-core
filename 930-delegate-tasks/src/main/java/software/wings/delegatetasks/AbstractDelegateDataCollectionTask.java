@@ -9,8 +9,8 @@ package software.wings.delegatetasks;
 
 import static io.harness.threading.Morpheus.sleep;
 
-import static software.wings.common.VerificationConstants.DATA_COLLECTION_RETRY_SLEEP;
-import static software.wings.common.VerificationConstants.DELAY_MINUTES;
+import static software.wings.delegatetasks.cv.CVConstants.DATA_COLLECTION_RETRY_SLEEP;
+import static software.wings.delegatetasks.cv.CVConstants.DELAY_MINUTES;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
@@ -28,7 +28,6 @@ import software.wings.service.impl.analysis.LogDataCollectionInfo;
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
 
 import com.google.common.collect.TreeBasedTable;
 import com.google.inject.Inject;
@@ -155,7 +154,8 @@ public abstract class AbstractDelegateDataCollectionTask extends AbstractDelegat
     }
   }
 
-  boolean saveMetrics(String accountId, String appId, String stateExecutionId, List<NewRelicMetricDataRecord> records) {
+  public boolean saveMetrics(
+      String accountId, String appId, String stateExecutionId, List<NewRelicMetricDataRecord> records) {
     if (records.isEmpty()) {
       return true;
     }
@@ -179,7 +179,7 @@ public abstract class AbstractDelegateDataCollectionTask extends AbstractDelegat
     return rv;
   }
 
-  protected abstract StateType getStateType();
+  protected abstract DelegateStateType getStateType();
 
   protected abstract DataCollectionTaskResult initDataCollection(TaskParameters parameters);
 

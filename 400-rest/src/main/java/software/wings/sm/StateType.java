@@ -103,6 +103,7 @@ import software.wings.beans.PhaseStepType;
 import software.wings.common.Constants;
 import software.wings.common.ProvisionerConstants;
 import software.wings.common.WorkflowConstants;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.service.impl.aws.model.AwsConstants;
 import software.wings.service.impl.workflow.WorkflowServiceHelper;
@@ -1085,5 +1086,13 @@ public enum StateType implements StateTypeDescriptor {
 
   public boolean isVerificationState() {
     return this.stencilCategory == StencilCategory.VERIFICATIONS;
+  }
+
+  public DelegateStateType getDelegateStateType() {
+    return DelegateStateType.valueOf(name());
+  }
+
+  public static StateType of(DelegateStateType delegateStateType) {
+    return valueOf(delegateStateType.name());
   }
 }
