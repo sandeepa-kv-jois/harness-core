@@ -334,19 +334,4 @@ public class SLIRecordServiceImplTest extends CvNextGenTestBase {
     testGraphCalculation(
         sliStates, SLIMissingDataType.GOOD, expectedSLITrend, expectedBurndown, expectedErrorBudgetRemaining);
   }
-
-  private void insertDummySLIRecords(int numOfGoodRecords, int numOfBadReocrds, Instant timeStamp, String sliId,
-      String verificationTaskId, int sliVersion) {
-    List<SLIState> sliStateList = new ArrayList<>();
-
-    for (int i = 0; i < numOfGoodRecords; i++) {
-      sliStateList.add(GOOD);
-    }
-
-    for (int i = 0; i < numOfBadReocrds; i++) {
-      sliStateList.add(BAD);
-    }
-
-    sliRecordService.create(getSLIRecordParam(timeStamp, sliStateList), sliId, verificationTaskId, sliVersion);
-  }
 }
