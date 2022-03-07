@@ -508,8 +508,8 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     planExecutionStrategy.getOrchestrationStartSubject().register(
         injector.getInstance(Key.get(ExecutionSummaryCreateEventHandler.class)));
     // End Observers
-    // planExecutionStrategy.getOrchestrationEndSubject().register(
-    //    injector.getInstance(Key.get(OrchestrationEndGraphHandler.class)));
+    planExecutionStrategy.getOrchestrationEndSubject().register(
+        injector.getInstance(Key.get(OrchestrationEndGraphHandler.class)));
     planExecutionStrategy.getOrchestrationEndSubject().register(
         injector.getInstance(Key.get(OrchestrationEndInterruptHandler.class)));
     planExecutionStrategy.getOrchestrationEndSubject().register(
