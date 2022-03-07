@@ -118,7 +118,7 @@ go_repository(
 
 go_rules_dependencies()
 
-go_register_toolchains(version = "1.17.5")
+go_register_toolchains(version = "1.17.7")
 
 gazelle_dependencies()
 
@@ -4332,7 +4332,7 @@ plain_artifacts = [
     "com.bugsnag:bugsnag:3.6.2",
     "com.carrotsearch:hppc:0.8.1",
     "com.coveo:saml-client:3.0.2",
-    "com.cronutils:cron-utils:9.0.1",
+    "com.cronutils:cron-utils:9.1.6",
     "com.datadoghq:java-dogstatsd-client:2.3",
     "com.deftlabs:mongo-java-distributed-lock:0.1.7",
     "com.eclipsesource.j2v8:j2v8_macosx_x86_64:4.6.0",
@@ -4555,6 +4555,7 @@ plain_artifacts = [
     "de.danielbechler:java-object-diff:0.94",
     "de.javakaffee:kryo-serializers:0.41",
     "de.jkeylockmanager:jkeylockmanager:2.1.0",
+    "de.skuzzle:semantic-version:2.1.0",
     "dk.brics.automaton:automaton:1.11-8",
     "dnsjava:dnsjava:2.1.8",
     "es.moki.ratelimitj:ratelimitj-core:0.6.0",

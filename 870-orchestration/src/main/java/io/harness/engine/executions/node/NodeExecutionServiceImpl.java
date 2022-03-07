@@ -151,14 +151,29 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   }
 
   @Override
+  public List<Status> fetchNodeExecutionsWithoutOldRetriesOnlyStatus(String planExecutionId) {
+    Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
+                      .addCriteria(where(NodeExecutionKeys.oldRetry).is(false));
+    query.fields().exclude(NodeExecutionKeys.id).include(NodeExecutionKeys.status);
+    List<NodeExecution> nodeExecutions = mongoTemplate.find(query, NodeExecution.class);
+    return nodeExecutions.stream().map(NodeExecution::getStatus).collect(Collectors.toList());
+  }
+
+  // Important : This should be used in graph regeneration no where else
+  // Please check with prashant if you need any such methods
+  @Override
   public List<NodeExecution> fetchNodeExecutionsWithoutOldRetries(String planExecutionId) {
-    return fetchNodeExecutionsWithoutOldRetriesAndStatusIn(planExecutionId, EnumSet.noneOf(Status.class));
+    return fetchNodeExecutionsWithoutOldRetriesAndStatusIn(
+        planExecutionId, EnumSet.noneOf(Status.class), false, new HashSet<>());
   }
 
   @Override
-  public List<NodeExecution> fetchNodeExecutionsWithoutOldRetriesAndStatusIn(
-      String planExecutionId, EnumSet<Status> statuses) {
-    return fetchNodeExecutionsWithoutOldRetriesAndStatusIn(planExecutionId, statuses, false, new HashSet<>());
+  public List<NodeExecution> fetchWithoutRetriesAndStatusIn(String planExecutionId, EnumSet<Status> statuses) {
+    Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
+                      .addCriteria(where(NodeExecutionKeys.oldRetry).is(false))
+                      .addCriteria(where(NodeExecutionKeys.status).is(statuses));
+    query.fields().include(NodeExecutionKeys.status);
+    return mongoTemplate.find(query, NodeExecution.class);
   }
 
   @Override
@@ -480,7 +495,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
       String planExecutionId, String parentId, EnumSet<Status> flowingStatuses, boolean includeParent) {
     List<NodeExecution> finalList = new ArrayList<>();
     List<NodeExecution> allExecutions =
-        fetchNodeExecutionsWithoutOldRetriesAndStatusIn(planExecutionId, flowingStatuses);
+        fetchNodeExecutionsWithoutOldRetriesAndStatusIn(planExecutionId, flowingStatuses, false, new HashSet<>());
     return extractChildExecutions(parentId, includeParent, finalList, allExecutions);
   }
 

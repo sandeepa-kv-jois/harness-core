@@ -135,9 +135,9 @@ public class UsageRestrictionsServiceImpl implements UsageRestrictionsService {
 
   @Override
   public boolean hasAccess(String accountId, boolean isAccountAdmin, String appIdFromRequest, String envIdFromRequest,
-      UsageRestrictions entityUsageRestrictions, UsageRestrictions restrictionsFromUserPermissions,
-      Map<String, Set<String>> appEnvMapFromPermissions, Map<String, List<Base>> appIdEnvMap,
-      boolean isScopedToAccount) {
+      boolean forUsageInNewApp, UsageRestrictions entityUsageRestrictions,
+      UsageRestrictions restrictionsFromUserPermissions, Map<String, Set<String>> appEnvMapFromPermissions,
+      Map<String, List<Base>> appIdEnvMap, boolean isScopedToAccount) {
     boolean hasNoRestrictions = hasNoRestrictions(entityUsageRestrictions);
 
     if (isNotEmpty(appIdFromRequest) && !appIdFromRequest.equals(GLOBAL_APP_ID)) {
@@ -160,6 +160,12 @@ public class UsageRestrictionsServiceImpl implements UsageRestrictionsService {
         // Restrict it to app
         return appEnvMapFromEntityRestrictions.containsKey(appIdFromRequest);
       }
+    } else if (!GLOBAL_APP_ID.equals(appIdFromRequest) && forUsageInNewApp) {
+      if (hasNoRestrictions || isScopedToAccount) {
+        return false;
+      }
+
+      return hasUsageRestrictionsForNewApp(entityUsageRestrictions.getAppEnvRestrictions());
     } else {
       User user = UserThreadLocal.get();
 
@@ -346,6 +352,17 @@ public class UsageRestrictionsServiceImpl implements UsageRestrictionsService {
     });
 
     return appEnvMap;
+  }
+
+  private boolean hasUsageRestrictionsForNewApp(Set<AppEnvRestriction> appEnvRestrictions) {
+    if (isEmpty(appEnvRestrictions)) {
+      return false;
+    }
+
+    return appEnvRestrictions.stream().anyMatch(appEnvRestriction -> {
+      GenericEntityFilter appFilter = appEnvRestriction.getAppFilter();
+      return GenericEntityFilter.FilterType.ALL.equals(appFilter.getFilterType());
+    });
   }
 
   @Override

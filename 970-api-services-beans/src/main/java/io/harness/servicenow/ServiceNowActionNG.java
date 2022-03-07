@@ -15,7 +15,9 @@ import io.harness.annotations.dev.OwnedBy;
 public enum ServiceNowActionNG {
   VALIDATE_CREDENTIALS("Validate Credentials"),
   GET_TICKET_CREATE_METADATA("Get Ticket Create Metadata"),
-  GET_TICKET("Get ticket");
+  GET_TICKET("Get ticket"),
+  CREATE_TICKET("Create ticket"),
+  UPDATE_TICKET("Update ticket");
 
   private final String displayName;
 

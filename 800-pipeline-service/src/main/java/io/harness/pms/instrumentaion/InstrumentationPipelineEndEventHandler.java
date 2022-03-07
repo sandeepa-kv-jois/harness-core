@@ -88,6 +88,7 @@ public class InstrumentationPipelineEndEventHandler implements OrchestrationEndO
     String accountName = accountDTO.getName();
     String projectId = AmbianceUtils.getProjectIdentifier(ambiance);
     String orgId = AmbianceUtils.getOrgIdentifier(ambiance);
+    // TODO : Optimize this query to use projections
     List<NodeExecution> nodeExecutionList = nodeExecutionService.fetchNodeExecutions(planExecutionId);
     Set<String> allSdkSteps = sdkStepHelper.getAllStepVisibleInUI();
 

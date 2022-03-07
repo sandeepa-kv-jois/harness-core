@@ -13,6 +13,7 @@ import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.accesscontrol.acl.persistence.ACL;
 import io.harness.accesscontrol.acl.persistence.repositories.ACLRepository;
+import io.harness.accesscontrol.aggregator.api.SecondarySyncStatus;
 import io.harness.accesscontrol.principals.usergroups.persistence.UserGroupRepository;
 import io.harness.accesscontrol.resources.resourcegroups.persistence.ResourceGroupRepository;
 import io.harness.accesscontrol.roleassignments.persistence.repositories.RoleAssignmentRepository;
@@ -24,7 +25,6 @@ import io.harness.aggregator.consumers.ChangeEventFailureHandler;
 import io.harness.aggregator.consumers.RoleAssignmentCRUDEventHandler;
 import io.harness.aggregator.consumers.UserGroupCRUDEventHandler;
 import io.harness.aggregator.models.AggregatorSecondarySyncState;
-import io.harness.aggregator.models.AggregatorSecondarySyncState.SecondarySyncStatus;
 import io.harness.aggregator.repositories.AggregatorSecondarySyncStateRepository;
 import io.harness.aggregator.repositories.MongoReconciliationOffsetRepository;
 import io.harness.annotations.dev.OwnedBy;

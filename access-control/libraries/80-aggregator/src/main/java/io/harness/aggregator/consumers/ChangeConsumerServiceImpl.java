@@ -12,7 +12,7 @@ import static io.harness.accesscontrol.principals.PrincipalType.USER;
 import static io.harness.accesscontrol.principals.PrincipalType.USER_GROUP;
 import static io.harness.aggregator.ACLUtils.buildACL;
 
-import io.harness.accesscontrol.Principal;
+import io.harness.accesscontrol.acl.api.Principal;
 import io.harness.accesscontrol.acl.persistence.ACL;
 import io.harness.accesscontrol.common.filter.ManagedFilter;
 import io.harness.accesscontrol.principals.usergroups.UserGroup;

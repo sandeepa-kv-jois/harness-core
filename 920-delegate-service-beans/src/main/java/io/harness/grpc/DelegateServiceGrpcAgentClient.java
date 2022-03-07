@@ -116,7 +116,7 @@ public class DelegateServiceGrpcAgentClient {
 
       return response.getSuccess();
     } catch (StatusRuntimeException ex) {
-      throw new DelegateServiceLiteException("Unexpected error occurred while checking task progress.", ex);
+      throw new DelegateServiceLiteException("Unexpected error occurred while sending task status.", ex);
     }
   }
 }

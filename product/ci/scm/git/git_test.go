@@ -14,9 +14,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	pb "github.com/harness/harness-core/product/ci/scm/proto"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 
@@ -398,7 +398,7 @@ func TestFindPR(t *testing.T) {
 
 // 	log, _ := logs.GetObservedLogger(zap.InfoLevel)
 // 	latestCommitIdResponse, err := GetLatestCommitOnFile(context.Background(), in, log.Sugar())
-	
+
 // 	assert.NotNil(t, err, "found errors")
 // 	assert.Equal(t, latestCommitIdResponse.CommitId, "", "status matches")
 // }
@@ -449,7 +449,6 @@ func TestFindPR(t *testing.T) {
 // 	assert.NotNil(t, len(got.CommitIds), "has commit")
 // }
 
-
 // func TestListCommitsBitbucketOnFile(t *testing.T) {
 // 	in := &pb.ListCommitsRequest{
 // 		Slug: "mohitgargharness/test-repository",
@@ -473,7 +472,6 @@ func TestFindPR(t *testing.T) {
 // 	assert.Nil(t, err, "no errors")
 // 	assert.NotNil(t, len(got.CommitIds), "has commit")
 // }
-
 
 // func TestListCommitsBitbucketOnNewFileThatDoesntExist(t *testing.T) {
 // 	in := &pb.ListCommitsRequest{

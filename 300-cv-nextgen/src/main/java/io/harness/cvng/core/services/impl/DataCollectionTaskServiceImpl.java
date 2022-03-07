@@ -16,6 +16,7 @@ import io.harness.cvng.beans.CVNGPerpetualTaskState;
 import io.harness.cvng.beans.DataCollectionExecutionStatus;
 import io.harness.cvng.beans.DataCollectionTaskDTO;
 import io.harness.cvng.beans.DataCollectionTaskDTO.DataCollectionTaskResult;
+import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
 import io.harness.cvng.core.entities.DataCollectionTask.DataCollectionTaskKeys;
@@ -37,6 +38,7 @@ import io.harness.persistence.HPersistence;
 import com.google.inject.Inject;
 import io.fabric8.utils.Lists;
 import java.time.Clock;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -137,6 +139,19 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
     updateTaskStatus(result, true);
   }
 
+  @Override
+  public DataCollectionTask updateRetry(ProjectParams projectParams, String identifier) {
+    UpdateOperations<DataCollectionTask> updateOperations =
+        hPersistence.createUpdateOperations(DataCollectionTask.class);
+    Instant instant = clock.instant().plusSeconds(300);
+    updateOperations.set(DataCollectionTaskKeys.validAfter, instant).set(DataCollectionTaskKeys.retryCount, 0);
+
+    DataCollectionTask dataCollectionTask = getDataCollectionTask(identifier);
+
+    hPersistence.update(dataCollectionTask, updateOperations);
+    return dataCollectionTask;
+  }
+
   private void updateTaskStatus(DataCollectionTaskResult result, boolean updateIfRunning) {
     log.info("Updating status {}", result);
     UpdateOperations<DataCollectionTask> updateOperations =
@@ -219,6 +234,15 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
         .filter(DataCollectionTaskKeys.verificationTaskId, verificationTaskId)
         .order(Sort.descending(DataCollectionTaskKeys.startTime))
         .asList(new FindOptions().limit(count));
+  }
+
+  @Override
+  public List<DataCollectionTask> getAllDataCollectionTasks(String accountId, String verificationTaskId) {
+    return hPersistence.createQuery(DataCollectionTask.class)
+        .filter(DataCollectionTaskKeys.accountId, accountId)
+        .filter(DataCollectionTaskKeys.verificationTaskId, verificationTaskId)
+        .order(Sort.descending(DataCollectionTaskKeys.startTime))
+        .asList();
   }
 
   private void markDependentTasksFailed(DataCollectionTask task) {

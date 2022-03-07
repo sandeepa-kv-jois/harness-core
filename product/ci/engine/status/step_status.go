@@ -13,7 +13,6 @@ import (
 
 	"github.com/cenkalti/backoff/v4"
 	"github.com/gogo/protobuf/jsonpb"
-	"github.com/pkg/errors"
 	pb "github.com/harness/harness-core/910-delegate-task-grpc-service/src/main/proto/io/harness/task/service"
 	callbackpb "github.com/harness/harness-core/920-delegate-service-beans/src/main/proto/io/harness/callback"
 	delegateSvcpb "github.com/harness/harness-core/920-delegate-service-beans/src/main/proto/io/harness/delegate"
@@ -22,6 +21,7 @@ import (
 	"github.com/harness/harness-core/commons/go/lib/utils"
 	"github.com/harness/harness-core/product/ci/engine/output"
 	enginepb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"

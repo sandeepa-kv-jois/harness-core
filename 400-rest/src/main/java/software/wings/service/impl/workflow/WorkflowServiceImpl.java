@@ -1133,7 +1133,29 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
     // Update Workflow Phase steps
     workflowServiceTemplateHelper.updateLinkedWorkflowPhases(
         orchestrationWorkflow.getWorkflowPhases(), existingOrchestrationWorkflow.getWorkflowPhases(), fromYaml);
-    return updateWorkflow(workflow, workflow.getOrchestrationWorkflow(), false);
+    boolean envChanged = false;
+    if (workflow.getEnvId() != null) {
+      if (existingWorkflow.getEnvId() == null || !existingWorkflow.getEnvId().equals(workflow.getEnvId())) {
+        envChanged = true;
+      }
+    }
+    return updateWorkflow(workflow, workflow.getOrchestrationWorkflow(), envChanged, false);
+  }
+
+  @Override
+  public Workflow updateWorkflow(
+      Workflow workflow, OrchestrationWorkflow orchestrationWorkflow, boolean envChanged, boolean migration) {
+    if (!workflow.checkServiceTemplatized() && !workflow.checkInfraDefinitionTemplatized()) {
+      workflowServiceHelper.validateServiceAndInfraDefinition(
+          workflow.getAppId(), workflow.getServiceId(), workflow.getInfraDefinitionId());
+    }
+
+    if (!migration) {
+      Workflow savedWorkflow = readWorkflow(workflow.getAppId(), workflow.getUuid());
+      validateWorkflowNameForDuplicates(workflow);
+      validateWorkflowVariables(savedWorkflow, orchestrationWorkflow);
+    }
+    return updateWorkflow(workflow, orchestrationWorkflow, true, false, envChanged, false, migration);
   }
 
   @Override

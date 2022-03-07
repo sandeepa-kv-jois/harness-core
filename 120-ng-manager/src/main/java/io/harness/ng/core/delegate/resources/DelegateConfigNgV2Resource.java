@@ -14,21 +14,26 @@ import static io.harness.delegate.utils.RbacConstants.DELEGATE_CONFIG_VIEW_PERMI
 
 import static software.wings.security.PermissionAttribute.PermissionType.LOGGED_IN;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.NGResourceFilterConstants;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
+import io.harness.delegate.beans.DelegateGroup;
+import io.harness.delegate.beans.DelegateGroupTags;
 import io.harness.delegate.beans.DelegateProfileDetailsNg;
 import io.harness.delegate.beans.ScopingRuleDetailsNg;
 import io.harness.delegate.filter.DelegateProfileFilterPropertiesDTO;
 import io.harness.ng.core.api.DelegateProfileManagerNgService;
+import io.harness.ng.core.delegate.client.DelegateConfigClient;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.remote.client.RestClientUtils;
 import io.harness.rest.RestResponse;
 
 import software.wings.security.annotations.AuthRule;
@@ -82,12 +87,14 @@ import retrofit2.http.Body;
 public class DelegateConfigNgV2Resource {
   private final DelegateProfileManagerNgService delegateProfileManagerNgService;
   private final AccessControlClient accessControlClient;
+  private final DelegateConfigClient delegateConfigClient;
 
   @Inject
-  public DelegateConfigNgV2Resource(
-      DelegateProfileManagerNgService delegateProfileManagerNgService, AccessControlClient accessControlClient) {
+  public DelegateConfigNgV2Resource(DelegateProfileManagerNgService delegateProfileManagerNgService,
+      AccessControlClient accessControlClient, DelegateConfigClient delegateConfigClient) {
     this.delegateProfileManagerNgService = delegateProfileManagerNgService;
     this.accessControlClient = accessControlClient;
+    this.delegateConfigClient = delegateConfigClient;
   }
 
   @GET
@@ -333,5 +340,30 @@ public class DelegateConfigNgV2Resource {
 
     return new RestResponse<>(delegateProfileManagerNgService.listV2(
         accountId, orgId, projectId, filterIdentifier, searchTerm, delegateProfileFilterPropertiesDTO, pageRequest));
+  }
+
+  @PUT
+  @ApiOperation(value = "Update tags for the Delegate group", nickname = "updateTagsForDelegateGroup")
+  @Timed
+  @Path("{identifier}/tags")
+  @ExceptionMetered
+  @Operation(operationId = "updateTagsForDelegateGroup", summary = "Update tags for the Delegate group",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.
+        ApiResponse(responseCode = "default", description = "Delegate Group details for updated group")
+      })
+  public RestResponse<DelegateGroup>
+  updateTagsForDelegateGroup(@Parameter(description = "Delegate Group Name") @PathParam(
+                                 NGCommonEntityConstants.IDENTIFIER_KEY) @NotEmpty String groupName,
+      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) @NotEmpty String accountId,
+      @Parameter(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) String orgId,
+      @Parameter(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) String projectId,
+      @RequestBody(required = true, description = "List of tags") DelegateGroupTags tags) {
+    return new RestResponse<>(RestClientUtils.getResponse(
+        delegateConfigClient.updateDelegateGroupTags(groupName, accountId, orgId, projectId, tags)));
   }
 }

@@ -128,8 +128,14 @@ public class WatcherApplication {
       }
     });
 
-    modules.add(new WatcherManagerClientModule(
-        configuration.getManagerUrl(), configuration.getAccountId(), configuration.getAccountSecret()));
+    // TODO: Remove this block once we completely deprecate accountSecret in YAML.
+    String delegateToken = configuration.getDelegateToken();
+    if (StringUtils.isEmpty(delegateToken)) {
+      log.error("Error while reading secret");
+      throw new RuntimeException("Neither delegateToken nor accountSecret present in config-watcher.yml");
+    }
+    modules.add(
+        new WatcherManagerClientModule(configuration.getManagerUrl(), configuration.getAccountId(), delegateToken));
 
     modules.add(WatcherModule.getInstance());
 
@@ -147,7 +153,7 @@ public class WatcherApplication {
       if (publishTarget != null && publishAuthority != null) {
         modules.add(new TailerModule(Config.builder()
                                          .accountId(configuration.getAccountId())
-                                         .accountSecret(configuration.getAccountSecret())
+                                         .accountSecret(delegateToken)
                                          .queueFilePath(Optional.ofNullable(configuration.getQueueFilePath())
                                                             .orElse(EventPublisherConstants.DEFAULT_QUEUE_FILE_PATH))
                                          .publishTarget(publishTarget)

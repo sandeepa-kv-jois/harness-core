@@ -16,18 +16,18 @@ import lombok.Data;
 
 @Data
 @Builder
-@Schema(name = "GitFullSyncConfig", description = "This has config details specific to Git Full Sync with Harness")
+@Schema(name = "GitFullSyncConfig", description = "This has config details specific to Git Full Sync with Harness.")
 public class GitFullSyncConfigDTO {
   @Schema(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) private String accountIdentifier;
   @Schema(description = NGCommonEntityConstants.ORG_PARAM_MESSAGE) private String orgIdentifier;
   @Schema(description = NGCommonEntityConstants.PROJECT_PARAM_MESSAGE) private String projectIdentifier;
-  @Schema(description = GitSyncApiConstants.DEFAULT_BRANCH_PARAM_MESSAGE) private String baseBranch;
-  @Schema(description = "Branch on which Entities will be pushed") private String branch;
-  @Schema(description = "PR Title") private String prTitle;
-  @Schema(description = "This checks whether to create a pull request. Its default value is False")
-  private boolean createPullRequest;
+  @Schema(description = "Name of the branch from which the new branch will be forked out.") private String baseBranch;
+  @Schema(description = "Name of the branch. Entities were pushed to this branch, and a pull request was made from it.")
+  private String branch;
+  @Schema(description = "Title of the pull request.") private String prTitle;
+  @Schema(description = "Determines if pull request was created.") private boolean createPullRequest;
   @Schema(description = GitSyncApiConstants.REPOID_PARAM_MESSAGE) private String repoIdentifier;
-  @Schema(description = "Checks the new Branch") boolean isNewBranch;
-  @Schema(description = "Target Branch for pull request") String targetBranch;
-  @Schema(description = "Root Folder Path where entities will be pushed") String rootFolder;
+  @Schema(description = "Determines if the provided branch was a new branch.") boolean isNewBranch;
+  @Schema(description = "Name of the target branch of the pull request.") String targetBranch;
+  @Schema(description = "Path of the root folder inside which entities were pushed.") String rootFolder;
 }

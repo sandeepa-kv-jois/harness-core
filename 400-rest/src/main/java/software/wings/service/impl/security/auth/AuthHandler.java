@@ -1960,6 +1960,11 @@ public class AuthHandler {
     }
 
     if (!isAuthorized(requiredPermissionAttributes, accountPermissions)) {
+      log.info("{} : required => {} | permissions => {}", USER_NOT_AUTHORIZED,
+          requiredPermissionAttributes.stream()
+              .map(PermissionAttribute::getPermissionType)
+              .collect(Collectors.toList()),
+          accountPermissions);
       throw new InvalidRequestException(USER_NOT_AUTHORIZED, USER);
     }
   }

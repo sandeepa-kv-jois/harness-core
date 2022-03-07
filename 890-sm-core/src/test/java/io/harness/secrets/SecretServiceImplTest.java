@@ -11,6 +11,7 @@ import static io.harness.rule.OwnerRule.PIYUSH;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.doReturn;
@@ -47,9 +48,9 @@ public class SecretServiceImplTest extends SMCoreTestBase {
     mockSecretScopeMetaData.add(SecretScopeMetadata.builder().secretId("secretThatCanbeRead").build());
     doReturn(mockSecretScopeMetaData)
         .when(secretsRBACService)
-        .filterSecretsByReadPermission(anyString(), any(List.class), anyString(), anyString());
+        .filterSecretsByReadPermission(anyString(), any(List.class), anyString(), anyString(), anyBoolean());
     List<SecretMetadata> secretIdsResponse =
-        secretService.filterSecretIdsByReadPermission(new HashSet<>(secretIds), "accountId", "dummy", "dummmy");
+        secretService.filterSecretIdsByReadPermission(new HashSet<>(secretIds), "accountId", "dummy", "dummmy", false);
     assertThat(secretIdsResponse.size()).isEqualTo(3);
     for (SecretMetadata metadata : secretIdsResponse) {
       switch (metadata.getSecretId()) {

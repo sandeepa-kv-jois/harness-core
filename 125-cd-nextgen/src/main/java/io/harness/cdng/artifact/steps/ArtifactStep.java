@@ -132,6 +132,13 @@ public class ArtifactStep implements TaskExecutable<ArtifactStepParameters, Arti
               LogColor.Cyan, LogWeight.Bold));
     }
 
+    if (taskResponse != null && taskResponse.getArtifactTaskExecutionResponse() != null
+        && taskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses() != null) {
+      logCallback.saveExecutionLog(LogHelper.color(
+          taskResponse.getArtifactTaskExecutionResponse().getArtifactDelegateResponses().get(0).describe(),
+          LogColor.Green, LogWeight.Bold));
+    }
+
     switch (taskResponse.getCommandExecutionStatus()) {
       case SUCCESS:
         return StepResponse.builder()

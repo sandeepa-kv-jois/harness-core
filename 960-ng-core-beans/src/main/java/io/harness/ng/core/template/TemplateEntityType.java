@@ -10,6 +10,8 @@ package io.harness.ng.core.template;
 import static io.harness.NGCommonEntityConstants.IDENTIFIER_KEY;
 import static io.harness.NGCommonEntityConstants.NAME_KEY;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE;
+import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE_ROOT_FIELD;
 import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STAGE_ROOT_FIELD;
 import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
@@ -28,7 +30,8 @@ import java.util.List;
 @OwnedBy(CDC)
 public enum TemplateEntityType {
   @JsonProperty(STEP) STEP_TEMPLATE(STEP, STEP_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY)),
-  @JsonProperty(STAGE) STAGE_TEMPLATE(STAGE, STAGE_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY));
+  @JsonProperty(STAGE) STAGE_TEMPLATE(STAGE, STAGE_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY)),
+  @JsonProperty(PIPELINE) PIPELINE_TEMPLATE(PIPELINE, PIPELINE_ROOT_FIELD, asList(IDENTIFIER_KEY, NAME_KEY));
 
   private final String yamlType;
   private String rootYamlName;

@@ -27,6 +27,7 @@ import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
@@ -95,6 +96,7 @@ public class InstanceSyncPerpetualTaskServiceImpl implements InstanceSyncPerpetu
             -> instanceSyncPerpetualTaskInfo.getPerpetualTaskIds()
                    .stream()
                    .map(id -> perpetualTaskService.getTaskRecord(id))
+                   .filter(Objects::nonNull)
                    .collect(Collectors.toList()))
         .orElse(emptyList());
   }

@@ -33,6 +33,7 @@ import io.harness.perpetualtask.instancesync.CustomDeploymentInstanceSyncTaskPar
 import io.harness.perpetualtask.instancesync.K8sInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.NativeHelmInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.PcfInstanceSyncPerpetualTaskParams;
+import io.harness.perpetualtask.instancesync.PdcInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.instancesync.SpotinstAmiInstanceSyncPerpetualTaskParams;
 import io.harness.perpetualtask.k8s.watch.K8SWatchTaskExecutor;
 import io.harness.perpetualtask.k8s.watch.K8sWatchTaskParams;
@@ -74,6 +75,7 @@ public class PerpetualTaskWorkerModule extends AbstractModule {
         .to(AwsAmiInstanceSyncPerpetualTaskExecutor.class);
     mapBinder.addBinding(AwsSshInstanceSyncPerpetualTaskParams.class.getSimpleName())
         .to(AwsSshInstanceSyncExecutor.class);
+    mapBinder.addBinding(PdcInstanceSyncPerpetualTaskParams.class.getSimpleName()).to(PdcInstanceSyncExecutor.class);
     mapBinder.addBinding(AwsLambdaInstanceSyncPerpetualTaskParams.class.getSimpleName())
         .to(AwsLambdaInstanceSyncPerpetualTaskExecutor.class);
     mapBinder.addBinding(SpotinstAmiInstanceSyncPerpetualTaskParams.class.getSimpleName())

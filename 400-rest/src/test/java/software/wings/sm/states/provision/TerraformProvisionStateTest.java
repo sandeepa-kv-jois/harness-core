@@ -94,7 +94,9 @@ import io.harness.security.encryption.EncryptedRecordData;
 import io.harness.tasks.ResponseData;
 
 import software.wings.WingsBaseTest;
+import software.wings.api.PhaseElement;
 import software.wings.api.ScriptStateExecutionData;
+import software.wings.api.ServiceElement;
 import software.wings.api.TerraformExecutionData;
 import software.wings.api.TerraformOutputInfoElement;
 import software.wings.api.terraform.TerraformOutputVariables;
@@ -1486,19 +1488,88 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         .when(infrastructureProvisionerService)
         .getManagerExecutionCallback(APP_ID, "activityId", state.commandUnit().name());
 
+    PhaseElement phaseElement = Mockito.mock(PhaseElement.class);
+    doReturn(phaseElement).when(executionContext).getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
+    String INFRA_ID = "INFRA_ID";
+    doReturn(INFRA_ID).when(phaseElement).getInfraDefinitionId();
+    String SERVICE_ID = "SERVICE_ID";
+    doReturn(ServiceElement.builder().uuid(SERVICE_ID).build()).when(phaseElement).getServiceElement();
+
     state.handleAsyncResponse(executionContext, response);
 
     ArgumentCaptor<SweepingOutputInstance> sweepingOutputCaptor = ArgumentCaptor.forClass(SweepingOutputInstance.class);
-    verify(sweepingOutputService, times(1)).save(sweepingOutputCaptor.capture());
+    verify(sweepingOutputService, times(2)).save(sweepingOutputCaptor.capture());
     verify(sweepingOutputService, never()).deleteById(anyString(), anyString());
 
-    SweepingOutputInstance storedSweepingOutputInstance = sweepingOutputCaptor.getValue();
+    SweepingOutputInstance storedSweepingOutputInstance = sweepingOutputCaptor.getAllValues().get(0);
     assertThat(storedSweepingOutputInstance.getName()).isEqualTo(TerraformOutputVariables.SWEEPING_OUTPUT_NAME);
     assertThat(storedSweepingOutputInstance.getValue()).isInstanceOf(TerraformOutputVariables.class);
     TerraformOutputVariables storedOutputVariables = (TerraformOutputVariables) storedSweepingOutputInstance.getValue();
     assertThat(storedOutputVariables.get("outputVar")).isEqualTo("outputVarValue");
     assertThat(storedOutputVariables.get("complex")).isInstanceOf(Map.class);
     Map<String, String> complexVarValue = (Map<String, String>) storedOutputVariables.get("complex");
+    assertThat(complexVarValue.get("output")).isEqualTo("value");
+  }
+
+  @Test
+  @Owner(developers = ARVIND)
+  @Category(UnitTests.class)
+  public void testSaveProvisionerOutputsOnResponse_PipelineScope() {
+    when(featureFlagService.isEnabled(eq(FeatureName.SAVE_TERRAFORM_OUTPUTS_TO_SWEEPING_OUTPUT), anyString()))
+        .thenReturn(true);
+    TerraformInfrastructureProvisioner provisioner = TerraformInfrastructureProvisioner.builder().appId(APP_ID).build();
+    TerraformExecutionData terraformExecutionData =
+        TerraformExecutionData.builder()
+            .executionStatus(ExecutionStatus.SUCCESS)
+            .outputs(
+                "{\"outputVar\": { \"value\" :\"outputVarValue\"}, \"complex\": { \"value\": { \"output\": \"value\"}}}")
+            .build();
+    Map<String, ResponseData> response = new HashMap<>();
+    response.put("activityId", terraformExecutionData);
+    state.setProvisionerId(PROVISIONER_ID);
+
+    doReturn(APP_ID).when(executionContext).getAppId();
+    doReturn(SweepingOutputInstance.builder().build())
+        .when(sweepingOutputService)
+        .find(argThat(hasProperty("name", is(state.getMarkerName()))));
+    doReturn(provisioner).when(infrastructureProvisionerService).get(APP_ID, PROVISIONER_ID);
+    doReturn(SweepingOutputInstance.builder()).when(executionContext).prepareSweepingOutputBuilder(Scope.WORKFLOW);
+    doReturn(SweepingOutputInstance.builder()).when(executionContext).prepareSweepingOutputBuilder(Scope.PIPELINE);
+    doReturn(managerExecutionLogCallback)
+        .when(infrastructureProvisionerService)
+        .getManagerExecutionCallback(APP_ID, "activityId", state.commandUnit().name());
+
+    PhaseElement phaseElement = Mockito.mock(PhaseElement.class);
+    doReturn(phaseElement).when(executionContext).getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
+    String INFRA_ID = "INFRA_ID";
+    doReturn(INFRA_ID).when(phaseElement).getInfraDefinitionId();
+    String SERVICE_ID = "SERVICE_ID";
+    doReturn(ServiceElement.builder().uuid(SERVICE_ID).build()).when(phaseElement).getServiceElement();
+
+    state.handleAsyncResponse(executionContext, response);
+
+    ArgumentCaptor<SweepingOutputInstance> sweepingOutputCaptor = ArgumentCaptor.forClass(SweepingOutputInstance.class);
+    verify(sweepingOutputService, times(2)).save(sweepingOutputCaptor.capture());
+    verify(sweepingOutputService, never()).deleteById(anyString(), anyString());
+
+    List<SweepingOutputInstance> allValues = sweepingOutputCaptor.getAllValues();
+    SweepingOutputInstance storedSweepingOutputInstance = allValues.get(0);
+    assertThat(storedSweepingOutputInstance.getName()).isEqualTo(TerraformOutputVariables.SWEEPING_OUTPUT_NAME);
+    assertThat(storedSweepingOutputInstance.getValue()).isInstanceOf(TerraformOutputVariables.class);
+    TerraformOutputVariables storedOutputVariables = (TerraformOutputVariables) storedSweepingOutputInstance.getValue();
+    assertThat(storedOutputVariables.get("outputVar")).isEqualTo("outputVarValue");
+    assertThat(storedOutputVariables.get("complex")).isInstanceOf(Map.class);
+    Map<String, String> complexVarValue = (Map<String, String>) storedOutputVariables.get("complex");
+    assertThat(complexVarValue.get("output")).isEqualTo("value");
+
+    storedSweepingOutputInstance = allValues.get(1);
+    assertThat(storedSweepingOutputInstance.getName())
+        .isEqualTo(TerraformOutputVariables.SWEEPING_OUTPUT_NAME + "_" + INFRA_ID + "_" + SERVICE_ID);
+    assertThat(storedSweepingOutputInstance.getValue()).isInstanceOf(TerraformOutputVariables.class);
+    storedOutputVariables = (TerraformOutputVariables) storedSweepingOutputInstance.getValue();
+    assertThat(storedOutputVariables.get("outputVar")).isEqualTo("outputVarValue");
+    assertThat(storedOutputVariables.get("complex")).isInstanceOf(Map.class);
+    complexVarValue = (Map<String, String>) storedOutputVariables.get("complex");
     assertThat(complexVarValue.get("output")).isEqualTo("value");
   }
 
@@ -1537,13 +1608,20 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         .when(infrastructureProvisionerService)
         .getManagerExecutionCallback(APP_ID, "activityId", state.commandUnit().name());
 
+    PhaseElement phaseElement = Mockito.mock(PhaseElement.class);
+    doReturn(phaseElement).when(executionContext).getContextElement(ContextElementType.PARAM, PhaseElement.PHASE_PARAM);
+    String INFRA_ID = "INFRA_ID";
+    doReturn(INFRA_ID).when(phaseElement).getInfraDefinitionId();
+    String SERVICE_ID = "SERVICE_ID";
+    doReturn(ServiceElement.builder().uuid(SERVICE_ID).build()).when(phaseElement).getServiceElement();
+
     state.handleAsyncResponse(executionContext, response);
 
     ArgumentCaptor<SweepingOutputInstance> sweepingOutputCaptor = ArgumentCaptor.forClass(SweepingOutputInstance.class);
-    verify(sweepingOutputService, times(1)).save(sweepingOutputCaptor.capture());
+    verify(sweepingOutputService, times(2)).save(sweepingOutputCaptor.capture());
     verify(sweepingOutputService, times(1)).deleteById(APP_ID, UUID);
 
-    SweepingOutputInstance storedSweepingOutputInstance = sweepingOutputCaptor.getValue();
+    SweepingOutputInstance storedSweepingOutputInstance = sweepingOutputCaptor.getAllValues().get(0);
     assertThat(storedSweepingOutputInstance.getName()).isEqualTo(TerraformOutputVariables.SWEEPING_OUTPUT_NAME);
     assertThat(storedSweepingOutputInstance.getValue()).isInstanceOf(TerraformOutputVariables.class);
     TerraformOutputVariables storedOutputVariables = (TerraformOutputVariables) storedSweepingOutputInstance.getValue();

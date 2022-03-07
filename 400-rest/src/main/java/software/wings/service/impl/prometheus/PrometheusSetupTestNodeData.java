@@ -7,9 +7,9 @@
 
 package software.wings.service.impl.prometheus;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
 import software.wings.service.impl.analysis.TimeSeries;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
@@ -34,7 +34,7 @@ public class PrometheusSetupTestNodeData extends SetupTestNodeData {
       Instance instanceElement, String hostExpression, String workflowId, long fromTime, long toTime,
       List<TimeSeries> timeSeriesToAnalyze, String guid) {
     super(appId, settingId, instanceName, isServiceLevel, instanceElement, hostExpression, workflowId, guid,
-        StateType.PROMETHEUS, fromTime, toTime);
+        DelegateStateType.PROMETHEUS, fromTime, toTime);
     this.timeSeriesToAnalyze = timeSeriesToAnalyze;
   }
 }

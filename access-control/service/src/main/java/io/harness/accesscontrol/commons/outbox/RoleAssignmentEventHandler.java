@@ -14,8 +14,9 @@ import static io.harness.accesscontrol.scopes.harness.ScopeMapper.fromDTO;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
 import static io.harness.remote.client.NGRestUtils.getResponse;
+
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
 import io.harness.ModuleType;
 import io.harness.accesscontrol.principals.usergroups.UserGroup;

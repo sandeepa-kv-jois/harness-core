@@ -270,11 +270,11 @@ public class IntegrationStageUtils {
         throw new IllegalArgumentException("CI codebase spec is not set");
       }
 
-      if (isEmpty(ciCodebase.getRepoName())) {
+      if (isEmpty(ciCodebase.getRepoName().getValue())) {
         throw new IllegalArgumentException("Repo name is not set in CI codebase spec");
       }
 
-      String repoName = ciCodebase.getRepoName();
+      String repoName = ciCodebase.getRepoName().getValue();
       if (url.endsWith(PATH_SEPARATOR)) {
         gitUrl = url + repoName;
       } else {

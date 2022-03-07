@@ -40,6 +40,7 @@ public class ConnectorNextGenRegistrars {
           .addAll(NGAuditCommonsRegistrars.kryoRegistrars)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .addAll(LicenseBeanRegistrar.kryoRegistrars)
+          .addAll(AccessControlClientRegistrars.kryoRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =

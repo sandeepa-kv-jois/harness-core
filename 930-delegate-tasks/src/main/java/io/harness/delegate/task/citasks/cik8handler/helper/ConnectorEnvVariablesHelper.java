@@ -168,6 +168,19 @@ public class ConnectorEnvVariablesHelper {
                 encodeBase64(String.valueOf(manualConfig.getSecretKeyRef().getDecryptedValue()))));
       }
     }
+
+    if (awsConnectorConfig.getCredential() != null
+        && awsConnectorConfig.getCredential().getCrossAccountAccess() != null) {
+      String crossAccountRoleArn = awsConnectorConfig.getCredential().getCrossAccountAccess().getCrossAccountRoleArn();
+
+      String crossAccountArnEnvVarName =
+          connectorDetails.getEnvToSecretsMap().get(EnvVariableEnum.AWS_CROSS_ACCOUNT_ROLE_ARN);
+      if (isNotBlank(crossAccountArnEnvVarName)) {
+        secretData.put(crossAccountArnEnvVarName,
+            getVariableSecret(
+                crossAccountArnEnvVarName + connectorDetails.getIdentifier(), encodeBase64(crossAccountRoleArn)));
+      }
+    }
     return secretData;
   }
 

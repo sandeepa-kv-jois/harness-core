@@ -9,10 +9,12 @@ package software.wings.service;
 
 import static io.harness.rule.OwnerRule.AGORODETKI;
 import static io.harness.rule.OwnerRule.PRABU;
+import static io.harness.rule.OwnerRule.SHIVAM;
 
 import static software.wings.utils.WingsTestConstants.ACCOUNT_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.ENV_ID;
+import static software.wings.utils.WingsTestConstants.SERVICE2_ID;
 import static software.wings.utils.WingsTestConstants.SERVICE_ID;
 
 import static java.util.Arrays.asList;
@@ -106,6 +108,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     GovernanceConfig savedGovernanceConfig =
         governanceConfigService.upsert(governanceConfig.getAccountId(), governanceConfig);
     savedGovernanceConfig.setUuid("GOVERNANCE_CONFIG_ID");
+    governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).setApplicable(true);
     JsonNode actual = JsonUtils.toJsonNode(savedGovernanceConfig);
     JsonNode expected = JsonUtils.readResourceFile("governance/governance_config_expected.json", JsonNode.class);
     assertThat(actual).hasToString(expected.toString());
@@ -117,7 +120,6 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
   public void shouldDeleteDeploymentFreeze() {
     GovernanceConfig governanceConfig =
         JsonUtils.readResourceFile("governance/governance_config.json", GovernanceConfig.class);
-
     GovernanceConfig savedGovernanceConfig =
         governanceConfigService.upsert(governanceConfig.getAccountId(), governanceConfig);
     savedGovernanceConfig.getTimeRangeBasedFreezeConfigs().remove(0);
@@ -155,6 +157,24 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
   }
 
   @Test
+  @Owner(developers = SHIVAM)
+  @Category(UnitTests.class)
+  public void shouldThrowExceptionForCustomServiceWithMultipleApps() {
+    GovernanceConfig governanceConfig =
+        JsonUtils.readResourceFile("governance/governance_config.json", GovernanceConfig.class);
+    CustomAppFilter appConfig =
+        (CustomAppFilter) governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).getAppSelections().get(0);
+    appConfig.getApps().add("app2");
+
+    governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).getAppSelections().get(0).getEnvSelection().setFilterType(
+        EnvironmentFilterType.ALL);
+
+    assertThatThrownBy(() -> governanceConfigService.upsert(governanceConfig.getAccountId(), governanceConfig))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Application filter should have exactly one app when service filter type is CUSTOM");
+  }
+
+  @Test
   @Owner(developers = PRABU)
   @Category(UnitTests.class)
   public void shouldThrowExceptionForCustomEnvWithMultipleApps() {
@@ -179,12 +199,14 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllProdEnvFilter(EnvironmentFilterType.ALL_PROD))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection2 = CustomAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
                                           .apps(asList(APP_ID, APP_ID + 2))
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -192,6 +214,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID + 3))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenAppEnvs", null,
@@ -230,6 +253,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -237,6 +261,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenAllAppEnvs",
@@ -268,6 +293,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -275,6 +301,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, asList(SERVICE_ID, SERVICE2_ID)))
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
@@ -356,6 +383,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
@@ -387,12 +415,14 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllProdEnvFilter(EnvironmentFilterType.ALL_PROD))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection2 = CustomAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
                                           .apps(asList(APP_ID, APP_ID + 2))
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -400,6 +430,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID + 3))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetFrozenEnvsForApp",
@@ -516,12 +547,14 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllProdEnvFilter(EnvironmentFilterType.ALL_PROD))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection2 = CustomAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
                                           .apps(asList(APP_ID, APP_ID + 2))
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig1 =
@@ -560,6 +593,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -567,6 +601,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig = new TimeRangeBasedFreezeConfig(true,
         Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD), range, "shouldGetOnlyApplicableEnvs",
@@ -630,6 +665,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
         new TimeRangeBasedFreezeConfig(true, Collections.emptyList(), Collections.singletonList(EnvironmentType.PROD),
@@ -676,6 +712,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
@@ -762,6 +799,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
@@ -803,6 +841,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -810,6 +849,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
@@ -838,6 +878,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -845,6 +886,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
@@ -874,6 +916,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -881,6 +924,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
@@ -923,6 +967,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     ApplicationFilter appSelection1 = AllAppFilter.builder()
                                           .blackoutWindowFilterType(BlackoutWindowFilterType.ALL)
                                           .envSelection(new AllEnvFilter(EnvironmentFilterType.ALL))
+                                          .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
                                           .build();
 
     ApplicationFilter appSelection3 =
@@ -930,6 +975,7 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
             .blackoutWindowFilterType(BlackoutWindowFilterType.CUSTOM)
             .apps(asList(APP_ID))
             .envSelection(new CustomEnvFilter(EnvironmentFilterType.CUSTOM, asList(ENV_ID, ENV_ID + 2)))
+            .serviceSelection(new ServiceFilter(ServiceFilterType.ALL, null))
             .build();
 
     TimeRangeBasedFreezeConfig timeRangeBasedFreezeConfig =
@@ -958,5 +1004,22 @@ public class GovernanceConfigServiceImplTest extends WingsBaseTest {
     verify(deploymentFreezeUtils).handleActivationEvent(timeRangeBasedFreezeConfig, ACCOUNT_ID);
     verify(deploymentFreezeUtils, never()).handleActivationEvent(timeRangeBasedFreezeConfig2, ACCOUNT_ID);
     verify(deploymentFreezeUtils).handleDeActivationEvent(timeRangeBasedFreezeConfig, ACCOUNT_ID);
+  }
+
+  @Test
+  @Owner(developers = SHIVAM)
+  @Category(UnitTests.class)
+  public void shouldThrowErrorOnEnablingTheExpiredWindow() {
+    GovernanceConfig governanceConfig =
+        JsonUtils.readResourceFile("governance/governance_config.json", GovernanceConfig.class);
+    governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).setApplicable(false);
+
+    GovernanceConfig savedGovernanceConfig =
+        governanceConfigService.upsert(governanceConfig.getAccountId(), governanceConfig);
+    savedGovernanceConfig.setUuid("GOVERNANCE_CONFIG_ID");
+    governanceConfig.getTimeRangeBasedFreezeConfigs().get(0).setApplicable(true);
+    assertThatThrownBy(() -> governanceConfigService.upsert(governanceConfig.getAccountId(), governanceConfig))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Cannot update expired freeze window: freezer");
   }
 }

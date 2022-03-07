@@ -19,7 +19,7 @@ public interface ManifestStoreType {
   String LOCAL = "Local";
   String GITHUB = "Github";
   String BITBUCKET = "Bitbucket";
-  String GITLAB = "Gitlab";
+  String GITLAB = "GitLab";
   String HTTP = "Http";
   String S3 = "S3";
   String GCS = "Gcs";

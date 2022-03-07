@@ -141,6 +141,7 @@ public class SettingResource {
   @ExceptionMetered
   public RestResponse<PageResponse<SettingAttribute>> list(
       @DefaultValue(GLOBAL_APP_ID) @QueryParam("appId") String appId, @QueryParam("currentAppId") String currentAppId,
+      @DefaultValue("false") @QueryParam("forUsageInNewApp") Boolean forUsageInNewApp,
       @QueryParam("currentEnvId") String currentEnvId, @QueryParam("accountId") String accountId,
       @QueryParam("type") List<SettingVariableTypes> settingVariableTypes,
       @QueryParam("gitSshConfigOnly") boolean gitSshConfigOnly,
@@ -169,7 +170,8 @@ public class SettingResource {
         artifactType = service.getArtifactType();
       }
       result = settingsService.list(pageRequest, currentAppId, currentEnvId, accountId, gitSshConfigOnly,
-          withArtifactStreamCount, artifactStreamSearchString, maxArtifactStreams, artifactType);
+          withArtifactStreamCount, artifactStreamSearchString, maxArtifactStreams, artifactType,
+          Boolean.TRUE.equals(forUsageInNewApp));
     } else {
       if (featureFlagService.isEnabled(FeatureName.CUSTOM_MAX_PAGE_SIZE, accountId)) {
         String limit = PageRequest.UNLIMITED.equals(pageRequest.getLimit())
@@ -177,7 +179,7 @@ public class SettingResource {
             : Integer.toString(Parser.asInt(pageRequest.getLimit(), Integer.parseInt(CUSTOM_MAX_LIMIT)));
         pageRequest.setLimit(limit);
       }
-      result = settingsService.list(pageRequest, currentAppId, currentEnvId);
+      result = settingsService.list(pageRequest, currentAppId, currentEnvId, Boolean.TRUE.equals(forUsageInNewApp));
     }
     result.forEach(
         settingAttribute -> settingServiceHelper.updateSettingAttributeBeforeResponse(settingAttribute, true));
@@ -693,7 +695,7 @@ public class SettingResource {
       SettingAttribute settingAttribute = settingsService.get(settingId);
       if (settingAttribute == null || !settingAttribute.getAccountId().equals(accountId)
           || isEmpty(settingsService.getFilteredSettingAttributes(
-              Collections.singletonList(settingAttribute), currentAppId, currentEnvId))) {
+              Collections.singletonList(settingAttribute), currentAppId, currentEnvId, false))) {
         throw new InvalidRequestException("Setting attribute does not exist", USER);
       }
     }

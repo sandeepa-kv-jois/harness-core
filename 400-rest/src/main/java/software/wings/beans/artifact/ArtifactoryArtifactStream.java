@@ -14,6 +14,7 @@ import static io.harness.exception.WingsException.USER;
 
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 import static software.wings.beans.artifact.ArtifactStreamType.ARTIFACTORY;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 
 import static java.lang.String.format;
 import static org.apache.commons.lang3.StringUtils.isBlank;
@@ -145,7 +146,7 @@ public class ArtifactoryArtifactStream extends ArtifactStream {
         .artifactPattern(artifactPattern)
         .artifactName(artifactPaths == null ? "" : artifactPaths.get(0))
         .repositoryType(getRepositoryType())
-        .metadataOnly(isMetadataOnly())
+        .metadataOnly(metadataOnlyBehindFlag(featureFlagService, getAccountId(), isMetadataOnly()))
         .artifactoryDockerRepositoryServer(dockerRepositoryServer)
         .dockerBasedDeployment(useDockerFormat)
         .build();

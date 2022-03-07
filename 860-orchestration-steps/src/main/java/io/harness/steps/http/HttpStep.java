@@ -19,6 +19,8 @@ import io.harness.delegate.task.http.HttpTaskParametersNg.HttpTaskParametersNgBu
 import io.harness.exception.InvalidRequestException;
 import io.harness.expression.EngineExpressionEvaluator;
 import io.harness.http.HttpHeaderConfig;
+import io.harness.logging.CommandExecutionStatus;
+import io.harness.logging.LogLevel;
 import io.harness.logstreaming.LogStreamingStepClientFactory;
 import io.harness.logstreaming.NGLogCallback;
 import io.harness.plancreator.steps.TaskSelectorYaml;
@@ -138,10 +140,10 @@ public class HttpStep extends TaskExecutableWithRollback<HttpStepResponse> {
     if (!assertionSuccessful) {
       responseBuilder.status(Status.FAILED);
       responseBuilder.failureInfo(FailureInfo.newBuilder().setErrorMessage("assertion failed").build());
-      logCallback.saveExecutionLog("Assertions failed");
+      logCallback.saveExecutionLog("Assertions failed", LogLevel.INFO, CommandExecutionStatus.FAILURE);
     } else {
       responseBuilder.status(Status.SUCCEEDED);
-      logCallback.saveExecutionLog("Assertions passed");
+      logCallback.saveExecutionLog("Assertions passed", LogLevel.INFO, CommandExecutionStatus.SUCCESS);
     }
     responseBuilder.stepOutcome(
         StepOutcome.builder().name(YAMLFieldNameConstants.OUTPUT).outcome(executionData).build());

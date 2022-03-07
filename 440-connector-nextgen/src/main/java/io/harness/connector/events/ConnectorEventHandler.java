@@ -11,7 +11,8 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static io.harness.connector.ConnectorEvent.CONNECTOR_CREATED;
 import static io.harness.connector.ConnectorEvent.CONNECTOR_DELETED;
 import static io.harness.connector.ConnectorEvent.CONNECTOR_UPDATED;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
+
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;

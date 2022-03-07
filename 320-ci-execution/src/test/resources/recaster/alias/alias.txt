@@ -138,3 +138,9 @@ io.harness.beans.steps.nodes.S3UploadNode
 io.harness.beans.steps.nodes.SaveCacheGCSNode
 io.harness.beans.steps.nodes.SaveCacheS3Node
 io.harness.beans.steps.nodes.SecurityNode
+io.harness.steps.servicenow.create.ServiceNowCreateSpecParameters
+io.harness.steps.servicenow.create.ServiceNowCreateStepNode
+io.harness.steps.servicenow.create.ServiceNowCreateStepInfo
+io.harness.steps.servicenow.update.ServiceNowUpdateSpecParameters
+io.harness.steps.servicenow.update.ServiceNowUpdateStepNode
+io.harness.steps.servicenow.update.ServiceNowUpdateStepInfo

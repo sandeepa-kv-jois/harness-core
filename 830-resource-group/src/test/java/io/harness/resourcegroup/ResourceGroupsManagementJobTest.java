@@ -18,16 +18,16 @@ import io.harness.category.element.UnitTests;
 import io.harness.lock.PersistentLocker;
 import io.harness.ng.beans.PageRequest;
 import io.harness.reflection.ReflectionUtils;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.resourcegroup.commons.bootstrap.ConfigurationState;
 import io.harness.resourcegroup.commons.bootstrap.ConfigurationStateRepository;
-import io.harness.resourcegroup.framework.service.ResourceGroupService;
-import io.harness.resourcegroup.remote.dto.ManagedFilter;
-import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
+import io.harness.resourcegroup.framework.v1.service.ResourceGroupService;
+import io.harness.resourcegroup.v1.remote.dto.ManagedFilter;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import io.serializer.HObjectMapper;
 import java.lang.reflect.Field;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,8 +56,7 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
   public void testSave() {
     ResourceGroupsConfig resourceGroupsConfig =
         (ResourceGroupsConfig) ReflectionUtils.getFieldValue(resourceGroupsManagementJob, RESOURCE_GROUPS_CONFIG_FIELD);
-    ResourceGroupsConfig resourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(resourceGroupsConfig);
+    ResourceGroupsConfig resourceGroupsConfigClone = (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
 
     resourceGroupsManagementJob.run();
     validate(resourceGroupsConfigClone);
@@ -72,21 +71,20 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
         (ResourceGroupsConfig) ReflectionUtils.getFieldValue(resourceGroupsManagementJob, RESOURCE_GROUPS_CONFIG_FIELD);
     ReflectionUtils.setObjectField(
         resourceGroupsConfig.getClass().getDeclaredField(VERSION_FIELD), resourceGroupsConfig, 2);
-    ResourceGroupsConfig latestResourceGroupsConfig =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(resourceGroupsConfig);
+    ResourceGroupsConfig latestResourceGroupsConfig = (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
     ResourceGroupsConfig currentResourceGroupsConfig = ResourceGroupsConfig.builder()
                                                            .version(1)
                                                            .name(latestResourceGroupsConfig.getName())
                                                            .resourceGroups(new HashSet<>())
                                                            .build();
     ResourceGroupsConfig currentResourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(currentResourceGroupsConfig);
+        (ResourceGroupsConfig) HObjectMapper.clone(currentResourceGroupsConfig);
     ReflectionUtils.setObjectField(f, resourceGroupsManagementJob, currentResourceGroupsConfig);
     resourceGroupsManagementJob.run();
     validate(currentResourceGroupsConfigClone);
 
     ResourceGroupsConfig latestResourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(latestResourceGroupsConfig);
+        (ResourceGroupsConfig) HObjectMapper.clone(latestResourceGroupsConfig);
     ReflectionUtils.setObjectField(f, resourceGroupsManagementJob, latestResourceGroupsConfig);
     resourceGroupsManagementJob.run();
     validate(latestResourceGroupsConfigClone);
@@ -107,8 +105,7 @@ public class ResourceGroupsManagementJobTest extends ResourceGroupTestBase {
     ReflectionUtils.setObjectField(
         resourceGroupsConfig.getClass().getDeclaredField(VERSION_FIELD), resourceGroupsConfig, currentVersion + 1);
 
-    ResourceGroupsConfig resourceGroupsConfigClone =
-        (ResourceGroupsConfig) NGObjectMapperHelper.clone(resourceGroupsConfig);
+    ResourceGroupsConfig resourceGroupsConfigClone = (ResourceGroupsConfig) HObjectMapper.clone(resourceGroupsConfig);
 
     resourceGroupsManagementJob.run();
     validate(resourceGroupsConfigClone);

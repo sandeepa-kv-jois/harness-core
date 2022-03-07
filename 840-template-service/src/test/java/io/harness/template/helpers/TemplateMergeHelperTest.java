@@ -8,6 +8,7 @@
 package io.harness.template.helpers;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.rule.OwnerRule.ABHINAV_MITTAL;
 import static io.harness.rule.OwnerRule.INDER;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -74,6 +75,30 @@ public class TemplateMergeHelperTest extends TemplateServiceTestBase {
   @Category(UnitTests.class)
   public void testCreateTemplateInputsFromStepTemplateWithoutRuntimeInputs() {
     String filename = "step-template-without-runtime-inputs.yaml";
+    String yaml = readFile(filename);
+    String templateYaml = templateMergeHelper.createTemplateInputsFromTemplate(yaml);
+    assertThat(templateYaml).isNullOrEmpty();
+  }
+
+  @Test
+  @Owner(developers = ABHINAV_MITTAL)
+  @Category(UnitTests.class)
+  public void testCreateTemplateInputsFromPipelineTemplateWithRuntimeInputs() {
+    String filename = "template-pipeline.yaml";
+    String yaml = readFile(filename);
+    String templateYaml = templateMergeHelper.createTemplateInputsFromTemplate(yaml);
+    assertThat(templateYaml).isNotNull();
+
+    String resFile = "template-pipeline-templateInputs.yaml";
+    String resTemplate = readFile(resFile);
+    assertThat(templateYaml).isEqualTo(resTemplate);
+  }
+
+  @Test
+  @Owner(developers = ABHINAV_MITTAL)
+  @Category(UnitTests.class)
+  public void testCreateTemplateInputsFromPipelineTemplateWithoutRuntimeInputs() {
+    String filename = "pipeline-template-without-runtime-inputs.yaml";
     String yaml = readFile(filename);
     String templateYaml = templateMergeHelper.createTemplateInputsFromTemplate(yaml);
     assertThat(templateYaml).isNullOrEmpty();

@@ -8,8 +8,8 @@ package artifacts
 import (
 	"fmt"
 
-	"github.com/pkg/errors"
 	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/pkg/errors"
 )
 
 //Validates the publish artifact request

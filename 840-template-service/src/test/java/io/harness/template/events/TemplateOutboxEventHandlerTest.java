@@ -43,12 +43,12 @@ import io.harness.security.SourcePrincipalContextData;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.UserPrincipal;
 import io.harness.template.entity.TemplateEntity;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.api.client.util.Charsets;
 import com.google.common.io.Resources;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 import org.junit.Before;
 import org.junit.Test;
@@ -66,7 +66,7 @@ public class TemplateOutboxEventHandlerTest extends CategoryTest {
 
   @Before
   public void setup() throws IOException {
-    objectMapper = NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER;
+    objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     auditClientService = mock(AuditClientService.class);
     eventProducer = mock(Producer.class);
     templateOutboxEventHandler = spy(new TemplateOutboxEventHandler(auditClientService, eventProducer));

@@ -10,7 +10,13 @@ package io.harness.accesscontrol.clients;
 import static io.harness.exception.WingsException.USER;
 
 import io.harness.accesscontrol.NGAccessDeniedException;
-import io.harness.accesscontrol.Principal;
+import io.harness.accesscontrol.acl.api.AccessCheckRequestDTO;
+import io.harness.accesscontrol.acl.api.AccessCheckResponseDTO;
+import io.harness.accesscontrol.acl.api.AccessControlDTO;
+import io.harness.accesscontrol.acl.api.PermissionCheckDTO;
+import io.harness.accesscontrol.acl.api.Principal;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.AccessDeniedException;

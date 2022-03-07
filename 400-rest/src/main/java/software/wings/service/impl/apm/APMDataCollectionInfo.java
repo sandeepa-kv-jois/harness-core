@@ -18,8 +18,8 @@ import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator
 import io.harness.expression.ExpressionEvaluator;
 import io.harness.security.encryption.EncryptedDataDetail;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
-import software.wings.sm.StateType;
 import software.wings.utils.Utils;
 
 import java.util.ArrayList;
@@ -39,7 +39,7 @@ public class APMDataCollectionInfo implements TaskParameters, ExecutionCapabilit
   private List<APMMetricInfo> canaryMetricInfos;
   private Map<String, List<APMMetricInfo>> metricEndpoints;
   private Map<String, String> hosts;
-  private StateType stateType;
+  private DelegateStateType stateType;
   private long startTime;
   private int dataCollectionMinute;
   private String applicationId;

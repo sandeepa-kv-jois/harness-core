@@ -10,10 +10,12 @@ package io.harness.generator.artifactstream;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 
 import static java.util.Arrays.asList;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ff.FeatureFlagService;
 import io.harness.generator.OwnerManager.Owners;
 import io.harness.generator.Randomizer;
 import io.harness.generator.Randomizer.Seed;
@@ -35,6 +37,7 @@ import com.google.inject.Singleton;
 public class JenkinsArtifactStreamStreamsGenerator implements ArtifactStreamsGenerator {
   @Inject private SettingGenerator settingGenerator;
   @Inject private ArtifactStreamGeneratorHelper artifactStreamGeneratorHelper;
+  @Inject FeatureFlagService featureFlagService;
 
   @Override
   public ArtifactStream ensureArtifactStream(Seed seed, Owners owners) {
@@ -114,7 +117,8 @@ public class JenkinsArtifactStreamStreamsGenerator implements ArtifactStreamsGen
       throw new UnsupportedOperationException();
     }
 
-    builder.metadataOnly(artifactStream.isMetadataOnly());
+    builder.metadataOnly(
+        metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly()));
 
     return artifactStreamGeneratorHelper.saveArtifactStream(builder.build(), owners);
   }

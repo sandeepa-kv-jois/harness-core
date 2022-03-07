@@ -11,4 +11,6 @@ public interface ArtifactSourceConstants {
   String DOCKER_REGISTRY_NAME = "DockerRegistry";
   String GCR_NAME = "Gcr";
   String ECR_NAME = "Ecr";
+  String NEXUS3_REGISTRY_NAME = "Nexus3Registry";
+  String ARTIFACTORY_REGISTRY_NAME = "ArtifactoryRegistry";
 }

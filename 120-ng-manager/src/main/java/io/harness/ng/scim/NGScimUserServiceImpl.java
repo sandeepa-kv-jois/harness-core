@@ -17,6 +17,7 @@ import io.harness.ng.core.invites.api.InviteService;
 import io.harness.ng.core.invites.dto.RoleBinding;
 import io.harness.ng.core.invites.entities.Invite;
 import io.harness.ng.core.user.UserInfo;
+import io.harness.ng.core.user.UserMembershipUpdateSource;
 import io.harness.ng.core.user.entities.UserGroup;
 import io.harness.ng.core.user.remote.dto.UserMetadataDTO;
 import io.harness.ng.core.user.service.NgUserService;
@@ -84,6 +85,8 @@ public class NGScimUserServiceImpl implements ScimUserService {
       } else {
         log.info("NGSCIM: Creating user call for accountId {} with conflict {}", accountId, userQuery);
       }
+      ngUserService.addUserToScope(
+          user.getUuid(), Scope.of(accountId, null, null), null, null, UserMembershipUpdateSource.SYSTEM);
       return Response.status(Response.Status.CREATED).entity(getUser(user.getUuid(), accountId)).build();
     } else {
       String userName = getName(userQuery);

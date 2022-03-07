@@ -291,6 +291,7 @@ build_protocol_info(){
 build_bazel_application 940-notification-client
 build_bazel_application 820-platform-service
 
+build_bazel_module 100-migrator
 build_bazel_module 320-ci-execution
 build_bazel_module 330-ci-beans
 build_bazel_module 380-cg-graphql

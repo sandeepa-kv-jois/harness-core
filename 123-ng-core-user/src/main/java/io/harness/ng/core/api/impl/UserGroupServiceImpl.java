@@ -55,7 +55,6 @@ import io.harness.ng.core.user.service.LastAdminCheckService;
 import io.harness.ng.core.user.service.NgUserService;
 import io.harness.notification.NotificationChannelType;
 import io.harness.outbox.api.OutboxService;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.repositories.ng.core.spring.UserGroupRepository;
 import io.harness.user.remote.UserClient;
 import io.harness.utils.ScopeUtils;
@@ -68,6 +67,7 @@ import com.google.common.collect.Sets;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -296,7 +296,7 @@ public class UserGroupServiceImpl implements UserGroupService {
   public UserGroup addMember(String accountIdentifier, String orgIdentifier, String projectIdentifier,
       String userGroupIdentifier, String userIdentifier) {
     UserGroup existingUserGroup = getOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, userGroupIdentifier);
-    UserGroupDTO oldUserGroup = (UserGroupDTO) NGObjectMapperHelper.clone(toDTO(existingUserGroup));
+    UserGroupDTO oldUserGroup = (UserGroupDTO) HObjectMapper.clone(toDTO(existingUserGroup));
 
     if (existingUserGroup.getUsers().stream().noneMatch(userIdentifier::equals)) {
       log.info("[NGSamlUserGroupSync] Adding member {} to Existing Usergroup: {}", userIdentifier, existingUserGroup);
@@ -344,7 +344,7 @@ public class UserGroupServiceImpl implements UserGroupService {
   public UserGroup removeMember(Scope scope, String userGroupIdentifier, String userIdentifier) {
     UserGroup existingUserGroup = getOrThrow(
         scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier(), userGroupIdentifier);
-    UserGroupDTO oldUserGroup = (UserGroupDTO) NGObjectMapperHelper.clone(toDTO(existingUserGroup));
+    UserGroupDTO oldUserGroup = (UserGroupDTO) HObjectMapper.clone(toDTO(existingUserGroup));
     validateAtleastOneAdminExistAfterRemoval(scope, userGroupIdentifier, userIdentifier);
     existingUserGroup.getUsers().remove(userIdentifier);
     return updateInternal(existingUserGroup, oldUserGroup);
@@ -543,7 +543,7 @@ public class UserGroupServiceImpl implements UserGroupService {
       String projectIdentifier, @NotBlank String userGroupIdentifier, @NotNull SSOType ssoType, @NotBlank String ssoId,
       @NotBlank String ssoGroupId, @NotBlank String ssoGroupName) {
     UserGroup existingUserGroup = getOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, userGroupIdentifier);
-    UserGroupDTO oldUserGroup = (UserGroupDTO) NGObjectMapperHelper.clone(toDTO(existingUserGroup));
+    UserGroupDTO oldUserGroup = (UserGroupDTO) HObjectMapper.clone(toDTO(existingUserGroup));
 
     if (TRUE.equals(existingUserGroup.getIsSsoLinked())) {
       throw new InvalidRequestException("SSO Provider already linked to the group. Try unlinking first.");
@@ -578,7 +578,7 @@ public class UserGroupServiceImpl implements UserGroupService {
   public UserGroup unlinkSsoGroup(@NotBlank @AccountIdentifier String accountIdentifier, String orgIdentifier,
       String projectIdentifier, @NotBlank String userGroupIdentifier, boolean retainMembers) {
     UserGroup existingUserGroup = getOrThrow(accountIdentifier, orgIdentifier, projectIdentifier, userGroupIdentifier);
-    UserGroupDTO oldUserGroup = (UserGroupDTO) NGObjectMapperHelper.clone(toDTO(existingUserGroup));
+    UserGroupDTO oldUserGroup = (UserGroupDTO) HObjectMapper.clone(toDTO(existingUserGroup));
 
     if (FALSE.equals(existingUserGroup.getIsSsoLinked()) || existingUserGroup.getIsSsoLinked() == null) {
       throw new InvalidRequestException("Group is not linked to any SSO group.");

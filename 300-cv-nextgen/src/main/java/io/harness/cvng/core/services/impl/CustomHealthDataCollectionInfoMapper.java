@@ -16,6 +16,7 @@ import io.harness.cvng.core.entities.CustomHealthCVConfig;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
 import io.harness.cvng.core.services.api.DataCollectionInfoMapper;
 import io.harness.cvng.core.services.api.DataCollectionSLIInfoMapper;
+import io.harness.cvng.core.utils.dataCollection.MetricDataCollectionUtils;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
 
 import java.util.ArrayList;
@@ -30,10 +31,13 @@ public class CustomHealthDataCollectionInfoMapper
     CustomHealthDataCollectionInfo customHealthDataCollectionInfo =
         CustomHealthDataCollectionInfo.builder()
             .groupName(cvConfig.getGroupName())
-            .metricInfoList(cvConfig.getMetricDefinitions()
-                                .stream()
-                                .map(metricDefinition -> mapMetricDefinitionToMetricInfo(metricDefinition))
-                                .collect(Collectors.toList()))
+            .metricInfoList(
+                cvConfig.getMetricDefinitions()
+                    .stream()
+                    .filter(metricInfo
+                        -> MetricDataCollectionUtils.isMetricApplicableForDataCollection(metricInfo, taskType))
+                    .map(metricDefinition -> mapMetricDefinitionToMetricInfo(metricDefinition))
+                    .collect(Collectors.toList()))
             .build();
     customHealthDataCollectionInfo.setDataCollectionDsl(cvConfig.getDataCollectionDsl());
     return customHealthDataCollectionInfo;
@@ -67,6 +71,7 @@ public class CustomHealthDataCollectionInfoMapper
     MetricResponseMapping metricResponseMapping = metricDefinition.getMetricResponseMapping();
     return CustomHealthDataCollectionInfo.CustomHealthMetricInfo.builder()
         .metricName(metricDefinition.getMetricName())
+        .metricIdentifier(metricDefinition.getIdentifier())
         .endTime(metricDefinition.getEndTime())
         .responseMapping(MetricResponseMappingDTO.builder()
                              .metricValueJsonPath(metricResponseMapping.getMetricValueJsonPath())

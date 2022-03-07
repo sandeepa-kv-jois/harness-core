@@ -313,3 +313,27 @@ fi
 java -jar accesscontrol-service-capsule.jar scan-classpath-metadata
 
 cd ../..
+
+mkdir -p dist/migrator ;
+cd dist/migrator
+
+cp ${BAZEL_BIN}/100-migrator/module_deploy.jar migrator-capsule.jar
+cp ../../400-rest/src/main/resources/hazelcast.xml .
+cp ../../keystore.jks .
+cp ../../360-cg-manager/key.pem .
+cp ../../360-cg-manager/cert.pem .
+cp ../../360-cg-manager/newrelic.yml .
+cp ../../100-migrator/config.yml .
+cp ../../400-rest/src/main/resources/redisson-jcache.yaml .
+cp ../../alpn-boot-8.1.13.v20181017.jar .
+
+cp ../../dockerization/migrator/Dockerfile-manager-jenkins-k8-openjdk ./Dockerfile
+cp ../../dockerization/migrator/Dockerfile-manager-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
+cp -r ../../dockerization/migrator/scripts/ .
+mv scripts/start_process_bazel.sh scripts/start_process.sh
+
+copy_common_files
+
+java -jar migrator-capsule.jar scan-classpath-metadata
+
+cd ../..

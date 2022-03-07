@@ -41,7 +41,6 @@ public class CustomHealthCVConfigTest extends CategoryTest {
     CustomHealthCVConfig.MetricDefinition metricDefinition =
         CustomHealthCVConfig.MetricDefinition.builder()
             .method(CustomHealthMethod.GET)
-            .queryType(HealthSourceQueryType.SERVICE_BASED)
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
             .sli(AnalysisInfo.SLI.builder().enabled(true).build())
@@ -51,8 +50,11 @@ public class CustomHealthCVConfigTest extends CategoryTest {
             .build();
 
     metricDefinitions.add(metricDefinition);
-    customHealthCVConfig =
-        CustomHealthCVConfig.builder().groupName("group1").metricDefinitions(metricDefinitions).build();
+    customHealthCVConfig = CustomHealthCVConfig.builder()
+                               .groupName("group1")
+                               .queryType(HealthSourceQueryType.SERVICE_BASED)
+                               .metricDefinitions(metricDefinitions)
+                               .build();
   }
 
   @Test
@@ -69,7 +71,7 @@ public class CustomHealthCVConfigTest extends CategoryTest {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testValidateParams_whenLiveMonitoringIsTrueForHostBasedQuery() {
-    metricDefinitions.get(0).setQueryType(HealthSourceQueryType.HOST_BASED);
+    customHealthCVConfig.setQueryType(HealthSourceQueryType.HOST_BASED);
     metricDefinitions.get(0).setDeploymentVerification(
         AnalysisInfo.DeploymentVerification.builder().enabled(true).build());
     metricDefinitions.get(0).setLiveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build());
@@ -84,7 +86,7 @@ public class CustomHealthCVConfigTest extends CategoryTest {
   public void testValidateParams_whenDeploymentVerificationIsTrueForServiceBasedQuery() {
     metricDefinitions.get(0).setDeploymentVerification(
         AnalysisInfo.DeploymentVerification.builder().enabled(true).build());
-    metricDefinitions.get(0).setQueryType(HealthSourceQueryType.SERVICE_BASED);
+    customHealthCVConfig.setQueryType(HealthSourceQueryType.SERVICE_BASED);
     assertThatThrownBy(customHealthCVConfig::validateParams)
         .isInstanceOf(InvalidRequestException.class)
         .hasMessage("Service based queries can only be used for live monitoring and service level indicators.");
@@ -97,11 +99,10 @@ public class CustomHealthCVConfigTest extends CategoryTest {
     CustomHealthCVConfig.MetricDefinition metricDefinition =
         CustomHealthCVConfig.MetricDefinition.builder()
             .method(CustomHealthMethod.GET)
-            .queryType(HealthSourceQueryType.HOST_BASED)
             .metricResponseMapping(responseMapping)
             .metricName("metric_1")
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
-            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
+            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
             .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
             .urlPath("https://dd.com")
             .build();

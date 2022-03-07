@@ -11,6 +11,7 @@ import static io.harness.beans.PageResponse.PageResponseBuilder.aPageResponse;
 import static io.harness.eraro.ErrorCode.NOT_ACCOUNT_MGR_NOR_HAS_ALL_APP_ACCESS;
 import static io.harness.eraro.ErrorCode.USER_NOT_AUTHORIZED_DUE_TO_USAGE_RESTRICTIONS;
 import static io.harness.rule.OwnerRule.DEEPAK;
+import static io.harness.rule.OwnerRule.KARAN;
 import static io.harness.rule.OwnerRule.RAMA;
 import static io.harness.rule.OwnerRule.UTKARSH;
 import static io.harness.rule.OwnerRule.VIKAS;
@@ -374,7 +375,7 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
   public void testHasAccess_When_RequestViaAppId_And_ScopedToAccount() {
     boolean isAccountAdmin = true;
     boolean hasAccess = usageRestrictionsService.hasAccess(
-        ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID_1, null, null, null, null, true);
+        ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID_1, false, null, null, null, null, true);
     assertThat(hasAccess).isFalse();
   }
 
@@ -384,7 +385,7 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
   public void testHasAccess_When_AdminUser_And_ScopedToAccount() {
     boolean isAccountAdmin = true;
     boolean hasAccess =
-        usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, null, null, null, null, null, null, true);
+        usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, null, null, false, null, null, null, null, true);
     assertThat(hasAccess).isTrue();
   }
 
@@ -420,8 +421,8 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
 
       setPermissions(appIds, envIds, actions, false, userGroups);
       boolean isAccountAdmin = false;
-      boolean hasAccess =
-          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, null, null, null, null, null, null, true);
+      boolean hasAccess = usageRestrictionsService.hasAccess(
+          ACCOUNT_ID, isAccountAdmin, null, null, false, null, null, null, null, true);
       assertThat(hasAccess).isFalse();
     } finally {
       UserThreadLocal.unset();
@@ -469,7 +470,7 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       usageRestrictions.setAppEnvRestrictions(newHashSet(appEnvRestriction));
 
       boolean hasAccess = usageRestrictionsService.hasAccess(
-          ACCOUNT_ID, isAccountAdmin, null, null, null, usageRestrictions, null, null, true);
+          ACCOUNT_ID, isAccountAdmin, null, null, false, null, usageRestrictions, null, null, true);
       assertThat(hasAccess).isTrue();
     } finally {
       UserThreadLocal.unset();
@@ -515,17 +516,20 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       setupEnvMocks();
 
       boolean hasAccess =
-          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID_1, usageRestrictions,
+          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID_1, false, usageRestrictions,
               restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isTrue();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, null, usageRestrictions,
-          restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
+      hasAccess =
+          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, null, false, usageRestrictions,
+              restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isTrue();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID_1, usageRestrictions,
-          restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
+      hasAccess =
+          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID_1, false, usageRestrictions,
+              restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID, usageRestrictions,
-          restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
+      hasAccess =
+          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID, false, usageRestrictions,
+              restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
 
       UsageRestrictions restrictionsFromPermissionsForReadAction =
@@ -533,7 +537,7 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       Map<String, Set<String>> appEnvMapFromPermissionsForReadAction =
           UserThreadLocal.get().getUserRequestContext().getUserRestrictionInfo().getAppEnvMapForReadAction();
 
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, null, null, usageRestrictions,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, null, null, false, usageRestrictions,
           restrictionsFromPermissionsForReadAction, appEnvMapFromPermissionsForReadAction, appIdEnvMap, false);
       assertThat(hasAccess).isTrue();
 
@@ -611,16 +615,16 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       Map<String, Set<String>> appEnvMapFromPermissionsForUpdateAction =
           UserThreadLocal.get().getUserRequestContext().getUserRestrictionInfo().getAppEnvMapForUpdateAction();
 
-      boolean hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID_1, ENV_ID_1, null,
+      boolean hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID_1, ENV_ID_1, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID_1, null, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID_1, null, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID, ENV_ID_1, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID, ENV_ID_1, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID_1, ENV_ID, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, APP_ID_1, ENV_ID, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
 
@@ -629,7 +633,7 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       Map<String, Set<String>> appEnvMapFromPermissionsForReadAction =
           UserThreadLocal.get().getUserRequestContext().getUserRestrictionInfo().getAppEnvMapForReadAction();
 
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, null, null, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, true, null, null, false, null,
           restrictionsFromPermissionsForReadAction, appEnvMapFromPermissionsForReadAction, appIdEnvMap, false);
       assertThat(hasAccess).isTrue();
 
@@ -664,16 +668,16 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       Map<String, Set<String>> appEnvMapFromPermissionsForUpdateAction =
           UserThreadLocal.get().getUserRequestContext().getUserRestrictionInfo().getAppEnvMapForUpdateAction();
 
-      boolean hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID_1, ENV_ID_1, null,
+      boolean hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID_1, ENV_ID_1, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID_1, null, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID_1, null, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID, ENV_ID_1, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID, ENV_ID_1, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID_1, ENV_ID, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, APP_ID_1, ENV_ID, false, null,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
 
@@ -682,7 +686,7 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       Map<String, Set<String>> appEnvMapFromPermissionsForReadAction =
           UserThreadLocal.get().getUserRequestContext().getUserRestrictionInfo().getAppEnvMapForReadAction();
 
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, null, null, null,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, false, null, null, false, null,
           restrictionsFromPermissionsForReadAction, appEnvMapFromPermissionsForReadAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
 
@@ -1094,10 +1098,10 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       setupEnvMocks();
 
       boolean hasAccess =
-          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID, usageRestrictions,
+          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID, false, usageRestrictions,
               restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, null, usageRestrictions,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, null, false, usageRestrictions,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
       checkIfHasAccess(isAccountAdmin, usageRestrictions, restrictionsFromPermissionsForUpdateAction,
@@ -1244,11 +1248,12 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       UsageRestrictions restrictionsFromPermissionsForUpdateAction,
       Map<String, Set<String>> appEnvMapFromPermissionsForUpdateAction, Map<String, List<Base>> appIdEnvMap) {
     boolean hasAccess =
-        usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID, usageRestrictions,
+        usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID, false, usageRestrictions,
             restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
     assertThat(hasAccess).isFalse();
-    hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID, usageRestrictions,
-        restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
+    hasAccess =
+        usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID_1, ENV_ID, false, usageRestrictions,
+            restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
     assertThat(hasAccess).isFalse();
 
     UsageRestrictions restrictionsFromPermissionsForReadAction =
@@ -1256,7 +1261,7 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
     Map<String, Set<String>> appEnvMapFromPermissionsForReadAction =
         UserThreadLocal.get().getUserRequestContext().getUserRestrictionInfo().getAppEnvMapForReadAction();
 
-    hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, null, null, usageRestrictions,
+    hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, null, null, false, usageRestrictions,
         restrictionsFromPermissionsForReadAction, appEnvMapFromPermissionsForReadAction, appIdEnvMap, false);
     assertThat(hasAccess).isTrue();
   }
@@ -1310,10 +1315,10 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
       setupEnvMocks();
 
       boolean hasAccess =
-          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID, usageRestrictions,
+          usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, ENV_ID, false, usageRestrictions,
               restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
-      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, null, usageRestrictions,
+      hasAccess = usageRestrictionsService.hasAccess(ACCOUNT_ID, isAccountAdmin, APP_ID, null, false, usageRestrictions,
           restrictionsFromPermissionsForUpdateAction, appEnvMapFromPermissionsForUpdateAction, appIdEnvMap, false);
       assertThat(hasAccess).isFalse();
       checkIfHasAccess(isAccountAdmin, usageRestrictions, restrictionsFromPermissionsForUpdateAction,
@@ -1321,6 +1326,29 @@ public class UsageRestrictionsServiceImplTest extends CategoryTest {
     } finally {
       UserThreadLocal.unset();
     }
+  }
+
+  @Test
+  @Owner(developers = KARAN)
+  @Category(UnitTests.class)
+  public void shouldHaveAccessForNewApp() {
+    UsageRestrictions usageRestrictions = getUsageRestrictionsWithAllAppsAndEnvTypes(newHashSet());
+    boolean hasAccess = usageRestrictionsService.hasAccess(
+        ACCOUNT_ID, true, null, null, true, usageRestrictions, null, null, null, false);
+    assertThat(hasAccess).isTrue();
+  }
+
+  @Test
+  @Owner(developers = KARAN)
+  @Category(UnitTests.class)
+  public void shouldNotHaveAccessForNewApp() {
+    GenericEntityFilter appFilter = GenericEntityFilter.builder().filterType(FilterType.SELECTED).build();
+    AppEnvRestriction appEnvRestriction = AppEnvRestriction.builder().appFilter(appFilter).build();
+    UsageRestrictions usageRestrictions = new UsageRestrictions();
+    usageRestrictions.setAppEnvRestrictions(newHashSet(appEnvRestriction));
+    boolean hasAccess = usageRestrictionsService.hasAccess(
+        ACCOUNT_ID, true, null, null, true, usageRestrictions, null, null, null, false);
+    assertThat(hasAccess).isFalse();
   }
 
   private UsageRestrictions getUsageRestrictionsWithAllAppsAndEnvTypes(Set<String> envFilters) {

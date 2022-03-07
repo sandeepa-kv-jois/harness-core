@@ -9,7 +9,7 @@ package io.harness.accesscontrol;
 
 import static io.harness.eraro.ErrorCode.NG_ACCESS_DENIED;
 
-import io.harness.accesscontrol.clients.PermissionCheckDTO;
+import io.harness.accesscontrol.acl.api.PermissionCheckDTO;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.AccessDeniedException;

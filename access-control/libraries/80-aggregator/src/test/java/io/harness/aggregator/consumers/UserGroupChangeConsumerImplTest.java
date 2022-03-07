@@ -40,12 +40,12 @@ import io.harness.aggregator.AggregatorTestBase;
 import io.harness.aggregator.controllers.AggregatorBaseSyncController.AggregatorJobType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.utils.PageTestUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -136,7 +136,7 @@ public class UserGroupChangeConsumerImplTest extends AggregatorTestBase {
     verifyACLs(roleAssignments, role.getPermissions().size(), newUserGroup.getUsers().size(),
         resourceGroup.getResourceSelectors().size());
 
-    UserGroupDBO updatedUserGroup = (UserGroupDBO) NGObjectMapperHelper.clone(newUserGroup);
+    UserGroupDBO updatedUserGroup = (UserGroupDBO) HObjectMapper.clone(newUserGroup);
     updatedUserGroup.getUsers().add(getRandomString(10));
     mockUserGroupServices(updatedUserGroup);
     userGroupChangeConsumer.consumeUpdateEvent(updatedUserGroup.getId(), updatedUserGroup);
@@ -155,7 +155,7 @@ public class UserGroupChangeConsumerImplTest extends AggregatorTestBase {
     List<RoleAssignmentDBO> roleAssignments = createACLsForRoleAssignments(numRoleAssignments, newUserGroup);
     verifyACLs(roleAssignments, 0, 0, 0);
 
-    UserGroupDBO updatedUserGroup = (UserGroupDBO) NGObjectMapperHelper.clone(newUserGroup);
+    UserGroupDBO updatedUserGroup = (UserGroupDBO) HObjectMapper.clone(newUserGroup);
     updatedUserGroup.getUsers().add(getRandomString(10));
     updatedUserGroup.getUsers().add(getRandomString(10));
     mockUserGroupServices(updatedUserGroup);
@@ -177,7 +177,7 @@ public class UserGroupChangeConsumerImplTest extends AggregatorTestBase {
     verifyACLs(roleAssignments, role.getPermissions().size(), newUserGroup.getUsers().size(),
         resourceGroup.getResourceSelectors().size());
 
-    UserGroupDBO updatedUserGroup = (UserGroupDBO) NGObjectMapperHelper.clone(newUserGroup);
+    UserGroupDBO updatedUserGroup = (UserGroupDBO) HObjectMapper.clone(newUserGroup);
     updatedUserGroup.getUsers().removeAll(updatedUserGroup.getUsers());
     mockUserGroupServices(updatedUserGroup);
 

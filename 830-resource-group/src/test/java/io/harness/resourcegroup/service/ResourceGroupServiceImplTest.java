@@ -22,9 +22,9 @@ import static org.mockito.MockitoAnnotations.initMocks;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.ng.beans.PageRequest;
-import io.harness.resourcegroup.framework.repositories.spring.ResourceGroupRepository;
-import io.harness.resourcegroup.framework.service.impl.ResourceGroupServiceImpl;
-import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
+import io.harness.resourcegroup.framework.v1.repositories.spring.ResourceGroupRepository;
+import io.harness.resourcegroup.framework.v1.service.impl.ResourceGroupServiceImpl;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;

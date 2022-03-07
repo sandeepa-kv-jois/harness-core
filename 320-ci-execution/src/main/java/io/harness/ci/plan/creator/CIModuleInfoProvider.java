@@ -112,8 +112,8 @@ public class CIModuleInfoProvider implements ExecutionSummaryModuleInfoProvider 
       if (initializeStepInfo.getCiCodebase() != null) {
         buildParameterField = initializeStepInfo.getCiCodebase().getBuild();
 
-        if (initializeStepInfo.getCiCodebase().getRepoName() != null) {
-          repoName = initializeStepInfo.getCiCodebase().getRepoName();
+        if (isNotEmpty(initializeStepInfo.getCiCodebase().getRepoName().getValue())) {
+          repoName = initializeStepInfo.getCiCodebase().getRepoName().getValue();
         }
         if (initializeStepInfo.getCiCodebase().getConnectorRef() != null) {
           try {

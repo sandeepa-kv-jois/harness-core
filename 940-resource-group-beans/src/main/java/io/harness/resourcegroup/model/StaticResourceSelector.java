@@ -21,6 +21,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 @Builder
 @FieldNameConstants(innerTypeName = "StaticResourceSelectorKeys")
 @OwnedBy(HarnessTeam.PL)
+/*This class cannot be moved since it is missing type alias*/
 public class StaticResourceSelector implements ResourceSelector {
   @NotNull String resourceType;
   @NotEmpty List<String> identifiers;

@@ -49,7 +49,7 @@ public class AppDynamicsDataCollectionInfo extends TimeSeriesDataCollectionInfo<
         CollectionUtils.emptyIfNull(getMetricPack().getMetrics())
             .stream()
             .filter(metricDefinition -> metricDefinition.isIncluded())
-            .map(metricDefinition -> metricDefinition.getName())
+            .map(metricDefinition -> metricDefinition.getMetricIdentifier())
             .collect(Collectors.toList()));
 
     if (CollectionUtils.isNotEmpty(customMetrics)

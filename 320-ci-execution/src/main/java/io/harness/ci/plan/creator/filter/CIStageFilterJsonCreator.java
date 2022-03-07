@@ -90,8 +90,8 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
     }
 
     if (ciCodeBase != null) {
-      if (ciCodeBase.getRepoName() != null) {
-        ciFilterBuilder.repoName(ciCodeBase.getRepoName());
+      if (ciCodeBase.getRepoName().getValue() != null) {
+        ciFilterBuilder.repoName(ciCodeBase.getRepoName().getValue());
       } else if (ciCodeBase.getConnectorRef() != null) {
         try {
           ConnectorDetails connectorDetails =

@@ -42,13 +42,13 @@ import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.utils.PageTestUtils;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
 import com.mongodb.client.result.UpdateResult;
+import io.serializer.HObjectMapper;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
@@ -150,7 +150,7 @@ public class RoleDaoImplTest extends AccessControlCoreTestBase {
       for (ManagedFilter managedFilter : managedFilters) {
         invocations += 1;
         RoleFilter roleFilter = getRoleFilter(includeChildScopesFilter, managedFilter, 2);
-        RoleFilter roleFilterClone = (RoleFilter) NGObjectMapperHelper.clone(roleFilter);
+        RoleFilter roleFilterClone = (RoleFilter) HObjectMapper.clone(roleFilter);
         ArgumentCaptor<Criteria> criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
         when(roleRepository.findAll(any(), any())).thenReturn(PageTestUtils.getPage(emptyList(), 0));
         when(scopeService.buildScopeFromScopeIdentifier(roleFilter.getScopeIdentifier()))
@@ -199,10 +199,10 @@ public class RoleDaoImplTest extends AccessControlCoreTestBase {
                           .allowedScopeLevels(currentRole.getAllowedScopeLevels())
                           .permissions(newPermissions)
                           .build();
-    Role roleUpdateClone = (Role) NGObjectMapperHelper.clone(roleUpdate);
+    Role roleUpdateClone = (Role) HObjectMapper.clone(roleUpdate);
     RoleDBO roleUpdateCloneDBO = RoleDBOMapper.toDBO(roleUpdateClone);
     roleUpdateCloneDBO.setId(currentRoleDBO.getId());
-    RoleDBO roleForValidation = (RoleDBO) NGObjectMapperHelper.clone(roleUpdateCloneDBO);
+    RoleDBO roleForValidation = (RoleDBO) HObjectMapper.clone(roleUpdateCloneDBO);
     when(roleRepository.find(any())).thenReturn(Optional.of(currentRoleDBO));
     when(scopeService.buildScopeFromScopeIdentifier(currentRole.getScopeIdentifier()))
         .thenReturn(Scope.builder().level(TestScopeLevels.TEST_SCOPE).build());
@@ -337,7 +337,7 @@ public class RoleDaoImplTest extends AccessControlCoreTestBase {
       for (ManagedFilter managedFilter : managedFilters) {
         invocations += 1;
         RoleFilter roleFilter = getRoleFilter(includeChildScopesFilter, managedFilter, 2);
-        RoleFilter roleFilterClone = (RoleFilter) NGObjectMapperHelper.clone(roleFilter);
+        RoleFilter roleFilterClone = (RoleFilter) HObjectMapper.clone(roleFilter);
         ArgumentCaptor<Criteria> criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
         when(roleRepository.deleteMulti(any())).thenReturn(17L);
         when(scopeService.buildScopeFromScopeIdentifier(roleFilter.getScopeIdentifier()))

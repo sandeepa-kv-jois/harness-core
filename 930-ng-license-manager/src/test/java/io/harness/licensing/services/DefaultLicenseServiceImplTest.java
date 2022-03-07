@@ -81,6 +81,7 @@ import javax.cache.Cache;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
+import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
@@ -314,15 +315,18 @@ public class DefaultLicenseServiceImplTest extends CategoryTest {
   @Owner(developers = ZHUO)
   @Category(UnitTests.class)
   public void testExtendTrial() {
-    when(moduleLicenseRepository.save(DEFAULT_CI_MODULE_LICENSE)).thenReturn(DEFAULT_CI_MODULE_LICENSE);
     when(moduleLicenseInterface.generateTrialLicense(any(), eq(ACCOUNT_IDENTIFIER), eq(DEFAULT_MODULE_TYPE)))
         .thenReturn(DEFAULT_CI_MODULE_LICENSE_DTO);
 
     CIModuleLicense expiredTrial = CIModuleLicense.builder().numberOfCommitters(10).build();
+    expiredTrial.setAccountIdentifier(ACCOUNT_IDENTIFIER);
+    expiredTrial.setModuleType(DEFAULT_MODULE_TYPE);
     expiredTrial.setLicenseType(LicenseType.TRIAL);
     expiredTrial.setEdition(Edition.ENTERPRISE);
     expiredTrial.setExpiryTime(Instant.now().minus(5, ChronoUnit.DAYS).toEpochMilli());
     expiredTrial.setStatus(LicenseStatus.EXPIRED);
+
+    when(moduleLicenseRepository.save(any())).thenReturn(DEFAULT_CI_MODULE_LICENSE);
     when(moduleLicenseRepository.findByAccountIdentifierAndModuleType(eq(ACCOUNT_IDENTIFIER), eq(DEFAULT_MODULE_TYPE)))
         .thenReturn(Lists.newArrayList(expiredTrial));
 
@@ -332,6 +336,11 @@ public class DefaultLicenseServiceImplTest extends CategoryTest {
     verifyZeroInteractions(ceLicenseClient);
     assertThat(result).isEqualTo(DEFAULT_CI_MODULE_LICENSE_DTO);
     verify(cache, times(1)).remove(any());
+
+    ArgumentCaptor<ModuleLicense> extendedLicense = ArgumentCaptor.forClass(ModuleLicense.class);
+    verify(moduleLicenseRepository, times(1)).save(extendedLicense.capture());
+    assertThat(extendedLicense.getValue().getStatus()).isEqualTo(LicenseStatus.ACTIVE);
+    assertThat(extendedLicense.getValue().getTrialExtended()).isTrue();
   }
 
   @Test
@@ -486,5 +495,27 @@ public class DefaultLicenseServiceImplTest extends CategoryTest {
     Map<ModuleType, Long> lastUpdatedAtMap = licenseService.getLastUpdatedAtMap(ACCOUNT_IDENTIFIER);
     assertThat(lastUpdatedAtMap.get(CD)).isEqualTo(1000L);
     assertThat(lastUpdatedAtMap.get(CI)).isEqualTo(0);
+  }
+
+  @Test
+  @Owner(developers = ZHUO)
+  @Category(UnitTests.class)
+  public void testDeleteModuleLicense() {
+    CDModuleLicense cdModuleLicense = CDModuleLicense.builder().workloads(Integer.valueOf(UNLIMITED)).build();
+    cdModuleLicense.setId("id");
+    cdModuleLicense.setAccountIdentifier(ACCOUNT_IDENTIFIER);
+    cdModuleLicense.setModuleType(DEFAULT_MODULE_TYPE);
+    cdModuleLicense.setEdition(Edition.FREE);
+    cdModuleLicense.setStatus(LicenseStatus.ACTIVE);
+    cdModuleLicense.setStartTime(1);
+    cdModuleLicense.setExpiryTime(Long.valueOf(UNLIMITED));
+    cdModuleLicense.setCreatedAt(0L);
+    cdModuleLicense.setLastUpdatedAt(1000L);
+
+    when(moduleLicenseRepository.findById("id")).thenReturn(Optional.of(cdModuleLicense));
+
+    licenseService.deleteModuleLicense("id");
+    verify(moduleLicenseRepository, times(1)).deleteById("id");
+    verify(cache, times(1)).remove(any());
   }
 }

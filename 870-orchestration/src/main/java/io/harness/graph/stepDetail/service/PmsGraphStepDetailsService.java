@@ -9,6 +9,7 @@ package io.harness.graph.stepDetail.service;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.stepDetail.NodeExecutionsInfo;
 import io.harness.pms.data.stepdetails.PmsStepDetails;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
 
@@ -20,6 +21,8 @@ public interface PmsGraphStepDetailsService {
   void addStepInputs(String nodeExecutionId, String planExecutionId, PmsStepParameters stepParameters);
 
   PmsStepParameters getStepInputs(String planExecutionId, String nodeExecutionId);
+
+  NodeExecutionsInfo getNodeExecutionsInfo(String nodeExecutionId);
 
   Map<String, PmsStepDetails> getStepDetails(String planExecutionId, String nodeExecutionId);
 

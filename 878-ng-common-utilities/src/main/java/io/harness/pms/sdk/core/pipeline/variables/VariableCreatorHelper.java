@@ -19,6 +19,7 @@ import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
 
 import com.google.common.base.Preconditions;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedList;
@@ -51,6 +52,39 @@ public class VariableCreatorHelper {
             YamlProperties.newBuilder().setLocalName(localName).setFqn(fqn).build());
       }
     });
+  }
+
+  public void addPropertiesForSchemaAutocomplete(
+      YamlField propertiesField, Map<String, YamlProperties> yamlPropertiesMap) {
+    YamlNode yamlNode = propertiesField.getNode();
+    addVariablesInComplexObject(yamlPropertiesMap, yamlNode);
+  }
+
+  public void addVariablesInComplexObject(Map<String, YamlProperties> yamlPropertiesMap, YamlNode yamlNode) {
+    List<String> extraFields = new ArrayList<>();
+    extraFields.add(YAMLFieldNameConstants.UUID);
+    extraFields.add(YAMLFieldNameConstants.IDENTIFIER);
+    List<YamlField> fields = yamlNode.fields();
+    fields.forEach(field -> {
+      if (field.getNode().isObject()) {
+        addVariablesInComplexObject(yamlPropertiesMap, field.getNode());
+      } else if (field.getNode().isArray()) {
+        List<YamlNode> innerFields = field.getNode().asArray();
+        innerFields.forEach(f -> addVariablesInComplexObject(yamlPropertiesMap, f));
+      } else if (!extraFields.contains(field.getName())) {
+        addFieldToPropertiesMapUnderStep(field, yamlPropertiesMap);
+      }
+    });
+  }
+
+  public void addFieldToPropertiesMapUnderStep(YamlField fieldNode, Map<String, YamlProperties> yamlPropertiesMap) {
+    String fqn = YamlUtils.getFullyQualifiedName(fieldNode.getNode());
+    String localName;
+
+    localName = YamlUtils.getQualifiedNameTillGivenField(fieldNode.getNode(), YAMLFieldNameConstants.PROPERTIES);
+
+    yamlPropertiesMap.put(fieldNode.getNode().getCurrJsonNode().textValue(),
+        YamlProperties.newBuilder().setLocalName(localName).setFqn(fqn).build());
   }
 
   public VariableCreationResponse createVariableResponseForVariables(YamlField variablesField, String fieldName) {

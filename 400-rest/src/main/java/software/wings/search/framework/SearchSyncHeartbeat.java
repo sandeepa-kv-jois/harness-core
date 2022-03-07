@@ -48,7 +48,7 @@ public class SearchSyncHeartbeat implements Runnable {
 
     if (searchDistributedLock != null) {
       String dummyAccountId = "6b2bc4d2f49c11e9b82c5a1";
-      EmbeddedUser embeddedUser = new EmbeddedUser("6b2bc4d2f49c11e9b82c5a", "Search Job", "search@harness.io");
+      EmbeddedUser embeddedUser = new EmbeddedUser("6b2bc4d2f49c11e9b82c5a", "Search Job", "search@harness.io", "");
 
       Application application = Application.Builder.anApplication()
                                     .name("Dummy application")

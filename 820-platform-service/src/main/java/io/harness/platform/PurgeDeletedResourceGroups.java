@@ -10,8 +10,8 @@ package io.harness.platform;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.resourcegroup.framework.repositories.spring.ResourceGroupRepository;
-import io.harness.resourcegroup.model.ResourceGroup;
+import io.harness.resourcegroup.framework.v1.repositories.spring.ResourceGroupRepository;
+import io.harness.resourcegroup.v1.model.ResourceGroup;
 
 import com.google.inject.Inject;
 import lombok.RequiredArgsConstructor;

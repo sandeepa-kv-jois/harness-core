@@ -15,4 +15,5 @@ import io.harness.annotations.dev.OwnedBy;
 public interface StepCategoryConstants {
   String APPROVAL = "Approval";
   String PROVISIONER = "Provisioner";
+  String SERVICENOW = "ServiceNow";
 }

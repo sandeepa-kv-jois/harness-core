@@ -14,6 +14,7 @@ import io.harness.security.annotations.DelegateAuth;
 import io.harness.serializer.KryoSerializer;
 
 import software.wings.beans.Log;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.security.PermissionAttribute.ResourceType;
 import software.wings.security.annotations.AuthRule;
 import software.wings.security.annotations.Scope;
@@ -68,6 +69,6 @@ public class LogResource {
       @QueryParam("accountId") final String accountId, @QueryParam("serverConfigId") String serverConfigId,
       @QueryParam("stateType") final StateType stateType, CustomLogSetupTestNodeData fetchConfig) {
     return new RestResponse<>(
-        cvManagerService.getDataForNode(accountId, serverConfigId, fetchConfig, StateType.LOG_VERIFICATION));
+        cvManagerService.getDataForNode(accountId, serverConfigId, fetchConfig, DelegateStateType.LOG_VERIFICATION));
   }
 }

@@ -28,6 +28,7 @@ import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.eraro.ErrorCode;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.ExplanationException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.logger.RepoBranchLogContext;
@@ -518,10 +519,13 @@ public class ScmServiceClientImpl implements ScmServiceClient {
       ScmResponseStatusUtils.checkScmResponseStatusAndThrowException(
           createBranchResponse.getStatus(), createBranchResponse.getError());
     } catch (WingsException e) {
+      log.error("SCM create branch ops error : {}", e.getMessage());
       final WingsException cause = ExceptionUtils.cause(ErrorCode.SCM_UNPROCESSABLE_ENTITY, e);
       if (cause != null) {
-        throw new ExplanationException(
-            String.format("A branch with name %s already exists in the remote Git repository", branch), e);
+        throw new InvalidRequestException(String.format("Action could not be completed. Possible reasons can be:\n"
+                + "1. A branch with name %s already exists in the remote Git repository\n"
+                + "2. The branch name %s is invalid\n",
+            branch, branch));
       } else {
         throw new ExplanationException(String.format("Failed to create branch %s", branch), e);
       }

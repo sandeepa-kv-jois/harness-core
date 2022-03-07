@@ -9,7 +9,9 @@ package io.harness.accesscontrol.clients;
 
 import static io.harness.security.dto.PrincipalType.SERVICE;
 
-import io.harness.accesscontrol.Principal;
+import io.harness.accesscontrol.acl.api.AccessControlDTO;
+import io.harness.accesscontrol.acl.api.PermissionCheckDTO;
+import io.harness.accesscontrol.acl.api.Principal;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 

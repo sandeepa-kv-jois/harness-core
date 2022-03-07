@@ -30,7 +30,6 @@ import io.harness.batch.processing.service.AwsAccountTagsCollectionService;
 import io.harness.batch.processing.service.impl.BatchJobBucketLogContext;
 import io.harness.batch.processing.service.impl.BatchJobRunningModeContext;
 import io.harness.batch.processing.service.impl.BatchJobTypeLogContext;
-import io.harness.batch.processing.service.impl.CronJobTypeLogContext;
 import io.harness.batch.processing.service.impl.InstanceDataServiceImpl;
 import io.harness.batch.processing.service.intfc.BillingDataPipelineHealthStatusService;
 import io.harness.batch.processing.shard.AccountShardService;
@@ -301,18 +300,15 @@ public class EventJobScheduler {
 
   @Scheduled(cron = "${scheduler-jobs-config.awsAccountTagsCollectionJobCron}") //  0 */10 * * * ? for testing
   public void runAwsAccountTagsCollectionJob() {
-    boolean masterPod = accountShardService.isMasterPod();
-    if (masterPod) {
-      try (AutoLogContext ignore = new CronJobTypeLogContext("runAwsAccountTagsCollectionJob", OVERRIDE_ERROR)) {
-        if (!batchMainConfig.getAwsAccountTagsCollectionJobConfig().isEnabled()) {
-          log.info("awsAccountTagsCollectionJobConfig is disabled in config");
-          return;
-        }
-        log.info("running aws account tags collection job");
-        awsAccountTagsCollectionService.update();
-      } catch (Exception ex) {
-        log.error("Exception while running runAwsAccountTagsCollectionJob", ex);
+    try {
+      if (!batchMainConfig.getAwsAccountTagsCollectionJobConfig().isEnabled()) {
+        log.info("awsAccountTagsCollectionJobConfig is disabled in config");
+        return;
       }
+      log.info("running aws account tags collection job");
+      awsAccountTagsCollectionService.update();
+    } catch (Exception ex) {
+      log.error("Exception while running runAwsAccountTagsCollectionJob", ex);
     }
   }
 

@@ -31,6 +31,7 @@ import org.apache.commons.collections4.CollectionUtils;
 public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<DynatraceConnectorDTO> {
   public static final String DYNATRACE_SERVICE_INSTANCE_DEFAULT_PLACEHOLDER = "dynatrace-placeholder-host";
   public static final String METRIC_NAME_PARAM = "metricName";
+  public static final String METRIC_IDENTIFIER_PARAM = "metricIdentifier";
   public static final String QUERY_SELECTOR_PARAM = "querySelector";
   public static final String GROUP_NAME_PARAM = "groupName";
   public static final String ENTITY_ID_PARAM = "entitySelector";
@@ -69,6 +70,7 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
                               .map(metricDefinitionDTO -> {
                                 Map<String, String> metricMap = new HashMap<>();
                                 metricMap.put(METRIC_NAME_PARAM, metricDefinitionDTO.getName());
+                                metricMap.put(METRIC_IDENTIFIER_PARAM, metricDefinitionDTO.getMetricIdentifier());
                                 metricMap.put(QUERY_SELECTOR_PARAM, metricDefinitionDTO.getPath());
                                 return metricMap;
                               })
@@ -79,6 +81,7 @@ public class DynatraceDataCollectionInfo extends TimeSeriesDataCollectionInfo<Dy
                               .map(metricDefinitionDTO -> {
                                 Map<String, String> metricMap = new HashMap<>();
                                 metricMap.put(METRIC_NAME_PARAM, metricDefinitionDTO.getMetricName());
+                                metricMap.put(METRIC_IDENTIFIER_PARAM, metricDefinitionDTO.getIdentifier());
                                 metricMap.put(QUERY_SELECTOR_PARAM, metricDefinitionDTO.getMetricSelector());
                                 return metricMap;
                               })

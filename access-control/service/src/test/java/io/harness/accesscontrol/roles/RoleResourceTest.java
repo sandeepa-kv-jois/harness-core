@@ -25,12 +25,13 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import io.harness.accesscontrol.AccessControlTestBase;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.accesscontrol.roles.api.RoleDTO;
 import io.harness.accesscontrol.roles.api.RoleDTOMapper;
 import io.harness.accesscontrol.roles.api.RoleResource;
+import io.harness.accesscontrol.roles.api.RoleResourceImpl;
 import io.harness.accesscontrol.roles.api.RoleResponseDTO;
 import io.harness.accesscontrol.roles.filter.RoleFilter;
 import io.harness.accesscontrol.scopes.core.Scope;
@@ -76,7 +77,7 @@ public class RoleResourceTest extends AccessControlTestBase {
     transactionTemplate = mock(TransactionTemplate.class);
     outboxService = mock(OutboxService.class);
     accessControlClient = mock(AccessControlClient.class);
-    roleResource = new RoleResource(
+    roleResource = new RoleResourceImpl(
         roleService, scopeService, roleDTOMapper, transactionTemplate, outboxService, accessControlClient);
     pageRequest = PageRequest.builder().pageIndex(0).pageSize(50).build();
     accountIdentifier = randomAlphabetic(10);

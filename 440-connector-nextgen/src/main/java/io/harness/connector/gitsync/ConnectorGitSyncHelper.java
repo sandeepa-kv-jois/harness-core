@@ -11,7 +11,6 @@ import static io.harness.connector.entities.Connector.ConnectorKeys;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.grpc.utils.StringValueUtils.getStringFromStringValue;
 import static io.harness.ng.core.utils.NGUtils.validate;
-import static io.harness.remote.NGObjectMapperHelper.configureNGObjectMapper;
 
 import io.harness.EntityType;
 import io.harness.annotations.dev.HarnessTeam;
@@ -48,6 +47,7 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.google.protobuf.StringValue;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 import java.util.List;
 import java.util.Optional;
@@ -72,7 +72,7 @@ public class ConnectorGitSyncHelper extends AbstractGitSdkEntityHandler<Connecto
       HarnessToGitPushInfoServiceGrpc.HarnessToGitPushInfoServiceBlockingStub harnessToGitPushInfoServiceBlockingStub) {
     this.connectorService = connectorService;
     this.connectorMapper = connectorMapper;
-    configureNGObjectMapper(objectMapper);
+    HObjectMapper.configureObjectMapperForNG(objectMapper);
     this.connectorFullSyncHelper = connectorFullSyncHelper;
     this.harnessToGitPushInfoServiceBlockingStub = harnessToGitPushInfoServiceBlockingStub;
   }

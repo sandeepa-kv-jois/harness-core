@@ -39,7 +39,6 @@ import software.wings.service.impl.dynatrace.DynaTraceTimeSeries;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.service.intfc.dynatrace.DynaTraceDelegateService;
-import software.wings.sm.StateType;
 import software.wings.sm.states.DynatraceState;
 
 import com.google.common.base.Preconditions;
@@ -81,13 +80,13 @@ public class DynaTraceDataCollectionTask extends AbstractDelegateDataCollectionT
     log.info("metric collection - dataCollectionInfo: {}", dataCollectionInfo);
     return DataCollectionTaskResult.builder()
         .status(DataCollectionTaskStatus.SUCCESS)
-        .stateType(StateType.DYNA_TRACE)
+        .stateType(DelegateStateType.DYNA_TRACE)
         .build();
   }
 
   @Override
-  protected StateType getStateType() {
-    return StateType.DYNA_TRACE;
+  protected DelegateStateType getStateType() {
+    return DelegateStateType.DYNA_TRACE;
   }
 
   @Override
@@ -393,7 +392,7 @@ public class DynaTraceDataCollectionTask extends AbstractDelegateDataCollectionT
                         .dataCollectionMinute(getCollectionMinute(
                             Timestamp.minuteBoundary(timeStamp.longValue()), dataResponse.getResult().getHost(), false))
                         .timeStamp(timeStamp.longValue())
-                        .stateType(StateType.DYNA_TRACE)
+                        .stateType(DelegateStateType.DYNA_TRACE)
                         .host(dataResponse.getResult().getHost())
                         .values(new HashMap<>())
                         .groupName(DEFAULT_GROUP_NAME)

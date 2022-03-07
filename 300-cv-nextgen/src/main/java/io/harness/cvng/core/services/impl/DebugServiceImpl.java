@@ -7,10 +7,18 @@
 
 package io.harness.cvng.core.services.impl;
 
+import io.harness.cvng.activity.entities.Activity;
+import io.harness.cvng.activity.services.api.ActivityService;
+import io.harness.cvng.beans.cvnglog.CVNGLogType;
+import io.harness.cvng.cdng.entities.CVNGStepTask;
+import io.harness.cvng.cdng.services.api.CVNGStepTaskService;
 import io.harness.cvng.core.beans.SLODebugResponse;
+import io.harness.cvng.core.beans.VerifyStepDebugResponse;
 import io.harness.cvng.core.beans.params.ProjectParams;
+import io.harness.cvng.core.entities.CVNGLog;
 import io.harness.cvng.core.entities.DataCollectionTask;
 import io.harness.cvng.core.entities.VerificationTask;
+import io.harness.cvng.core.services.api.CVNGLogService;
 import io.harness.cvng.core.services.api.DataCollectionTaskService;
 import io.harness.cvng.core.services.api.DebugService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
@@ -24,12 +32,16 @@ import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorS
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelObjectiveService;
 import io.harness.cvng.statemachine.entities.AnalysisStateMachine;
 import io.harness.cvng.statemachine.services.api.AnalysisStateMachineService;
+import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
+import io.harness.cvng.verificationjob.services.api.VerificationJobInstanceService;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 public class DebugServiceImpl implements DebugService {
   @Inject ServiceLevelObjectiveService serviceLevelObjectiveService;
@@ -39,6 +51,10 @@ public class DebugServiceImpl implements DebugService {
   @Inject DataCollectionTaskService dataCollectionTaskService;
   @Inject SLIRecordService sliRecordService;
   @Inject AnalysisStateMachineService analysisStateMachineService;
+  @Inject CVNGStepTaskService cvngStepTaskService;
+  @Inject VerificationJobInstanceService verificationJobInstanceService;
+  @Inject ActivityService activityService;
+  @Inject CVNGLogService cvngLogService;
 
   @Override
   public SLODebugResponse getSLODebugResponse(ProjectParams projectParams, String identifier) {
@@ -86,5 +102,52 @@ public class DebugServiceImpl implements DebugService {
         .sliIdentifierToSLIRecordMap(sliIdentifierToSLIRecordMap)
         .sliIdentifierToAnalysisStateMachineMap(sliIdentifierToAnalysisStateMachineMap)
         .build();
+  }
+
+  @Override
+  public VerifyStepDebugResponse getVerifyStepDebugResponse(ProjectParams projectParams, String callBackId) {
+    CVNGStepTask cvngStepTask = cvngStepTaskService.getByCallBackId(callBackId);
+    Activity activity = activityService.get(cvngStepTask.getActivityId());
+    VerificationJobInstance verificationJobInstance =
+        verificationJobInstanceService.getVerificationJobInstance(cvngStepTask.getVerificationJobInstanceId());
+    Set<String> verificationTaskIds = verificationTaskService.getVerificationTaskIds(
+        projectParams.getAccountIdentifier(), cvngStepTask.getVerificationJobInstanceId());
+
+    List<VerificationTask> verificationTaskList = new ArrayList<>();
+    Map<String, List<DataCollectionTask>> verificationTaskIdToDataCollectionTaskMap = new HashMap<>();
+    Map<String, AnalysisStateMachine> verificationTaskIdToAnalysisStateMachineMap = new HashMap<>();
+    Map<String, List<CVNGLog>> verificationTaskIdToCVNGApiLogMap = new HashMap<>();
+    Map<String, List<CVNGLog>> verificationTaskIdToCVNGExecutionLogMap = new HashMap<>();
+
+    for (String verificationTaskId : verificationTaskIds) {
+      verificationTaskList.add(verificationTaskService.get(verificationTaskId));
+      verificationTaskIdToDataCollectionTaskMap.put(verificationTaskId,
+          dataCollectionTaskService.getAllDataCollectionTasks(
+              projectParams.getAccountIdentifier(), verificationTaskId));
+      verificationTaskIdToAnalysisStateMachineMap.put(
+          verificationTaskId, analysisStateMachineService.getExecutingStateMachine(verificationTaskId));
+      verificationTaskIdToCVNGApiLogMap.put(verificationTaskId,
+          cvngLogService.getCompleteCVNGLog(
+              projectParams.getAccountIdentifier(), verificationTaskId, CVNGLogType.API_CALL_LOG));
+      verificationTaskIdToCVNGExecutionLogMap.put(verificationTaskId,
+          cvngLogService.getCompleteCVNGLog(
+              projectParams.getAccountIdentifier(), verificationTaskId, CVNGLogType.EXECUTION_LOG));
+    }
+
+    return VerifyStepDebugResponse.builder()
+        .projectParams(projectParams)
+        .cvngStepTask(cvngStepTask)
+        .activity(activity)
+        .verificationJobInstance(verificationJobInstance)
+        .verificationTaskList(verificationTaskList)
+        .verificationTaskIdToDataCollectionTaskMap(verificationTaskIdToDataCollectionTaskMap)
+        .verificationTaskIdToAnalysisStateMachineMap(verificationTaskIdToAnalysisStateMachineMap)
+        .verificationTaskIdToCVNGApiLogMap(verificationTaskIdToCVNGApiLogMap)
+        .verificationTaskIdToCVNGExecutionLogMap(verificationTaskIdToCVNGExecutionLogMap)
+        .build();
+  }
+
+  public DataCollectionTask retryDataCollectionTask(ProjectParams projectParams, String identifier) {
+    return dataCollectionTaskService.updateRetry(projectParams, identifier);
   }
 }

@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static javax.ws.rs.core.MediaType.APPLICATION_JSON;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ngmigration.beans.DiscoveryInput;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.service.DiscoveryService;
 import io.harness.rest.RestResponse;
@@ -25,7 +26,6 @@ import software.wings.security.annotations.Scope;
 import com.codahale.metrics.annotation.ExceptionMetered;
 import com.codahale.metrics.annotation.Timed;
 import com.google.inject.Inject;
-import io.swagger.annotations.Api;
 import java.util.List;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
@@ -38,13 +38,21 @@ import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(CDC)
 @Slf4j
-@Api("ng-migration")
-@Path("/ng-migration")
+@Path("/")
 @Consumes(APPLICATION_JSON)
 @Produces(APPLICATION_JSON)
 @Scope(ResourceType.APPLICATION)
 public class NgMigrationResource {
   @Inject DiscoveryService discoveryService;
+
+  @POST
+  @Path("/discover-multi")
+  @Timed
+  @ExceptionMetered
+  public RestResponse<DiscoveryResult> discoverMultipleEntities(
+      @QueryParam("accountId") String accountId, DiscoveryInput discoveryInput) {
+    return new RestResponse<>(discoveryService.discoverMulti(accountId, discoveryInput));
+  }
 
   @GET
   @Path("/discover")

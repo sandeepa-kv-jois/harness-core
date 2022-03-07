@@ -375,6 +375,21 @@ pipelineSdkRedisEventsConfig:
   pipelineSdkResponseEvent:
     maxTopicSize: ${PIPELINE_SDK_RESPONSE_EVENT_MAX_TOPIC_SIZE:-5000}
 
+debeziumConfig:
+  isEnabled: false
+  name: ${DEBEZIUM_NAME:-pipeline}
+  key.converter.schemas.enable: ${KEY_CONVERTER_SCHEMAS_ENABLE:-false}
+  value.converter.schemas.enable: ${VALUE_CONVERTER_SCHEMAS_ENABLE:-false}
+  offset.flush.interval.ms: ${OFFSET_FLUSH_INTERVAL_MS:-5000}
+  mongodb.hosts: ${MONGODB_HOSTS:-rs0/localhost:27017}
+  mongodb.name: ${MONGODB_NAME:-pms-harness_db}
+  mongodb.user: ${MONGODB_USER:-""}
+  mongodb.password: ${MONGODB_PASSWORD:-""}
+  mongodb.ssl.enabled: ${MONGODB_SSL_ENABLED:-false}
+  connector.class: ${CONNECTOR_CLASS:-io.debezium.connector.mongodb.MongoDbConnector}
+  database.include.list: ${DATABASE_INCLUDE_LIST:-pms-harness}
+  collection.include.list: ${COLLECTION_INCLUDE_LIST:-pms-harness.planExecutionsSummary}
+
 orchestrationRedisEventsConfig:
   pipelineInterruptEvent:
     maxTopicSize: ${PIPELINE_INTERRUPT_EVENT_MAX_TOPIC_SIZE:-1000}
