@@ -101,9 +101,8 @@ public class GovernanceServiceImpl implements GovernanceService {
 
       return mapResponseToMetadata(response);
     } finally {
-      log.info(
-          "[Governance_Metadata] Time taken to evaluate governance policies: {}ms for planExecutionId {}, projectId - {}, orgIdentifier - {}, accountId - {}",
-          System.currentTimeMillis() - startTs, planExecutionId, projectIdentifier, orgIdentifier, accountId);
+      log.info("[Governance_Metadata] Time taken to evaluate governance policies: {}ms",
+          System.currentTimeMillis() - startTs);
     }
   }
 

@@ -204,6 +204,8 @@ public class PlanCreatorMergeService {
       long start = System.currentTimeMillis();
       Map<Map.Entry<String, PlanCreatorServiceInfo>, List<Map.Entry<String, String>>> serviceToDependencyMap =
           new HashMap<>();
+      log.info("[PlanCreatorMergeService_Time] Starting Sdk plan creators for initial dependencies size {}",
+          responseBuilder.getDeps().getDependenciesMap().size());
 
       getServiceToDependenciesMap(services, responseBuilder, fullYamlField, serviceToDependencyMap);
 
@@ -225,7 +227,7 @@ public class PlanCreatorMergeService {
       } catch (Exception ex) {
         throw new UnexpectedException("Error fetching plan creation response from service", ex);
       } finally {
-        log.info("[PlanCreatorMergeService_Time] Sdk plan creators took {}ms for initial dependencies size {}",
+        log.info("[PlanCreatorMergeService_Time] Sdk plan creators done took {}ms for initial dependencies size {}",
             System.currentTimeMillis() - start, responseBuilder.getDeps().getDependenciesMap().size());
       }
       PmsExceptionUtils.checkAndThrowPlanCreatorException(errorResponses);

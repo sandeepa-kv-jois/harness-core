@@ -104,7 +104,7 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
         return planExecution;
       }
     } finally {
-      log.info("[PlanExecution] Time taken to execute plan in PlanExecutionStrategy: {} ",
+      log.info("[PlanExecution] Time taken to runNode plan in PlanExecutionStrategy: {} ",
           System.currentTimeMillis() - startTs);
     }
   }

@@ -10,6 +10,7 @@ package io.harness.pms.plan.creation;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.YamlException;
 import io.harness.logging.AutoLogContext;
 import io.harness.pms.contracts.plan.ExecutionMetadata;
@@ -164,10 +165,8 @@ public class PlanCreatorUtils {
 
   public AutoLogContext autoLogContext(
       ExecutionMetadata executionMetadata, String accountId, String orgIdentifier, String projectIdentifier) {
-    Map<String, String> logContextMap = new HashMap<>(ImmutableMap.of("planExecutionId",
-        executionMetadata.getExecutionUuid(), "pipelineIdentifier", executionMetadata.getPipelineIdentifier(),
-        "accountIdentifier", accountId, "orgIdentifier", orgIdentifier, "projectIdentifier", projectIdentifier));
-    return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
+    return autoLogContext(accountId, orgIdentifier, projectIdentifier, executionMetadata.getPipelineIdentifier(),
+        executionMetadata.getExecutionUuid());
   }
 
   public AutoLogContext autoLogContext(String accountId, String orgIdentifier, String projectIdentifier,
@@ -175,6 +174,18 @@ public class PlanCreatorUtils {
     Map<String, String> logContextMap =
         new HashMap<>(ImmutableMap.of("planExecutionId", planExecutionId, "pipelineIdentifier", pipelineIdentifier,
             "accountIdentifier", accountId, "orgIdentifier", orgIdentifier, "projectIdentifier", projectIdentifier));
+    return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
+  }
+
+  public AutoLogContext autoLogContextWithRandomRequestId(
+      ExecutionMetadata executionMetadata, String accountId, String orgIdentifier, String projectIdentifier) {
+    Map<String, String> logContextMap = new HashMap<>();
+    logContextMap.put("planExecutionId", executionMetadata.getExecutionUuid());
+    logContextMap.put("pipelineIdentifier", executionMetadata.getPipelineIdentifier());
+    logContextMap.put("accountIdentifier", accountId);
+    logContextMap.put("orgIdentifier", orgIdentifier);
+    logContextMap.put("projectIdentifier", projectIdentifier);
+    logContextMap.put("sdkPlanCreatorRequestId", UUIDGenerator.generateUuid());
     return new AutoLogContext(logContextMap, AutoLogContext.OverrideBehavior.OVERRIDE_NESTS);
   }
 }
