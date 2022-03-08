@@ -66,7 +66,7 @@ public class VaultConnector extends Connector implements PersistentRegularIterab
   String xVaultAwsIamServerIdRef;
 
   @Builder.Default Boolean useK8sAuth = Boolean.FALSE;
-  String vaultK8sRole;
+  String vaultK8sAuthRole;
   String serviceAccountTokenPath;
 
   public long getRenewedAt() {
