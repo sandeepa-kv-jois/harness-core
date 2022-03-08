@@ -65,6 +65,7 @@ import io.harness.utils.IdentifierRefHelper;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
+import com.google.protobuf.StringValue;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -327,13 +328,13 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
 
     // Incoming commit id could be a conflict resolved commit id for an entity
     String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
-    // Currently putting this BITBUCKET check to avoid a bug on GITHUB UpdateFile use-case
-    // https://harness.slack.com/archives/C029SDS22FN/p1645792247538309
-    // Once properly handled, this should be removed
-    if (connectorConfig.getConnectorType().equals(ConnectorType.BITBUCKET) && isEmpty(lastCommitIdForFile)
-        && request.getChangeType() != ChangeType.ADD) {
+    if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
+      // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
+      String branch = request.getBaseBranch().equals(StringValue.getDefaultInstance())
+          ? request.getBranch()
+          : request.getBaseBranch().getValue();
       GitSyncEntityDTO gitSyncEntityDTO =
-          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), request.getBranch());
+          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
       lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
     }
 
