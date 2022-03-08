@@ -23,7 +23,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.analysis.beans.ServiceGuardTimeSeriesAnalysisDTO;
 import io.harness.cvng.analysis.beans.ServiceGuardTxnMetricAnalysisDataDTO;
-import io.harness.cvng.analysis.beans.TimeSeriesAnomalies;
+import io.harness.cvng.analysis.beans.TimeSeriesAnomaliesDTO;
 import io.harness.cvng.analysis.beans.TimeSeriesRecordDTO;
 import io.harness.cvng.analysis.entities.LearningEngineTask;
 import io.harness.cvng.analysis.entities.LearningEngineTask.LearningEngineTaskType;
@@ -392,12 +392,12 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
       ServiceGuardTxnMetricAnalysisDataDTO txnMetricData =
           ServiceGuardTxnMetricAnalysisDataDTO.builder()
               .isKeyTransaction(false)
-              .cumulativeSums(TimeSeriesCumulativeSums.MetricSum.builder().risk(0.5).data(0.9).build())
+              .cumulativeSums(ServiceGuardTxnMetricAnalysisDataDTO.MetricSumDTO.builder().risk(0.5).data(0.9).build())
               .shortTermHistory(Arrays.asList(0.1, 0.2, 0.3, 0.4))
               .anomalousPatterns(
-                  Collections.singletonList(TimeSeriesAnomalies.builder()
+                  Collections.singletonList(TimeSeriesAnomaliesDTO.builder()
                                                 .transactionName(txn)
-                                                .metricName(TREND_METRIC_NAME)
+                                                .metricIdentifier(TREND_METRIC_NAME)
                                                 .testData(Arrays.asList(0.1, 0.2, 0.3, 0.4))
                                                 .anomalousTimestamps(Arrays.asList(12345l, 12346l, 12347l))
                                                 .build()))
@@ -433,9 +433,9 @@ public class TrendAnalysisServiceImplTest extends CvNextGenTestBase {
               .isKeyTransaction(false)
               .shortTermHistory(Arrays.asList(0.1, 0.2, 0.3, 0.4))
               .anomalousPatterns(
-                  Collections.singletonList(TimeSeriesAnomalies.builder()
+                  Collections.singletonList(TimeSeriesAnomaliesDTO.builder()
                                                 .transactionName(txn)
-                                                .metricName(TREND_METRIC_NAME)
+                                                .metricIdentifier(TREND_METRIC_NAME)
                                                 .testData(Arrays.asList(0.1, 0.2, 0.3, 0.4))
                                                 .anomalousTimestamps(Arrays.asList(12345l, 12346l, 12347l))
                                                 .build()))

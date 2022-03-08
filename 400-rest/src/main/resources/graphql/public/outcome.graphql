@@ -16,4 +16,6 @@ type DeploymentOutcome implements Outcome {
   execution: Execution @dataFetcher(name: execution)
   service: Service @dataFetcher(name: service, useBatch: true)
   environment: Environment @dataFetcher(name: environment, useBatch: true)
+  # Infra definition is behind feature flag OUTCOME_GRAPHQL_WITH_INFRA_DEF
+  infrastructureDefinition: InfrastructureDefinition @dataFetcher(name: infrastructureDefinition, useBatch: true)
 }

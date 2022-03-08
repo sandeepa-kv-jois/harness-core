@@ -56,7 +56,7 @@ applicationManifests {"name": "appManifestIdx2", "background": true} {"appId": 1
 applicationManifests {"name": "createdAt_1", "background": true} {"createdAt": 1}
 applications {"name": "appId_1", "background": true} {"appId": 1}
 applications {"name": "createdAt_1", "background": true} {"createdAt": 1}
-applications {"name": "yaml", "unique": true} {"accountId": 1, "name": 1}
+applications {"name": "yaml", "unique": true, "collation": {"locale": "en", "strength": 1}} {"accountId": 1, "name": 1}
 approvalPollingJob {"name": "nextIteration_1", "background": true} {"nextIteration": 1}
 artifactStream {"name": "accountId_1", "background": true} {"accountId": 1}
 artifactStream {"name": "appId_1", "background": true} {"appId": 1}

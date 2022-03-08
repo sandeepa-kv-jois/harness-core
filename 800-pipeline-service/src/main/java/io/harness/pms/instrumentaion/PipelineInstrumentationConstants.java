@@ -14,6 +14,7 @@ import io.harness.annotations.dev.OwnedBy;
 public class PipelineInstrumentationConstants {
   public static String PROJECT_IDENTIFIER = "projectId";
   public static String ORG_IDENTIFIER = "orgIdentifier";
+  public static String MODULE_NAME = "moduleName";
   public static String PLAN_EXECUTION_ID = "planExecutionId";
   public static String PIPELINE_EXECUTION = "ng_pipeline_execution";
   public static String PIPELINE_NOTIFICATION = "ng_pipeline_notification";
