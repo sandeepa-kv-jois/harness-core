@@ -18,11 +18,11 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.SortOrder;
 import io.harness.beans.SortOrder.OrderType;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.MetricType;
 import software.wings.metrics.RiskLevel;
 import software.wings.metrics.TimeSeriesMetricDefinition;
 import software.wings.service.impl.appdynamics.AppdynamicsTimeSeries;
-import software.wings.sm.StateType;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.math.Stats;
@@ -63,10 +63,10 @@ public class NewRelicMetricValueDefinition {
   public static String SERVER_SIDE_FAILURE_RATE = "serverSideFailureRate";
 
   @Deprecated
-  public static Map<StateType, SortOrder> SORTING_METRIC_NAME =
-      ImmutableMap.of(StateType.APP_DYNAMICS, aSortOrder().withField(RESPONSE_TIME_95, OrderType.DESC).build(),
-          StateType.NEW_RELIC, aSortOrder().withField(REQUSET_PER_MINUTE, OrderType.DESC).build(), StateType.DYNA_TRACE,
-          aSortOrder().withField(REQUEST_PER_MINUTE, OrderType.DESC).build());
+  public static Map<DelegateStateType, SortOrder> SORTING_METRIC_NAME =
+      ImmutableMap.of(DelegateStateType.APP_DYNAMICS, aSortOrder().withField(RESPONSE_TIME_95, OrderType.DESC).build(),
+          DelegateStateType.NEW_RELIC, aSortOrder().withField(REQUSET_PER_MINUTE, OrderType.DESC).build(),
+          DelegateStateType.DYNA_TRACE, aSortOrder().withField(REQUEST_PER_MINUTE, OrderType.DESC).build());
 
   public static Map<String, TimeSeriesMetricDefinition> NEW_RELIC_VALUES_TO_ANALYZE = new HashMap<>();
 

@@ -10,7 +10,7 @@ package software.wings.delegatetasks;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.threading.Morpheus.sleep;
 
-import static software.wings.common.VerificationConstants.DATA_COLLECTION_RETRY_SLEEP;
+import static software.wings.delegatetasks.cv.CVConstants.DATA_COLLECTION_RETRY_SLEEP;
 import static software.wings.service.impl.newrelic.NewRelicDelgateServiceImpl.METRIC_NAME_NON_SPECIAL_CHARS;
 import static software.wings.service.impl.newrelic.NewRelicDelgateServiceImpl.METRIC_NAME_SPECIAL_CHARS;
 import static software.wings.service.impl.newrelic.NewRelicDelgateServiceImpl.batchMetricsToCollect;
@@ -35,7 +35,6 @@ import io.harness.serializer.JsonUtils;
 import io.harness.time.Timestamp;
 
 import software.wings.beans.TaskType;
-import software.wings.metrics.TimeSeriesDataRecord;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.analysis.DataCollectionTaskResult.DataCollectionTaskStatus;
@@ -169,10 +168,6 @@ public class NewRelicDataCollectionTask extends AbstractDelegateDataCollectionTa
       log.debug("Fetching done for host {} for stateExecutionId {} for metrics {}", node,
           dataCollectionInfo.getStateExecutionId(), metricNames);
 
-      if (TimeSeriesDataRecord.shouldLogDetailedInfoForDebugging(
-              dataCollectionInfo.getNewRelicConfig().getAccountId(), dataCollectionInfo.getServiceId())) {
-        log.info("for {} retrieved records {} ", dataCollectionInfo.getStateExecutionId(), records);
-      }
       log.debug(records.toString());
       return records;
     }
