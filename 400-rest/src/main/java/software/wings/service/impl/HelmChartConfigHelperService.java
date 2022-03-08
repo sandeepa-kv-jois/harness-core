@@ -134,6 +134,8 @@ public class HelmChartConfigHelperService {
         || HelmVersion.V380.equals(getHelmVersionFromService(context))) {
       helmChartConfigParamsBuilder.useRepoFlags(
           featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS, context.getAccountId()));
+      helmChartConfigParamsBuilder.deleteRepoCacheDir(
+          featureFlagService.isEnabled(FeatureName.DELETE_HELM_REPO_CACHE_DIR, context.getAccountId()));
     }
 
     helmChartConfigParamsBuilder.checkIncorrectChartVersion(

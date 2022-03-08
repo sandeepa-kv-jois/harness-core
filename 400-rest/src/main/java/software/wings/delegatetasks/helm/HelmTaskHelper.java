@@ -265,7 +265,7 @@ public class HelmTaskHelper {
       helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
           helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
           helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
-          helmCommandFlag, timeoutInMillis, false, false);
+          helmCommandFlag, timeoutInMillis, false, false, false);
     } finally {
       if (chartMuseumServer != null) {
         chartMuseumClient.stopChartMuseumServer(chartMuseumServer.getStartedProcess());
@@ -360,7 +360,7 @@ public class HelmTaskHelper {
   public void addRepo(String repoName, String repoDisplayName, String chartRepoUrl, String username, char[] password,
       String chartDirectory, HelmVersion helmVersion, long timeoutInMillis) {
     helmTaskHelperBase.addRepo(repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion,
-        timeoutInMillis, false);
+        timeoutInMillis, false, false);
   }
 
   private void fetchChartFromHttpServer(HelmChartConfigParams helmChartConfigParams, String chartDirectory,
@@ -369,13 +369,13 @@ public class HelmTaskHelper {
 
     helmTaskHelperBase.addRepo(helmChartConfigParams.getRepoName(), helmChartConfigParams.getRepoDisplayName(),
         httpHelmRepoConfig.getChartRepoUrl(), httpHelmRepoConfig.getUsername(), httpHelmRepoConfig.getPassword(),
-        chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis,
-        helmChartConfigParams.isUseRepoFlags());
+        chartDirectory, helmChartConfigParams.getHelmVersion(), timeoutInMillis, helmChartConfigParams.isUseRepoFlags(),
+        helmChartConfigParams.isDeleteRepoCacheDir());
     helmTaskHelperBase.fetchChartFromRepo(helmChartConfigParams.getRepoName(),
         helmChartConfigParams.getRepoDisplayName(), helmChartConfigParams.getChartName(),
         helmChartConfigParams.getChartVersion(), chartDirectory, helmChartConfigParams.getHelmVersion(),
         helmCommandFlag, timeoutInMillis, helmChartConfigParams.isUseRepoFlags(),
-        helmChartConfigParams.isCheckIncorrectChartVersion());
+        helmChartConfigParams.isCheckIncorrectChartVersion(), helmChartConfigParams.isDeleteRepoCacheDir());
   }
 
   public void addHelmRepo(HelmRepoConfig helmRepoConfig, SettingValue connectorConfig, String repoName,
