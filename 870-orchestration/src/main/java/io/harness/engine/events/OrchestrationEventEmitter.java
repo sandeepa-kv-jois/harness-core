@@ -29,6 +29,7 @@ public class OrchestrationEventEmitter {
   @Inject private PmsEventSender eventSender;
 
   public void emitEvent(OrchestrationEvent event) {
+    /**
     try (AutoLogContext ignore = OrchestrationEventUtils.obtainLogContext(event)) {
       String serviceName =
           isEmpty(event.getServiceName()) ? ModuleType.PMS.name().toLowerCase() : event.getServiceName();
@@ -37,6 +38,7 @@ public class OrchestrationEventEmitter {
     } catch (Exception ex) {
       log.error("Failed to create orchestration event of type {}", event.getEventType(), ex);
       throw ex;
-    }
+    }*
+  */
   }
 }
