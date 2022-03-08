@@ -12,6 +12,7 @@ import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthLogDefinition;
 import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
+import io.harness.cvng.core.beans.monitoredService.HealthSource.CVConfigUpdateResult;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
 import io.harness.cvng.core.services.api.MetricPackService;
@@ -39,48 +40,41 @@ import lombok.experimental.SuperBuilder;
 public class CustomHealthSourceLogSpec extends HealthSourceSpec {
   List<CustomHealthLogDefinition> logDefinitions = new ArrayList<>();
 
-  @Data
-  @Builder
-  public static class Key {
-    String queryName;
-  }
-
   @Override
   public HealthSource.CVConfigUpdateResult getCVConfigUpdateResult(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
       String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     List<CustomHealthLogCVConfig> existingDBCVConfigs = (List<CustomHealthLogCVConfig>) (List<?>) existingCVConfigs;
-    Map<Key, CustomHealthLogCVConfig> existingConfigs = new HashMap<>();
-    existingDBCVConfigs.forEach(
-        config -> existingConfigs.put(Key.builder().queryName(config.getQueryName()).build(), config));
+    Map<String, CustomHealthLogCVConfig> existingConfigs = new HashMap<>();
+    existingDBCVConfigs.forEach(config -> existingConfigs.put(config.getQueryName(), config));
 
-    Map<Key, CustomHealthLogCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
+    Map<String, CustomHealthLogCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
         environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
 
-    Set<Key> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
-    Set<Key> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
-    Set<Key> updated = Sets.intersection(existingConfigs.keySet(), currentCVConfigs.keySet());
+    Set<String> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
+    Set<String> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
+    Set<String> updated = Sets.intersection(existingConfigs.keySet(), currentCVConfigs.keySet());
 
     List<CVConfig> updatedConfigs = updated.stream().map(currentCVConfigs::get).collect(Collectors.toList());
     List<CVConfig> updatedConfigWithUuid = updated.stream().map(existingConfigs::get).collect(Collectors.toList());
     for (int i = 0; i < updatedConfigs.size(); i++) {
       updatedConfigs.get(i).setUuid(updatedConfigWithUuid.get(i).getUuid());
     }
-    return HealthSource.CVConfigUpdateResult.builder()
+    return CVConfigUpdateResult.builder()
         .deleted(deleted.stream().map(existingConfigs::get).collect(Collectors.toList()))
         .updated(updatedConfigs)
         .added(added.stream().map(currentCVConfigs::get).collect(Collectors.toList()))
         .build();
   }
 
-  public Map<Key, CustomHealthLogCVConfig> getCVConfigs(String accountId, String orgIdentifier,
+  public Map<String, CustomHealthLogCVConfig> getCVConfigs(String accountId, String orgIdentifier,
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
       String identifier, String name) {
-    Map<Key, CustomHealthLogCVConfig> cvConfigMap = new HashMap<>();
+    Map<String, CustomHealthLogCVConfig> cvConfigMap = new HashMap<>();
     logDefinitions.forEach(logDefinition -> {
       String queryName = logDefinition.getQueryName();
 
-      Key cvConfigKey = Key.builder().queryName(queryName).build();
+      String cvConfigKey = queryName;
       CustomHealthLogCVConfig existingCvConfig = cvConfigMap.get(cvConfigKey);
 
       if (existingCvConfig != null) {
@@ -103,7 +97,7 @@ public class CustomHealthSourceLogSpec extends HealthSourceSpec {
               .timestampJsonPath(logDefinition.getTimestampJsonPath())
               .serviceInstanceJsonPath(logDefinition.getServiceInstanceJsonPath())
               .queryName(queryName)
-              .query("")
+              .query(requestDefinition.getUrlPath())
               .category(CVMonitoringCategory.ERRORS)
               .requestDefinition(CustomHealthRequestDefinition.builder()
                                      .requestBody(requestDefinition.getRequestBody())
