@@ -20,14 +20,16 @@ import lombok.extern.slf4j.Slf4j;
 @Singleton
 @Slf4j
 public class DebeziumController implements Runnable {
+  String redisAdress;
   protected final ExecutorService executorService =
       Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("debezium-engine").build());
   private Properties props;
   ChangeHandler changeConsumer;
 
-  public DebeziumController(Properties props, ChangeHandler changeConsumer) {
+  public DebeziumController(Properties props, ChangeHandler changeConsumer, String redisAdress) {
     this.changeConsumer = changeConsumer;
     this.props = props;
+    this.redisAdress = redisAdress;
   }
 
   @Override
@@ -38,6 +40,6 @@ public class DebeziumController implements Runnable {
   }
 
   protected DebeziumEngine<ChangeEvent<String, String>> getEngine(Properties props) {
-    return DebeziumEngine.create(Json.class).using(props).notifying(new DebeziumChangeConsumer(changeConsumer)).build();
+    return DebeziumEngine.create(Json.class).using(props).notifying(new RedisStreamChangeConsumer(redisAdress)).build();
   }
 }

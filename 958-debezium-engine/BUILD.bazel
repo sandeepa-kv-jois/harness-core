@@ -10,6 +10,8 @@ java_library(
         "//960-notification-beans:module",
         "//960-persistence:module",
         "//960-yaml-sdk:module",
+        "@maven//:redis_clients_jedis",
+        "@maven//:io_smallrye_reactive_mutiny",
         "@maven//:com_esotericsoftware_kryo",
         "@maven//:com_fasterxml_jackson_core_jackson_annotations",
         "@maven//:com_github_reinert_jjschema",
