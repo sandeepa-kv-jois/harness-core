@@ -356,7 +356,7 @@ public class SettingsServiceImpl implements SettingsService {
 
       return aPageResponse()
           .withResponse(resp)
-          .withTotal(filteredSettingAttributes.size())
+          .withTotal(pageResponse.getTotal())
           .withOffset(req.getOffset())
           .withLimit(req.getLimit())
           .build();

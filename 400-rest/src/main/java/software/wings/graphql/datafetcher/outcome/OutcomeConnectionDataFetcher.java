@@ -10,6 +10,7 @@ package software.wings.graphql.datafetcher.outcome;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.SearchFilter.Operator.IN;
+import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.HarnessModule;
@@ -98,7 +99,7 @@ public class OutcomeConnectionDataFetcher
 
   private void getOutcomeWithInfraDef(
       QLOutcomesQueryParameters qlQuery, WorkflowExecution execution, QLOutcomeConnectionBuilder connectionBuilder) {
-    final List<String> infraMappingIds = execution.getInfraMappingIds();
+    final List<String> infraMappingIds = emptyIfNull(execution.getInfraMappingIds());
     final PageRequest pageRequest =
         aPageRequest().addFilter(InfrastructureMapping.ID, IN, infraMappingIds.toArray()).build();
     final PageResponse<InfrastructureMapping> infraMappings = infrastructureMappingService.list(pageRequest);
