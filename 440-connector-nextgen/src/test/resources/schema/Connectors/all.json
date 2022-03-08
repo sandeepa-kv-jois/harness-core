@@ -4054,7 +4054,8 @@
                 "APP_ROLE",
                 "TOKEN",
                 "VAULT_AGENT",
-                "AWS_IAM"
+                "AWS_IAM",
+                "K8s_AUTH"
               ]
             },
             "appRoleId": {
@@ -4102,16 +4103,25 @@
             "secretId": {
               "type": "string"
             },
+            "serviceAccountTokenPath": {
+              "type": "string"
+            },
             "sinkPath": {
               "type": "string"
             },
             "useAwsIam": {
               "type": "boolean"
             },
+            "useK8sAuth": {
+              "type": "boolean"
+            },
             "useVaultAgent": {
               "type": "boolean"
             },
             "vaultAwsIamRole": {
+              "type": "string"
+            },
+            "vaultK8sAuthRole": {
               "type": "string"
             },
             "vaultUrl": {
