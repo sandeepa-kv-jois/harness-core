@@ -19,4 +19,8 @@ public class CVConstants {
   public static final String DELEGATE_DATA_COLLECTION = "delegate-data-collection";
   public static final String CV_TASK_STATUS_UPDATE_PATH = "/update-cv-task-status";
   public static final String SAVE_CV_ACTIVITY_LOGS_PATH = "/save-cv-activity-logs";
+  public static final int MAX_RETRIES = 2;
+  public static final int RATE_LIMIT_STATUS = 429;
+  public static final String URL_STRING = "Url";
+  public static final String CONNECTOR = ":";
 }

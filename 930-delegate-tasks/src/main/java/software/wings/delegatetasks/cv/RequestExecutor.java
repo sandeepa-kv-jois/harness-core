@@ -10,10 +10,10 @@ package software.wings.delegatetasks.cv;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.threading.Morpheus.sleep;
 
-import static software.wings.common.VerificationConstants.MAX_RETRIES;
-import static software.wings.common.VerificationConstants.RATE_LIMIT_STATUS;
-import static software.wings.common.VerificationConstants.URL_STRING;
+import static software.wings.delegatetasks.cv.CVConstants.MAX_RETRIES;
+import static software.wings.delegatetasks.cv.CVConstants.RATE_LIMIT_STATUS;
 import static software.wings.delegatetasks.cv.CVConstants.RETRY_SLEEP_DURATION;
+import static software.wings.delegatetasks.cv.CVConstants.URL_STRING;
 
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
