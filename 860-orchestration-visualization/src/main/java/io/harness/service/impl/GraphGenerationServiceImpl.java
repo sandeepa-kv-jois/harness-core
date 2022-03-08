@@ -76,7 +76,8 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
   @Override
   public boolean updateGraph(String planExecutionId) {
     String lockName = GRAPH_LOCK + planExecutionId;
-    try (AcquiredLock<?> lock = persistentLocker.tryToAcquireLock(lockName, Duration.ofSeconds(10))) {
+    // Todo: Introduce loading cache for this time.
+    try (AcquiredLock<?> lock = persistentLocker.tryToAcquireLock(lockName, Duration.ofSeconds(120))) {
       if (lock == null) {
         log.debug(String.format(
             "[PMS_GRAPH_LOCK_TEST] Not able to take lock on graph generation for lockName - %s, returning early.",
