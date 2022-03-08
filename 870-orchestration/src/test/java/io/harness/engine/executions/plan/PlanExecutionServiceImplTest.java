@@ -97,8 +97,7 @@ public class PlanExecutionServiceImplTest extends OrchestrationTestBase {
         planExecutionService.save(PlanExecution.builder().uuid(planExecutionId).status(Status.PAUSED).build());
     assertThat(savedExecution.getUuid()).isEqualTo(planExecutionId);
 
-    when(nodeExecutionService.fetchNodeExecutionsWithoutOldRetriesAndStatusIn(
-             eq(planExecutionId), eq(EnumSet.noneOf(Status.class))))
+    when(nodeExecutionService.fetchWithoutRetriesAndStatusIn(eq(planExecutionId), eq(EnumSet.noneOf(Status.class))))
         .thenReturn(
             ImmutableList.of(NodeExecution.builder().uuid(excludedNodeExecutionId).status(Status.QUEUED).build(),
                 NodeExecution.builder().uuid(generateUuid()).status(Status.RUNNING).build()));

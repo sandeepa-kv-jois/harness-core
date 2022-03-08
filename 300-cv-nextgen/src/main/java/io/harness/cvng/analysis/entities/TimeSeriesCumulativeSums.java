@@ -13,6 +13,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.cvng.CVConstants;
+import io.harness.cvng.analysis.beans.ServiceGuardTxnMetricAnalysisDataDTO.MetricSumDTO;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -84,9 +85,17 @@ public final class TimeSeriesCumulativeSums implements PersistentEntity, UuidAwa
   @FieldNameConstants(innerTypeName = "MetricSumsKeys")
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class MetricSum {
-    private String metricName;
+    @Deprecated private String metricName;
+    private String metricIdentifier;
     private double risk;
     private double data;
+
+    public String getMetricIdentifier() {
+      if (isEmpty(metricIdentifier)) {
+        return metricName;
+      }
+      return metricIdentifier;
+    }
   }
 
   public static List<TransactionMetricSums> convertMapToTransactionMetricSums(
@@ -99,8 +108,8 @@ public final class TimeSeriesCumulativeSums implements PersistentEntity, UuidAwa
       if (isNotEmpty(metricMap)) {
         TransactionMetricSums txnMetricSums = TransactionMetricSums.builder().transactionName(txnName).build();
         List<MetricSum> metricSumsList = new ArrayList<>();
-        metricMap.forEach((metricName, metricSums) -> {
-          metricSums.setMetricName(metricName);
+        metricMap.forEach((metricIdentifier, metricSums) -> {
+          metricSums.setMetricIdentifier(metricIdentifier);
           metricSumsList.add(metricSums);
         });
         txnMetricSums.setMetricSums(metricSumsList);
@@ -110,13 +119,13 @@ public final class TimeSeriesCumulativeSums implements PersistentEntity, UuidAwa
     return txnMetricSumList;
   }
 
-  public static Map<String, Map<String, List<MetricSum>>> convertToMap(
+  public static Map<String, Map<String, List<MetricSumDTO>>> convertToMap(
       List<TimeSeriesCumulativeSums> timeSeriesCumulativeSumsList) {
     if (isEmpty(timeSeriesCumulativeSumsList)) {
       return new HashMap<>();
     }
     timeSeriesCumulativeSumsList.sort(Comparator.comparing(TimeSeriesCumulativeSums::getAnalysisStartTime));
-    Map<String, Map<String, List<MetricSum>>> txnMetricMap = new HashMap<>();
+    Map<String, Map<String, List<MetricSumDTO>>> txnMetricMap = new HashMap<>();
 
     for (TimeSeriesCumulativeSums timeSeriesCumulativeSums : timeSeriesCumulativeSumsList) {
       if (isEmpty(timeSeriesCumulativeSums.getTransactionMetricSums())) {
@@ -128,11 +137,11 @@ public final class TimeSeriesCumulativeSums implements PersistentEntity, UuidAwa
           txnMetricMap.put(transactionName, new HashMap<>());
         }
         transactionSum.getMetricSums().forEach(metricSum -> {
-          String metricName = metricSum.getMetricName();
-          if (!txnMetricMap.get(transactionName).containsKey(metricName)) {
-            txnMetricMap.get(transactionName).put(metricName, new ArrayList<>());
+          String metricIdentifier = metricSum.getMetricIdentifier();
+          if (!txnMetricMap.get(transactionName).containsKey(metricIdentifier)) {
+            txnMetricMap.get(transactionName).put(metricIdentifier, new ArrayList<>());
           }
-          txnMetricMap.get(transactionName).get(metricName).add(metricSum);
+          txnMetricMap.get(transactionName).get(metricIdentifier).add(MetricSumDTO.toMetricSumDTO(metricSum));
         });
       }
     }

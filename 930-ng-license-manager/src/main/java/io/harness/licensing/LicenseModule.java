@@ -10,6 +10,7 @@ package io.harness.licensing;
 import io.harness.ModuleType;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cache.HarnessCacheManager;
 import io.harness.licensing.checks.LicenseComplianceResolver;
 import io.harness.licensing.checks.LicenseEditionChecker;
 import io.harness.licensing.checks.impl.DefaultLicenseComplianceResolver;
@@ -23,13 +24,22 @@ import io.harness.licensing.mappers.LicenseObjectConverter;
 import io.harness.licensing.mappers.LicenseObjectMapper;
 import io.harness.licensing.services.DefaultLicenseServiceImpl;
 import io.harness.licensing.services.LicenseService;
+import io.harness.version.VersionInfoManager;
 
 import com.google.inject.AbstractModule;
+import com.google.inject.Provides;
+import com.google.inject.Singleton;
 import com.google.inject.multibindings.MapBinder;
+import com.google.inject.name.Named;
+import java.util.List;
+import javax.cache.Cache;
+import javax.cache.expiry.AccessedExpiryPolicy;
+import javax.cache.expiry.Duration;
 
 @OwnedBy(HarnessTeam.GTM)
 public class LicenseModule extends AbstractModule {
   private static LicenseModule instance;
+  public static final String LICENSE_CACHE_NAMESPACE = "NGLicense";
 
   public static LicenseModule getInstance() {
     if (instance == null) {
@@ -62,5 +72,14 @@ public class LicenseModule extends AbstractModule {
     bind(ModuleLicenseInterface.class).to(ModuleLicenseImpl.class);
     bind(LicenseService.class).to(DefaultLicenseServiceImpl.class);
     bind(LicenseComplianceResolver.class).to(DefaultLicenseComplianceResolver.class);
+  }
+
+  @Provides
+  @Named(LICENSE_CACHE_NAMESPACE)
+  @Singleton
+  public Cache<String, List> getLicenseCache(
+      HarnessCacheManager harnessCacheManager, VersionInfoManager versionInfoManager) {
+    return harnessCacheManager.getCache(LICENSE_CACHE_NAMESPACE, String.class, List.class,
+        AccessedExpiryPolicy.factoryOf(Duration.THIRTY_MINUTES), versionInfoManager.getVersionInfo().getBuildNo());
   }
 }

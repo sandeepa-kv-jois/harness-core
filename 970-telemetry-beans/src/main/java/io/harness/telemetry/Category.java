@@ -11,4 +11,5 @@ public interface Category {
   String SIGN_UP = "SIGNUP";
   String GLOBAL = "GLOBAL";
   String COMMUNITY = "COMMUNITY";
+  String PLATFORM = "PLATFORM";
 }

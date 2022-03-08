@@ -53,8 +53,8 @@ import io.harness.entitysetupusageclient.remote.EntitySetupUsageClient;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.clients.YamlGitConfigClient;
 import io.harness.gitsync.persistance.GitSyncSdkService;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.rule.Owner;
@@ -92,7 +92,7 @@ public class DefaultConnectorServiceImplTest extends ConnectorsTestBase {
   @Mock ConnectorEntityReferenceHelper connectorEntityReferenceHelper;
   @Mock GitSyncSdkService gitSyncSdkService;
   @Mock YamlGitConfigClient yamlGitConfigClient;
-  @Mock AccountSettingsHelper accountSettingsHelper;
+  @Mock NGAccountSettingService accountSettingService;
   @Inject @InjectMocks DefaultConnectorServiceImpl connectorService;
   @Inject MongoTemplate mongoTemplate;
 
@@ -435,7 +435,7 @@ public class DefaultConnectorServiceImplTest extends ConnectorsTestBase {
   @Category({UnitTests.class})
   public void testListWhenDefaultSMIsDisabled() {
     doReturn(true)
-        .when(accountSettingsHelper)
+        .when(accountSettingService)
         .getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
     String connectorIdentifier1 = "harnessSecretManger";
     String connectorIdentifier2 = "connectorIdentifier2";
@@ -469,7 +469,7 @@ public class DefaultConnectorServiceImplTest extends ConnectorsTestBase {
   @Category({UnitTests.class})
   public void testListWhenDefaultSMIsEnabled() {
     doReturn(false)
-        .when(accountSettingsHelper)
+        .when(accountSettingService)
         .getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
     String connectorIdentifier1 = "harnessSecretManger";
     String connectorIdentifier2 = "connectorIdentifier2";

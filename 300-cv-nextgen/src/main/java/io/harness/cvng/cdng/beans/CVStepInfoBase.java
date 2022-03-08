@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.cdng.CvStepParametersUtils;
 import io.harness.plancreator.steps.common.SpecParameters;
 import io.harness.plancreator.steps.common.StepElementParameters.StepElementParametersBuilder;
+import io.harness.plancreator.steps.common.WithStepElementParameters;
 import io.harness.pms.sdk.core.steps.io.StepParameters;
 import io.harness.yaml.core.StepSpecType;
 
@@ -21,7 +22,7 @@ import io.swagger.annotations.ApiModel;
 
 @ApiModel(subTypes = {CVNGStepInfo.class})
 @OwnedBy(HarnessTeam.CV)
-public interface CVStepInfoBase extends StepParameters, StepSpecType {
+public interface CVStepInfoBase extends StepParameters, WithStepElementParameters, StepSpecType {
   default StepParameters getStepParameters(
       CVNGAbstractStepNode stepElementConfig, OnFailRollbackParameters failRollbackParameters) {
     StepElementParametersBuilder stepParametersBuilder =
@@ -30,8 +31,5 @@ public interface CVStepInfoBase extends StepParameters, StepSpecType {
     return stepParametersBuilder.build();
   }
 
-  @JsonIgnore
-  default SpecParameters getSpecParameters() {
-    return null;
-  }
+  @JsonIgnore SpecParameters getSpecParameters();
 }

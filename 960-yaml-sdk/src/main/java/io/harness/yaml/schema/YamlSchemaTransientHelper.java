@@ -81,6 +81,8 @@ public class YamlSchemaTransientHelper {
       add(EntityType.HELM_DEPLOY_STEP);
       add(EntityType.HELM_ROLLBACK_STEP);
       add(EntityType.POLICY_STEP);
+      add(EntityType.SERVICENOW_CREATE_STEP);
+      add(EntityType.SERVICENOW_UPDATE_STEP);
     }
   };
 

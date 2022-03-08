@@ -9,6 +9,7 @@ package io.harness.cvng.core.services.impl;
 
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.KANHAIYA;
+import static io.harness.rule.OwnerRule.KAPIL;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -24,6 +25,7 @@ import io.harness.cvng.beans.cvnglog.ApiCallLogDTO.ApiCallLogDTOField;
 import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
 import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.beans.cvnglog.TraceableType;
+import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.entities.CVNGLog;
 import io.harness.cvng.core.entities.CVNGLog.CVNGLogKeys;
 import io.harness.cvng.core.services.api.CVConfigService;
@@ -38,9 +40,12 @@ import com.google.inject.Inject;
 import java.lang.reflect.Field;
 import java.time.Duration;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import org.apache.commons.lang3.reflect.FieldUtils;
@@ -200,6 +205,67 @@ public class CVNGLogServiceImplTest extends CvNextGenTestBase {
       assertThat(logRecord.getTraceableType()).isEqualTo(TraceableType.VERIFICATION_TASK);
       timeCounter[0] += 10;
     });
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetCVNGLogsForVerificationTask_withNoFilters() throws IllegalAccessException {
+    List<CVNGLogDTO> cvngLogDTOs =
+        IntStream.range(0, 3).mapToObj(index -> createApiCallLogDTOVerification()).collect(Collectors.toList());
+    cvngLogService.save(cvngLogDTOs);
+    Set<String> traceableIds =
+        cvngLogDTOs.stream().map(cvngLogDTO -> cvngLogDTO.getTraceableId()).collect(Collectors.toSet());
+    VerificationTaskService verificationTaskService = mock(VerificationTaskServiceImpl.class);
+    CVConfigService cvConfigService = mock(CVConfigService.class);
+    FieldUtils.writeField(cvngLogService, "verificationTaskService", verificationTaskService, true);
+    FieldUtils.writeField(cvngLogService, "cvConfigService", cvConfigService, true);
+    when(verificationTaskService.maybeGetVerificationTaskIds(any(), any())).thenReturn(traceableIds);
+
+    PageResponse<CVNGLogDTO> cvngLogDTOResponse = cvngLogService.getCVNGLogs(accountId,
+        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), CVNGLogType.API_CALL_LOG,
+        Collections.emptyList(), false, PageParams.builder().page(0).size(10).build());
+
+    assertThat(cvngLogDTOResponse.getContent().size()).isEqualTo(3);
+    assertThat(cvngLogDTOResponse.getPageIndex()).isEqualTo(0);
+    assertThat(cvngLogDTOResponse.getPageSize()).isEqualTo(10);
+
+    List<CVNGLogDTO> cvngLogDTOsResult = cvngLogDTOResponse.getContent();
+    List<ApiCallLogDTO> apiCallLogDTOS = new ArrayList<>();
+    cvngLogDTOsResult.forEach(cvngLogDTO -> apiCallLogDTOS.add((ApiCallLogDTO) cvngLogDTO));
+
+    assertThat(apiCallLogDTOS.size()).isEqualTo(3);
+    assertThat(apiCallLogDTOS.get(0).getType()).isEqualTo(CVNGLogType.API_CALL_LOG);
+    assertThat(apiCallLogDTOS.get(0).getTraceableType()).isEqualTo(TraceableType.VERIFICATION_TASK);
+    apiCallLogDTOS.forEach(apiCallLogRecord -> {
+      assertThat(apiCallLogRecord.getResponses().get(0).getValue()).isEqualTo("200");
+      assertThat(apiCallLogRecord.getType()).isEqualTo(CVNGLogType.API_CALL_LOG);
+      assertThat(apiCallLogRecord.getTraceableType()).isEqualTo(TraceableType.VERIFICATION_TASK);
+    });
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetCVNGLogsForVerificationTask_withErrorLogsOnlyFilter() throws IllegalAccessException {
+    List<CVNGLogDTO> cvngLogDTOs =
+        IntStream.range(0, 3).mapToObj(index -> createApiCallLogDTOVerification()).collect(Collectors.toList());
+    cvngLogService.save(cvngLogDTOs);
+    Set<String> traceableIds =
+        cvngLogDTOs.stream().map(cvngLogDTO -> cvngLogDTO.getTraceableId()).collect(Collectors.toSet());
+    VerificationTaskService verificationTaskService = mock(VerificationTaskServiceImpl.class);
+    CVConfigService cvConfigService = mock(CVConfigService.class);
+    FieldUtils.writeField(cvngLogService, "verificationTaskService", verificationTaskService, true);
+    FieldUtils.writeField(cvngLogService, "cvConfigService", cvConfigService, true);
+    when(verificationTaskService.maybeGetVerificationTaskIds(any(), any())).thenReturn(traceableIds);
+
+    PageResponse<CVNGLogDTO> cvngLogDTOResponse = cvngLogService.getCVNGLogs(accountId,
+        verificationTaskService.getVerificationJobInstanceId(traceableIds.iterator().next()), CVNGLogType.API_CALL_LOG,
+        Collections.emptyList(), true, PageParams.builder().page(0).size(10).build());
+
+    assertThat(cvngLogDTOResponse.getContent().size()).isEqualTo(0);
+    assertThat(cvngLogDTOResponse.getPageIndex()).isEqualTo(0);
+    assertThat(cvngLogDTOResponse.getPageSize()).isEqualTo(10);
   }
 
   private CVNGLogDTO createApiCallLogDTOVerification() {

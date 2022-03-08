@@ -17,12 +17,11 @@ import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
 
 import software.wings.beans.DatadogConfig;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.impl.log.LogResponseParser;
 import software.wings.service.impl.log.LogResponseParser.LogResponseData;
 import software.wings.sm.states.BugsnagState;
-import software.wings.sm.states.CustomLogVerificationState;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 import software.wings.sm.states.DatadogLogState;
 
 import com.google.common.base.Charsets;
@@ -46,23 +45,17 @@ public class LogResponseParserTest extends CategoryTest {
         Resources.toString(LogResponseParserTest.class.getResource("/apm/sampleElkResponse.json"), Charsets.UTF_8);
 
     List<String> hostList = Arrays.asList("harness-manager-1.0.5909-192-7bd4987549-pfwgn");
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("@timestamp"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .build());
     responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder()
-            .fieldName("host")
-            .jsonPath(Arrays.asList("kubernetes.pod.name"))
-            .build());
-    responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
-            .fieldName("logMessage")
-            .jsonPath(Arrays.asList("log"))
-            .build());
+        CustomLogResponseMapper.builder().fieldName("host").jsonPath(Arrays.asList("kubernetes.pod.name")).build());
+    responseMappers.put(
+        "logMessage", CustomLogResponseMapper.builder().fieldName("logMessage").jsonPath(Arrays.asList("log")).build());
 
     LogResponseParser parser = new LogResponseParser();
     LogResponseParser.LogResponseData data =
@@ -82,20 +75,20 @@ public class LogResponseParserTest extends CategoryTest {
     List<String> hostList = Arrays.asList("harness-manager-1.0.5922-198-b5bbc487d-bcqx6",
         "harness-manager-1.0.5919-197-bbd6df89f-mzrw2", "harness-manager-1.0.5922-198-b5bbc487d-rqx6p",
         "harness-manager-1.0.5922-199-656965f8ff-pcq4j", "harness-manager-1.0.5919-197-bbd6df89f-bg57m");
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("hits.hits[*]._source.@timestamp"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .build());
     responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("host")
             .jsonPath(Arrays.asList("hits.hits[*]._source.kubernetes.pod.name"))
             .build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("hits.hits[*]._source.log"))
             .build());
@@ -117,17 +110,17 @@ public class LogResponseParserTest extends CategoryTest {
         Resources.toString(LogResponseParserTest.class.getResource("/apm/azuresample.json"), Charsets.UTF_8);
 
     List<String> hostList = Arrays.asList("harness-manager-1.0.5909-192-7bd4987549-pfwgn");
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("tables[*].rows[*].[1]"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SS'Z'")
             .build());
-    responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder().fieldName("host").fieldValue("samplehostname").build());
+    responseMappers.put(
+        "host", CustomLogResponseMapper.builder().fieldName("host").fieldValue("samplehostname").build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("tables[*].rows[*].[0]"))
             .build());
@@ -147,7 +140,7 @@ public class LogResponseParserTest extends CategoryTest {
     String textLoad =
         Resources.toString(LogResponseParserTest.class.getResource("/apm/bugsnagsample.json"), Charsets.UTF_8);
 
-    Map<String, ResponseMapper> responseMappers =
+    Map<String, CustomLogResponseMapper> responseMappers =
         BugsnagState.constructLogDefinitions("sampleProjecId", null).values().iterator().next();
     List<String> hostList = Arrays.asList("harness-manager-1.0.5909-192-7bd4987549-pfwgn");
     LogResponseParser parser = new LogResponseParser();
@@ -166,20 +159,20 @@ public class LogResponseParserTest extends CategoryTest {
         LogResponseParserTest.class.getResource("/apm/elkMultipleHitsResponse.json"), Charsets.UTF_8);
 
     List<String> hostList = Arrays.asList("harness-manager-1.0.5922-198-b5bbc487d-bcqx6");
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("hits.hits[*]._source.@timestamp"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .build());
     responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("host")
             .jsonPath(Arrays.asList("hits.hits[*]._source.kubernetes.pod.name"))
             .build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("hits.hits[*]._source.log"))
             .build());
@@ -202,9 +195,9 @@ public class LogResponseParserTest extends CategoryTest {
     DatadogConfig datadogConfig = DatadogConfig.builder().url("https://app․datadoghq․com/").build();
 
     List<String> hostList = Collections.singletonList("harness-example-deployment-canary-68659cc85f-szjs7");
-    Map<String, Map<String, ResponseMapper>> response =
+    Map<String, Map<String, CustomLogResponseMapper>> response =
         DatadogLogState.constructLogDefinitions(datadogConfig, "pod_name", false);
-    Map<String, ResponseMapper> responseMappers = response.get("https://app․datadoghq․com/logs-queries/list");
+    Map<String, CustomLogResponseMapper> responseMappers = response.get("https://app․datadoghq․com/logs-queries/list");
 
     LogResponseParser parser = new LogResponseParser();
     LogResponseParser.LogResponseData data =
@@ -230,9 +223,9 @@ public class LogResponseParserTest extends CategoryTest {
 
     List<String> hostList =
         Collections.singletonList("gke-cv-test-instana-pool-1-b8420bad-gqc2.c.playground-243019.internal");
-    Map<String, Map<String, ResponseMapper>> response =
+    Map<String, Map<String, CustomLogResponseMapper>> response =
         DatadogLogState.constructLogDefinitions(datadogConfig, "host", false);
-    Map<String, ResponseMapper> responseMappers = response.get("https://app․datadoghq․com/logs-queries/list");
+    Map<String, CustomLogResponseMapper> responseMappers = response.get("https://app․datadoghq․com/logs-queries/list");
 
     LogResponseParser parser = new LogResponseParser();
     LogResponseParser.LogResponseData data =

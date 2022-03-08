@@ -10,7 +10,9 @@ package io.harness.batch.processing.tasklet.support;
 import static io.harness.batch.processing.writer.constants.K8sCCMConstants.K8SV1_RELEASE_NAME;
 
 import io.harness.batch.processing.tasklet.util.CacheUtils;
+import io.harness.beans.FeatureName;
 import io.harness.ccm.commons.beans.HarnessServiceInfo;
+import io.harness.ff.FeatureFlagService;
 
 import software.wings.service.intfc.instance.CloudToHarnessMappingService;
 
@@ -31,6 +33,7 @@ public class HarnessServiceInfoFetcher extends CacheUtils {
   private final K8sLabelServiceInfoFetcher k8sLabelServiceInfoFetcher;
 
   public final LoadingCache<CacheKey, Optional<HarnessServiceInfo>> getHarnessServiceInfoCache;
+  private final FeatureFlagService featureFlagService;
 
   @Value
   private static class CacheKey {
@@ -42,9 +45,10 @@ public class HarnessServiceInfoFetcher extends CacheUtils {
 
   @Inject
   public HarnessServiceInfoFetcher(K8sLabelServiceInfoFetcher k8sLabelServiceInfoFetcher,
-      CloudToHarnessMappingService cloudToHarnessMappingService) {
+      CloudToHarnessMappingService cloudToHarnessMappingService, FeatureFlagService featureFlagService) {
     this.k8sLabelServiceInfoFetcher = k8sLabelServiceInfoFetcher;
     this.cloudToHarnessMappingService = cloudToHarnessMappingService;
+    this.featureFlagService = featureFlagService;
     this.getHarnessServiceInfoCache = Caffeine.newBuilder()
                                           .recordStats()
                                           .expireAfterAccess(24, TimeUnit.HOURS)
@@ -58,7 +62,8 @@ public class HarnessServiceInfoFetcher extends CacheUtils {
       String accountId, String computeProviderId, String namespace, String podName, Map<String, String> labelsMap) {
     try {
       Optional<HarnessServiceInfo> harnessServiceInfo = Optional.empty();
-      if (labelsMap.containsKey(K8SV1_RELEASE_NAME)) {
+      if (labelsMap.containsKey(K8SV1_RELEASE_NAME)
+          || featureFlagService.isEnabled(FeatureName.CE_HARNESS_INSTANCE_QUERY, accountId)) {
         harnessServiceInfo =
             getHarnessServiceInfoCache.get(new CacheKey(accountId, computeProviderId, namespace, podName));
       }

@@ -23,7 +23,6 @@ public interface VerificationManagerService {
       DataCollectionConnectorBundle bundle);
 
   void deletePerpetualTask(String accountId, String perpetualTaskId);
-  void deletePerpetualTasks(String accountId, List<String> perpetualTaskIds);
   String getDataCollectionResponse(
       String accountId, String orgIdentifier, String projectIdentifier, DataCollectionRequest request);
   List<String> getKubernetesNamespaces(

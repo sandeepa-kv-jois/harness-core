@@ -20,4 +20,14 @@ public enum CVNGLogType {
   public String getDisplayName() {
     return displayName;
   }
+
+  public static CVNGLogType toCVNGLogType(String cvngLogType) {
+    if (cvngLogType.equalsIgnoreCase("ApiCallLog")) {
+      return CVNGLogType.API_CALL_LOG;
+    } else if (cvngLogType.equalsIgnoreCase("ExecutionLog")) {
+      return CVNGLogType.EXECUTION_LOG;
+    } else {
+      throw new UnsupportedOperationException("logType should either be ApiCallLog or ExecutionLog");
+    }
+  }
 }

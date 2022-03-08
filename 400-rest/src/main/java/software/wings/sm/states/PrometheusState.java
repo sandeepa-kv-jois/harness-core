@@ -22,6 +22,7 @@ import io.harness.delegate.beans.TaskData;
 import software.wings.beans.PrometheusConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TaskType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.MetricType;
 import software.wings.metrics.TimeSeriesMetricDefinition;
 import software.wings.resources.PrometheusResource;
@@ -108,7 +109,7 @@ public class PrometheusState extends AbstractMetricAnalysisState {
             .hosts(hosts)
             .base64EncodingRequired(prometheusConfig.usesBasicAuth())
             .headers(prometheusConfig.generateHeaders())
-            .stateType(StateType.PROMETHEUS)
+            .stateType(DelegateStateType.PROMETHEUS)
             .applicationId(context.getAppId())
             .stateExecutionId(context.getStateExecutionInstanceId())
             .workflowId(context.getWorkflowId())

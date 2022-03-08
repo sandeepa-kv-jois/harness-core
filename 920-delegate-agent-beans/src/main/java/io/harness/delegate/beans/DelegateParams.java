@@ -10,6 +10,7 @@ package io.harness.delegate.beans;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.Builder;
@@ -20,6 +21,7 @@ import lombok.experimental.FieldDefaults;
 @Builder(toBuilder = true)
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @OwnedBy(HarnessTeam.DEL)
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DelegateParams {
   String delegateId;
   String accountId;

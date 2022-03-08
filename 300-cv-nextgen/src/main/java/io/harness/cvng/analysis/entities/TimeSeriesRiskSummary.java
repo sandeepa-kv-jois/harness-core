@@ -7,6 +7,8 @@
 
 package io.harness.cvng.analysis.entities;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.cvng.CVConstants;
@@ -77,7 +79,8 @@ public final class TimeSeriesRiskSummary implements PersistentEntity, UuidAware 
   @FieldNameConstants(innerTypeName = "TransactionMetricRiskKeys")
   public static class TransactionMetricRisk {
     private String transactionName;
-    private String metricName;
+    @Deprecated private String metricName;
+    private String metricIdentifier;
     private Integer metricRisk;
     private double metricScore;
     private boolean longTermPattern;
@@ -87,6 +90,13 @@ public final class TimeSeriesRiskSummary implements PersistentEntity, UuidAware 
     }
     public boolean isAnomalous() {
       return getMetricRisk().isGreaterThanEq(Risk.OBSERVE);
+    }
+
+    public String getMetricIdentifier() {
+      if (isEmpty(metricIdentifier)) {
+        return metricName;
+      }
+      return metricIdentifier;
     }
   }
 }

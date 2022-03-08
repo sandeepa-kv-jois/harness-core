@@ -155,8 +155,8 @@ public class InterruptServiceImpl implements InterruptService {
 
     // Find All children for the stage (nodeExecutionId in interrupt) and check if the starting node is one of these. If
     // yes Pause the execution
-    List<NodeExecution> targetExecutions =
-        nodeExecutionService.findAllChildren(interrupt.getPlanExecutionId(), interrupt.getNodeExecutionId(), true);
+    List<NodeExecution> targetExecutions = nodeExecutionService.findAllChildrenOnlyIds(
+        interrupt.getPlanExecutionId(), interrupt.getNodeExecutionId(), true);
     return targetExecutions.stream().anyMatch(ne -> ne.getUuid().equals(nodeExecutionId));
   }
 

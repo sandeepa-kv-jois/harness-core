@@ -35,6 +35,7 @@ public interface CVNextGenConstants {
   String CHANGE_EVENT_RESOURCE = "change-event";
   int CVNG_MAX_PARALLEL_THREADS = 20;
   int CVNG_TIMELINE_BUCKET_COUNT = 48;
+  int SRM_STATEMACHINE_MAX_THREADS = 20;
 
   String ACCOUNT_IDENTIFIER_KEY = "accountIdentifier";
   String ORG_IDENTIFIER_KEY = "orgIdentifier";

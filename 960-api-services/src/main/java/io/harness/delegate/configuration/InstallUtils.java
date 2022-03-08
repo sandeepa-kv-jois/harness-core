@@ -54,10 +54,10 @@ public class InstallUtils {
   private static final String harnessPywinrmBaseDir = "./client-tools/harness-pywinrm/";
 
   static final String helm3Version = "v3.1.2";
-
+  static final String helm3VersionNew = "v3.8.0";
   static final String helm2Version = "v2.13.1";
 
-  private static final List<String> helmVersions = Arrays.asList(helm2Version, helm3Version);
+  private static final List<String> helmVersions = Arrays.asList(helm2Version, helm3Version, helm3VersionNew);
 
   private static final String helmBaseDir = "./client-tools/helm/";
 
@@ -94,6 +94,7 @@ public class InstallUtils {
   static {
     helmPaths.put(helm2Version, "helm");
     helmPaths.put(helm3Version, "helm");
+    helmPaths.put(helm3VersionNew, "helm");
     kubectlPaths.put(defaultKubectlVersion, "kubectl");
     kubectlPaths.put(newKubectlVersion, "kubectl");
     kustomizePaths.put(kustomizeVersionOld, "kustomize");
@@ -114,7 +115,7 @@ public class InstallUtils {
 
   private static final String scmBaseDir = "./client-tools/scm/";
   private static final String scmBinary = "scm";
-  private static final String defaultScmVersion = "04ad961e";
+  private static final String defaultScmVersion = "e2904e7";
 
   private static final String KUBECTL_CDN_PATH = "public/shared/tools/kubectl/release/%s/bin/%s/amd64/kubectl";
   private static final String CHART_MUSEUM_CDN_PATH =
@@ -179,6 +180,10 @@ public class InstallUtils {
 
   public static String getHelm3Path() {
     return helmPaths.get(helm3Version);
+  }
+
+  public static String getNewHelm3Path() {
+    return helmPaths.get(helm3VersionNew);
   }
 
   public static String getChartMuseumPath(boolean useLastestVersion) {
@@ -1164,7 +1169,7 @@ public class InstallUtils {
         log.info("Found user configured helm2 at {}. Skipping Install.", helmPath);
         return true;
       }
-    } else if (helm3Version.equals(helmVersion)) {
+    } else if (helm3Version.equals(helmVersion) || helm3VersionNew.equals(helmVersion)) {
       if (isNotEmpty(configuration.getHelm3Path())) {
         String helmPath = configuration.getHelm3Path();
         helmPaths.put(helmVersion, helmPath);
@@ -1217,6 +1222,7 @@ public class InstallUtils {
     }
     if (isNotEmpty(delegateConfiguration.getHelm3Path())) {
       helmPaths.put(helm3Version, delegateConfiguration.getHelm3Path());
+      helmPaths.put(helm3VersionNew, delegateConfiguration.getHelm3Path());
     }
     if (isNotEmpty(delegateConfiguration.getHelmPath())) {
       helmPaths.put(helm2Version, delegateConfiguration.getHelmPath());

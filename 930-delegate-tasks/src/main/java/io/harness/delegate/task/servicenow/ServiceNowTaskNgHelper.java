@@ -69,6 +69,8 @@ public class ServiceNowTaskNgHelper {
       case GET_TICKET_CREATE_METADATA:
         return getIssueCreateMetaData(serviceNowTaskNGParameters);
       case GET_TICKET:
+      case CREATE_TICKET:
+      case UPDATE_TICKET:
         return getTicket(serviceNowTaskNGParameters);
       default:
         throw new InvalidRequestException(

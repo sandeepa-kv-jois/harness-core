@@ -22,8 +22,8 @@ import io.harness.eventsframework.consumer.Message;
 import io.harness.eventsframework.entity_crud.organization.OrganizationEntityChangeDTO;
 import io.harness.eventsframework.entity_crud.project.ProjectEntityChangeDTO;
 import io.harness.exception.InvalidRequestException;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -37,14 +37,14 @@ import lombok.extern.slf4j.Slf4j;
 public class ConnectorEntityCRUDStreamListener implements MessageListener {
   private final HarnessSMManager harnessSMManager;
   private final ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler;
-  private final AccountSettingsHelper accountSettingsHelper;
+  private final NGAccountSettingService accountSettingService;
 
   @Inject
   public ConnectorEntityCRUDStreamListener(HarnessSMManager harnessSMManager,
-      ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler, AccountSettingsHelper accountSettingsHelper) {
+      ConnectorEntityCRUDEventHandler connectorEntityCRUDEventHandler, NGAccountSettingService accountSettingService) {
     this.harnessSMManager = harnessSMManager;
     this.connectorEntityCRUDEventHandler = connectorEntityCRUDEventHandler;
-    this.accountSettingsHelper = accountSettingsHelper;
+    this.accountSettingService = accountSettingService;
   }
 
   @Override
@@ -89,7 +89,7 @@ public class ConnectorEntityCRUDStreamListener implements MessageListener {
   }
 
   private boolean processOrganizationCreateEvent(OrganizationEntityChangeDTO organizationEntityChangeDTO) {
-    final boolean isBuiltInSMDisabled = accountSettingsHelper.getIsBuiltInSMDisabled(
+    final boolean isBuiltInSMDisabled = accountSettingService.getIsBuiltInSMDisabled(
         organizationEntityChangeDTO.getAccountIdentifier(), null, null, AccountSettingType.CONNECTOR);
     if (!isBuiltInSMDisabled) {
       harnessSMManager.createHarnessSecretManager(
@@ -130,7 +130,7 @@ public class ConnectorEntityCRUDStreamListener implements MessageListener {
   }
 
   private boolean processProjectCreateEvent(ProjectEntityChangeDTO projectEntityChangeDTO) {
-    final boolean isBuiltInSMDisabled = accountSettingsHelper.getIsBuiltInSMDisabled(
+    final boolean isBuiltInSMDisabled = accountSettingService.getIsBuiltInSMDisabled(
         projectEntityChangeDTO.getAccountIdentifier(), null, null, AccountSettingType.CONNECTOR);
     if (!isBuiltInSMDisabled) {
       harnessSMManager.createHarnessSecretManager(projectEntityChangeDTO.getAccountIdentifier(),

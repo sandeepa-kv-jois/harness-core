@@ -135,7 +135,7 @@ function setupDelegateJars() {
 
     done
 
-    for version in v2.13.1 v3.0.2 v3.1.2; do
+    for version in v2.13.1 v3.1.2 v3.8.0; do
 
       echo "Copying helm ${version} binaries for ${platform}"
 
@@ -205,7 +205,7 @@ function setupDelegateJars() {
 
     done
 
-    for version in 04ad961e; do
+    for version in e2904e7; do
 
       echo "Copying scm ${version} binaries for ${platform}"
 

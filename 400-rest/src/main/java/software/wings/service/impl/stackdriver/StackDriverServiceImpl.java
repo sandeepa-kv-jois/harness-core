@@ -14,7 +14,6 @@ import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 import static software.wings.common.VerificationConstants.STACK_DRIVER_METRIC;
 import static software.wings.common.VerificationConstants.TIME_DURATION_FOR_LOGS_IN_MINUTES;
 import static software.wings.service.impl.ThirdPartyApiCallLog.createApiCallLog;
-import static software.wings.sm.StateType.STACK_DRIVER;
 
 import io.harness.delegate.beans.TaskData;
 import io.harness.eraro.ErrorCode;
@@ -29,6 +28,7 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.SyncTaskContext;
 import software.wings.common.VerificationConstants;
 import software.wings.delegatetasks.DelegateProxyFactory;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.impl.analysis.VerificationNodeDataSetupResponse;
 import software.wings.service.impl.apm.MLServiceUtils;
@@ -37,7 +37,6 @@ import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.security.SecretManager;
 import software.wings.service.intfc.stackdriver.StackDriverDelegateService;
 import software.wings.service.intfc.stackdriver.StackDriverService;
-import software.wings.sm.StateType;
 import software.wings.sm.states.StackDriverState;
 import software.wings.verification.stackdriver.StackDriverMetricDefinition;
 
@@ -104,7 +103,7 @@ public class StackDriverServiceImpl implements StackDriverService {
       hostName = mlServiceUtils.getHostName(setupTestNodeData);
     }
 
-    if (setupTestNodeData.getStateType() == STACK_DRIVER) {
+    if (setupTestNodeData.getStateType() == DelegateStateType.STACK_DRIVER) {
       validateMetricDefinitions(setupTestNodeData.getMetricDefinitions());
     }
 
@@ -118,7 +117,7 @@ public class StackDriverServiceImpl implements StackDriverService {
                                             .timeout(TaskData.DEFAULT_SYNC_CALL_TIMEOUT * 3)
                                             .build();
 
-      if (StateType.STACK_DRIVER_LOG == setupTestNodeData.getStateType()) {
+      if (DelegateStateType.STACK_DRIVER_LOG == setupTestNodeData.getStateType()) {
         return delegateProxyFactory.get(StackDriverDelegateService.class, syncTaskContext)
             .getLogWithDataForNode(StackdriverLogGcpConfigTaskParams.builder()
                                        .gcpConfig((GcpConfig) settingAttribute.getValue())

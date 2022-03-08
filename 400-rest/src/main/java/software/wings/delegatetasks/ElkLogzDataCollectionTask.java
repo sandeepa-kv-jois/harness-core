@@ -38,7 +38,6 @@ import software.wings.service.impl.elk.ElkLogFetchRequest;
 import software.wings.service.impl.logz.LogzDataCollectionInfo;
 import software.wings.service.intfc.elk.ElkDelegateService;
 import software.wings.service.intfc.logz.LogzDelegateService;
-import software.wings.sm.StateType;
 
 import com.google.inject.Inject;
 import java.text.ParseException;
@@ -103,7 +102,7 @@ public class ElkLogzDataCollectionTask extends AbstractDelegateDataCollectionTas
   }
 
   @Override
-  protected StateType getStateType() {
+  protected DelegateStateType getStateType() {
     return dataCollectionInfo.getStateType();
   }
 

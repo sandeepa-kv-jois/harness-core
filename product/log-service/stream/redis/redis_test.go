@@ -19,8 +19,8 @@ import (
 	"github.com/alicebob/miniredis/v2"
 	"github.com/elliotchance/redismock/v7"
 	"github.com/go-redis/redis/v7"
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/product/log-service/stream"
+	"github.com/stretchr/testify/assert"
 )
 
 var (

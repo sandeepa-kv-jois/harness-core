@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.AZURE_KEY_VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
+import static io.harness.exception.WingsException.USER_SRE;
 import static io.harness.threading.Morpheus.sleep;
 
 import static java.lang.String.format;
@@ -20,6 +21,7 @@ import static java.time.Duration.ofMillis;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.concurrent.HTimeLimiter;
 import io.harness.encryptors.VaultEncryptor;
+import io.harness.exception.AzureKeyVaultOperationException;
 import io.harness.exception.SecretManagementDelegateException;
 import io.harness.helpers.ext.azure.AzureParsedSecretReference;
 import io.harness.helpers.ext.azure.KeyVaultADALAuthenticator;
@@ -239,6 +241,10 @@ public class AzureVaultEncryptor implements VaultEncryptor {
 
       log.info("Done decrypting Azure secret {} in {} ms", parsedSecretReference.getSecretName(),
           System.currentTimeMillis() - startTime);
+      if (secret.value() == null) {
+        throw new AzureKeyVaultOperationException("Received null value for " + parsedSecretReference.getSecretName(),
+            AZURE_KEY_VAULT_OPERATION_ERROR, USER_SRE);
+      }
       return secret.value().toCharArray();
     } catch (Exception ex) {
       log.error("Failed to decrypt azure secret in vault due to exception", ex);

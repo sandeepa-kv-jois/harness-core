@@ -738,7 +738,7 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
   @Override
   public HelmCommandResponse ensureHelm3Installed(HelmCommandRequest commandRequest) {
-    String helmPath = k8sGlobalConfigService.getHelmPath(HelmVersion.V3);
+    String helmPath = k8sGlobalConfigService.getHelmPath(commandRequest.getHelmVersion());
     if (isNotBlank(helmPath)) {
       return new HelmCommandResponse(CommandExecutionStatus.SUCCESS, format("Helm3 is installed at [%s]", helmPath));
     }
@@ -747,11 +747,14 @@ public class HelmDeployServiceImpl implements HelmDeployService {
 
   @Override
   public HelmCommandResponse ensureHelmInstalled(HelmCommandRequest commandRequest) {
-    if (commandRequest.getHelmVersion() == null) {
+    HelmVersion helmVersion = commandRequest.getHelmVersion();
+    if (helmVersion == HelmVersion.V3 || helmVersion == HelmVersion.V380) {
+      return ensureHelm3Installed(commandRequest);
+    }
+    if (helmVersion == null) {
       log.error("Did not expect null value of helmVersion, defaulting to V2");
     }
-    return commandRequest.getHelmVersion() == HelmVersion.V3 ? ensureHelm3Installed(commandRequest)
-                                                             : ensureHelmCliAndTillerInstalled(commandRequest);
+    return ensureHelmCliAndTillerInstalled(commandRequest);
   }
 
   boolean isHelm3(String cliResponse) {

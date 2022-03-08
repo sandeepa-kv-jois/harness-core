@@ -12,9 +12,9 @@ import (
 
 	"github.com/golang/protobuf/jsonpb" //nolint:staticcheck //only used in test
 	"github.com/golang/protobuf/proto"  //nolint:staticcheck //only used in test
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	pb "github.com/harness/harness-core/product/ci/scm/proto"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 

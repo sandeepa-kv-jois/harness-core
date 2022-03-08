@@ -15,10 +15,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.Scope;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.NGEntityName;
-import io.harness.resourcegroup.v1.model.DynamicResourceSelector;
-import io.harness.resourcegroup.v1.model.ResourceSelector;
-import io.harness.resourcegroup.v1.model.ResourceSelectorByScope;
-import io.harness.resourcegroup.v1.model.StaticResourceSelector;
+import io.harness.resourcegroup.model.DynamicResourceSelector;
+import io.harness.resourcegroup.model.ResourceSelector;
+import io.harness.resourcegroup.model.ResourceSelectorByScope;
+import io.harness.resourcegroup.model.StaticResourceSelector;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModelProperty;

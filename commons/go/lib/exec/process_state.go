@@ -10,8 +10,8 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/pkg/errors"
 )
 
 //go:generate mockgen -source process_state.go -destination process_state_mock.go -package exec ProcessState

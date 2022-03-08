@@ -117,8 +117,8 @@ public class TimeSeriesResource {
       @QueryParam("taskId") String taskId, @QueryParam("baseLineExecutionId") String baseLineExecutionId,
       @QueryParam("cvConfigId") String cvConfigId, @QueryParam("tag") String tag,
       TimeSeriesMLAnalysisRecord mlAnalysisResponse) {
-    try (VerificationLogContext ignored =
-             new VerificationLogContext(accountId, cvConfigId, stateExecutionId, stateType, OVERRIDE_ERROR)) {
+    try (VerificationLogContext ignored = new VerificationLogContext(
+             accountId, cvConfigId, stateExecutionId, stateType.getDelegateStateType(), OVERRIDE_ERROR)) {
       LearningEngineAnalysisTask analysisTask = learningEngineService.getTaskById(taskId);
       Preconditions.checkNotNull(analysisTask);
       long currentEpoch = currentTimeMillis();

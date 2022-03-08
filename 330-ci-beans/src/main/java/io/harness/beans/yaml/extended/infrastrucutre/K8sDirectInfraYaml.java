@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_MAP_CLASSPATH;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotations.dev.OwnedBy;
@@ -19,6 +20,7 @@ import io.harness.yaml.YamlSchemaTypes;
 
 import com.fasterxml.jackson.annotation.JsonTypeName;
 import io.swagger.annotations.ApiModelProperty;
+import java.util.List;
 import java.util.Map;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -56,5 +58,11 @@ public class K8sDirectInfraYaml implements Infrastructure {
     private ParameterField<Integer> runAsUser;
     @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> serviceAccountName;
     @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> initTimeout;
+    @YamlSchemaTypes(value = {runtime})
+    @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
+    private ParameterField<Map<String, String>> nodeSelector;
+    @YamlSchemaTypes(value = {runtime})
+    @ApiModelProperty(dataType = "[Lio.harness.beans.yaml.extended.infrastrucutre.Toleration;")
+    private ParameterField<List<Toleration>> tolerations;
   }
 }

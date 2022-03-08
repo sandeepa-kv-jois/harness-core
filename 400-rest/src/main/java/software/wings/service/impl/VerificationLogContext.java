@@ -10,7 +10,7 @@ package software.wings.service.impl;
 import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
 
-import software.wings.sm.StateType;
+import software.wings.delegatetasks.DelegateStateType;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,7 +20,7 @@ public class VerificationLogContext extends AutoLogContext {
   public static final String stateTypeKeyword = "stateType";
 
   private static Map<String, String> getContext(
-      String accountId, String cvConfigId, String stateExecutionId, StateType stateType) {
+      String accountId, String cvConfigId, String stateExecutionId, DelegateStateType stateType) {
     Map<String, String> contextMap = new HashMap<>();
     contextMap.put(AccountLogContext.ID, accountId);
     if (cvConfigId != null) {
@@ -35,8 +35,8 @@ public class VerificationLogContext extends AutoLogContext {
     return contextMap;
   }
 
-  public VerificationLogContext(
-      String accountId, String cvConfigId, String stateExecutionId, StateType stateType, OverrideBehavior behavior) {
+  public VerificationLogContext(String accountId, String cvConfigId, String stateExecutionId,
+      DelegateStateType stateType, OverrideBehavior behavior) {
     super(getContext(accountId, cvConfigId, stateExecutionId, stateType), behavior);
   }
 }

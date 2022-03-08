@@ -13,6 +13,8 @@ public interface PipelineResourceConstants {
   String PROJECT_PARAM_MESSAGE = "Project Identifier for the entity.";
   String PIPELINE_ID_PARAM_MESSAGE = "Pipeline Identifier";
   String STAGE_NODE_ID_PARAM_MESSAGE = "Stage Node Identifier to get execution stats.";
+  String GENERATE_FULL_GRAPH_PARAM_MESSAGE = "Generate full graph";
+
   String PIPELINE_ID_LIST_PARAM_MESSAGE = "Pipeline Identifier filter if exact pipelines needs to be filtered.";
   String PIPELINE_SEARCH_TERM_PARAM_MESSAGE =
       "Search term to filter out pipelines based on pipeline name, identifier, tags.";

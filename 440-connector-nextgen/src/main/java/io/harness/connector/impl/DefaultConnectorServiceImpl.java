@@ -94,8 +94,8 @@ import io.harness.manage.GlobalContextManager;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.ng.core.NGAccess;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.dto.ErrorDetail;
 import io.harness.ng.core.entities.Organization;
 import io.harness.ng.core.entities.Project;
@@ -146,7 +146,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
   private final OrganizationService organizationService;
   EntitySetupUsageClient entitySetupUsageClient;
   ConnectorStatisticsHelper connectorStatisticsHelper;
-  AccountSettingsHelper accountSettingsHelper;
+  NGAccountSettingService accountSettingService;
   private NGErrorHelper ngErrorHelper;
   private ConnectorErrorMessagesHelper connectorErrorMessagesHelper;
   private SecretRefInputValidationHelper secretRefInputValidationHelper;
@@ -197,7 +197,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       String filterIdentifier, String searchTerm, Boolean includeAllConnectorsAccessibleAtScope,
       Boolean getDistinctFromBranches) {
     boolean isBuiltInSMDisabled =
-        accountSettingsHelper.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
+        accountSettingService.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
 
     Criteria criteria =
         filterService.createCriteriaFromConnectorListQueryParams(accountIdentifier, orgIdentifier, projectIdentifier,
@@ -281,7 +281,7 @@ public class DefaultConnectorServiceImpl implements ConnectorService {
       ConnectorCategory sourceCategory) {
     /** Settings are only available at Account Scope for now **/
     boolean isBuiltInSMDisabled =
-        accountSettingsHelper.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
+        accountSettingService.getIsBuiltInSMDisabled(accountIdentifier, null, null, AccountSettingType.CONNECTOR);
     Criteria criteria = filterService.createCriteriaFromConnectorFilter(accountIdentifier, orgIdentifier,
         projectIdentifier, searchTerm, type, category, sourceCategory, isBuiltInSMDisabled);
     Pageable pageable = PageUtils.getPageRequest(

@@ -25,10 +25,6 @@ public interface TimeSeriesDashboardService {
       CVMonitoringCategory monitoringCategory, Long startTimeMillis, Long endTimeMillis, Long analysisStartTimeMillis,
       boolean anomalous, int page, int size, String filter, DataSourceType dataSourceType);
 
-  PageResponse<TimeSeriesMetricDataDTO> getActivityMetrics(String activityId, String accountId,
-      String projectIdentifier, String orgIdentifier, String environmentIdentifier, String serviceIdentifier,
-      Long startTimeMillis, Long endTimeMillis, boolean anomalousOnly, int page, int size);
-
   PageResponse<TimeSeriesMetricDataDTO> getTimeSeriesMetricData(MonitoredServiceParams monitoredServiceParams,
       TimeRangeParams timeRangeParams, TimeSeriesAnalysisFilter timeSeriesAnalysisFilter, PageParams pageParams);
 }

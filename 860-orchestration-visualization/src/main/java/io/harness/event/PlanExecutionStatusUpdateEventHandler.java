@@ -42,7 +42,10 @@ public class PlanExecutionStatusUpdateEventHandler {
         orchestrationGraph = orchestrationGraph.withEndTs(planExecution.getEndTs());
       }
     } catch (Exception e) {
-      log.error("[PMS_GRAPH] Graph update for PLAN_EXECUTION_UPDATE event failed for plan [{}]", planExecutionId, e);
+      log.error(String.format(
+                    "[GRAPH_ERROR] Graph update for PLAN_EXECUTION_UPDATE event failed for plan [%s]", planExecutionId),
+          e);
+      throw e;
     }
     return orchestrationGraph.withStatus(planExecution.getStatus());
   }

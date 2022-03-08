@@ -364,11 +364,15 @@ def ingest_data_to_preagg(jsonData):
                     productname AS awsServicecode, region, availabilityzone AS awsAvailabilityzone, usageaccountid AS awsUsageaccountid,
                     usagetype AS awsUsagetype, "AWS" AS cloudProvider"""
 
+    group_by = """awsServicecode, region, awsAvailabilityzone, awsUsageaccountid, awsUsagetype, startTime"""
     # Amend query as per columns availability
     for additionalColumn in ["instancetype"]:
         if additionalColumn.lower() in jsonData["available_columns"]:
             insert_columns = insert_columns + ", aws%s" % additionalColumn
             select_columns = select_columns + ", %s as aws%s" % (additionalColumn, additionalColumn)
+            # Modify groupbys as per columns availability and need
+            if additionalColumn == "instancetype":
+                group_by = group_by + ", aws%s" % additionalColumn
 
     query = """DELETE FROM `%s.preAggregated` WHERE DATE(startTime) >= '%s' AND DATE(startTime) <= '%s' AND cloudProvider = "AWS"
                 AND awsUsageAccountId IN (%s);
@@ -376,12 +380,12 @@ def ingest_data_to_preagg(jsonData):
                    SELECT %s 
                    FROM `%s.awscur_%s` 
                    WHERE usageaccountid IN (%s) 
-               GROUP BY awsServicecode, region, awsAvailabilityzone, awsUsageaccountid, awsInstancetype, awsUsagetype, startTime;
+               GROUP BY %s;
     """ % (ds, date_start, date_end,
            jsonData["usageaccountid"],
            ds, insert_columns,
            select_columns, ds, jsonData["awsCurTableSuffix"],
-           jsonData["usageaccountid"])
+           jsonData["usageaccountid"], group_by)
     job_config = bigquery.QueryJobConfig(
         query_parameters=[
             bigquery.ScalarQueryParameter(

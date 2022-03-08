@@ -353,7 +353,7 @@ public class HeatMapApiIntegrationTest extends IntegrationTestBase {
                                                             .groupName("default")
                                                             .name(transactionName)
                                                             .serviceId(savedService.getUuid())
-                                                            .stateType(stateType)
+                                                            .stateType(stateType.getDelegateStateType())
                                                             .dataCollectionMinute(minute)
                                                             .timeStamp(TimeUnit.MINUTES.toMillis(minute))
                                                             .host(generateUuid())

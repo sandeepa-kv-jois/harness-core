@@ -217,21 +217,7 @@ public class ChangeEventServiceImpl implements ChangeEventService {
     HeatMapResolution resolution = HeatMapResolution.resolutionForDurationDTO(duration);
     Instant trendEndTime = resolution.getNextResolutionEndTime(endTime);
     Instant trendStartTime = trendEndTime.minus(duration.getDuration());
-    String monitoredServiceIdentifier;
-    if (monitoredServiceParams.getMonitoredServiceIdentifier() == null
-        && monitoredServiceParams.getServiceIdentifier() != null
-        && monitoredServiceParams.getEnvironmentIdentifier() != null) {
-      // TODO: remove this once UI start sending monitoredServiceIdentifier.
-      monitoredServiceIdentifier =
-          monitoredServiceService
-              .getMonitoredServiceDTO(ServiceEnvironmentParams.builderWithProjectParams(monitoredServiceParams)
-                                          .serviceIdentifier(monitoredServiceParams.getServiceIdentifier())
-                                          .environmentIdentifier(monitoredServiceParams.getEnvironmentIdentifier())
-                                          .build())
-              .getIdentifier();
-    } else {
-      monitoredServiceIdentifier = monitoredServiceParams.getMonitoredServiceIdentifier();
-    }
+    String monitoredServiceIdentifier = monitoredServiceParams.getMonitoredServiceIdentifier();
     Preconditions.checkNotNull(monitoredServiceIdentifier, "monitoredServiceIdentifier can not be null");
     return getTimeline(monitoredServiceParams, Arrays.asList(monitoredServiceIdentifier), searchText, null,
         changeSourceTypes, trendStartTime, trendEndTime, CVNextGenConstants.CVNG_TIMELINE_BUCKET_COUNT);

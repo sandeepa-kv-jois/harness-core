@@ -8,7 +8,9 @@
 package io.harness.cvng.analysis.services.impl;
 
 import static io.harness.cvng.beans.DataSourceType.APP_DYNAMICS;
+import static io.harness.cvng.beans.DataSourceType.ERROR_TRACKING;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.rule.OwnerRule.BGROVES;
 import static io.harness.rule.OwnerRule.KAMAL;
 import static io.harness.rule.OwnerRule.KANHAIYA;
 import static io.harness.rule.OwnerRule.KAPIL;
@@ -64,6 +66,7 @@ public class DeploymentLogAnalysisServiceImplTest extends CvNextGenTestBase {
   private String accountId;
   private String cvConfigId;
   private String verificationJobInstanceId;
+  private String cvConfigId2;
   BuilderFactory builderFactory;
 
   @Before
@@ -73,6 +76,8 @@ public class DeploymentLogAnalysisServiceImplTest extends CvNextGenTestBase {
     VerificationJobInstance verificationJobInstance = builderFactory.verificationJobInstanceBuilder().build();
     cvConfigId =
         verificationJobInstance.getCvConfigMap().values().stream().collect(Collectors.toList()).get(0).getUuid();
+    cvConfigId2 =
+        verificationJobInstance.getCvConfigMap().values().stream().collect(Collectors.toList()).get(1).getUuid();
     verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstance);
   }
 
@@ -212,6 +217,75 @@ public class DeploymentLogAnalysisServiceImplTest extends CvNextGenTestBase {
     assertThat(logAnalysisClusterChartDTOlist.get(0).getLabel()).isEqualTo(2);
     assertThat(logAnalysisClusterChartDTOlist.get(0).getX()).isEqualTo(0.4525);
     assertThat(logAnalysisClusterChartDTOlist.get(0).getY()).isEqualTo(0.542524);
+  }
+
+  @Test
+  @Owner(developers = BGROVES)
+  @Category(UnitTests.class)
+  public void testGetLogAnalysisClusters_WithErrorTracking() {
+    String verificationTaskIdErrorTracking = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfigId2, verificationJobInstanceId, ERROR_TRACKING);
+    DeploymentLogAnalysis deploymentLogAnalysisErrorTracking =
+        createDeploymentLogAnalysis(verificationTaskIdErrorTracking, "ErrorTracking", "ErrorTracking");
+    deploymentLogAnalysisService.save(deploymentLogAnalysisErrorTracking);
+
+    DeploymentLogAnalysisFilter deploymentLogAnalysisFilter =
+        DeploymentLogAnalysisFilter.builder().healthSourceIdentifiers(null).clusterTypes(null).hostName(null).build();
+    List<LogAnalysisClusterChartDTO> logAnalysisClusterChartDTOlist =
+        deploymentLogAnalysisService.getLogAnalysisClusters(
+            accountId, verificationJobInstanceId, deploymentLogAnalysisFilter);
+    assertThat(logAnalysisClusterChartDTOlist).isNotNull();
+    assertThat(logAnalysisClusterChartDTOlist.size()).isEqualTo(0);
+
+    deploymentLogAnalysisFilter = DeploymentLogAnalysisFilter.builder()
+                                      .healthSourceIdentifiers(null)
+                                      .clusterTypes(null)
+                                      .hostName("ErrorTracking")
+                                      .build();
+    logAnalysisClusterChartDTOlist = deploymentLogAnalysisService.getLogAnalysisClusters(
+        accountId, verificationJobInstanceId, deploymentLogAnalysisFilter);
+    assertThat(logAnalysisClusterChartDTOlist).isNotNull();
+    assertThat(logAnalysisClusterChartDTOlist.size()).isEqualTo(2);
+    assertThat(logAnalysisClusterChartDTOlist.get(0).getHostName()).isEqualTo("ErrorTracking");
+    assertThat(logAnalysisClusterChartDTOlist.get(1).getHostName()).isEqualTo("ErrorTracking");
+
+    String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfigId, verificationJobInstanceId, APP_DYNAMICS);
+    DeploymentLogAnalysis deploymentLogAnalysis = createDeploymentLogAnalysis(verificationTaskId);
+    deploymentLogAnalysisService.save(deploymentLogAnalysis);
+
+    deploymentLogAnalysisFilter =
+        DeploymentLogAnalysisFilter.builder().healthSourceIdentifiers(null).clusterTypes(null).hostName(null).build();
+    logAnalysisClusterChartDTOlist = deploymentLogAnalysisService.getLogAnalysisClusters(
+        accountId, verificationJobInstanceId, deploymentLogAnalysisFilter);
+    assertThat(logAnalysisClusterChartDTOlist).isNotNull();
+    assertThat(logAnalysisClusterChartDTOlist.size()).isEqualTo(3);
+    assertThat(logAnalysisClusterChartDTOlist.get(0).getHostName()).isEqualTo("node1");
+    assertThat(logAnalysisClusterChartDTOlist.get(1).getHostName()).isEqualTo("node2");
+    assertThat(logAnalysisClusterChartDTOlist.get(2).getHostName()).isEqualTo("node3");
+
+    deploymentLogAnalysisFilter = DeploymentLogAnalysisFilter.builder()
+                                      .healthSourceIdentifiers(null)
+                                      .clusterTypes(null)
+                                      .hostName("node1")
+                                      .build();
+    logAnalysisClusterChartDTOlist = deploymentLogAnalysisService.getLogAnalysisClusters(
+        accountId, verificationJobInstanceId, deploymentLogAnalysisFilter);
+    assertThat(logAnalysisClusterChartDTOlist).isNotNull();
+    assertThat(logAnalysisClusterChartDTOlist.size()).isEqualTo(1);
+    assertThat(logAnalysisClusterChartDTOlist.get(0).getHostName()).isEqualTo("node1");
+
+    deploymentLogAnalysisFilter = DeploymentLogAnalysisFilter.builder()
+                                      .healthSourceIdentifiers(null)
+                                      .clusterTypes(null)
+                                      .hostName("ErrorTracking")
+                                      .build();
+    logAnalysisClusterChartDTOlist = deploymentLogAnalysisService.getLogAnalysisClusters(
+        accountId, verificationJobInstanceId, deploymentLogAnalysisFilter);
+    assertThat(logAnalysisClusterChartDTOlist).isNotNull();
+    assertThat(logAnalysisClusterChartDTOlist.size()).isEqualTo(2);
+    assertThat(logAnalysisClusterChartDTOlist.get(0).getHostName()).isEqualTo("ErrorTracking");
+    assertThat(logAnalysisClusterChartDTOlist.get(1).getHostName()).isEqualTo("ErrorTracking");
   }
 
   @Test
@@ -396,6 +470,79 @@ public class DeploymentLogAnalysisServiceImplTest extends CvNextGenTestBase {
     assertThat(pageResponse.getTotalPages()).isEqualTo(1);
     assertThat(pageResponse.getContent()).isNotNull();
     assertThat(pageResponse.getContent().size()).isEqualTo(3);
+  }
+
+  @Test
+  @Owner(developers = BGROVES)
+  @Category(UnitTests.class)
+  public void testGetLogAnalysisResult_withErrorTracking() {
+    String verificationTaskIdErrorTracking = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfigId2, verificationJobInstanceId, ERROR_TRACKING);
+    DeploymentLogAnalysis deploymentLogAnalysisErrorTracking =
+        createDeploymentLogAnalysis(verificationTaskIdErrorTracking, "ErrorTracking", "ErrorTracking");
+    deploymentLogAnalysisService.save(deploymentLogAnalysisErrorTracking);
+
+    PageParams pageParams = PageParams.builder().page(0).size(10).build();
+    DeploymentLogAnalysisFilter deploymentLogAnalysisFilter =
+        DeploymentLogAnalysisFilter.builder().healthSourceIdentifiers(null).clusterTypes(null).hostName(null).build();
+    PageResponse<LogAnalysisClusterDTO> pageResponse = deploymentLogAnalysisService.getLogAnalysisResult(
+        accountId, verificationJobInstanceId, null, deploymentLogAnalysisFilter, pageParams);
+    assertThat(pageResponse.getPageIndex()).isEqualTo(0);
+    assertThat(pageResponse.getTotalPages()).isEqualTo(0);
+    assertThat(pageResponse.getContent()).isNotNull();
+    assertThat(pageResponse.getContent().size()).isEqualTo(0);
+
+    deploymentLogAnalysisFilter = DeploymentLogAnalysisFilter.builder()
+                                      .healthSourceIdentifiers(null)
+                                      .clusterTypes(null)
+                                      .hostName("ErrorTracking")
+                                      .build();
+    pageResponse = deploymentLogAnalysisService.getLogAnalysisResult(
+        accountId, verificationJobInstanceId, null, deploymentLogAnalysisFilter, pageParams);
+    assertThat(pageResponse.getPageIndex()).isEqualTo(0);
+    assertThat(pageResponse.getTotalPages()).isEqualTo(1);
+    assertThat(pageResponse.getContent()).isNotNull();
+    assertThat(pageResponse.getContent().size()).isEqualTo(6);
+
+    String verificationTaskId = verificationTaskService.createDeploymentVerificationTask(
+        accountId, cvConfigId, verificationJobInstanceId, APP_DYNAMICS);
+    DeploymentLogAnalysis deploymentLogAnalysis = createDeploymentLogAnalysis(verificationTaskId);
+    deploymentLogAnalysisService.save(deploymentLogAnalysis);
+
+    pageParams = PageParams.builder().page(0).size(10).build();
+    deploymentLogAnalysisFilter =
+        DeploymentLogAnalysisFilter.builder().healthSourceIdentifiers(null).clusterTypes(null).hostName(null).build();
+    pageResponse = deploymentLogAnalysisService.getLogAnalysisResult(
+        accountId, verificationJobInstanceId, null, deploymentLogAnalysisFilter, pageParams);
+    assertThat(pageResponse.getPageIndex()).isEqualTo(0);
+    assertThat(pageResponse.getTotalPages()).isEqualTo(1);
+    assertThat(pageResponse.getContent()).isNotNull();
+    assertThat(pageResponse.getContent().size()).isEqualTo(3);
+
+    pageParams = PageParams.builder().page(0).size(10).build();
+    deploymentLogAnalysisFilter = DeploymentLogAnalysisFilter.builder()
+                                      .healthSourceIdentifiers(null)
+                                      .clusterTypes(null)
+                                      .hostName("node1")
+                                      .build();
+    pageResponse = deploymentLogAnalysisService.getLogAnalysisResult(
+        accountId, verificationJobInstanceId, null, deploymentLogAnalysisFilter, pageParams);
+    assertThat(pageResponse.getPageIndex()).isEqualTo(0);
+    assertThat(pageResponse.getTotalPages()).isEqualTo(1);
+    assertThat(pageResponse.getContent()).isNotNull();
+    assertThat(pageResponse.getContent().size()).isEqualTo(3);
+
+    deploymentLogAnalysisFilter = DeploymentLogAnalysisFilter.builder()
+                                      .healthSourceIdentifiers(null)
+                                      .clusterTypes(null)
+                                      .hostName("ErrorTracking")
+                                      .build();
+    pageResponse = deploymentLogAnalysisService.getLogAnalysisResult(
+        accountId, verificationJobInstanceId, null, deploymentLogAnalysisFilter, pageParams);
+    assertThat(pageResponse.getPageIndex()).isEqualTo(0);
+    assertThat(pageResponse.getTotalPages()).isEqualTo(1);
+    assertThat(pageResponse.getContent()).isNotNull();
+    assertThat(pageResponse.getContent().size()).isEqualTo(6);
   }
 
   @Test
@@ -926,13 +1073,18 @@ public class DeploymentLogAnalysisServiceImplTest extends CvNextGenTestBase {
   }
 
   private DeploymentLogAnalysis createDeploymentLogAnalysis(String verificationTaskId) {
+    return createDeploymentLogAnalysis(verificationTaskId, "node1", "node2");
+  }
+
+  private DeploymentLogAnalysis createDeploymentLogAnalysis(
+      String verificationTaskId, String hostName1, String hostName2) {
     Cluster cluster1 = createCluster("Error in cluster 1", 1);
     Cluster cluster2 = createCluster("Error in cluster 2", 2);
     Cluster cluster3 = createCluster("Error in cluster 3", 3);
     List<Cluster> clusters = Arrays.asList(cluster1, cluster2, cluster3);
 
-    ClusterCoordinates clusterCoordinates1 = createClusterCoordinates("node1", 1, 0.6464, 0.717171);
-    ClusterCoordinates clusterCoordinates2 = createClusterCoordinates("node2", 2, 0.4525, 0.542524);
+    ClusterCoordinates clusterCoordinates1 = createClusterCoordinates(hostName1, 1, 0.6464, 0.717171);
+    ClusterCoordinates clusterCoordinates2 = createClusterCoordinates(hostName2, 2, 0.4525, 0.542524);
     ClusterCoordinates clusterCoordinates3 = createClusterCoordinates("node3", 3, 0.2131, 0.4151);
     List<ClusterCoordinates> clusterCoordinatesList =
         Arrays.asList(clusterCoordinates1, clusterCoordinates2, clusterCoordinates3);
@@ -951,8 +1103,8 @@ public class DeploymentLogAnalysisServiceImplTest extends CvNextGenTestBase {
     ResultSummary resultSummary2 =
         createResultSummary(2, 1, Arrays.asList(clusterSummary4, clusterSummary5, clusterSummary6), null);
 
-    HostSummary hostSummary1 = createHostSummary("node1", resultSummary);
-    HostSummary hostSummary2 = createHostSummary("node2", resultSummary2);
+    HostSummary hostSummary1 = createHostSummary(hostName1, resultSummary);
+    HostSummary hostSummary2 = createHostSummary(hostName2, resultSummary2);
     return DeploymentLogAnalysis.builder()
         .accountId(accountId)
         .clusters(clusters)

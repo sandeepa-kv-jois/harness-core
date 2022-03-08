@@ -315,6 +315,7 @@ public class TimeSeriesRecordServiceImplTest extends CvNextGenTestBase {
       for (int j = 0; j < numOfMetrics; j++) {
         TimeSeriesDataRecordMetricValue metricValue = TimeSeriesDataRecordMetricValue.builder()
                                                           .metricName("metric-" + j)
+                                                          .metricIdentifier("metric-" + j)
                                                           .timeSeriesValues(new HashSet<>())
                                                           .build();
         for (int k = 0; k < numOfTxnx; k++) {
@@ -876,7 +877,7 @@ public class TimeSeriesRecordServiceImplTest extends CvNextGenTestBase {
     for (int j = 0; j < numMetrics; j++) {
       for (int k = 0; k < numTxns; k++) {
         TransactionMetricRisk transactionMetricRisk = TransactionMetricRisk.builder()
-                                                          .metricName("metric-" + j)
+                                                          .metricIdentifier("metric-" + j)
                                                           .transactionName("group-" + k)
                                                           .metricRisk(j % 2 == 0 ? 1 : 0)
                                                           .build();

@@ -13,11 +13,11 @@ import (
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
-	"github.com/opentracing/opentracing-go"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	"github.com/harness/harness-core/commons/go/lib/utils"
 	xtrace "github.com/harness/harness-core/commons/go/lib/x/trace"
+	"github.com/opentracing/opentracing-go"
 
 	"go.uber.org/zap"
 )

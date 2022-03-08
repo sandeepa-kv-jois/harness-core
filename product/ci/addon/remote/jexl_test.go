@@ -11,8 +11,8 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/tj/assert"
 	cengine "github.com/harness/harness-core/product/ci/engine/grpc/client"
+	"github.com/tj/assert"
 	"google.golang.org/grpc"
 
 	"github.com/harness/harness-core/commons/go/lib/logs"
