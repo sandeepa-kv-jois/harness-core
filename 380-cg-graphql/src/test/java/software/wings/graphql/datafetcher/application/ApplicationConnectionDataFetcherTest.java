@@ -18,6 +18,7 @@ import static org.mockito.MockitoAnnotations.initMocks;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.ff.FeatureFlagService;
 import io.harness.rule.Owner;
 
 import software.wings.dl.WingsPersistence;
@@ -63,6 +64,7 @@ public class ApplicationConnectionDataFetcherTest extends CategoryTest {
   @Mock TagHelper tagHelper;
   @Mock WingsPersistence wingsPersistence;
   @Mock DataFetchingEnvironment dataFetchingEnvironment;
+  @Mock FeatureFlagService featureFlagService;
 
   @InjectMocks @Spy ApplicationConnectionDataFetcher applicationConnectionDataFetcher;
   @InjectMocks @Spy ApplicationQueryHelper applicationQueryHelper;
