@@ -17,7 +17,6 @@ import io.harness.common.EntityReference;
 import io.harness.connector.ConnectorResponseDTO;
 import io.harness.connector.helper.EncryptionHelper;
 import io.harness.connector.services.ConnectorService;
-import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.delegate.beans.git.YamlGitConfigDTO;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
@@ -62,6 +61,7 @@ import io.harness.security.dto.UserPrincipal;
 import io.harness.tasks.DecryptGitApiAccessHelper;
 import io.harness.utils.IdentifierRefHelper;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -326,18 +326,6 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     final ScmConnector connectorConfig = (ScmConnector) connector.get().getConnector().getConnectorConfig();
     connectorConfig.setUrl(yamlGitConfig.getRepo());
 
-    // Incoming commit id could be a conflict resolved commit id for an entity
-    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
-    if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
-      // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
-      String branch = request.getBaseBranch().equals(StringValue.getDefaultInstance())
-          ? request.getBranch()
-          : request.getBaseBranch().getValue();
-      GitSyncEntityDTO gitSyncEntityDTO =
-          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
-      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
-    }
-
     return InfoForGitPush.builder()
         .accountId(accountId)
         .orgIdentifier(entityDetailDTO.getEntityRef().getOrgIdentifier())
@@ -351,7 +339,23 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
         .oldFileSha(StringValueUtils.getStringFromStringValue(request.getOldFileSha()))
         .yaml(request.getYaml())
         .scmConnector(connectorConfig)
-        .commitId(lastCommitIdForFile)
+        .commitId(fetchLastCommitIdForFile(request, entityDetailDTO))
         .build();
+  }
+
+  @VisibleForTesting
+  protected String fetchLastCommitIdForFile(FileInfo request, EntityDetail entityDetailDTO) {
+    // Incoming commit id could be a conflict resolved commit id for an entity
+    String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
+    if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
+      // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
+      String branch = request.getBaseBranch().equals(StringValue.getDefaultInstance())
+          ? request.getBranch()
+          : request.getBaseBranch().getValue();
+      GitSyncEntityDTO gitSyncEntityDTO =
+          gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
+      lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
+    }
+    return lastCommitIdForFile;
   }
 }
