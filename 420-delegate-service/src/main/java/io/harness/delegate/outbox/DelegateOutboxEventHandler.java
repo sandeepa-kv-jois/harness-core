@@ -67,7 +67,7 @@ public class DelegateOutboxEventHandler implements OutboxEventHandler {
     DelegateGroupUpsertEvent delegateGroupUpsertEvent =
         objectMapper.readValue(outboxEvent.getEventData(), DelegateGroupUpsertEvent.class);
     AuditEntry auditEntry = AuditEntry.builder()
-                                .action(Action.UPSERT)
+                                .action(Action.CREATE)
                                 .module(ModuleType.CORE)
                                 .newYaml(getYamlString(delegateGroupUpsertEvent.getDelegateSetupDetails()))
                                 .timestamp(outboxEvent.getCreatedAt())
