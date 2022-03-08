@@ -27,7 +27,7 @@ public class RedisOffsetBackingStore extends MemoryOffsetBackingStore {
 
   private String address;
 
-  private Jedis client = null;
+  private Jedis client;
 
   public RedisOffsetBackingStore() {}
 

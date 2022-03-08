@@ -36,7 +36,7 @@ public class RedisStreamChangeConsumer implements DebeziumEngine.ChangeConsumer<
   String nullKey = "default";
   String nullValue = "default";
 
-  private Jedis client = null;
+  private Jedis client;
 
   public RedisStreamChangeConsumer(String redisAddress) {
     this.redisAddress = redisAddress;
