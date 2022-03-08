@@ -7,7 +7,7 @@
 
 package io.harness.gitsync.common.impl;
 
-import static io.harness.rule.OwnerRule.DEEPAK;
+import static io.harness.rule.OwnerRule.MOHIT_GARG;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
@@ -50,7 +50,7 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   }
 
   @Test
-  @Owner(developers = DEEPAK)
+  @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testIfConflictCommitIdPresent() {
     String lastCommitId = harnessToGitHelperService.fetchLastCommitIdForFile(
@@ -59,7 +59,7 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   }
 
   @Test
-  @Owner(developers = DEEPAK)
+  @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testFetchLastCommitIdForFileForAddChangeType() {
     String lastCommitId = harnessToGitHelperService.fetchLastCommitIdForFile(
@@ -68,7 +68,7 @@ public class HarnessToGitHelperServiceImplTest extends GitSyncTestBase {
   }
 
   @Test
-  @Owner(developers = DEEPAK)
+  @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testFetchLastCommitIdForFileUpdateCase() {
     // update case
