@@ -51,4 +51,4 @@ if [[ $NO_PROXY != "" ]]; then
   PROXY_SYS_PROPS=$PROXY_SYS_PROPS" -Dhttp.nonProxyHosts=*$SYSTEM_PROPERTY_NO_PROXY"
 fi
 
-export $PROXY_SYS_PROPS
+export PROXY_SYS_PROPS
