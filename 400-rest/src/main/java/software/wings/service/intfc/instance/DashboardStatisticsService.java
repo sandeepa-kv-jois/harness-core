@@ -12,8 +12,10 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
+import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 
+import software.wings.beans.WorkflowExecution;
 import software.wings.beans.infrastructure.instance.Instance;
 import software.wings.beans.instance.dashboard.InstanceStatsByEnvironment;
 import software.wings.beans.instance.dashboard.InstanceStatsByService;
@@ -92,8 +94,8 @@ public interface DashboardStatisticsService {
    * @param envId
    * @return service dashboard with cloud instance info
    */
-  ServiceInstanceDashboard getServiceInstanceDashboard(
-      @NotEmpty String accountId, @NotEmpty String appId, @NotEmpty String serviceId, String envId);
+  ServiceInstanceDashboard getServiceInstanceDashboard(@NotEmpty String accountId, @NotEmpty String appId,
+      @NotEmpty String serviceId, PageRequest<WorkflowExecution> pageRequest);
 
   /**
    * Gets the instance detailed information including the metadata
@@ -108,4 +110,7 @@ public interface DashboardStatisticsService {
 
   PageResponse<CompareEnvironmentAggregationResponseInfo> getCompareServicesByEnvironment(
       String accountId, String appId, String envId1, String envId2, int offset, int limit);
+
+  ServiceInstanceDashboard getServiceInstanceDashboardFiltered(
+      String accountId, String appId, String serviceId, PageRequest<WorkflowExecution> pageRequest);
 }

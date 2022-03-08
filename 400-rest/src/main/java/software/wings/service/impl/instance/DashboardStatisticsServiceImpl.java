@@ -787,9 +787,9 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
 
   @Override
   public ServiceInstanceDashboard getServiceInstanceDashboard(
-      String accountId, String appId, String serviceId, String envId) {
+      String accountId, String appId, String serviceId, PageRequest<WorkflowExecution> pageRequest) {
     List<CurrentActiveInstances> currentActiveInstances = getCurrentActiveInstances(accountId, appId, serviceId);
-    List<DeploymentHistory> deploymentHistoryList = getDeploymentHistory(accountId, appId, serviceId, envId);
+    List<DeploymentHistory> deploymentHistoryList = getDeploymentHistory(accountId, appId, serviceId, pageRequest);
     Service service = serviceResourceService.getWithDetails(appId, serviceId);
     notNullCheck("Service not found", service, USER);
     EntitySummary serviceSummary = getEntitySummary(service.getName(), serviceId, EntityType.SERVICE.name());
@@ -980,7 +980,8 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
   }
 
   @VisibleForTesting
-  public List<DeploymentHistory> getDeploymentHistory(String accountId, String appId, String serviceId, String envId) {
+  public List<DeploymentHistory> getDeploymentHistory(
+      String accountId, String appId, String serviceId, PageRequest<WorkflowExecution> pageRequest) {
     List<DeploymentHistory> deploymentExecutionHistoryList = new ArrayList<>();
     Service service = serviceResourceService.getWithDetails(appId, serviceId);
     if (service == null) {
@@ -989,27 +990,34 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
 
     List<String> artifactStreamIds = artifactStreamServiceBindingService.listArtifactStreamIds(service);
 
-    PageRequestBuilder pageRequestBuilder = aPageRequest()
-                                                .addFilter("appId", EQ, appId)
-                                                .addFilter("workflowType", EQ, ORCHESTRATION)
-                                                .addFilter("serviceIds", HAS, serviceId)
-                                                .addOrder(WorkflowExecutionKeys.createdAt, OrderType.DESC)
-                                                .withLimit("10");
+    PageRequest<WorkflowExecution> finalPageRequest;
 
-    if (isNotEmpty(envId)) {
-      pageRequestBuilder.addFilter("envIds", HAS, envId);
+    if (pageRequest == null) {
+      PageRequestBuilder pageRequestBuilder = aPageRequest()
+                                                  .addFilter("appId", EQ, appId)
+                                                  .addFilter("workflowType", EQ, ORCHESTRATION)
+                                                  .addFilter("serviceIds", HAS, serviceId)
+                                                  .addOrder(WorkflowExecutionKeys.createdAt, OrderType.DESC)
+                                                  .withLimit("10");
+
+      finalPageRequest = pageRequestBuilder.build();
+    } else {
+      pageRequest.addFilter("appId", EQ, appId);
+      pageRequest.addFilter("workflowType", EQ, ORCHESTRATION);
+      pageRequest.addFilter("serviceIds", HAS, serviceId);
+      pageRequest.addOrder(WorkflowExecutionKeys.createdAt, OrderType.DESC);
+      pageRequest.setLimit("10");
+      finalPageRequest = pageRequest;
     }
 
     Optional<Integer> retentionPeriodInDays =
         ((DeploymentHistoryFeature) deploymentHistoryFeature).getRetentionPeriodInDays(accountId);
     retentionPeriodInDays.ifPresent(val
-        -> pageRequestBuilder.addFilter(WorkflowExecutionKeys.startTs, GE,
+        -> finalPageRequest.addFilter(WorkflowExecutionKeys.startTs, GE,
             EpochUtils.calculateEpochMilliOfStartOfDayForXDaysInPastFromNow(val, "UTC")));
 
-    PageRequest<WorkflowExecution> pageRequest = pageRequestBuilder.build();
-
     List<WorkflowExecution> workflowExecutionList =
-        workflowExecutionService.listExecutions(pageRequest, false).getResponse();
+        workflowExecutionService.listExecutions(finalPageRequest, false).getResponse();
 
     if (isEmpty(workflowExecutionList)) {
       return deploymentExecutionHistoryList;
@@ -1354,6 +1362,12 @@ public class DashboardStatisticsServiceImpl implements DashboardStatisticsServic
         .withLimit(Integer.toString(limit))
         .withTotal(serviceList.size())
         .build();
+  }
+
+  @Override
+  public ServiceInstanceDashboard getServiceInstanceDashboardFiltered(
+      String accountId, String appId, String serviceId, PageRequest<WorkflowExecution> pageRequest) {
+    return getServiceInstanceDashboard(accountId, appId, serviceId, pageRequest);
   }
 
   private ServiceInfoResponseSummary createServiceSummary(ServiceInfoSummary item) {

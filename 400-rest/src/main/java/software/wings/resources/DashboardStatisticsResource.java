@@ -12,9 +12,11 @@ import static io.harness.annotations.dev.HarnessTeam.DX;
 import static java.util.stream.Collectors.toList;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
 import io.harness.rest.RestResponse;
 
+import software.wings.beans.WorkflowExecution;
 import software.wings.beans.infrastructure.instance.Instance;
 import software.wings.beans.instance.dashboard.InstanceStatsByEnvironment;
 import software.wings.beans.instance.dashboard.InstanceStatsByService;
@@ -46,6 +48,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.ws.rs.BeanParam;
 import javax.ws.rs.DefaultValue;
 import javax.ws.rs.GET;
 import javax.ws.rs.PUT;
@@ -172,7 +175,7 @@ public class DashboardStatisticsResource {
   @AuthRule(permissionType = PermissionType.SERVICE, action = Action.READ)
   public RestResponse<ServiceInstanceDashboard> getServiceInstanceDashboard(@QueryParam("accountId") String accountId,
       @QueryParam("appId") String appId, @QueryParam("serviceId") String serviceId, @QueryParam("envId") String envId) {
-    return new RestResponse<>(dashboardStatsService.getServiceInstanceDashboard(accountId, appId, serviceId, envId));
+    return new RestResponse<>(dashboardStatsService.getServiceInstanceDashboard(accountId, appId, serviceId, null));
   }
 
   /**
@@ -269,5 +272,17 @@ public class DashboardStatisticsResource {
       @QueryParam("limit") @DefaultValue("-1") int limit) {
     return new RestResponse<>(
         dashboardStatsService.getCompareServicesByEnvironment(accountId, appId, envId1, envId2, offset, limit));
+  }
+
+  @GET
+  @Path("service-instance-dash-filtered")
+  @Timed
+  @ExceptionMetered
+  @AuthRule(permissionType = PermissionType.SERVICE, action = Action.READ)
+  public RestResponse<ServiceInstanceDashboard> getServiceInstanceDashboard(@QueryParam("accountId") String accountId,
+      @QueryParam("appId") String appId, @QueryParam("serviceId") String serviceId,
+      @BeanParam PageRequest<WorkflowExecution> pageRequest) {
+    return new RestResponse<>(
+        dashboardStatsService.getServiceInstanceDashboardFiltered(accountId, appId, serviceId, pageRequest));
   }
 }
