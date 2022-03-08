@@ -793,6 +793,7 @@ public class BuilderFactory {
                   .spec(RatioSLIMetricSpec.builder()
                             .metric1("Errors per Minute")
                             .metric2("Calls per Minute")
+                            .eventType(RatioSLIMetricEventType.GOOD)
                             .thresholdValue(100.0)
                             .thresholdType(ThresholdType.GREATER_THAN_EQUAL_TO)
                             .build())
