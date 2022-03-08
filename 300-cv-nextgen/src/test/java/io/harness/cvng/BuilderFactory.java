@@ -720,6 +720,7 @@ public class BuilderFactory {
 
   public ServiceLevelObjectiveBuilder getServiceLevelObjectiveBuilder() {
     return ServiceLevelObjective.builder()
+        .accountId(context.getAccountId())
         .projectIdentifier(context.getProjectIdentifier())
         .orgIdentifier(context.getOrgIdentifier())
         .identifier("sloIdentifier")
@@ -728,7 +729,7 @@ public class BuilderFactory {
         .desc("slo description")
         .sloTarget(RollingSLOTarget.builder().periodLengthDays(30).build())
         .sloTargetPercentage(80.0)
-        .serviceLevelIndicators(Collections.singletonList("sloIdentifier"))
+        .serviceLevelIndicators(Collections.singletonList("sloIdentifier_metric1"))
         .healthSourceIdentifier("healthSourceIdentifier")
         .monitoredServiceIdentifier(context.serviceIdentifier + "_" + context.getEnvIdentifier())
         .userJourneyIdentifier("userJourney");
