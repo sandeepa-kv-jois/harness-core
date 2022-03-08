@@ -1776,6 +1776,9 @@
             "type": "string"
           }
         },
+        "template": {
+          "$ref": "#/definitions/TemplateLinkConfig"
+        },
         "timeout": {
           "type": "string",
           "pattern": "^(([1-9])+\\d+[s])|(((([1-9])+\\d*[mhwd])+([\\s]?\\d+[smhwd])*)|(<\\+input>.*)|(.*<\\+.*>.*))$"
