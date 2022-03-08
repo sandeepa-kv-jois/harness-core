@@ -88,7 +88,7 @@ public class RedisOffsetBackingStore extends MemoryOffsetBackingStore {
             .invoke(item -> { log.trace("Offsets fetched from redis: " + item); })
             .await()
             .indefinitely();
-    if (offsets != null) {
+    if (offsets.size() > 0) {
       for (Map.Entry<String, String> mapEntry : offsets.entrySet()) {
         ByteBuffer key = (mapEntry.getKey() != null) ? ByteBuffer.wrap(mapEntry.getKey().getBytes()) : null;
         ByteBuffer value = (mapEntry.getValue() != null) ? ByteBuffer.wrap(mapEntry.getValue().getBytes()) : null;
