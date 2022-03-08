@@ -24,8 +24,7 @@ public class DebeziumEngineStarter {
     ExecutorService debeziumExecutorService =
         Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("debezium-controller").build());
     DebeziumController debeziumController =
-        new DebeziumController(debeziumConfiguration.getDebeziumProperties(debeziumConfig), changeConsumer,
-            debeziumConfig.getOffsetStorageFileName());
+        new DebeziumController(debeziumConfiguration.getDebeziumProperties(debeziumConfig), changeConsumer);
     debeziumExecutorService.submit(debeziumController);
   }
 }
