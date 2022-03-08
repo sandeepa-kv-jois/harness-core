@@ -377,7 +377,7 @@ pipelineSdkRedisEventsConfig:
 
 debeziumConfig:
   isEnabled: false
-  offset.storage.file.filename: ${OFFSET_STORAGE_FILE_FILENAME:-127.0.0.1:6379}
+  offset.storage.file.filename: ${OFFSET_STORAGE_FILE_FILENAME:-redis://127.0.0.1:6379}
   name: ${DEBEZIUM_NAME:-pipeline}
   key.converter.schemas.enable: ${KEY_CONVERTER_SCHEMAS_ENABLE:-false}
   value.converter.schemas.enable: ${VALUE_CONVERTER_SCHEMAS_ENABLE:-false}
