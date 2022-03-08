@@ -119,6 +119,8 @@ import software.wings.graphql.datafetcher.execution.RuntimeExecutionInputsToResu
 import software.wings.graphql.datafetcher.execution.StartExecutionDataFetcher;
 import software.wings.graphql.datafetcher.infraDefinition.InfrastructureDefinitionConnectionDataFetcher;
 import software.wings.graphql.datafetcher.infraDefinition.InfrastructureDefinitionDataFetcher;
+import software.wings.graphql.datafetcher.infraDefinition.batch.InfrastructureDefinitionBatchDataFetcher;
+import software.wings.graphql.datafetcher.infraDefinition.batch.InfrastructureDefinitionBatchDataLoader;
 import software.wings.graphql.datafetcher.instance.InstanceConnectionDataFetcher;
 import software.wings.graphql.datafetcher.instance.InstanceCountDataFetcher;
 import software.wings.graphql.datafetcher.instance.InstanceStatsDataFetcher;
@@ -258,6 +260,7 @@ public class WingsGraphQLModule extends AbstractModule {
     bindBatchedDataLoaderWithAnnotation(ArtifactSourceBatchDataLoader.class);
     bindBatchedDataLoaderWithAnnotation(WorkflowBatchDataLoader.class);
     bindBatchedDataLoaderWithAnnotation(PipelineBatchDataLoader.class);
+    bindBatchedDataLoaderWithAnnotation(InfrastructureDefinitionBatchDataLoader.class);
   }
 
   private void bindInstanceInfoControllers() {
@@ -426,6 +429,7 @@ public class WingsGraphQLModule extends AbstractModule {
     bindDataFetcherWithAnnotation(TagUsageConnectionDataFetcher.class);
     bindDataFetcherWithAnnotation(TagDataFetcher.class);
     bindDataFetcherWithAnnotation(VerificationResultConnectionDataFetcher.class);
+    bindDataFetcherWithAnnotation(InfrastructureDefinitionBatchDataFetcher.class);
   }
 
   @NotNull

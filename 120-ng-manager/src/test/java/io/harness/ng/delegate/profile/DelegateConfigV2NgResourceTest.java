@@ -29,6 +29,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.DelegateProfileDetailsNg;
 import io.harness.delegate.beans.ScopingRuleDetailsNg;
 import io.harness.ng.core.api.DelegateProfileManagerNgService;
+import io.harness.ng.core.delegate.client.DelegateConfigClient;
 import io.harness.ng.core.delegate.resources.DelegateConfigNgV2Resource;
 import io.harness.rest.RestResponse;
 import io.harness.rule.Owner;
@@ -53,11 +54,13 @@ public class DelegateConfigV2NgResourceTest extends CategoryTest {
 
   @Mock private AccessControlClient accessControlClient;
   @Mock private DelegateProfileManagerNgService delegateProfileManagerNgService;
+  @Mock private DelegateConfigClient delegateConfigClient;
 
   @Before
   public void setup() {
     initMocks(this);
-    delegateConfigNgV2Resource = new DelegateConfigNgV2Resource(delegateProfileManagerNgService, accessControlClient);
+    delegateConfigNgV2Resource =
+        new DelegateConfigNgV2Resource(delegateProfileManagerNgService, accessControlClient, delegateConfigClient);
   }
 
   @Test

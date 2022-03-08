@@ -37,7 +37,6 @@ import io.harness.CategoryTest;
 import io.harness.ModuleType;
 import io.harness.account.services.AccountService;
 import io.harness.beans.EmbeddedUser;
-import io.harness.cache.HarnessCacheManager;
 import io.harness.category.element.UnitTests;
 import io.harness.ccm.license.remote.CeLicenseClient;
 import io.harness.licensing.Edition;
@@ -93,7 +92,6 @@ public class DefaultLicenseServiceImplTest extends CategoryTest {
   @Mock TelemetryReporter telemetryReporter;
   @Mock CeLicenseClient ceLicenseClient;
   @Mock LicenseComplianceResolver licenseComplianceResolver;
-  @Mock HarnessCacheManager cacheManager;
   @Mock Cache<String, List> cache;
   @InjectMocks DefaultLicenseServiceImpl licenseService;
 
@@ -120,7 +118,6 @@ public class DefaultLicenseServiceImplTest extends CategoryTest {
                                    .build())
             .build();
 
-    when(cacheManager.<String, List>getCache(any(), any(), any(), any())).thenReturn(cache);
     when(cache.containsKey(ACCOUNT_IDENTIFIER + ":" + DEFAULT_MODULE_TYPE)).thenReturn(false);
   }
 

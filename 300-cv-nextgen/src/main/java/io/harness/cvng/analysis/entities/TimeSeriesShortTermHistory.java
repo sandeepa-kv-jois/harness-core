@@ -108,8 +108,16 @@ public final class TimeSeriesShortTermHistory implements PersistentEntity, UuidA
   @FieldNameConstants(innerTypeName = "MetricHistoryKeys")
   @JsonIgnoreProperties(ignoreUnknown = true)
   public static class MetricHistory {
-    private String metricName;
+    @Deprecated private String metricName;
+    private String metricIdentifier;
     private List<Double> value;
+
+    public String getMetricIdentifier() {
+      if (isEmpty(metricIdentifier)) {
+        return metricName;
+      }
+      return metricIdentifier;
+    }
   }
 
   public static List<TransactionMetricHistory> convertFromMap(Map<String, Map<String, List<Double>>> txnMetricHistory) {
@@ -120,8 +128,9 @@ public final class TimeSeriesShortTermHistory implements PersistentEntity, UuidA
     txnMetricHistory.forEach((txn, metricHistory) -> {
       TransactionMetricHistory transactionMetricHistory =
           TransactionMetricHistory.builder().transactionName(txn).metricHistoryList(new ArrayList<>()).build();
-      metricHistory.forEach((metric, values) -> {
-        MetricHistory shortTermHistory = MetricHistory.builder().metricName(metric).value(values).build();
+      metricHistory.forEach((metricIdentifier, values) -> {
+        MetricHistory shortTermHistory =
+            MetricHistory.builder().metricIdentifier(metricIdentifier).value(values).build();
         transactionMetricHistory.getMetricHistoryList().add(shortTermHistory);
       });
       transactionMetricHistories.add(transactionMetricHistory);
@@ -142,12 +151,12 @@ public final class TimeSeriesShortTermHistory implements PersistentEntity, UuidA
 
       if (isNotEmpty(transactionMetricHistory.getMetricHistoryList())) {
         transactionMetricHistory.getMetricHistoryList().forEach(metricHistory -> {
-          String metricName = metricHistory.getMetricName();
-          if (!txnMetricHistoryMap.get(txn).containsKey(metricName)) {
-            txnMetricHistoryMap.get(txn).put(metricName, new ArrayList<>());
+          String metricIdentifier = metricHistory.getMetricIdentifier();
+          if (!txnMetricHistoryMap.get(txn).containsKey(metricIdentifier)) {
+            txnMetricHistoryMap.get(txn).put(metricIdentifier, new ArrayList<>());
           }
           if (metricHistory.getValue() != null) {
-            txnMetricHistoryMap.get(txn).get(metricName).addAll(metricHistory.getValue());
+            txnMetricHistoryMap.get(txn).get(metricIdentifier).addAll(metricHistory.getValue());
           }
         });
       }

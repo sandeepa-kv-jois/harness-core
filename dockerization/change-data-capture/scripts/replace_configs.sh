@@ -20,6 +20,10 @@ if [[ "" != "$MONGO_URI" ]]; then
   yq write -i $CONFIG_FILE harness-mongo.uri "$MONGO_URI"
 fi
 
+if [[ "" != "$MONGO_SERVER_SELECTION_TIMEOUT" ]]; then
+  yq write -i $CONFIG_FILE harness-mongo.serverSelectionTimeout "$MONGO_SERVER_SELECTION_TIMEOUT"
+fi
+
 if [[ "" != "$MONGO_TAG_NAME" ]]; then
   yq write -i $CONFIG_FILE mongotags.tagKey "$MONGO_TAG_NAME"
 fi

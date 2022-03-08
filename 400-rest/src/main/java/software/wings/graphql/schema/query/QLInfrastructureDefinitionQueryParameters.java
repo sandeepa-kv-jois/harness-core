@@ -12,10 +12,12 @@ import io.harness.annotations.dev.TargetModule;
 
 import lombok.Builder;
 import lombok.Value;
+import lombok.experimental.FieldNameConstants;
 
 @Value
 @Builder
 @TargetModule(HarnessModule._380_CG_GRAPHQL)
+@FieldNameConstants(innerTypeName = "QLInfrastructureDefinitionQueryParametersKeys")
 public class QLInfrastructureDefinitionQueryParameters {
   private String infrastructureId;
   private String infrastructureName;

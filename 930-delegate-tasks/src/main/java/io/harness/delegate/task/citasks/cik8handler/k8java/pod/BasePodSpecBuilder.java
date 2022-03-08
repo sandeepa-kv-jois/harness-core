@@ -7,12 +7,16 @@
 
 package io.harness.delegate.task.citasks.cik8handler.k8java.pod;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.delegate.beans.ci.pod.ContainerParams;
 import io.harness.delegate.beans.ci.pod.HostAliasParams;
 import io.harness.delegate.beans.ci.pod.PVCParams;
 import io.harness.delegate.beans.ci.pod.PodParams;
+import io.harness.delegate.beans.ci.pod.PodToleration;
 import io.harness.delegate.task.citasks.cik8handler.k8java.container.ContainerSpecBuilder;
 import io.harness.delegate.task.citasks.cik8handler.k8java.container.ContainerSpecBuilderResponse;
 
@@ -27,6 +31,8 @@ import io.kubernetes.client.openapi.models.V1PodBuilder;
 import io.kubernetes.client.openapi.models.V1PodFluent;
 import io.kubernetes.client.openapi.models.V1PodSecurityContext;
 import io.kubernetes.client.openapi.models.V1PodSecurityContextBuilder;
+import io.kubernetes.client.openapi.models.V1Toleration;
+import io.kubernetes.client.openapi.models.V1TolerationBuilder;
 import io.kubernetes.client.openapi.models.V1Volume;
 import io.kubernetes.client.openapi.models.V1VolumeBuilder;
 import java.util.ArrayList;
@@ -79,11 +85,42 @@ public abstract class BasePodSpecBuilder {
         .withNewSpec()
         .withContainers(containers)
         .withServiceAccountName(podParams.getServiceAccountName())
+        .withNodeSelector(podParams.getNodeSelector())
+        .withTolerations(getTolerations(podParams))
         .withInitContainers(initContainers)
         .withImagePullSecrets(imageSecrets)
         .withHostAliases(getHostAliases(podParams.getHostAliasParamsList()))
         .withVolumes(new ArrayList<>(volumesToCreate))
         .withSecurityContext(getSecurityContext(podParams));
+  }
+
+  private List<V1Toleration> getTolerations(PodParams<ContainerParams> podParams) {
+    List<V1Toleration> tolerations = new ArrayList<>();
+    if (isEmpty(podParams.getTolerations())) {
+      return tolerations;
+    }
+
+    for (PodToleration podToleration : podParams.getTolerations()) {
+      V1TolerationBuilder tolerationBuilder = new V1TolerationBuilder();
+      if (isNotEmpty(podToleration.getEffect())) {
+        tolerationBuilder.withEffect(podToleration.getEffect());
+      }
+      if (isNotEmpty(podToleration.getKey())) {
+        tolerationBuilder.withKey(podToleration.getKey());
+      }
+      if (isNotEmpty(podToleration.getOperator())) {
+        tolerationBuilder.withOperator(podToleration.getOperator());
+      }
+      if (podToleration.getTolerationSeconds() != null) {
+        tolerationBuilder.withTolerationSeconds((long) podToleration.getTolerationSeconds());
+      }
+      if (isNotEmpty(podToleration.getValue())) {
+        tolerationBuilder.withValue(podToleration.getValue());
+      }
+
+      tolerations.add(tolerationBuilder.build());
+    }
+    return tolerations;
   }
 
   private V1PodSecurityContext getSecurityContext(PodParams<ContainerParams> podParams) {

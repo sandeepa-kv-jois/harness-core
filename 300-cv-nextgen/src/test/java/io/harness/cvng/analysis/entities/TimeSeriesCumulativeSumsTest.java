@@ -16,6 +16,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.analysis.beans.ServiceGuardTxnMetricAnalysisDataDTO.MetricSumDTO;
 import io.harness.rule.Owner;
 
 import java.util.ArrayList;
@@ -42,7 +43,7 @@ public class TimeSeriesCumulativeSumsTest extends CategoryTest {
       List<MetricSum> metricSumsList = transactionMetricSum.getMetricSums();
       assertThat(metricSumsList.size()).isEqualTo(3);
       metricSumsList.forEach(metricSums -> {
-        assertThat(Arrays.asList("metric1", "metric2", "metric3").contains(metricSums.getMetricName())).isTrue();
+        assertThat(Arrays.asList("metric1", "metric2", "metric3").contains(metricSums.getMetricIdentifier())).isTrue();
         assertThat(metricSums.getData()).isEqualTo(0.9);
         assertThat(metricSums.getRisk()).isEqualTo(0.5);
       });
@@ -68,7 +69,7 @@ public class TimeSeriesCumulativeSumsTest extends CategoryTest {
                                                             .transactionMetricSums(buildTransactionMetricSums())
                                                             .build();
 
-    Map<String, Map<String, List<MetricSum>>> txnMetricMap =
+    Map<String, Map<String, List<MetricSumDTO>>> txnMetricMap =
         TimeSeriesCumulativeSums.convertToMap(Collections.singletonList(timeSeriesCumulativeSums));
 
     assertThat(txnMetricMap.size()).isEqualTo(3);
@@ -77,12 +78,12 @@ public class TimeSeriesCumulativeSumsTest extends CategoryTest {
     assertThat(txnMetricMap.containsKey("txn3")).isTrue();
 
     for (String txn : txnMetricMap.keySet()) {
-      Map<String, List<MetricSum>> metricSumsMap = txnMetricMap.get(txn);
+      Map<String, List<MetricSumDTO>> metricSumsMap = txnMetricMap.get(txn);
       assertThat(metricSumsMap.size()).isEqualTo(3);
       assertThat(metricSumsMap.containsKey("metric1")).isTrue();
       assertThat(metricSumsMap.containsKey("metric2")).isTrue();
       assertThat(metricSumsMap.containsKey("metric3")).isTrue();
-      MetricSum sums = metricSumsMap.get("metric1").get(0);
+      MetricSumDTO sums = metricSumsMap.get("metric1").get(0);
       assertThat(sums.getRisk()).isEqualTo(0.5);
       assertThat(sums.getData()).isEqualTo(0.9);
     }
@@ -95,7 +96,7 @@ public class TimeSeriesCumulativeSumsTest extends CategoryTest {
     TimeSeriesCumulativeSums timeSeriesCumulativeSums =
         TimeSeriesCumulativeSums.builder().verificationTaskId(generateUuid()).transactionMetricSums(null).build();
 
-    Map<String, Map<String, List<MetricSum>>> txnMetricMap =
+    Map<String, Map<String, List<MetricSumDTO>>> txnMetricMap =
         TimeSeriesCumulativeSums.convertToMap(Collections.singletonList(timeSeriesCumulativeSums));
     assertThat(txnMetricMap).isNotNull();
     assertThat(txnMetricMap.size()).isEqualTo(0);

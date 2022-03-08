@@ -861,6 +861,7 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
   private ContainerMetadata getContainerMetadataFromInstanceSyncResponse(DelegateResponseData responseData) {
     String syncNamespace;
     String syncReleaseName;
+    String containerServiceName = null;
     ContainerMetadataType syncType = null;
     if (responseData instanceof K8sTaskExecutionResponse) {
       K8sTaskExecutionResponse k8sTaskExecutionResponse = (K8sTaskExecutionResponse) responseData;
@@ -877,12 +878,18 @@ public class ContainerInstanceHandler extends InstanceHandler implements Instanc
 
       syncNamespace = containerSyncResponse.getNamespace();
       syncReleaseName = containerSyncResponse.getReleaseName();
+      containerServiceName = containerSyncResponse.getControllerName();
     } else {
       return null;
     }
 
     if (isNotEmpty(syncNamespace) && isNotEmpty(syncReleaseName)) {
-      return ContainerMetadata.builder().type(syncType).namespace(syncNamespace).releaseName(syncReleaseName).build();
+      return ContainerMetadata.builder()
+          .type(syncType)
+          .namespace(syncNamespace)
+          .releaseName(syncReleaseName)
+          .containerServiceName(containerServiceName)
+          .build();
     }
 
     return null;

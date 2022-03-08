@@ -42,7 +42,7 @@ public class TimeSeriesShortTermHistoryTest extends CategoryTest {
       List<MetricHistory> metricSumsList = transactionMetricSum.getMetricHistoryList();
       assertThat(metricSumsList.size()).isEqualTo(3);
       metricSumsList.forEach(metricSums -> {
-        assertThat(Arrays.asList("metric1", "metric2", "metric3").contains(metricSums.getMetricName())).isTrue();
+        assertThat(Arrays.asList("metric1", "metric2", "metric3").contains(metricSums.getMetricIdentifier())).isTrue();
         List<Double> sums = metricSums.getValue();
         assertThat(sums.containsAll(Arrays.asList(0.1, 0.2, 0.3, 0.4))).isTrue();
       });

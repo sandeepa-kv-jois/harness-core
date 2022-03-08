@@ -120,14 +120,13 @@ public class InstallUtilsTest extends CategoryTest implements MockableTestMixin 
       setStaticFieldValue(SystemUtils.class, "IS_OS_WINDOWS", false);
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", false);
       assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
-          .isEqualTo(
-              "https://app.harness.io/storage/harness-download/harness-scm/release/04ad961e/bin/linux/amd64/scm");
+          .isEqualTo("https://app.harness.io/storage/harness-download/harness-scm/release/e2904e7/bin/linux/amd64/scm");
 
       setStaticFieldValue(SystemUtils.class, "IS_OS_WINDOWS", false);
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", true);
       assertThat(InstallUtils.getScmDownloadUrl(delegateConfiguration))
           .isEqualTo(
-              "https://app.harness.io/storage/harness-download/harness-scm/release/04ad961e/bin/darwin/amd64/scm");
+              "https://app.harness.io/storage/harness-download/harness-scm/release/e2904e7/bin/darwin/amd64/scm");
     } finally {
       setStaticFieldValue(SystemUtils.class, "IS_OS_WINDOWS", win);
       setStaticFieldValue(SystemUtils.class, "IS_OS_MAC", mac);

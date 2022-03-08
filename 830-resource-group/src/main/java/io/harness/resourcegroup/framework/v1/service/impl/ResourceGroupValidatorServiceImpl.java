@@ -16,11 +16,11 @@ import io.harness.beans.Scope;
 import io.harness.beans.ScopeLevel;
 import io.harness.resourcegroup.framework.v1.service.Resource;
 import io.harness.resourcegroup.framework.v1.service.ResourceGroupValidatorService;
-import io.harness.resourcegroup.v1.model.DynamicResourceSelector;
+import io.harness.resourcegroup.model.DynamicResourceSelector;
+import io.harness.resourcegroup.model.ResourceSelector;
+import io.harness.resourcegroup.model.ResourceSelectorByScope;
+import io.harness.resourcegroup.model.StaticResourceSelector;
 import io.harness.resourcegroup.v1.model.ResourceGroup;
-import io.harness.resourcegroup.v1.model.ResourceSelector;
-import io.harness.resourcegroup.v1.model.ResourceSelectorByScope;
-import io.harness.resourcegroup.v1.model.StaticResourceSelector;
 
 import com.google.inject.Inject;
 import java.util.ArrayList;
