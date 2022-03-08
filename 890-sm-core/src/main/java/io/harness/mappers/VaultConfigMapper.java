@@ -47,7 +47,7 @@ public class VaultConfigMapper {
                                   .vaultAwsIamRole(vaultConfigDTO.getVaultAwsIamRole())
                                   .xVaultAwsIamServerId(vaultConfigDTO.getXVaultAwsIamServerId())
                                   .useK8sAuth(vaultConfigDTO.isUseK8sAuth())
-                                  .role(vaultConfigDTO.getRole())
+                                  .vaultK8sAuthRole(vaultConfigDTO.getVaultK8sAuthRole())
                                   .serviceAccountTokenPath(vaultConfigDTO.getServiceAccountTokenPath())
                                   .sinkPath(vaultConfigDTO.getSinkPath())
                                   .build();

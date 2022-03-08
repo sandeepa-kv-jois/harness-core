@@ -143,7 +143,7 @@ public class NGVaultTaskHelper {
       }
       log.info("The mounted service account token is {}.", jwt);
       VaultK8sAuthLoginRequest loginRequest =
-          VaultK8sAuthLoginRequest.builder().role(vaultConfig.getRole()).jwt(jwt).build();
+          VaultK8sAuthLoginRequest.builder().role(vaultConfig.getVaultK8sAuthRole()).jwt(jwt).build();
       Response<VaultK8sLoginResponse> response = restClient.k8sAuthLogin(loginRequest).execute();
 
       VaultK8sLoginResult result = null;
@@ -183,7 +183,7 @@ public class NGVaultTaskHelper {
 
   private static void validateVaultConfigK8sAuth(BaseVaultConfig vaultConfig) {
     if (vaultConfig.isUseK8sAuth()) {
-      if (isBlank(vaultConfig.getRole())) {
+      if (isBlank(vaultConfig.getVaultK8sAuthRole())) {
         throw new io.harness.exception.SecretManagementException(
             VAULT_OPERATION_ERROR, "You must provide vault role if you are using Vault with K8s Auth method", USER);
       }

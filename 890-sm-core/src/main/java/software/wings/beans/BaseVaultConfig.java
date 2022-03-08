@@ -74,7 +74,7 @@ public abstract class BaseVaultConfig extends SecretManagerConfig {
 
   // added for K8s Auth Method
   @Attributes(title = "useK8sAuth") private boolean useK8sAuth;
-  @Attributes(title = "role") private String role;
+  @Attributes(title = "K8s Auth Role") private String vaultK8sAuthRole;
   @Attributes(title = "serviceAccountTokenPath") private String serviceAccountTokenPath;
 
   public boolean isCertValidationRequired() {

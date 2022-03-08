@@ -461,11 +461,11 @@ public class NGVaultServiceImpl implements NGVaultService {
   }
 
   private void setK8sAuthParams(BaseVaultConfig vaultConfig, VaultMetadataRequestSpecDTO specDTO) {
-    Optional<String> role = Optional.ofNullable(specDTO)
-                                .filter(x -> x.getAccessType() == AccessType.K8s_AUTH)
-                                .map(x -> ((VaultK8sCredentialDTO) (x.getSpec())).getRole())
-                                .filter(x -> !x.isEmpty());
-    role.ifPresent(x -> {
+    Optional<String> vaultK8sAuthRole = Optional.ofNullable(specDTO)
+                                            .filter(x -> x.getAccessType() == AccessType.K8s_AUTH)
+                                            .map(x -> ((VaultK8sCredentialDTO) (x.getSpec())).getVaultK8sAuthRole())
+                                            .filter(x -> !x.isEmpty());
+    vaultK8sAuthRole.ifPresent(x -> {
       vaultConfig.setAuthToken(null);
       vaultConfig.setAppRoleId(null);
       vaultConfig.setSecretId(null);
@@ -473,7 +473,7 @@ public class NGVaultServiceImpl implements NGVaultService {
       vaultConfig.setUseVaultAgent(false);
       vaultConfig.setUseAwsIam(false);
       vaultConfig.setUseK8sAuth(true);
-      vaultConfig.setRole(x);
+      vaultConfig.setVaultK8sAuthRole(x);
     });
 
     Optional<String> serviceAccountTokenPath =

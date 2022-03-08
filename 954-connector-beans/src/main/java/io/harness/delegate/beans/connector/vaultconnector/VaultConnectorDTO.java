@@ -8,13 +8,13 @@
 package io.harness.delegate.beans.connector.vaultconnector;
 
 import static io.harness.SecretManagerDescriptionConstants.AWS_REGION;
-import static io.harness.SecretManagerDescriptionConstants.ROLE;
 import static io.harness.SecretManagerDescriptionConstants.SERVICE_ACCOUNT_TOKEN_PATH;
 import static io.harness.SecretManagerDescriptionConstants.SINK_PATH;
 import static io.harness.SecretManagerDescriptionConstants.USE_AWS_IAM;
 import static io.harness.SecretManagerDescriptionConstants.USE_K8s_AUTH;
 import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_HEADER;
 import static io.harness.SecretManagerDescriptionConstants.VAULT_AWS_IAM_ROLE;
+import static io.harness.SecretManagerDescriptionConstants.VAULT_K8S_AUTH_ROLE;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
@@ -92,7 +92,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @JsonProperty(value = "xvaultAwsIamServerId")
   private SecretRefData headerAwsIam;
   @Schema(description = USE_K8s_AUTH) private boolean useK8sAuth;
-  @Schema(description = ROLE) private String role;
+  @Schema(description = VAULT_K8S_AUTH_ROLE) private String vaultK8sAuthRole;
   @Schema(description = SERVICE_ACCOUNT_TOKEN_PATH) private String serviceAccountTokenPath;
 
   public AccessType getAccessType() {
@@ -176,7 +176,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
       }
     }
     if (isUseK8sAuth()) {
-      if (isBlank(getRole())) {
+      if (isBlank(getVaultK8sAuthRole())) {
         throw new InvalidRequestException(
             "You must provide a vault role if you are using Vault with K8s Auth method", INVALID_REQUEST, USER);
       }

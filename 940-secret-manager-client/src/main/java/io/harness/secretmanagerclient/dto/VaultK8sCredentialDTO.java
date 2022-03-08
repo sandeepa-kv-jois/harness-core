@@ -15,6 +15,6 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = true)
 @JsonTypeName("K8s_AUTH")
 public class VaultK8sCredentialDTO extends VaultCredentialDTO {
-  private String role;
+  private String vaultK8sAuthRole;
   private String serviceAccountTokenPath;
 }

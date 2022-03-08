@@ -50,7 +50,7 @@ public class VaultConfigDTOMapper {
             .awsRegion(vaultConnectorDTO.getAwsRegion())
             .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole())
             .useK8sAuth(vaultConnectorDTO.isUseK8sAuth())
-            .role(vaultConnectorDTO.getRole())
+            .vaultK8sAuthRole(vaultConnectorDTO.getVaultK8sAuthRole())
             .serviceAccountTokenPath(vaultConnectorDTO.getServiceAccountTokenPath());
 
     if (null != vaultConnectorDTO.getHeaderAwsIam()
@@ -98,7 +98,7 @@ public class VaultConfigDTOMapper {
                                               .awsRegion(vaultConnectorDTO.getAwsRegion())
                                               .vaultAwsIamRole(vaultConnectorDTO.getVaultAwsIamRole())
                                               .useK8sAuth(vaultConnectorDTO.isUseK8sAuth())
-                                              .role(vaultConnectorDTO.getRole())
+                                              .vaultK8sAuthRole(vaultConnectorDTO.getVaultK8sAuthRole())
                                               .serviceAccountTokenPath(vaultConnectorDTO.getServiceAccountTokenPath());
 
     if (null != vaultConnectorDTO.getHeaderAwsIam()

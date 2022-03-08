@@ -678,7 +678,7 @@ public class HashicorpVaultEncryptorTest extends CategoryTest {
   @NotNull
   private void performK8sAuthLoginResult() {
     vaultConfig.setUseK8sAuth(true);
-    vaultConfig.setRole("role");
+    vaultConfig.setVaultK8sAuthRole("role");
     vaultConfig.setServiceAccountTokenPath("serviceAccountTokenPath");
   }
 }
