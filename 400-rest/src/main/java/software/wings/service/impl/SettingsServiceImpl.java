@@ -282,10 +282,7 @@ public class SettingsServiceImpl implements SettingsService {
       List<SettingAttribute> filteredSettingAttributes = getFilteredSettingAttributes(
           pageResponse.getResponse(), appIdFromRequest, envIdFromRequest, forUsageInNewApp);
       log.info("Total time taken in filtering setting records:  {}.", System.currentTimeMillis() - timestamp);
-      return aPageResponse()
-          .withResponse(filteredSettingAttributes)
-          .withTotal(filteredSettingAttributes.size())
-          .build();
+      return aPageResponse().withResponse(filteredSettingAttributes).withTotal(pageResponse.getTotal()).build();
     } catch (Exception e) {
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
     }
