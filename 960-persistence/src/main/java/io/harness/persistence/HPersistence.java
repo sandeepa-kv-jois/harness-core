@@ -93,14 +93,20 @@ public interface HPersistence extends HealthMonitor {
   }
 
   default AdvancedDatastore getDefaultAnalyticsDatastore(Class cls) {
-    return getDatastore(getClassStores().computeIfAbsent(cls, klass -> {
-      return Arrays.stream(cls.getDeclaredAnnotations())
-          .filter(annotation -> annotation.annotationType().equals(StoreIn.class))
-          .map(annotation -> ((StoreIn) annotation).value())
-          .map(name -> Store.builder().name(name).build())
-          .findFirst()
-          .orElseGet(() -> ANALYTIC_STORE);
-    }));
+    Store classStore = getClassStores().computeIfAbsent(cls,
+        klass
+        -> Arrays.stream(cls.getDeclaredAnnotations())
+               .filter(annotation -> annotation.annotationType().equals(StoreIn.class))
+               .map(annotation -> ((StoreIn) annotation).value())
+               .map(name -> Store.builder().name(name).build())
+               .findFirst()
+               .orElseGet(() -> DEFAULT_STORE));
+
+    // only if the request is for cg db, get from analytics node
+    if (DEFAULT_STORE.equals(classStore)) {
+      return getDatastore(ANALYTIC_STORE);
+    }
+    return getDatastore(classStore);
   }
 
   /**
