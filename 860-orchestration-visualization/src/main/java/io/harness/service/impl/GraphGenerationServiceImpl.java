@@ -46,6 +46,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -76,8 +77,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
   @Override
   public boolean updateGraph(String planExecutionId) {
     String lockName = GRAPH_LOCK + planExecutionId;
-    // Todo: Introduce loading cache for this time.
-    try (AcquiredLock<?> lock = persistentLocker.tryToAcquireLock(lockName, Duration.ofSeconds(120))) {
+    try (AcquiredLock<?> lock = persistentLocker.tryToAcquireLock(lockName, Duration.ofSeconds(10))) {
       if (lock == null) {
         log.debug(String.format(
             "[PMS_GRAPH_LOCK_TEST] Not able to take lock on graph generation for lockName - %s, returning early.",
@@ -142,8 +142,11 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
 
     Update executionSummaryUpdate = new Update();
     Set<String> processedNodeExecutionIds = new HashSet<>();
+    Map<String, Long> nodeExecutionToEventLogCount = new HashMap<>();
     for (OrchestrationEventLog orchestrationEventLog : unprocessedEventLogs) {
       String nodeExecutionId = orchestrationEventLog.getNodeExecutionId();
+      nodeExecutionToEventLogCount.put(
+          nodeExecutionId, nodeExecutionToEventLogCount.getOrDefault(nodeExecutionId, 0L) + 1);
       OrchestrationEventType orchestrationEventType = orchestrationEventLog.getOrchestrationEventType();
       switch (orchestrationEventType) {
         case PLAN_EXECUTION_STATUS_UPDATE:
@@ -177,6 +180,7 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
       }
       lastUpdatedAt = orchestrationEventLog.getCreatedAt();
     }
+    log.info("[UNIQUE_NODE_IDS]: {}", nodeExecutionToEventLogCount.keySet().toString());
     cachePartialOrchestrationGraph(orchestrationGraph.withLastUpdatedAt(lastUpdatedAt), lastUpdatedAt);
     pmsExecutionSummaryService.update(planExecutionId, executionSummaryUpdate);
     log.info("[PMS_GRAPH] Processing of [{}] orchestration event logs completed in [{}ms]", unprocessedEventLogs.size(),

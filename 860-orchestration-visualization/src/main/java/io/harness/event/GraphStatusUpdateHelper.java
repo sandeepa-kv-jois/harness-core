@@ -55,6 +55,7 @@ public class GraphStatusUpdateHelper {
     if (nodeExecution == null) {
       return orchestrationGraph;
     }
+    long startTs = System.currentTimeMillis();
     String nodeExecutionId = nodeExecution.getUuid();
     try {
       if (orchestrationGraph.getRootNodeIds().isEmpty()) {
@@ -82,6 +83,8 @@ public class GraphStatusUpdateHelper {
           e);
       throw e;
     }
+    log.warn("Time spent in GraphStatusUpdateHelper for nodeExecutionId: [{}] is [{}]", nodeExecutionId,
+        System.currentTimeMillis() - startTs);
     return orchestrationGraph;
   }
 
