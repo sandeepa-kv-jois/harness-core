@@ -13,36 +13,36 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DebeziumConfiguration {
-  private static final String MONGO_DB_CONNECTOR = "io.debezium.connector.mongodb.MongoDbConnector";
-  private static final String CONNECTOR_NAME = "name";
-  private static final String OFFSET_STORAGE = "offset.storage";
-  private static final String OFFSET_STORAGE_KEY = "offset.storage.topic";
-  private static final String OFFSET_STORAGE_FILE_FILENAME = "offset.storage.file.filename";
-  private static final String KEY_CONVERTER_SCHEMAS_ENABLE = "key.converter.schemas.enable";
-  private static final String VALUE_CONVERTER_SCHEMAS_ENABLE = "value.converter.schemas.enable";
-  private static final String OFFSET_FLUSH_INTERVAL_MS = "offset.flush.interval.ms";
-  private static final String CONNECTOR_CLASS = "connector.class";
-  private static final String MONGODB_HOSTS = "mongodb.hosts";
-  private static final String MONGODB_NAME = "mongodb.name";
-  private static final String MONGODB_USER = "mongodb.user";
-  private static final String MONGODB_PASSWORD = "mongodb.password";
-  private static final String MONGODB_SSL_ENABLED = "mongodb.ssl.enabled";
-  private static final String DATABASE_INCLUDE_LIST = "database.include.list";
-  private static final String COLLECTION_INCLUDE_LIST = "collection.include.list";
-  private static final String TRANSFORMS = "transforms";
-  private static final String TRANSFORMS_UNWRAP_TYPE = "transforms.unwrap.type";
-  private static final String TRANSFORMS_UNWRAP_DROP_TOMBSTONES = "transforms.unwrap.drop.tombstones";
-  private static final String TRANSFORMS_UNWRAP_ADD_HEADERS = "transforms.unwrap.add.headers";
-  private static final String DEBEZIUM_CONNECTOR_MONGODB_TRANSFORMS_EXTRACT_NEW_DOCUMENT_STATE =
+  public static final String MONGO_DB_CONNECTOR = "io.debezium.connector.mongodb.MongoDbConnector";
+  public static final String CONNECTOR_NAME = "name";
+  public static final String OFFSET_STORAGE = "offset.storage";
+  public static final String OFFSET_STORAGE_KEY = "offset.storage.topic";
+  public static final String OFFSET_STORAGE_FILE_FILENAME = "offset.storage.file.filename";
+  public static final String KEY_CONVERTER_SCHEMAS_ENABLE = "key.converter.schemas.enable";
+  public static final String VALUE_CONVERTER_SCHEMAS_ENABLE = "value.converter.schemas.enable";
+  public static final String OFFSET_FLUSH_INTERVAL_MS = "offset.flush.interval.ms";
+  public static final String CONNECTOR_CLASS = "connector.class";
+  public static final String MONGODB_HOSTS = "mongodb.hosts";
+  public static final String MONGODB_NAME = "mongodb.name";
+  public static final String MONGODB_USER = "mongodb.user";
+  public static final String MONGODB_PASSWORD = "mongodb.password";
+  public static final String MONGODB_SSL_ENABLED = "mongodb.ssl.enabled";
+  public static final String DATABASE_INCLUDE_LIST = "database.include.list";
+  public static final String COLLECTION_INCLUDE_LIST = "collection.include.list";
+  public static final String TRANSFORMS = "transforms";
+  public static final String TRANSFORMS_UNWRAP_TYPE = "transforms.unwrap.type";
+  public static final String TRANSFORMS_UNWRAP_DROP_TOMBSTONES = "transforms.unwrap.drop.tombstones";
+  public static final String TRANSFORMS_UNWRAP_ADD_HEADERS = "transforms.unwrap.add.headers";
+  public static final String DEBEZIUM_CONNECTOR_MONGODB_TRANSFORMS_EXTRACT_NEW_DOCUMENT_STATE =
       "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState";
+  public static final String REDIS_OFFSETS_KEY = "debezium:offsets";
 
   public Properties getDebeziumProperties(DebeziumConfig debeziumConfig) {
     Properties props = new Properties();
-    String offsetKey = "debezium:offsets";
     props.setProperty(CONNECTOR_NAME, debeziumConfig.getConnectorName());
     props.setProperty(OFFSET_STORAGE, RedisOffsetBackingStore.class.getName());
     props.setProperty(OFFSET_STORAGE_FILE_FILENAME, debeziumConfig.getOffsetStorageFileName());
-    props.setProperty(OFFSET_STORAGE_KEY, offsetKey);
+    props.setProperty(OFFSET_STORAGE_KEY, REDIS_OFFSETS_KEY);
     props.setProperty(KEY_CONVERTER_SCHEMAS_ENABLE, debeziumConfig.getKeyConverterSchemasEnable());
     props.setProperty(VALUE_CONVERTER_SCHEMAS_ENABLE, debeziumConfig.getValueConverterSchemasEnable());
     props.setProperty(OFFSET_FLUSH_INTERVAL_MS, debeziumConfig.getOffsetFlushIntervalMillis());
