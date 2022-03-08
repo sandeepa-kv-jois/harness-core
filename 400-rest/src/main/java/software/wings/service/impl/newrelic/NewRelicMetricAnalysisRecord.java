@@ -224,31 +224,4 @@ public class NewRelicMetricAnalysisRecord
       return metricName.compareTo(other.metricName);
     }
   }
-
-  @Data
-  @Builder
-  public static class NewRelicMetricAnalysisValue {
-    private String name;
-    private String type;
-    private String alertType;
-    private RiskLevel riskLevel;
-    private double testValue;
-    private double controlValue;
-    private List<NewRelicMetricHostAnalysisValue> hostAnalysisValues;
-  }
-
-  @Data
-  @Builder
-  public static class NewRelicMetricHostAnalysisValue {
-    private RiskLevel riskLevel;
-    private String testHostName;
-    private String controlHostName;
-    private List<Double> testValues;
-    private List<Double> controlValues;
-    private List<Double> upperThresholds;
-    private List<Double> lowerThresholds;
-    private List<Integer> anomalies;
-    int testStartIndex;
-    private String failFastCriteriaDescription;
-  }
 }

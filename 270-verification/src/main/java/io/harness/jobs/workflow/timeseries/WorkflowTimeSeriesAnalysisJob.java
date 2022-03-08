@@ -40,6 +40,7 @@ import software.wings.service.impl.newrelic.LearningEngineAnalysisTask;
 import software.wings.service.impl.newrelic.LearningEngineExperimentalAnalysisTask;
 import software.wings.service.impl.newrelic.MLExperiments;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord;
+import software.wings.service.impl.newrelic.NewRelicMetricAnalysisValue;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.impl.newrelic.NewRelicMetricValueDefinition;
 import software.wings.service.intfc.MetricDataAnalysisService;
@@ -207,7 +208,7 @@ public class WorkflowTimeSeriesAnalysisJob implements Handler<AnalysisContext> {
                                                                     .metricType(valuesToAnalyze.getValue())
                                                                     .build();
 
-          NewRelicMetricAnalysisRecord.NewRelicMetricAnalysisValue metricAnalysisValue =
+          NewRelicMetricAnalysisValue metricAnalysisValue =
               metricValueDefinition.analyze(metric.getValue(), controlRecordsByMetric.get(metricName));
           metricAnalysisValue.setHostAnalysisValues(metricValueDefinition.getTestHostValues(metric.getValue()));
           metricAnalysis.addNewRelicMetricAnalysisValue(metricAnalysisValue);

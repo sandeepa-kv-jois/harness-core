@@ -16,7 +16,7 @@ import software.wings.service.impl.analysis.DeploymentTimeSeriesAnalysis;
 import software.wings.service.impl.analysis.TimeSeriesMLTransactionThresholds;
 import software.wings.service.impl.analysis.TimeSeriesMetricGroup.TimeSeriesMlAnalysisGroupInfo;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord;
-import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord.NewRelicMetricHostAnalysisValue;
+import software.wings.service.impl.newrelic.NewRelicMetricHostAnalysisValue;
 import software.wings.sm.StateType;
 
 import java.io.UnsupportedEncodingException;

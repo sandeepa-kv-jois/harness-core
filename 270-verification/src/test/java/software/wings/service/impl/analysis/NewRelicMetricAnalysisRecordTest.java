@@ -18,7 +18,7 @@ import io.harness.rule.Owner;
 import software.wings.WingsBaseTest;
 import software.wings.metrics.RiskLevel;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord.NewRelicMetricAnalysis;
-import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord.NewRelicMetricAnalysisValue;
+import software.wings.service.impl.newrelic.NewRelicMetricAnalysisValue;
 import software.wings.service.impl.newrelic.NewRelicMetricValueDefinition;
 
 import com.google.gson.Gson;

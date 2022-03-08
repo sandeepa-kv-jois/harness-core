@@ -18,8 +18,8 @@ import io.harness.rule.Owner;
 import software.wings.WingsBaseTest;
 import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.MetricType;
-import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord.NewRelicMetricHostAnalysisValue;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
+import software.wings.service.impl.newrelic.NewRelicMetricHostAnalysisValue;
 import software.wings.service.impl.newrelic.NewRelicMetricValueDefinition;
 
 import java.security.SecureRandom;
