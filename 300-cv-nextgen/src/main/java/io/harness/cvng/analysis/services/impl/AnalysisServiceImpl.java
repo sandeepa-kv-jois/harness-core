@@ -45,14 +45,14 @@ public class AnalysisServiceImpl implements AnalysisService {
         timeSeriesAnalysisService.getTopTimeSeriesTransactionMetricRisk(verificationTaskIds, startTime, endTime);
 
     List<AnalysisRisk> analysisRisks = new ArrayList<>();
-    analysisRisks.addAll(
-        timeSeriesMetricRisks.stream()
-            .map(timeSeriesMetricRisk
-                -> AnalysisRisk.builder()
-                       .name(timeSeriesMetricRisk.getTransactionName() + " - " + timeSeriesMetricRisk.getMetricName())
-                       .risk((int) (timeSeriesMetricRisk.getMetricScore() * 100))
-                       .build())
-            .collect(Collectors.toList()));
+    analysisRisks.addAll(timeSeriesMetricRisks.stream()
+                             .map(timeSeriesMetricRisk
+                                 -> AnalysisRisk.builder()
+                                        .name(timeSeriesMetricRisk.getTransactionName() + " - "
+                                            + timeSeriesMetricRisk.getMetricIdentifier())
+                                        .risk((int) (timeSeriesMetricRisk.getMetricScore() * 100))
+                                        .build())
+                             .collect(Collectors.toList()));
     List<LogAnalysisResult> logAnalysisResults =
         logAnalysisService.getTopLogAnalysisResults(verificationTaskIds, startTime, endTime);
 

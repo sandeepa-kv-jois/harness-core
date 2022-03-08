@@ -13,9 +13,9 @@ import static io.harness.cvng.analysis.CVAnalysisConstants.TIMESERIES_VERIFICATI
 
 import io.harness.cvng.analysis.beans.DeploymentTimeSeriesAnalysisDTO;
 import io.harness.cvng.analysis.beans.ServiceGuardTimeSeriesAnalysisDTO;
-import io.harness.cvng.analysis.beans.TimeSeriesAnomalies;
+import io.harness.cvng.analysis.beans.ServiceGuardTxnMetricAnalysisDataDTO.MetricSumDTO;
+import io.harness.cvng.analysis.beans.TimeSeriesAnomaliesDTO;
 import io.harness.cvng.analysis.beans.TimeSeriesRecordDTO;
-import io.harness.cvng.analysis.entities.TimeSeriesCumulativeSums.MetricSum;
 import io.harness.cvng.analysis.services.api.TimeSeriesAnalysisService;
 import io.harness.cvng.core.beans.TimeSeriesMetricDefinition;
 import io.harness.rest.RestResponse;
@@ -64,7 +64,7 @@ public class TimeSeriesAnalysisResource {
   @ExceptionMetered
   @LearningEngineAuth
   @ApiOperation(value = "get risk analysis cumulative sums", nickname = "getCumulativeSums")
-  public RestResponse<Map<String, Map<String, List<MetricSum>>>> getCumulativeSums(
+  public RestResponse<Map<String, Map<String, List<MetricSumDTO>>>> getCumulativeSums(
       @QueryParam("verificationTaskId") String verificationTaskId,
       @QueryParam("analysisStartTime") String epochStartInstant,
       @QueryParam("analysisEndTime") String epochEndInstant) {
@@ -79,7 +79,7 @@ public class TimeSeriesAnalysisResource {
   @LearningEngineAuth
   @ExceptionMetered
   @ApiOperation(value = "get previous anomalies for a data source config", nickname = "getPreviousAnomalies")
-  public RestResponse<Map<String, Map<String, List<TimeSeriesAnomalies>>>> getPreviousAnomalies(
+  public RestResponse<Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>>> getPreviousAnomalies(
       @QueryParam("verificationTaskId") String verificationTaskId) {
     return new RestResponse<>(timeSeriesAnalysisService.getLongTermAnomalies(verificationTaskId));
   }

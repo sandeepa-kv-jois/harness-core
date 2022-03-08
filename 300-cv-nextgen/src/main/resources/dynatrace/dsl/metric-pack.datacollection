@@ -30,7 +30,7 @@ foreach metricToValidate in Env:metricsToValidate {
         foreach metricTimestamp in Var:metricTimestamps {
            Var metricValue = Var:metricValues[Var:index]
            if Var:metricValue != Var:nullObject {
-              Var tsRecord = new TimeseriesRecord(txnName=Env:groupName, metricName=Var:metricName, metricIdentifier=Var:metricIdentifier, metricValue=Var:metricValue, timestamp=Var:metricTimestamp, host=Env:host)
+              Var tsRecord = new TimeseriesRecord(txnName=Env:groupName, metricIdentifier=Var:metricIdentifier, metricName=Var:metricName, metricValue=Var:metricValue, timestamp=Var:metricTimestamp, host=Env:host)
               Var:returnList.append(Var:tsRecord)
            }
            index = Var:index + Var:one

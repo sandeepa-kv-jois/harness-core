@@ -5,22 +5,20 @@
  * https://polyformproject.org/wp-content/uploads/2020/06/PolyForm-Shield-1.0.0.txt.
  */
 
-package io.harness.resourcegroup.v1.model;
+package io.harness.resourcegroup.model;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.beans.Scope;
 
-import javax.validation.Valid;
+import javax.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
-import org.springframework.data.annotation.TypeAlias;
 
 @OwnedBy(HarnessTeam.PL)
 @Data
 @Builder
-@TypeAlias("ResourceSelectorByScope")
-public class ResourceSelectorByScope implements ResourceSelector {
-  boolean includeChildScopes;
-  @Valid Scope scope;
+/*This class cannot be moved since it is missing type alias*/
+public class DynamicResourceSelector implements ResourceSelector {
+  @NotNull String resourceType;
+  Boolean includeChildScopes;
 }

@@ -525,4 +525,26 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
         .map(key -> (String) key.getId())
         .collect(toList());
   }
+
+  @Override
+  public DelegateGroup updateDelegateGroupTags(
+      String accountId, String orgId, String projectId, String delegateGroupName, List<String> tags) {
+    DelegateEntityOwner owner = DelegateEntityOwnerHelper.buildOwner(orgId, projectId);
+
+    Query<DelegateGroup> updateQuery = persistence.createQuery(DelegateGroup.class)
+                                           .filter(DelegateGroupKeys.accountId, accountId)
+                                           .filter(DelegateGroupKeys.name, delegateGroupName)
+                                           .filter(DelegateGroupKeys.owner, owner)
+                                           .filter(DelegateGroupKeys.ng, true);
+
+    final UpdateOperations<DelegateGroup> updateOperations = persistence.createUpdateOperations(DelegateGroup.class);
+    setUnset(updateOperations, DelegateGroupKeys.tags, tags);
+
+    DelegateGroup updatedDelegateGroup =
+        persistence.findAndModify(updateQuery, updateOperations, HPersistence.returnNewOptions);
+    delegateCache.invalidateDelegateGroupCacheByIdentifier(accountId, owner, delegateGroupName);
+
+    log.info("Updating tags for delegate group: {} tags:{}", delegateGroupName, String.valueOf(tags.toString()));
+    return updatedDelegateGroup;
+  }
 }

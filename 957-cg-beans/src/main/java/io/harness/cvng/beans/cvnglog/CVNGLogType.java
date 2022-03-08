@@ -7,11 +7,9 @@
 
 package io.harness.cvng.beans.cvnglog;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public enum CVNGLogType {
-  @JsonProperty("ApiCallLog") API_CALL_LOG("ApiCallLog"),
-  @JsonProperty("ExecutionLog") EXECUTION_LOG("ExecutionLog");
+  API_CALL_LOG("ApiCallLog"),
+  EXECUTION_LOG("ExecutionLog");
 
   private String displayName;
 

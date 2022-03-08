@@ -143,6 +143,16 @@ public class CVNGLogServiceImpl implements CVNGLogService {
   }
 
   @Override
+  public List<CVNGLog> getCompleteCVNGLog(String accountId, String verificationTaskId, CVNGLogType cvngLogType) {
+    return hPersistence.createQuery(CVNGLog.class)
+        .filter(CVNGLogKeys.accountId, accountId)
+        .filter(CVNGLogKeys.traceableType, VERIFICATION_TASK)
+        .filter(CVNGLogKeys.traceableId, verificationTaskId)
+        .filter(CVNGLogKeys.logType, cvngLogType)
+        .asList();
+  }
+
+  @Override
   public PageResponse<CVNGLogDTO> getCVNGLogs(String accountId, String verificationJobInstanceId, CVNGLogType logType,
       List<String> healthSourceIdentifiers, boolean errorLogsOnly, PageParams pageParams) {
     List<CVNGLog> cvngLogs = getCVNGLogs(accountId, verificationJobInstanceId, logType, healthSourceIdentifiers);

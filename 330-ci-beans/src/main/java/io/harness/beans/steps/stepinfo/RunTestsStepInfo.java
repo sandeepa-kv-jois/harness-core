@@ -12,6 +12,7 @@ import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_MAP_CLASSPATH;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotation.RecasterAlias;
@@ -71,11 +72,11 @@ public class RunTestsStepInfo implements CIStepInfo {
 
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> args;
   @NotNull
-  @YamlSchemaTypes({string})
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.TILanguage")
   private ParameterField<TILanguage> language;
   @NotNull
-  @YamlSchemaTypes({string})
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.TIBuildTool")
   private ParameterField<TIBuildTool> buildTool;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> packages;
@@ -96,10 +97,10 @@ public class RunTestsStepInfo implements CIStepInfo {
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> postCommand;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = BOOLEAN_CLASSPATH) private ParameterField<Boolean> privileged;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
-  @YamlSchemaTypes({string})
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.ImagePullPolicy")
   private ParameterField<ImagePullPolicy> imagePullPolicy;
-  @YamlSchemaTypes({string})
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.CIShellType")
   private ParameterField<CIShellType> shell;
 
