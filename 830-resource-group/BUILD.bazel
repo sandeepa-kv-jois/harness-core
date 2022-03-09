@@ -63,10 +63,14 @@ java_library(
     name = "tests",
     testonly = True,
     srcs = glob(["src/test/**/*.java"]),
-    data = ["//830-resource-group/src/main/resources:resource"],
+    data = [
+        "//830-resource-group/src/main/resources:resource",
+        "//830-resource-group/src/test/resources:resource",
+    ],
     resources = [
         "//:resource",
         "//830-resource-group/src/main/resources:resource",
+        "//830-resource-group/src/test/resources:resource",
     ],
     visibility = ["//visibility:public"],
     runtime_deps = [
