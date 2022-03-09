@@ -4,8 +4,8 @@ load("//:tools/bazel/macros.bzl", "run_analysis")
 java_binary(
     name = "module",
     srcs = glob(["src/main/java/**/*.java"]),
-    visibility = ["//visibility:public"],
     main_class = "io.harness.DebeziumServiceApplication",
+    visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
         "//958-debezium-engine:module",
@@ -19,20 +19,20 @@ java_binary(
         "@maven//:com_google_code_findbugs_annotations",
         "@maven//:com_google_guava_guava",
         "@maven//:com_google_inject_guice",
-        "@maven//:io_dropwizard_dropwizard_logging",
-        "@maven//:io_dropwizard_dropwizard_request_logging",
         "@maven//:io_debezium_debezium_api",
         "@maven//:io_debezium_debezium_connector_mongodb",
         "@maven//:io_debezium_debezium_core",
-        "@maven//:org_apache_logging_log4j_log4j_api",
-        "@maven//:org_apache_logging_log4j_log4j_to_slf4j",
         "@maven//:io_debezium_debezium_embedded",
+        "@maven//:io_dropwizard_dropwizard_logging",
+        "@maven//:io_dropwizard_dropwizard_request_logging",
         "@maven//:javax_validation_validation_api",
         "@maven//:org_apache_commons_commons_collections4",
         "@maven//:org_apache_commons_commons_lang3",
         "@maven//:org_apache_kafka_connect_api",
         "@maven//:org_apache_kafka_connect_runtime",
         "@maven//:org_apache_kafka_kafka_clients",
+        "@maven//:org_apache_logging_log4j_log4j_api",
+        "@maven//:org_apache_logging_log4j_log4j_to_slf4j",
         "@maven//:org_hibernate_hibernate_validator",
         "@maven//:org_mongodb_mongo_java_driver",
         "@maven//:org_mongodb_morphia_morphia",
@@ -50,4 +50,3 @@ run_analysis()
 exports_files([
     "config.yml",
 ])
-
