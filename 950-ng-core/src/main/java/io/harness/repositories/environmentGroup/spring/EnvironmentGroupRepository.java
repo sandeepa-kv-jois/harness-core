@@ -9,7 +9,6 @@ package io.harness.repositories.environmentGroup.spring;
 
 import io.harness.annotation.HarnessRepo;
 import io.harness.ng.core.envGroup.beans.EnvironmentGroupEntity;
-import io.harness.ng.core.environment.beans.Environment;
 import io.harness.repositories.environment.custom.EnvironmentRepositoryCustom;
 
 import java.util.Optional;
@@ -19,8 +18,5 @@ import org.springframework.data.repository.PagingAndSortingRepository;
 public interface EnvironmentGroupRepository
     extends PagingAndSortingRepository<EnvironmentGroupEntity, String>, EnvironmentRepositoryCustom {
   Optional<EnvironmentGroupEntity> findByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifierAndDeletedNot(
-      String accountId, String orgIdentifier, String projectIdentifier, String serviceIdentifier, boolean notDeleted);
-
-  void deleteByAccountIdAndOrgIdentifierAndProjectIdentifierAndIdentifier(
-      String accountId, String orgIdentifier, String projectIdentifier, String serviceIdentifier);
+      String accountId, String orgIdentifier, String projectIdentifier, String envGroupId, boolean notDeleted);
 }
