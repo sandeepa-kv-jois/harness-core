@@ -31,6 +31,7 @@ import io.harness.event.client.EventPublisher;
 import io.harness.grpc.pingpong.PingPongClient;
 import io.harness.serializer.YamlUtils;
 import io.harness.threading.ExecutorModule;
+import io.harness.threading.Morpheus;
 import io.harness.threading.ThreadPool;
 import io.harness.utils.ProcessControl;
 
@@ -43,6 +44,7 @@ import com.ning.http.client.AsyncHttpClient;
 import java.io.File;
 import java.io.IOException;
 import java.lang.management.ManagementFactory;
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
@@ -121,6 +123,7 @@ public class DelegateApplication {
 
     boolean watched = watcherProcess != null;
     if (watched) {
+      Morpheus.sleep(Duration.ofSeconds(60));
       log.info("Sending watcher {} new delegate process ID: {}", watcherProcess, processId);
       messageService.writeMessageToChannel(WATCHER, watcherProcess, NEW_DELEGATE, processId);
       Map<String, Object> watcherData = new HashMap<>();
