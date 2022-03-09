@@ -63,7 +63,7 @@ public class AnomalyServiceImpl implements AnomalyService {
   @Inject CEViewService viewService;
   @Inject PerspectiveToAnomalyQueryHelper perspectiveToAnomalyQueryHelper;
 
-  private static final Integer DEFAULT_LIMIT = 100;
+  private static final Integer DEFAULT_LIMIT = 1000;
   private static final Integer DEFAULT_OFFSET = 0;
   private static final String ANOMALY_RELATIVE_TIME_TEMPLATE = "since %s %s";
   private static final String STATUS_RELATIVE_TIME_TEMPLATE = "%s %s ago";
@@ -82,8 +82,6 @@ public class AnomalyServiceImpl implements AnomalyService {
         anomalyQueryBuilder.getOrderByFields(anomalyQuery.getOrderBy()), anomalyQuery.getOffset(),
         anomalyQuery.getLimit());
 
-    log.info("Anomalies: {}", anomalies);
-
     List<AnomalyData> anomalyData = new ArrayList<>();
     anomalies.forEach(anomaly -> anomalyData.add(buildAnomalyData(anomaly)));
     return anomalyData;
@@ -96,9 +94,12 @@ public class AnomalyServiceImpl implements AnomalyService {
     CCMFilter filters =
         perspectiveToAnomalyQueryHelper.getConvertedFiltersForPerspective(perspective, perspectiveQuery);
     List<AnomalyData> anomalyData = listAnomalies(accountIdentifier,
-        AnomalyQueryDTO.builder().filter(filters).orderBy(Collections.emptyList()).limit(1000).offset(0).build());
-    log.info("Anomalies for perspective: {}", anomalyData);
-    // Todo: Add perspective query to anomaly query mapping
+        AnomalyQueryDTO.builder()
+            .filter(filters)
+            .orderBy(Collections.emptyList())
+            .limit(DEFAULT_LIMIT)
+            .offset(DEFAULT_OFFSET)
+            .build());
     return buildPerspectiveAnomalyData(anomalyData);
   }
 
@@ -117,7 +118,7 @@ public class AnomalyServiceImpl implements AnomalyService {
   @Override
   public List<AnomalySummary> getAnomalySummary(@NonNull String accountIdentifier, AnomalyQueryDTO anomalyQuery) {
     if (anomalyQuery == null) {
-      return null;
+      return Collections.emptyList();
     }
     Condition condition = anomalyQuery.getFilter() != null
         ? anomalyQueryBuilder.applyAllFilters(anomalyQuery.getFilter())
