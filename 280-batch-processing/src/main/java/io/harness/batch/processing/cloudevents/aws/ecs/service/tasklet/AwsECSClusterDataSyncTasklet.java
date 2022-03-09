@@ -27,6 +27,7 @@ import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.E
 import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.ng.NGConnectorHelper;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.response.EcsUtilizationData;
 import io.harness.batch.processing.cloudevents.aws.ecs.service.tasklet.support.response.MetricValue;
+import io.harness.batch.processing.dao.intfc.ECSServiceDao;
 import io.harness.batch.processing.dao.intfc.InstanceDataDao;
 import io.harness.batch.processing.service.intfc.InstanceDataService;
 import io.harness.batch.processing.service.intfc.InstanceResourceService;
@@ -43,6 +44,7 @@ import io.harness.ccm.commons.constants.InstanceMetaDataConstants;
 import io.harness.ccm.commons.entities.batch.InstanceData;
 import io.harness.ccm.commons.entities.billing.CECloudAccount;
 import io.harness.ccm.commons.entities.billing.CECluster;
+import io.harness.ccm.commons.entities.ecs.ECSService;
 import io.harness.ccm.health.LastReceivedPublishedMessageDao;
 import io.harness.ccm.setup.CECloudAccountDao;
 import io.harness.connector.ConnectorInfoDTO;
@@ -107,6 +109,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
   @Autowired private CEClusterDao ceClusterDao;
   @Autowired private EcsMetricClient ecsMetricClient;
   @Autowired private InstanceDataDao instanceDataDao;
+  @Autowired private ECSServiceDao ecsServiceDao;
   @Autowired private CECloudAccountDao ceCloudAccountDao;
   @Autowired private NGConnectorHelper ngConnectorHelper;
   @Autowired private AwsECSHelperService awsECSHelperService;
@@ -380,6 +383,16 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
               }
             }
 
+            ECSService ecsService =
+                ECSService.builder()
+                    .accountId(accountId)
+                    .clusterId(clusterId)
+                    .serviceArn(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_ARN))
+                    .serviceName(metaData.get(InstanceMetaDataConstants.ECS_SERVICE_NAME))
+                    .resource(resource)
+                    .labels(labels)
+                    .build();
+
             Instant startInstant = task.getPullStartedAt().toInstant();
             InstanceData instanceData =
                 InstanceData.builder()
@@ -401,6 +414,7 @@ public class AwsECSClusterDataSyncTasklet implements Tasklet {
 
             updateInstanceStopTimeForTask(instanceData, task);
             log.debug("Creating task {} ", taskId);
+            ecsServiceDao.create(ecsService);
             instanceDataService.create(instanceData);
           }
         });
