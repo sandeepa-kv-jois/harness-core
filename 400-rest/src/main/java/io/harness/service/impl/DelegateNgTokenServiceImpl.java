@@ -15,6 +15,8 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.UUIDGenerator;
+import io.harness.delegate.beans.Delegate;
+import io.harness.delegate.beans.Delegate.DelegateKeys;
 import io.harness.delegate.beans.DelegateEntityOwner;
 import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateToken.DelegateTokenKeys;
@@ -30,6 +32,7 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HPersistence;
 import io.harness.security.SourcePrincipalContextBuilder;
+import io.harness.service.intfc.DelegateCache;
 import io.harness.utils.Misc;
 
 import software.wings.beans.Account;
@@ -42,6 +45,7 @@ import java.time.OffsetDateTime;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 import javax.validation.executable.ValidateOnExecution;
 import lombok.extern.slf4j.Slf4j;
@@ -58,11 +62,14 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
   private static final String DEFAULT_TOKEN_NAME = "default_token";
   private final HPersistence persistence;
   private final OutboxService outboxService;
+  private final DelegateCache delegateCache;
 
   @Inject
-  public DelegateNgTokenServiceImpl(HPersistence persistence, OutboxService outboxService) {
+  public DelegateNgTokenServiceImpl(
+      HPersistence persistence, OutboxService outboxService, DelegateCache delegateCache) {
     this.persistence = persistence;
     this.outboxService = outboxService;
+    this.delegateCache = delegateCache;
   }
 
   @Override
@@ -98,6 +105,7 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
                 Date.from(OffsetDateTime.now().plusDays(DelegateToken.TTL.toDays()).toInstant()));
     DelegateToken updatedDelegateToken =
         persistence.findAndModify(filterQuery, updateOperations, new FindAndModifyOptions());
+    invalidateDelegateGroupCache(accountId, tokenName);
     publishRevokeTokenAuditEvent(updatedDelegateToken);
     return getDelegateTokenDetails(updatedDelegateToken, false);
   }
@@ -272,5 +280,14 @@ public class DelegateNgTokenServiceImpl implements DelegateNgTokenService, Accou
         .name(delegateToken.getName())
         .identifier(delegateToken.getUuid())
         .build();
+  }
+
+  private void invalidateDelegateGroupCache(String accountId, String tokenName) {
+    Set<String> delegateGroupIds = null;
+    Query<Delegate> query = persistence.createQuery(Delegate.class)
+                                .filter(DelegateKeys.accountId, accountId)
+                                .filter(DelegateKeys.delegateTokenName, tokenName);
+    query.asList().forEach(delegate -> delegateGroupIds.add(delegate.getUuid()));
+    delegateGroupIds.forEach(delegateGroupId -> delegateCache.invalidateDelegateGroupCache(accountId, delegateGroupId));
   }
 }

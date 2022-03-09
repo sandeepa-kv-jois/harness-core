@@ -34,6 +34,7 @@ public class DelegateGroupListing {
     private long lastHeartbeat;
     private boolean activelyConnected;
     private String hostName;
+    private boolean isTokenActive;
     List<DelegateConnectionDetails> connections;
   }
 }

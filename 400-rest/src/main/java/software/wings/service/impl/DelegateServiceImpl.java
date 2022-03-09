@@ -109,6 +109,7 @@ import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateScripts;
 import io.harness.delegate.beans.DelegateSetupDetails;
 import io.harness.delegate.beans.DelegateSizeDetails;
+import io.harness.delegate.beans.DelegateToken;
 import io.harness.delegate.beans.DelegateTokenDetails;
 import io.harness.delegate.beans.DelegateTokenStatus;
 import io.harness.delegate.beans.DelegateType;
@@ -814,6 +815,7 @@ public class DelegateServiceImpl implements DelegateService {
               .implicitSelectors(delegateSetupService.retrieveDelegateImplicitSelectors(delegate))
               .sampleDelegate(delegate.isSampleDelegate())
               .connections(connections)
+              .isTokenActive(getDelegateTokenStatusFromDB(delegate.getAccountId(), delegate.getDelegateTokenName()))
               .build();
         })
         .collect(toList());
@@ -3902,5 +3904,13 @@ public class DelegateServiceImpl implements DelegateService {
       return true;
     }
     return existingOwner.getIdentifier().equals(owner.getIdentifier());
+  }
+
+  private boolean getDelegateTokenStatusFromDB(String accountId, String tokenName) {
+    DelegateToken delegateToken = persistence.createQuery(DelegateToken.class)
+                                      .filter(DelegateToken.DelegateTokenKeys.accountId, accountId)
+                                      .filter(DelegateToken.DelegateTokenKeys.name, tokenName)
+                                      .get();
+    return delegateToken.getStatus().equals(DelegateTokenStatus.ACTIVE);
   }
 }
