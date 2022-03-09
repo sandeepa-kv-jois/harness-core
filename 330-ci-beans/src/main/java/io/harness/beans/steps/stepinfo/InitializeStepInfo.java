@@ -123,8 +123,8 @@ public class InitializeStepInfo implements CIStepInfo, WithConnectorRef {
     }
 
     if (!skipGitClone) {
-      connectorRefMap.put(
-          YAMLFieldNameConstants.CODEBASE_CONNECTOR_REF, ParameterField.createValueField(ciCodebase.getConnectorRef()));
+      connectorRefMap.put(YAMLFieldNameConstants.CODEBASE_CONNECTOR_REF,
+          ParameterField.createValueField(ciCodebase.getConnectorRef().getValue()));
     }
 
     return connectorRefMap;

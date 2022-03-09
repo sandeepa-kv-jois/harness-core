@@ -294,57 +294,6 @@ public class ChangeEventResourceTest extends CvNextGenTestBase {
   }
 
   @Test
-  @Owner(developers = ABHIJITH)
-  @Category(UnitTests.class)
-  public void testGetMonitoredServiceChangeTimeline() {
-    hPersistence.save(Arrays.asList(
-        builderFactory.getDeploymentActivityBuilder().eventTime(Instant.ofEpochSecond(50)).build(),
-        builderFactory.getKubernetesClusterActivityForAppServiceBuilder().eventTime(Instant.ofEpochSecond(50)).build(),
-        builderFactory.getDeploymentActivityBuilder().eventTime(Instant.ofEpochSecond(100)).build(),
-        builderFactory.getDeploymentActivityBuilder()
-            .serviceIdentifier("service2")
-            .environmentIdentifier("env2")
-            .monitoredServiceIdentifier("service_env2")
-            .eventTime(Instant.ofEpochSecond(500))
-            .build(),
-        builderFactory.getDeploymentActivityBuilder().eventTime(Instant.ofEpochSecond(14398)).build(),
-        builderFactory.getKubernetesClusterActivityForAppServiceBuilder()
-            .eventTime(Instant.ofEpochSecond(14399500))
-            .build()));
-
-    Response response = RESOURCES.client()
-                            .target("http://localhost:9998/change-event/monitored-service-timeline")
-                            .queryParam("accountId", builderFactory.getContext().getAccountId())
-                            .queryParam("orgIdentifier", builderFactory.getContext().getOrgIdentifier())
-                            .queryParam("projectIdentifier", builderFactory.getContext().getProjectIdentifier())
-                            .queryParam("serviceIdentifier", builderFactory.getContext().getServiceIdentifier())
-                            .queryParam("environmentIdentifier", builderFactory.getContext().getEnvIdentifier())
-                            .queryParam("changeSourceTypes", "HarnessCDNextGen", "K8sCluster")
-                            .queryParam("duration", DurationDTO.FOUR_HOURS)
-                            .queryParam("endTime", 14300000)
-                            .request(MediaType.APPLICATION_JSON_TYPE)
-                            .get();
-    assertThat(response.getStatus()).isEqualTo(200);
-    ChangeTimeline changeTimeline =
-        response.readEntity(new GenericType<RestResponse<ChangeTimeline>>() {}).getResource();
-
-    List<TimeRangeDetail> deploymentChanges = changeTimeline.getCategoryTimeline().get(ChangeCategory.DEPLOYMENT);
-    assertThat(deploymentChanges.size()).isEqualTo(2);
-    assertThat(deploymentChanges.get(0).getCount()).isEqualTo(2);
-    assertThat(deploymentChanges.get(0).getStartTime()).isEqualTo(0);
-    assertThat(deploymentChanges.get(0).getEndTime()).isEqualTo(300000);
-    assertThat(deploymentChanges.get(1).getCount()).isEqualTo(1);
-    assertThat(deploymentChanges.get(1).getStartTime()).isEqualTo(14100000);
-    assertThat(deploymentChanges.get(1).getEndTime()).isEqualTo(14400000);
-    List<TimeRangeDetail> infrastructureChanges =
-        changeTimeline.getCategoryTimeline().get(ChangeCategory.INFRASTRUCTURE);
-    assertThat(infrastructureChanges.size()).isEqualTo(1);
-    assertThat(infrastructureChanges.get(0).getCount()).isEqualTo(1);
-    assertThat(infrastructureChanges.get(0).getStartTime()).isEqualTo(0);
-    assertThat(infrastructureChanges.get(0).getEndTime()).isEqualTo(300000);
-  }
-
-  @Test
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
   public void testGetMonitoredServiceChangeTimeline_withMonitoredServiceFilter() {

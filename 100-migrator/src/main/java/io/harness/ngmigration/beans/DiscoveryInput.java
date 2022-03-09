@@ -19,5 +19,6 @@ import lombok.Data;
 @OwnedBy(HarnessTeam.CDC)
 @Data
 public class DiscoveryInput {
+  private boolean exportImage;
   private List<DiscoverEntityInput> entities;
 }

@@ -361,8 +361,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
     Reflect.on(nodeExecution7).set(NodeExecutionKeys.status, Status.FAILED);
     Reflect.on(nodeExecution8).set(NodeExecutionKeys.status, Status.QUEUED);
 
-    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution4.getUuid(),
-             StatusUtils.finalStatuses(), false, true,
+    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution4.getUuid(), null, false, true,
              Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
         .thenReturn(Collections.singletonList(nodeExecution7));
     // Check current status for FAILED
@@ -387,8 +386,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
     Reflect.on(nodeExecution7).set(NodeExecutionKeys.status, Status.ERRORED);
     Reflect.on(nodeExecution8).set(NodeExecutionKeys.status, Status.QUEUED);
 
-    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution4.getUuid(),
-             StatusUtils.finalStatuses(), false, true,
+    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution4.getUuid(), null, false, true,
              Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
         .thenReturn(Collections.singletonList(nodeExecution7));
     // Check current status for ERRORED

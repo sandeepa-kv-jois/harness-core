@@ -10,13 +10,17 @@ package io.harness.ngmigration.service;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EncryptedData;
+import io.harness.beans.MigratedEntityMapping;
 import io.harness.beans.SecretManagerConfig;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
 import io.harness.ng.core.dto.secrets.SecretResponseWrapper;
 import io.harness.ng.core.dto.secrets.SecretTextSpecDTO;
+import io.harness.ngmigration.beans.BaseEntityInput;
+import io.harness.ngmigration.beans.BaseInputDefinition;
 import io.harness.ngmigration.beans.MigrationInputDTO;
+import io.harness.ngmigration.beans.MigratorInputType;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
@@ -25,6 +29,7 @@ import io.harness.secretmanagerclient.ValueType;
 import io.harness.secrets.SecretService;
 import io.harness.serializer.JsonUtils;
 
+import software.wings.ngmigration.CgBasicInfo;
 import software.wings.ngmigration.CgEntityId;
 import software.wings.ngmigration.CgEntityNode;
 import software.wings.ngmigration.DiscoveryNode;
@@ -47,6 +52,25 @@ import retrofit2.Response;
 @OwnedBy(HarnessTeam.CDC)
 public class SecretMigrationService implements NgMigrationService {
   @Inject private SecretService secretService;
+
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    CgBasicInfo basicInfo = yamlFile.getCgBasicInfo();
+    SecretDTOV2 secretYaml = ((SecretRequestWrapper) yamlFile.getYaml()).getSecret();
+    return MigratedEntityMapping.builder()
+        .appId(basicInfo.getAppId())
+        .accountId(basicInfo.getAccountId())
+        .cgEntityId(basicInfo.getId())
+        .entityType(NGMigrationEntityType.SECRET.name())
+        .accountIdentifier(basicInfo.getAccountId())
+        .orgIdentifier(secretYaml.getOrgIdentifier())
+        .projectIdentifier(secretYaml.getProjectIdentifier())
+        .identifier(secretYaml.getIdentifier())
+        .scope(MigratorMappingService.getScope(secretYaml.getOrgIdentifier(), secretYaml.getProjectIdentifier()))
+        .fullyQualifiedIdentifier(MigratorMappingService.getFullyQualifiedIdentifier(basicInfo.getAccountId(),
+            secretYaml.getOrgIdentifier(), secretYaml.getProjectIdentifier(), secretYaml.getIdentifier()))
+        .build();
+  }
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -116,6 +140,12 @@ public class SecretMigrationService implements NgMigrationService {
                                                   .build())
                                         .build())
                             .build())
+                  .cgBasicInfo(CgBasicInfo.builder()
+                                   .id(encryptedData.getUuid())
+                                   .accountId(encryptedData.getAccountId())
+                                   .appId(null)
+                                   .type(NGMigrationEntityType.SECRET)
+                                   .build())
                   .build());
 
     // TODO: make it more obvious that migratedEntities needs to be updated by having compile-time check
@@ -127,5 +157,18 @@ public class SecretMigrationService implements NgMigrationService {
             .build());
 
     return files;
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
+    EncryptedData secretManagerConfig = (EncryptedData) entities.get(entityId).getEntity();
+    return BaseEntityInput.builder()
+        .migrationStatus(MigratorInputType.CREATE_NEW)
+        .identifier(
+            BaseInputDefinition.buildIdentifier(MigratorUtility.generateIdentifier(secretManagerConfig.getName())))
+        .name(BaseInputDefinition.buildName(secretManagerConfig.getName()))
+        .spec(null)
+        .build();
   }
 }

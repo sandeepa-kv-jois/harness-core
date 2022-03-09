@@ -456,46 +456,25 @@
           ],
           "properties": {
             "args": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             "connectorRef": {
               "type": "string"
             },
             "entrypoint": {
-              "oneOf": [
-                {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             },
             "envVariables": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
             },
             "image": {
               "type": "string"
@@ -509,41 +488,20 @@
               ]
             },
             "portBindings": {
-              "oneOf": [
-                {
-                  "type": "object",
-                  "additionalProperties": {
-                    "type": "string"
-                  }
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              "type": "object",
+              "additionalProperties": {
+                "type": "string"
+              }
             },
             "privileged": {
-              "oneOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              "type": "boolean"
             },
             "resources": {
               "$ref": "#/definitions/ContainerResource"
             },
             "runAsUser": {
-              "oneOf": [
-                {
-                  "type": "integer",
-                  "format": "int32"
-                },
-                {
-                  "type": "string"
-                }
-              ]
+              "type": "integer",
+              "format": "int32"
             }
           }
         }
@@ -973,6 +931,9 @@
         "name": {
           "type": "string"
         },
+        "spec": {
+          "$ref": "#/definitions/DependencySpecType"
+        },
         "type": {
           "type": "string",
           "enum": [
@@ -980,25 +941,7 @@
           ]
         }
       },
-      "$schema": "http://json-schema.org/draft-07/schema#",
-      "allOf": [
-        {
-          "if": {
-            "properties": {
-              "type": {
-                "const": "Service"
-              }
-            }
-          },
-          "then": {
-            "properties": {
-              "spec": {
-                "$ref": "#/definitions/CIServiceInfo"
-              }
-            }
-          }
-        }
-      ]
+      "$schema": "http://json-schema.org/draft-07/schema#"
     },
     "DependencySpecType": {
       "type": "object",
@@ -1782,7 +1725,16 @@
       ],
       "properties": {
         "cloneCodebase": {
-          "type": "boolean"
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
         },
         "execution": {
           "$ref": "#/definitions/ExecutionElementConfig"
@@ -1801,10 +1753,19 @@
           ]
         },
         "serviceDependencies": {
-          "type": "array",
-          "items": {
-            "$ref": "#/definitions/DependencyElement"
-          }
+          "oneOf": [
+            {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/DependencyElement"
+              }
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
         },
         "sharedPaths": {
           "oneOf": [
@@ -2363,7 +2324,7 @@
         },
         "memory": {
           "type": "string",
-          "pattern": "^(([0-9]*[.])?[0-9]+)([GM]i?)$"
+          "pattern": "^(([0-9]*[.])?[0-9]+)([GM]i?)|<\\+input>$"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -2912,7 +2873,16 @@
               ]
             },
             "reports": {
-              "$ref": "#/definitions/UnitTestReport"
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/UnitTestReport"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "resources": {
               "$ref": "#/definitions/ContainerResource"
@@ -3493,10 +3463,19 @@
               ]
             },
             "outputVariables": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/OutputNGVariable"
-              }
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/OutputNGVariable"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "privileged": {
               "oneOf": [
@@ -3509,7 +3488,16 @@
               ]
             },
             "reports": {
-              "$ref": "#/definitions/UnitTestReport"
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/UnitTestReport"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "resources": {
               "$ref": "#/definitions/ContainerResource"
@@ -3537,7 +3525,9 @@
                   ]
                 },
                 {
-                  "type": "string"
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
                 }
               ]
             }
@@ -3634,10 +3624,19 @@
               ]
             },
             "outputVariables": {
-              "type": "array",
-              "items": {
-                "$ref": "#/definitions/OutputNGVariable"
-              }
+              "oneOf": [
+                {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/definitions/OutputNGVariable"
+                  }
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "packages": {
               "type": "string"
@@ -3659,7 +3658,16 @@
               ]
             },
             "reports": {
-              "$ref": "#/definitions/UnitTestReport"
+              "oneOf": [
+                {
+                  "$ref": "#/definitions/UnitTestReport"
+                },
+                {
+                  "type": "string",
+                  "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+                  "minLength": 1
+                }
+              ]
             },
             "resources": {
               "$ref": "#/definitions/ContainerResource"

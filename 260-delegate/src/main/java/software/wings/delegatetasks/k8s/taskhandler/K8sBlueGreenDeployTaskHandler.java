@@ -63,6 +63,8 @@ import io.harness.k8s.model.Release.Status;
 import io.harness.k8s.model.ReleaseHistory;
 import io.harness.logging.CommandExecutionStatus;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -121,10 +123,14 @@ public class K8sBlueGreenDeployTaskHandler extends K8sTaskHandler {
         return getFailureResponse(null);
       }
     } else {
+      ExecutionLogCallback executionLogCallback =
+          k8sTaskHelper.getExecutionLogCallback(k8sBlueGreenDeployTaskParameters, FetchFiles);
+      executionLogCallback.saveExecutionLog(
+          color("\nStarting Kubernetes Blue-Greeen Deployment", LogColor.White, LogWeight.Bold));
+
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sBlueGreenDeployTaskParameters.getK8sDelegateManifestConfig(),
-          k8sBlueGreenHandlerConfig.getManifestFilesDirectory(),
-          k8sTaskHelper.getExecutionLogCallback(k8sBlueGreenDeployTaskParameters, FetchFiles), timeoutInMillis);
+          k8sBlueGreenHandlerConfig.getManifestFilesDirectory(), executionLogCallback, timeoutInMillis);
       if (!success) {
         return getFailureResponse(null);
       }

@@ -10,6 +10,7 @@ package io.harness.ngmigration.service;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import io.harness.beans.MigratedEntityMapping;
 import io.harness.cdng.manifest.ManifestConfigType;
 import io.harness.cdng.manifest.yaml.GitStore;
 import io.harness.cdng.manifest.yaml.ManifestConfig;
@@ -20,6 +21,7 @@ import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigType;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.delegate.beans.storeconfig.FetchType;
 import io.harness.exception.UnsupportedOperationException;
+import io.harness.ngmigration.beans.BaseEntityInput;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
@@ -50,6 +52,11 @@ import java.util.Set;
 
 public class ManifestMigrationService implements NgMigrationService {
   @Inject private ApplicationManifestService applicationManifestService;
+
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    throw new IllegalAccessError("Mapping not allowed for Manifests");
+  }
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -95,6 +102,12 @@ public class ManifestMigrationService implements NgMigrationService {
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
+    return null;
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
     return null;
   }
 

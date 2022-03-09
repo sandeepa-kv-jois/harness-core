@@ -115,10 +115,10 @@ public class CIModuleInfoProvider implements ExecutionSummaryModuleInfoProvider 
         if (isNotEmpty(initializeStepInfo.getCiCodebase().getRepoName().getValue())) {
           repoName = initializeStepInfo.getCiCodebase().getRepoName().getValue();
         }
-        if (initializeStepInfo.getCiCodebase().getConnectorRef() != null) {
+        if (initializeStepInfo.getCiCodebase().getConnectorRef().getValue() != null) {
           try {
-            ConnectorDetails connectorDetails =
-                connectorUtils.getConnectorDetails(baseNGAccess, initializeStepInfo.getCiCodebase().getConnectorRef());
+            ConnectorDetails connectorDetails = connectorUtils.getConnectorDetails(
+                baseNGAccess, initializeStepInfo.getCiCodebase().getConnectorRef().getValue());
             if (executionTriggerInfo.getTriggerType() == TriggerType.WEBHOOK) {
               url = IntegrationStageUtils.getGitURLFromConnector(connectorDetails, initializeStepInfo.getCiCodebase());
             }

@@ -12,10 +12,14 @@ import static software.wings.ngmigration.NGMigrationEntityType.CONNECTOR;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.MigratedEntityMapping;
 import io.harness.cdng.infra.InfrastructureDef;
 import io.harness.cdng.infra.yaml.InfrastructureType;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
+import io.harness.ngmigration.beans.BaseEntityInput;
+import io.harness.ngmigration.beans.BaseInputDefinition;
 import io.harness.ngmigration.beans.MigrationInputDTO;
+import io.harness.ngmigration.beans.MigratorInputType;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
@@ -43,6 +47,11 @@ import java.util.Set;
 @OwnedBy(HarnessTeam.CDC)
 public class InfraMigrationService implements NgMigrationService {
   @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
+
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    throw new IllegalAccessError("Mapping not allowed for Infrastructure");
+  }
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -80,6 +89,18 @@ public class InfraMigrationService implements NgMigrationService {
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     return new ArrayList<>();
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
+    InfrastructureDefinition infra = (InfrastructureDefinition) entities.get(entityId).getEntity();
+    return BaseEntityInput.builder()
+        .migrationStatus(MigratorInputType.CREATE_NEW)
+        .identifier(BaseInputDefinition.buildIdentifier(MigratorUtility.generateIdentifier(infra.getName())))
+        .name(BaseInputDefinition.buildName(infra.getName()))
+        .spec(null)
+        .build();
   }
 
   public InfrastructureDef getInfraDef(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
