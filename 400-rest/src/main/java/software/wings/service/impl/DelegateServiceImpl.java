@@ -120,6 +120,8 @@ import io.harness.delegate.beans.K8sConfigDetails;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.events.DelegateGroupDeleteEvent;
 import io.harness.delegate.events.DelegateGroupUpsertEvent;
+import io.harness.delegate.events.DelegateRegisterEvent;
+import io.harness.delegate.events.DelegateUnregisterEvent;
 import io.harness.delegate.service.intfc.DelegateNgTokenService;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.DelegateLogContext;
@@ -2005,9 +2007,6 @@ public class DelegateServiceImpl implements DelegateService {
 
     log.info("Delegate saved: {}", savedDelegate);
 
-    auditServiceHelper.reportForAuditingUsingAccountId(
-        accountId, savedDelegate, savedDelegate, Type.DELEGATE_REGISTRATION);
-
     // When polling is enabled for delegate, do not perform these event publishing
     if (isDelegateWithoutPollingEnabled(delegate)) {
       eventEmitter.send(Channel.DELEGATES,
@@ -2356,16 +2355,16 @@ public class DelegateServiceImpl implements DelegateService {
           upsertDelegateGroup(delegateParams.getDelegateGroupName(), delegateParams.getAccountId(), null);
       delegateGroupId = delegateGroup.getUuid();
     }
+    DelegateSetupDetails delegateSetupDetails = DelegateSetupDetails.builder()
+                                                    .name(delegateParams.getDelegateName())
+                                                    .orgIdentifier(delegateParams.getOrgIdentifier())
+                                                    .projectIdentifier(delegateParams.getProjectIdentifier())
+                                                    .description(delegateParams.getDescription())
+                                                    .delegateType(delegateParams.getDelegateType())
+                                                    .build();
 
     String delegateGroupName = delegateParams.getDelegateGroupName();
     if (delegateParams.isNg()) {
-      DelegateSetupDetails delegateSetupDetails = DelegateSetupDetails.builder()
-                                                      .name(delegateParams.getDelegateName())
-                                                      .orgIdentifier(delegateParams.getOrgIdentifier())
-                                                      .projectIdentifier(delegateParams.getProjectIdentifier())
-                                                      .description(delegateParams.getDescription())
-                                                      .delegateType(delegateParams.getDelegateType())
-                                                      .build();
       final DelegateGroup delegateGroup =
           upsertDelegateGroup(delegateParams.getDelegateName(), delegateParams.getAccountId(), delegateSetupDetails);
       delegateGroupId = delegateGroup.getUuid();
@@ -2424,7 +2423,7 @@ public class DelegateServiceImpl implements DelegateService {
       }
       return delegateRegisterResponse;
     } else {
-      return registerResponseFromDelegate(upsertDelegateOperation(existingDelegate, delegate));
+      return registerResponseFromDelegate(upsertDelegateOperation(existingDelegate, delegate, delegateSetupDetails));
     }
   }
 
@@ -2452,6 +2451,9 @@ public class DelegateServiceImpl implements DelegateService {
 
     if (existingDelegate != null) {
       log.info("Removing delegate instance {} from delegate {}", request.getHostName(), request.getDelegateId());
+      if (request.isNg()) {
+        sendUnregisterDelegateAuditEvent(request, accountId);
+      }
       persistence.delete(existingDelegate);
     } else {
       log.warn("Delegate instance {} doesn't exist for {}, nothing to remove", request.getHostName(),
@@ -2461,8 +2463,13 @@ public class DelegateServiceImpl implements DelegateService {
         .forEach(connection -> delegateDisconnected(accountId, request.getDelegateId(), connection.getUuid()));
   }
 
-  @VisibleForTesting
   Delegate upsertDelegateOperation(Delegate existingDelegate, Delegate delegate) {
+    return upsertDelegateOperation(existingDelegate, delegate,null);
+  }
+
+  @VisibleForTesting
+  Delegate upsertDelegateOperation(
+      Delegate existingDelegate, Delegate delegate, DelegateSetupDetails delegateSetupDetails) {
     long delegateHeartbeat = delegate.getLastHeartBeat();
     long now = clock.millis();
     long skew = Math.abs(now - delegateHeartbeat);
@@ -2479,6 +2486,14 @@ public class DelegateServiceImpl implements DelegateService {
       createAuditHeaderForDelegateRegistration(delegate.getHostName());
 
       registeredDelegate = add(delegate);
+      if (delegate.isNg()) {
+        if (delegateSetupDetails != null) {
+          sendRegisterDelegateAuditEvent(delegateSetupDetails, delegate.getAccountId());
+        }
+      } else {
+        auditServiceHelper.reportForAuditingUsingAccountId(
+            delegate.getAccountId(), delegate, delegate, Type.DELEGATE_REGISTRATION);
+      }
       sendTelemetryTrackEvents(
           delegate.getAccountId(), delegate.getDelegateType(), delegate.isNg(), DELEGATE_REGISTERED_EVENT);
     } else {
@@ -2855,14 +2870,6 @@ public class DelegateServiceImpl implements DelegateService {
     }
 
     DelegateGroup delegateGroup = persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
-    outboxService.save(
-        DelegateGroupUpsertEvent.builder()
-            .accountIdentifier(accountId)
-            .orgIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getOrgIdentifier() : null)
-            .projectIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getProjectIdentifier() : null)
-            .delegateGroupId(delegateGroup.getUuid())
-            .delegateSetupDetails(delegateSetupDetails)
-            .build());
     if (delegateSetupDetails != null) {
       delegateCache.invalidateDelegateGroupCache(accountId, delegateGroup.getUuid());
     }
@@ -3721,6 +3728,7 @@ public class DelegateServiceImpl implements DelegateService {
       validateDelegateSetupDetails(accountId, delegateSetupDetails, KUBERNETES);
     }
     DelegateGroup delegateGroup = upsertDelegateGroup(delegateSetupDetails.getName(), accountId, delegateSetupDetails);
+    sendNewDelegateGroupAuditEvent(delegateSetupDetails, delegateGroup, accountId);
     return delegateGroup.getUuid();
   }
 
@@ -3902,5 +3910,35 @@ public class DelegateServiceImpl implements DelegateService {
       return true;
     }
     return existingOwner.getIdentifier().equals(owner.getIdentifier());
+  }
+
+  private void sendUnregisterDelegateAuditEvent(DelegateUnregisterRequest request, String accountId) {
+    outboxService.save(DelegateRegisterEvent.builder()
+                           .accountIdentifier(accountId)
+                           .orgIdentifier(request.getOrgIdentifier())
+                           .projectIdentifier(request.getProjectIdentifier())
+                           .delegateSetupDetails(DelegateSetupDetails.builder().name(request.getHostName()).build())
+                           .build());
+  }
+
+  private void sendRegisterDelegateAuditEvent(DelegateSetupDetails delegateSetupDetails, String accountId) {
+    outboxService.save(DelegateUnregisterEvent.builder()
+                           .accountIdentifier(accountId)
+                           .orgIdentifier(delegateSetupDetails.getOrgIdentifier())
+                           .projectIdentifier(delegateSetupDetails.getProjectIdentifier())
+                           .delegateSetupDetails(delegateSetupDetails)
+                           .build());
+  }
+
+  private void sendNewDelegateGroupAuditEvent(
+      DelegateSetupDetails delegateSetupDetails, DelegateGroup delegateGroup, String accountId) {
+    outboxService.save(
+        DelegateGroupUpsertEvent.builder()
+            .accountIdentifier(accountId)
+            .orgIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getOrgIdentifier() : null)
+            .projectIdentifier(delegateSetupDetails != null ? delegateSetupDetails.getProjectIdentifier() : null)
+            .delegateGroupId(delegateGroup.getUuid())
+            .delegateSetupDetails(delegateSetupDetails)
+            .build());
   }
 }

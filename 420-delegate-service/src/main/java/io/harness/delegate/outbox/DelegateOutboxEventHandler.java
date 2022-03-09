@@ -22,6 +22,8 @@ import io.harness.delegate.events.DelegateGroupDeleteEvent;
 import io.harness.delegate.events.DelegateGroupUpsertEvent;
 import io.harness.delegate.events.DelegateNgTokenCreateEvent;
 import io.harness.delegate.events.DelegateNgTokenRevokeEvent;
+import io.harness.delegate.events.DelegateRegisterEvent;
+import io.harness.delegate.events.DelegateUnregisterEvent;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
 
@@ -54,6 +56,10 @@ public class DelegateOutboxEventHandler implements OutboxEventHandler {
           return handleDelegateNgTokenCreateEvent(outboxEvent);
         case DelegateNgTokenRevokeEvent.DELEGATE_TOKEN_REVOKE_EVENT:
           return handleDelegateNgTokenRevokeEvent(outboxEvent);
+        case DelegateRegisterEvent.DELEGATE_REGISTER_EVENT:
+          return handleDelegateRegisterEvent(outboxEvent);
+        case DelegateUnregisterEvent.DELEGATE_UNREGISTER_EVENT:
+          return handleDelegateUnRegisterEvent(outboxEvent);
         default:
           return false;
       }
@@ -120,6 +126,38 @@ public class DelegateOutboxEventHandler implements OutboxEventHandler {
                                 .newYaml(getYamlString(delegateNgTokenRevokeEvent.getToken()))
                                 .timestamp(outboxEvent.getCreatedAt())
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                .insertId(outboxEvent.getId())
+                                .build();
+    return auditClientService.publishAudit(auditEntry, globalContext);
+  }
+
+  private boolean handleDelegateRegisterEvent(OutboxEvent outboxEvent) throws IOException {
+    GlobalContext globalContext = outboxEvent.getGlobalContext();
+    DelegateRegisterEvent delegateRegisterEvent =
+        objectMapper.readValue(outboxEvent.getEventData(), DelegateRegisterEvent.class);
+    AuditEntry auditEntry = AuditEntry.builder()
+                                .action(Action.CREATE)
+                                .module(ModuleType.CORE)
+                                .timestamp(outboxEvent.getCreatedAt())
+                                .newYaml(getYamlString(delegateRegisterEvent.getDelegateSetupDetails()))
+                                .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
+                                .insertId(outboxEvent.getId())
+                                .build();
+    return auditClientService.publishAudit(auditEntry, globalContext);
+  }
+
+  private boolean handleDelegateUnRegisterEvent(OutboxEvent outboxEvent) throws IOException {
+    GlobalContext globalContext = outboxEvent.getGlobalContext();
+    DelegateUnregisterEvent delegateRegisterEvent =
+        objectMapper.readValue(outboxEvent.getEventData(), DelegateUnregisterEvent.class);
+    AuditEntry auditEntry = AuditEntry.builder()
+                                .action(Action.DELETE)
+                                .module(ModuleType.CORE)
+                                .timestamp(outboxEvent.getCreatedAt())
+                                .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
+                                .newYaml(getYamlString(delegateRegisterEvent.getDelegateSetupDetails()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
                                 .insertId(outboxEvent.getId())
                                 .build();

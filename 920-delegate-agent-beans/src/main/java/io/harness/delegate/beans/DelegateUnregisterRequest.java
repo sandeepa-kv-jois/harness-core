@@ -20,4 +20,6 @@ public class DelegateUnregisterRequest {
   private final boolean ng;
   private final String delegateType;
   private final String ipAddress;
+  private final String orgIdentifier;
+  private final String projectIdentifier;
 }
