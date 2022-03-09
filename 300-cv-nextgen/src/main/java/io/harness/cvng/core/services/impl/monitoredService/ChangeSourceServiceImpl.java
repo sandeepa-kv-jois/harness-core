@@ -194,9 +194,9 @@ public class ChangeSourceServiceImpl implements ChangeSourceService {
   }
 
   @Override
-  public ChangeSummaryDTO getChangeSummary(ServiceEnvironmentParams serviceEnvironmentParams,
+  public ChangeSummaryDTO getChangeSummary(MonitoredServiceParams monitoredServiceParams,
       List<String> changeSourceIdentifiers, Instant startTime, Instant endTime) {
-    return changeEventService.getChangeSummary(serviceEnvironmentParams, changeSourceIdentifiers, startTime, endTime);
+    return changeEventService.getChangeSummary(monitoredServiceParams, changeSourceIdentifiers, startTime, endTime);
   }
 
   private void validate(Set<ChangeSourceDTO> changeSourceDTOs) {

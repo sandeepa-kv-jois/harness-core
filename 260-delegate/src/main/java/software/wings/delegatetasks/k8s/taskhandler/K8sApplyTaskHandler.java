@@ -42,6 +42,8 @@ import io.harness.k8s.manifest.ManifestHelper;
 import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.logging.CommandExecutionStatus;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -95,9 +97,13 @@ public class K8sApplyTaskHandler extends K8sTaskHandler {
         return getFailureResponse();
       }
     } else {
-      success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
-          k8sApplyTaskParameters.getK8sDelegateManifestConfig(), k8sApplyHandlerConfig.getManifestFilesDirectory(),
-          k8sTaskHelper.getExecutionLogCallback(k8sApplyTaskParameters, FetchFiles), timeoutInMillis);
+      ExecutionLogCallback executionLogCallback =
+          k8sTaskHelper.getExecutionLogCallback(k8sApplyTaskParameters, FetchFiles);
+      executionLogCallback.saveExecutionLog(color("\nStarting Kubernetes Apply", LogColor.White, LogWeight.Bold));
+
+      success =
+          k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(k8sApplyTaskParameters.getK8sDelegateManifestConfig(),
+              k8sApplyHandlerConfig.getManifestFilesDirectory(), executionLogCallback, timeoutInMillis);
       if (!success) {
         return getFailureResponse();
       }

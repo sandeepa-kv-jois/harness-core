@@ -13,6 +13,7 @@ import io.harness.beans.Scope;
 import io.harness.exception.InvalidRequestException;
 import io.harness.resourcegroup.beans.ScopeFilterType;
 import io.harness.resourcegroup.framework.v2.service.ResourceGroupValidator;
+import io.harness.resourcegroup.v2.model.ResourceFilter;
 import io.harness.resourcegroup.v2.model.ScopeSelector;
 import io.harness.resourcegroup.v2.remote.dto.ResourceGroupDTO;
 import io.harness.resourcegroup.v2.remote.dto.ResourceGroupRequest;
@@ -30,6 +31,23 @@ public class ResourceGroupValidatorImpl implements ResourceGroupValidator {
     return false;
   }
 
+  private void validateResourceFilter(ResourceFilter resourceFilter, boolean includeStaticResources) {
+    if (resourceFilter == null) {
+      return;
+    }
+    if (resourceFilter.isIncludeAllResources() && !isEmpty(resourceFilter.getResources())) {
+      throw new InvalidRequestException("Cannot provide specific resources when you include all resources");
+    }
+    if (!isEmpty(resourceFilter.getResources())) {
+      resourceFilter.getResources().forEach(filter -> {
+        if (!includeStaticResources && !isEmpty(filter.getIdentifiers())) {
+          throw new InvalidRequestException(
+              "Cannot provide specific identifiers in resource filter for a dynamic scope");
+        }
+      });
+    }
+  }
+
   public void validateResourceGroup(ResourceGroupRequest resourceGroupRequest) {
     if (resourceGroupRequest == null || resourceGroupRequest.getResourceGroup() == null) {
       return;
@@ -38,6 +56,7 @@ public class ResourceGroupValidatorImpl implements ResourceGroupValidator {
     Scope scopeOfResourceGroup = Scope.of(resourceGroupDTO.getAccountIdentifier(), resourceGroupDTO.getOrgIdentifier(),
         resourceGroupDTO.getProjectIdentifier());
     AtomicBoolean includeStaticResources = new AtomicBoolean(false);
+    ResourceFilter resourceFilter = resourceGroupDTO.getResourceFilter();
 
     if (ScopeUtils.isAccountScope(scopeOfResourceGroup)) {
       resourceGroupDTO.getIncludedScopes().forEach(scope -> {
@@ -66,13 +85,6 @@ public class ResourceGroupValidatorImpl implements ResourceGroupValidator {
       throw new InvalidRequestException("Invalid scope of resource group");
     }
 
-    if (!isEmpty(resourceGroupDTO.getResourceFilter())) {
-      resourceGroupDTO.getResourceFilter().forEach(filter -> {
-        if (!includeStaticResources.get() && !isEmpty(filter.getIdentifiers())) {
-          throw new InvalidRequestException(
-              "Cannot provide specific identifiers in resource filter for a dynamic scope");
-        }
-      });
-    }
+    validateResourceFilter(resourceFilter, includeStaticResources.get());
   }
 }

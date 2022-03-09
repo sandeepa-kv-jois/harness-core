@@ -551,19 +551,24 @@ public class NgUserServiceImpl implements NgUserService {
             .collect(toList());
 
     try {
-      RoleAssignmentCreateRequestDTO createRequestDTO =
-          RoleAssignmentCreateRequestDTO.builder().roleAssignments(managedRoleAssignments).build();
-      getResponse(accessControlAdminClient.createMultiRoleAssignment(scope.getAccountIdentifier(),
-          scope.getOrgIdentifier(), scope.getProjectIdentifier(), true, createRequestDTO));
+      if (isNotEmpty(managedRoleAssignments)) {
+        RoleAssignmentCreateRequestDTO createRequestDTO =
+            RoleAssignmentCreateRequestDTO.builder().roleAssignments(managedRoleAssignments).build();
+        getResponse(accessControlAdminClient.createMultiRoleAssignment(scope.getAccountIdentifier(),
+            scope.getOrgIdentifier(), scope.getProjectIdentifier(), true, createRequestDTO));
+      }
 
-      createRequestDTO = RoleAssignmentCreateRequestDTO.builder().roleAssignments(userRoleAssignments).build();
-      getResponse(accessControlAdminClient.createMultiRoleAssignment(scope.getAccountIdentifier(),
-          scope.getOrgIdentifier(), scope.getProjectIdentifier(), false, createRequestDTO));
+      if (isNotEmpty(userRoleAssignments)) {
+        RoleAssignmentCreateRequestDTO createRequestDTO =
+            RoleAssignmentCreateRequestDTO.builder().roleAssignments(userRoleAssignments).build();
+        getResponse(accessControlAdminClient.createMultiRoleAssignment(scope.getAccountIdentifier(),
+            scope.getOrgIdentifier(), scope.getProjectIdentifier(), false, createRequestDTO));
+      }
 
     } catch (Exception e) {
       log.error("Could not create all of the role assignments in [{}] for user [{}] at [{}]", roleAssignmentDTOs,
           userId,
-          ScopeUtils.toString(scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier()));
+          ScopeUtils.toString(scope.getAccountIdentifier(), scope.getOrgIdentifier(), scope.getProjectIdentifier()), e);
     }
   }
 

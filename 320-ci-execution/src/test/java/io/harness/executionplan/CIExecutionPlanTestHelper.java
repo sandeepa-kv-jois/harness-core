@@ -197,11 +197,14 @@ public class CIExecutionPlanTestHelper {
   }
 
   public CodeBase getCICodebase() {
-    return CodeBase.builder().connectorRef(GIT_CONNECTOR).build();
+    return CodeBase.builder().connectorRef(ParameterField.createValueField(GIT_CONNECTOR)).build();
   }
 
   public CodeBase getCICodebaseWithRepoName() {
-    return CodeBase.builder().connectorRef(GIT_CONNECTOR).repoName(ParameterField.createValueField("portal")).build();
+    return CodeBase.builder()
+        .connectorRef(ParameterField.createValueField(GIT_CONNECTOR))
+        .repoName(ParameterField.createValueField("portal"))
+        .build();
   }
 
   public ConnectorDetails getGitConnector() {
@@ -1206,7 +1209,7 @@ public class CIExecutionPlanTestHelper {
         .execution(getExecutionElementConfig())
         .infrastructure(getInfrastructure())
         .sharedPaths(createValueField(newArrayList("share/")))
-        .serviceDependencies(Collections.singletonList(getServiceDependencyElement()))
+        .serviceDependencies(ParameterField.createValueField(Collections.singletonList(getServiceDependencyElement())))
         .build();
   }
 }

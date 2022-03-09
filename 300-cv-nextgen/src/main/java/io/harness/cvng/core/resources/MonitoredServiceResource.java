@@ -323,29 +323,6 @@ public class MonitoredServiceResource {
         monitoredServiceService.getCurrentAndDependentServicesScore(serviceEnvironmentParams));
   }
 
-  @GET
-  @Timed
-  @ExceptionMetered
-  @Path("/scores")
-  @ApiOperation(value = "get monitored service scores from service and env ref",
-      nickname = "getMonitoredServiceScoresFromServiceAndEnvironment")
-  public ResponseDTO<HealthScoreDTO>
-  getMonitoredServiceScoreFromServiceAndEnvironment(@NotNull @QueryParam("accountId") String accountId,
-      @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
-      @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @NotNull @QueryParam("serviceIdentifier") String serviceIdentifier,
-      @NotNull @QueryParam("environmentIdentifier") String environmentIdentifier) {
-    ServiceEnvironmentParams serviceEnvironmentParams = ServiceEnvironmentParams.builder()
-                                                            .accountIdentifier(accountId)
-                                                            .orgIdentifier(orgIdentifier)
-                                                            .projectIdentifier(projectIdentifier)
-                                                            .serviceIdentifier(serviceIdentifier)
-                                                            .environmentIdentifier(environmentIdentifier)
-                                                            .build();
-    return ResponseDTO.newResponse(
-        monitoredServiceService.getCurrentAndDependentServicesScore(serviceEnvironmentParams));
-  }
-
   @DELETE
   @Timed
   @ExceptionMetered
@@ -492,9 +469,25 @@ public class MonitoredServiceResource {
   @GET
   @Timed
   @ExceptionMetered
+  @Path("{monitoredServiceIdentifier}/service-details")
+  @ApiOperation(value = "get details of a monitored service present in the Service Dependency Graph",
+      nickname = "getMonitoredServiceDetails")
+  public MonitoredServiceListItemDTO
+  getMonitoredServiceDetails(@BeanParam ProjectParams projectParams,
+      @PathParam("monitoredServiceIdentifier") String monitoredServiceIdentifier) {
+    return monitoredServiceService.getMonitoredServiceDetails(
+        MonitoredServiceParams.builderWithProjectParams(projectParams)
+            .monitoredServiceIdentifier(monitoredServiceIdentifier)
+            .build());
+  }
+
+  @GET
+  @Timed
+  @ExceptionMetered
   @Path("/service-details")
   @ApiOperation(value = "get details of a monitored service present in the Service Dependency Graph",
       nickname = "getMonitoredServiceDetails")
+  @Deprecated
   public MonitoredServiceListItemDTO
   getMonitoredServiceDetails(@BeanParam ServiceEnvironmentParams serviceEnvironmentParams) {
     return monitoredServiceService.getMonitoredServiceDetails(serviceEnvironmentParams);

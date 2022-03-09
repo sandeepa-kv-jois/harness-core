@@ -39,4 +39,11 @@ public class MonitoredServiceParams extends ProjectParams {
         .environmentIdentifier(getEnvironmentIdentifier())
         .build();
   }
+
+  public static MonitoredServiceParamsBuilder builderWithProjectParams(ProjectParams projectParams) {
+    return MonitoredServiceParams.builder()
+        .orgIdentifier(projectParams.getOrgIdentifier())
+        .accountIdentifier(projectParams.getAccountIdentifier())
+        .projectIdentifier(projectParams.getProjectIdentifier());
+  }
 }

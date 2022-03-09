@@ -275,9 +275,8 @@ public class LogAnalysisServiceImpl implements LogAnalysisService {
                                  .filter(result -> LogAnalysisTag.getAnomalousTags().contains(result.getTag()))
                                  .count();
     heatMapService.updateRiskScore(cvConfig.getAccountId(), cvConfig.getOrgIdentifier(),
-        cvConfig.getProjectIdentifier(), cvConfig.getServiceIdentifier(), cvConfig.getEnvIdentifier(), cvConfig,
-        cvConfig.getCategory(), learningEngineTask.getAnalysisStartTime(), analysisBody.getScore(), 0,
-        anomalousLogCount);
+        cvConfig.getProjectIdentifier(), cvConfig, cvConfig.getCategory(), learningEngineTask.getAnalysisStartTime(),
+        analysisBody.getScore(), 0, anomalousLogCount);
   }
 
   @Override

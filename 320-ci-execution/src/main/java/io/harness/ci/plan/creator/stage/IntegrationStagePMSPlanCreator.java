@@ -222,7 +222,7 @@ public class IntegrationStagePMSPlanCreator extends GenericStagePlanCreator {
     TriggerPayload triggerPayload = planCreationContextValue.getTriggerPayload();
 
     return IntegrationStageUtils.buildExecutionSource(triggerInfo, triggerPayload, stageElementConfig.getIdentifier(),
-        codeBase.getBuild(), codeBase.getConnectorRef(), connectorUtils, planCreationContextValue, codeBase);
+        codeBase.getBuild(), codeBase.getConnectorRef().getValue(), connectorUtils, planCreationContextValue, codeBase);
   }
 
   private BuildStatusUpdateParameter obtainBuildStatusUpdateParameter(
@@ -238,14 +238,14 @@ public class IntegrationStagePMSPlanCreator extends GenericStagePlanCreator {
       String sha = retrieveLastCommitSha((WebhookExecutionSource) executionSource);
       return BuildStatusUpdateParameter.builder()
           .sha(sha)
-          .connectorIdentifier(codeBase.getConnectorRef())
+          .connectorIdentifier(codeBase.getConnectorRef().getValue())
           .repoName(codeBase.getRepoName().getValue())
           .name(stageElementConfig.getName())
           .identifier(stageElementConfig.getIdentifier())
           .build();
     } else {
       return BuildStatusUpdateParameter.builder()
-          .connectorIdentifier(codeBase.getConnectorRef())
+          .connectorIdentifier(codeBase.getConnectorRef().getValue())
           .repoName(codeBase.getRepoName().getValue())
           .name(stageElementConfig.getName())
           .identifier(stageElementConfig.getIdentifier())

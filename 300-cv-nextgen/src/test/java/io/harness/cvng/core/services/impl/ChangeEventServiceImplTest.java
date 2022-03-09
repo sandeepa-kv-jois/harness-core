@@ -724,7 +724,7 @@ public class ChangeEventServiceImplTest extends CvNextGenTestBase {
                           .eventTime(builderFactory.getClock().instant().minus(Duration.ofMinutes(15)))
                           .build());
     ChangeSummaryDTO changeSummaryDTO =
-        changeEventService.getChangeSummary(builderFactory.getContext().getServiceEnvironmentParams(),
+        changeEventService.getChangeSummary(builderFactory.getContext().getMonitoredServiceParams(),
             changeSourceIdentifiers, builderFactory.getClock().instant().minus(Duration.ofMinutes(10)),
             builderFactory.getClock().instant().plus(Duration.ofMinutes(10)));
     Assertions.assertThat(changeSummaryDTO.getCategoryCountMap().get(ChangeCategory.DEPLOYMENT).getCount())

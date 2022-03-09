@@ -18,9 +18,10 @@ function getProperty () {
 }
 
 buildNo=$1
-buildMajorVersion=$(getProperty "build.properties" "build.majorVersion")
-buildMinorVersion=$(getProperty "build.properties" "build.minorVersion")
-patch=$(getProperty "build.properties" "build.patch")
+buildPropertiesFile=${2:-build.properties}
+buildMajorVersion=$(getProperty "${buildPropertiesFile}" "build.majorVersion")
+buildMinorVersion=$(getProperty "${buildPropertiesFile}" "build.minorVersion")
+patch=$(getProperty "${buildPropertiesFile}" "build.patch")
 timestamp=$( date +'%y%m%d-%H%M')
 
 echo "----------------------------------------------------------------------------"

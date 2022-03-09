@@ -56,8 +56,8 @@ public class FullSyncGrpcService extends FullSyncServiceImplBase {
 
   @Override
   public void getEntitiesForFullSync(ScopeDetails request, StreamObserver<FileChanges> responseObserver) {
-    log.info("Got the Grpc Request for Full Sync");
     try (MdcContextSetter ignore1 = new MdcContextSetter(request.getLogContextMap())) {
+      log.info("Got the grpc request to get entities for full sync");
       SecurityContextBuilder.setContext(
           new ServicePrincipal(AuthorizationServiceHeader.GIT_SYNC_SERVICE.getServiceId()));
       final FileChanges fileChanges = fullSyncSdkService.getFileChanges(request);
@@ -72,6 +72,7 @@ public class FullSyncGrpcService extends FullSyncServiceImplBase {
   public void performEntitySync(FullSyncRequest request, StreamObserver<FullSyncResponse> responseObserver) {
     try (GlobalContextManager.GlobalContextGuard guard = GlobalContextManager.ensureGlobalContextGuard();
          MdcContextSetter ignore1 = new MdcContextSetter(request.getLogContextMap())) {
+      log.info("Got the grpc request to sync full sync entities");
       List<FullSyncChangeSet> fileChangesList =
           request.getFileChangesList().stream().collect(toCollection(ArrayList::new));
       List<EntityType> entityTypesOrder = emptyIfNull(sortOrder.get());

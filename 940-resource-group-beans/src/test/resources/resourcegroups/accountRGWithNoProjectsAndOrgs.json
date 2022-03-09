@@ -10,9 +10,11 @@
       "filter": "EXCLDING_CHILD_SCOPES"
     }
   ],
-  "resourceFilter": [
-    {
-      "resourceType": "SECRET"
-    }
-  ]
+  "resourceFilter":{
+    "resources":[
+      {
+        "resourceType":"SECRET"
+      }
+    ]
+  }
 }

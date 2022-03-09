@@ -69,17 +69,21 @@ public class RunStepInfo implements CIStepInfo, WithConnectorRef {
   @Min(MIN_RETRY) @Max(MAX_RETRY) private int retry;
 
   @NotNull @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> command;
-  private List<OutputNGVariable> outputVariables;
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = "[Lio.harness.yaml.core.variables.OutputNGVariable;")
+  private ParameterField<List<OutputNGVariable>> outputVariables;
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
   private ParameterField<Map<String, String>> envVariables;
-  private UnitTestReport reports;
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.reports.UnitTestReport")
+  private ParameterField<UnitTestReport> reports;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> image;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> connectorRef;
   private ContainerResource resources;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = BOOLEAN_CLASSPATH) private ParameterField<Boolean> privileged;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
-  @YamlSchemaTypes({string})
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.CIShellType")
   private ParameterField<CIShellType> shell;
   @YamlSchemaTypes({runtime})
@@ -90,9 +94,10 @@ public class RunStepInfo implements CIStepInfo, WithConnectorRef {
   @ConstructorProperties({"identifier", "name", "retry", "command", "outputVariables", "reports", "envVariables",
       "image", "connectorRef", "resources", "privileged", "runAsUser", "shell", "imagePullPolicy"})
   public RunStepInfo(String identifier, String name, Integer retry, ParameterField<String> command,
-      List<OutputNGVariable> outputVariables, UnitTestReport reports, ParameterField<Map<String, String>> envVariables,
-      ParameterField<String> image, ParameterField<String> connectorRef, ContainerResource resources,
-      ParameterField<Boolean> privileged, ParameterField<Integer> runAsUser, ParameterField<CIShellType> shell,
+      ParameterField<List<OutputNGVariable>> outputVariables, ParameterField<UnitTestReport> reports,
+      ParameterField<Map<String, String>> envVariables, ParameterField<String> image,
+      ParameterField<String> connectorRef, ContainerResource resources, ParameterField<Boolean> privileged,
+      ParameterField<Integer> runAsUser, ParameterField<CIShellType> shell,
       ParameterField<ImagePullPolicy> imagePullPolicy) {
     this.identifier = identifier;
     this.name = name;

@@ -216,7 +216,7 @@ public class CIStepGroupUtils {
     if (ciCodebase == null) {
       throw new CIStageExecutionException("Codebase is mandatory with enabled cloneCodebase flag");
     }
-    Integer depth = ciCodebase.getDepth();
+    Integer depth = ciCodebase.getDepth().getValue();
     ExecutionSource executionSource = ciExecutionArgs.getExecutionSource();
     if (depth == null) {
       if (executionSource.getType() == ExecutionSource.Type.MANUAL) {
@@ -231,13 +231,13 @@ public class CIStepGroupUtils {
       settings.put(GIT_CLONE_DEPTH_ATTRIBUTE, JsonNodeFactory.instance.textNode(depth.toString()));
     }
 
-    if (ciCodebase.getPrCloneStrategy() != null) {
+    if (ciCodebase.getPrCloneStrategy().getValue() != null) {
       settings.put(PR_CLONE_STRATEGY_ATTRIBUTE,
-          JsonNodeFactory.instance.textNode(ciCodebase.getPrCloneStrategy().getYamlName()));
+          JsonNodeFactory.instance.textNode(ciCodebase.getPrCloneStrategy().getValue().getYamlName()));
     }
 
     Map<String, String> envVariables = new HashMap<>();
-    if (ciCodebase.getSslVerify() != null && !ciCodebase.getSslVerify()) {
+    if (ciCodebase.getSslVerify().getValue() != null && !ciCodebase.getSslVerify().getValue()) {
       envVariables.put(GIT_SSL_NO_VERIFY, "true");
     }
 

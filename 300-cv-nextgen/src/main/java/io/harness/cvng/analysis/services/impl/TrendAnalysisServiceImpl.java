@@ -296,8 +296,7 @@ public class TrendAnalysisServiceImpl implements TrendAnalysisService {
       }
       hPersistence.save(analysisResult);
       heatMapService.updateRiskScore(cvConfig.getAccountId(), cvConfig.getOrgIdentifier(),
-          cvConfig.getProjectIdentifier(), cvConfig.getServiceIdentifier(), cvConfig.getEnvIdentifier(), cvConfig,
-          cvConfig.getCategory(), startTime, score, 0, anomalousCount);
+          cvConfig.getProjectIdentifier(), cvConfig, cvConfig.getCategory(), startTime, score, 0, anomalousCount);
     }
   }
 

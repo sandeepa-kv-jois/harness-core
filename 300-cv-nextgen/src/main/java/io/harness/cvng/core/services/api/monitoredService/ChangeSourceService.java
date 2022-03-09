@@ -34,8 +34,8 @@ public interface ChangeSourceService {
 
   void enqueueDataCollectionTask(KubernetesChangeSource changeSource);
 
-  ChangeSummaryDTO getChangeSummary(ServiceEnvironmentParams serviceEnvironmentParams,
-      List<String> changeSourceIdentifiers, Instant startTime, Instant endTime);
+  ChangeSummaryDTO getChangeSummary(MonitoredServiceParams monitoredServiceParams, List<String> changeSourceIdentifiers,
+      Instant startTime, Instant endTime);
 
   void handleCurrentGenEvents(HarnessCDCurrentGenChangeSource changeSource);
 

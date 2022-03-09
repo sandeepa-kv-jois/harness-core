@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.hash.Hashing;
 import java.util.Base64;
 import java.util.List;
+import java.util.Map;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -58,6 +59,7 @@ public final class CECluster implements PersistentEntity, UuidAware, CreatedAtAw
   String infraAccountId;
   String infraMasterAccountId;
   String parentAccountSettingId; // setting id of ce connectors
+  Map<String, String> labels;
   @FdIndex String hash;
   long lastReceivedAt;
   long createdAt;
@@ -65,7 +67,7 @@ public final class CECluster implements PersistentEntity, UuidAware, CreatedAtAw
 
   @Builder(toBuilder = true)
   private CECluster(String accountId, String clusterName, String clusterArn, String region, String infraAccountId,
-      String infraMasterAccountId, String parentAccountSettingId) {
+      String infraMasterAccountId, String parentAccountSettingId, Map<String, String> labels) {
     this.accountId = accountId;
     this.clusterName = clusterName;
     this.clusterArn = clusterArn;
@@ -73,6 +75,7 @@ public final class CECluster implements PersistentEntity, UuidAware, CreatedAtAw
     this.infraAccountId = infraAccountId;
     this.infraMasterAccountId = infraMasterAccountId;
     this.parentAccountSettingId = parentAccountSettingId;
+    this.labels = labels;
     this.hash = hash(accountId, clusterName, region, infraAccountId);
   }
 
