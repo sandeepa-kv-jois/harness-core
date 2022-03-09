@@ -148,6 +148,14 @@ if [[ "" != "$MONGO_INDEX_MANAGER_MODE" ]]; then
   yq write -i $CONFIG_FILE mongo.indexManagerMode $MONGO_INDEX_MANAGER_MODE
 fi
 
+if [[ "" != "$ANALYTIC_MONGO_TAG_NAME" ]]; then
+ yq write -i $CONFIG_FILE mongo.analyticNodeConfig.mongoTagKey "$ANALYTIC_MONGO_TAG_NAME"
+fi
+
+if [[ "" != "$ANALYTIC_MONGO_TAG_VALUE" ]]; then
+ yq write -i $CONFIG_FILE mongo.analyticNodeConfig.mongoTagValue "$ANALYTIC_MONGO_TAG_VALUE"
+fi
+
 if [[ "" != "$EVEMTS_MONGO_INDEX_MANAGER_MODE" ]]; then
   yq write -i $CONFIG_FILE events-mongo.indexManagerMode $EVEMTS_MONGO_INDEX_MANAGER_MODE
 fi

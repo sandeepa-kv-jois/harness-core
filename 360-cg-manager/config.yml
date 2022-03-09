@@ -295,6 +295,9 @@ mongo:
     mongoSSLEnabled: false
     mongoTrustStorePath:
     mongoTrustStorePassword:
+  analyticNodeConfig:
+    mongoTagKey: nodeType
+    mongoTagValue: ANALYTICS
 
 events-mongo:
   uri: mongodb://localhost:27017/events

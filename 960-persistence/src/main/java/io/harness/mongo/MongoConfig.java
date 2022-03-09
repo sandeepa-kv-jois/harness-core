@@ -106,6 +106,8 @@ public class MongoConfig {
 
   @JsonProperty(defaultValue = "MANUAL") @Default @NotEmpty private IndexManager.Mode indexManagerMode = MANUAL;
 
+  private AnalyticNodeMongoConfig analyticNodeConfig = AnalyticNodeMongoConfig.builder().build();
+
   @JsonIgnore
   public ReadPreference getReadPreference() {
     if (readPref == null || readPref.getName() == null || readPref.getName().equals("primary")) {

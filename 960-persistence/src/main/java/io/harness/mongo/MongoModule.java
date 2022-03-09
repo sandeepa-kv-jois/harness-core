@@ -7,6 +7,7 @@
 
 package io.harness.mongo;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import static java.lang.String.format;
@@ -198,9 +199,20 @@ public class MongoModule extends AbstractModule {
   @Named("analyticsDatabase")
   @Singleton
   public AdvancedDatastore getAnalyticsDatabase(MongoConfig mongoConfig, Morphia morphia) {
-    TagSet tags = new TagSet(new Tag("nodeType", "ANALYTICS"));
+    TagSet tags = null;
+    if (!mongoConfig.getAnalyticNodeConfig().getMongoTagKey().equals("none")) {
+      tags = new TagSet(new Tag(mongoConfig.getAnalyticNodeConfig().getMongoTagKey(),
+          mongoConfig.getAnalyticNodeConfig().getMongoTagValue()));
+    }
+
+    ReadPreference readPreference;
+    if (Objects.isNull(tags)) {
+      readPreference = ReadPreference.secondaryPreferred();
+    } else {
+      readPreference = ReadPreference.secondary(tags);
+    }
+
     final String mongoClientUrl = mongoConfig.getUri();
-    ReadPreference readPreference = ReadPreference.secondary(tags);
     MongoClientURI uri = new MongoClientURI(mongoClientUrl,
         MongoClientOptions.builder(MongoModule.getDefaultMongoClientOptions(mongoConfig))
             .readPreference(readPreference));
