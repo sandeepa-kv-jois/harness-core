@@ -141,7 +141,6 @@ public class NGVaultTaskHelper {
                 + vaultConfig.getServiceAccountTokenPath(),
             e, USER);
       }
-      log.info("The mounted service account token is {}.", jwt);
       VaultK8sAuthLoginRequest loginRequest =
           VaultK8sAuthLoginRequest.builder().role(vaultConfig.getVaultK8sAuthRole()).jwt(jwt).build();
       Response<VaultK8sLoginResponse> response = restClient.k8sAuthLogin(loginRequest).execute();
