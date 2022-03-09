@@ -146,6 +146,17 @@ metadata:
 ---
 
 apiVersion: v1
+kind: Secret
+metadata:
+  name: harness-delegate-accoun-upgrader-token
+  namespace: harness-delegate
+type: Opaque
+data:
+  UPGRADER_TOKEN: "QUNDT1VOVF9LRVk="
+
+---
+
+apiVersion: v1
 kind: ConfigMap
 metadata:
   name: harness-delegate-accoun-upgrader-config
@@ -186,7 +197,7 @@ spec:
             imagePullPolicy: Always
             envFrom:
             - secretRef:
-                name: harness-delegate-account-token
+                name: harness-delegate-accoun-upgrader-token
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config

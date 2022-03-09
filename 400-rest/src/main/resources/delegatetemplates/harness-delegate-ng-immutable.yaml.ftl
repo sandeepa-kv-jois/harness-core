@@ -93,4 +93,4 @@ spec:
 
 ---
 
-<@upgrader.cronjob />
+<@upgrader.cronjob  base64Secret/>

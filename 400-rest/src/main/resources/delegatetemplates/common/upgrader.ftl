@@ -1,7 +1,18 @@
 <#import "upgrader-role.ftl" as upgraderRole>
-<#macro cronjob fullDelegateName=delegateName>
+<#macro cronjob base64Secret fullDelegateName=delegateName>
 <#assign upgraderSaName = "upgrader-cronjob-sa">
 <@upgraderRole.cronJobRole upgraderSaName />
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: ${fullDelegateName}-upgrader-token
+  namespace: ${delegateNamespace}
+type: Opaque
+data:
+  UPGRADER_TOKEN: "${base64Secret}"
 
 ---
 
@@ -46,7 +57,7 @@ spec:
             imagePullPolicy: Always
             envFrom:
             - secretRef:
-                name: ${accountTokenName}
+                name: ${fullDelegateName}-upgrader-token
             volumeMounts:
               - name: config-volume
                 mountPath: /etc/config

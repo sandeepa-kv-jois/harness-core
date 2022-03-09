@@ -86,4 +86,4 @@ spec:
 
 ---
 
-<@upgrader.cronjob fullDelegateName=delegateName + "-" + kubernetesAccountLabel/>
+<@upgrader.cronjob base64Secret=base64Secret fullDelegateName=delegateName + "-" + kubernetesAccountLabel/>
