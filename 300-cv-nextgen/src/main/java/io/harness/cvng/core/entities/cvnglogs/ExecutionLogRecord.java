@@ -32,7 +32,7 @@ public class ExecutionLogRecord extends CVNGLogRecord {
 
   @Override
   public CVNGLogDTO toCVNGLogDTO() {
-    return ExecutionLogDTO.builder().log(log).logLevel(logLevel).build();
+    return ExecutionLogDTO.builder().log(log).logLevel(logLevel).createdAt(getCreatedAt()).build();
   }
 
   @Override
