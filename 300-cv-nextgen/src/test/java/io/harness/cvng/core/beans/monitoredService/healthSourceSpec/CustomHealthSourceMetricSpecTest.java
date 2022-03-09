@@ -167,9 +167,9 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
         existingCVConfigs, metricPackService);
 
     List<CustomHealthMetricCVConfig> updatedConfigs = new ArrayList<>();
-    updatedConfigs.add(
-        builderFactory.customHealthMetricCVConfigBuilder(metricName, false, true, false, responseMapping, groupName,
-            HealthSourceQueryType.SERVICE_BASED, CustomHealthMethod.POST, CVMonitoringCategory.PERFORMANCE, "{}"));
+    updatedConfigs.add(builderFactory.customHealthMetricCVConfigBuilder(metricName, false, true, false, responseMapping,
+        groupName, HealthSourceQueryType.SERVICE_BASED, CustomHealthMethod.POST, CVMonitoringCategory.PERFORMANCE,
+        "post body"));
 
     assertThat(((CustomHealthMetricCVConfig) result.getUpdated().get(0)).getMetricDefinitions())
         .isEqualTo(updatedConfigs.get(0).getMetricDefinitions());
