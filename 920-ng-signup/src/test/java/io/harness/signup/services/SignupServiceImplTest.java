@@ -32,7 +32,6 @@ import io.harness.authenticationservice.recaptcha.ReCaptchaVerifier;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.SignupException;
-import io.harness.exception.WingsException;
 import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.dto.AccountDTO;
 import io.harness.ng.core.user.UserInfo;
@@ -47,7 +46,7 @@ import io.harness.signup.dto.SignupInviteDTO;
 import io.harness.signup.dto.VerifyTokenResponseDTO;
 import io.harness.signup.entities.SignupVerificationToken;
 import io.harness.signup.notification.EmailType;
-import io.harness.signup.notification.SignupNotificationHelper;
+import io.harness.signup.notification.SaasSignupNotificationHelper;
 import io.harness.signup.services.impl.SignupServiceImpl;
 import io.harness.signup.validator.SignupValidator;
 import io.harness.telemetry.TelemetryReporter;
@@ -78,7 +77,7 @@ public class SignupServiceImplTest extends CategoryTest {
   @Mock AccessControlClient accessControlClient;
   @Mock ReCaptchaVerifier reCaptchaVerifier;
   @Mock TelemetryReporter telemetryReporter;
-  @Mock SignupNotificationHelper signupNotificationHelper;
+  @Mock SaasSignupNotificationHelper signupNotificationHelper;
   @Mock SignupVerificationTokenRepository verificationTokenRepository;
   @Mock @Named("NGSignupNotification") ExecutorService executorService;
   @Mock LicenseService licenseService;
@@ -219,15 +218,15 @@ public class SignupServiceImplTest extends CategoryTest {
     }
   }
 
-  @Test(expected = WingsException.class)
+  @Test(expected = RuntimeException.class)
   @Owner(developers = ZHUO)
   @Category(UnitTests.class)
   public void testSignupWithInvliadReCaptcha() {
     SignupDTO signupDTO = SignupDTO.builder().email(INVALID_EMAIL).password(PASSWORD).build();
-    doThrow(new WingsException("")).when(reCaptchaVerifier).verifyInvisibleCaptcha(any());
+    doThrow(new RuntimeException("")).when(reCaptchaVerifier).verifyInvisibleCaptcha(any());
     try {
       signupServiceImpl.signup(signupDTO, null);
-    } catch (WingsException e) {
+    } catch (RuntimeException e) {
       verify(telemetryReporter, times(1))
           .sendTrackEvent(
               eq(FAILED_EVENT_NAME), eq(INVALID_EMAIL), any(), any(), any(), eq(io.harness.telemetry.Category.SIGN_UP));

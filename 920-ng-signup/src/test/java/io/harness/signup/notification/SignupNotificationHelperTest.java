@@ -35,7 +35,7 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 
 public class SignupNotificationHelperTest extends CategoryTest {
-  @InjectMocks SignupNotificationHelper signupNotificationHelper;
+  @InjectMocks SaasSignupNotificationHelper signupNotificationHelper;
   @Mock private NotificationClient notificationClient;
   @Mock private SignupNotificationTemplateLoader catchLoader;
   @Mock private SignupNotificationConfiguration notificationConfiguration;
