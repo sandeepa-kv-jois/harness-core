@@ -60,7 +60,7 @@ import software.wings.beans.appmanifest.ManifestFile;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.command.ServiceCommand;
 import software.wings.beans.template.Template;
-import software.wings.beans.yaml.FilePathWithSubtype;
+import software.wings.beans.yaml.EntityInformation;
 import software.wings.exception.YamlProcessingException;
 import software.wings.infra.InfrastructureDefinition;
 import software.wings.security.PermissionAttribute.Action;
@@ -1334,8 +1334,8 @@ public class YamlResource {
   @AuthRule(permissionType = ACCOUNT_MANAGEMENT)
   @ApiKeyAuthorized(permissionType = ACCOUNT_MANAGEMENT)
   public RestResponse<YamlOperationResponse> deleteYAMLEntitiesV2(
-      @QueryParam("accountId") @NotEmpty String accountId, @NotEmpty List<FilePathWithSubtype> filePathsWithSubtype) {
-    return new RestResponse<>(yamlService.deleteYAMLByPathsV2(accountId, filePathsWithSubtype));
+      @QueryParam("accountId") @NotEmpty String accountId, @NotEmpty List<EntityInformation> entityInformations) {
+    return new RestResponse<>(yamlService.deleteYAMLByPathsV2(accountId, entityInformations));
   }
 
   /**

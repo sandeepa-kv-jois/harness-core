@@ -125,7 +125,7 @@ import software.wings.beans.Base;
 import software.wings.beans.User;
 import software.wings.beans.yaml.Change;
 import software.wings.beans.yaml.ChangeContext;
-import software.wings.beans.yaml.FilePathWithSubtype;
+import software.wings.beans.yaml.EntityInformation;
 import software.wings.beans.yaml.GitFileChange;
 import software.wings.beans.yaml.YamlConstants;
 import software.wings.beans.yaml.YamlType;
@@ -1141,20 +1141,20 @@ public class YamlServiceImpl<Y extends BaseYaml, B extends Base> implements Yaml
 
   @Override
   public YamlOperationResponse deleteYAMLByPathsV2(
-      final String accountId, final List<FilePathWithSubtype> filePathsWithSubtype) {
+      final String accountId, final List<EntityInformation> entityInformations) {
     try {
-      List changeList = filePathsWithSubtype.stream()
-                            .map(filePath -> {
+      List changeList = io.harness.data.structure.CollectionUtils.emptyIfNull(entityInformations)
+                            .stream()
+                            .map(entityInformation -> {
                               String fileContent;
-                              if (isNotEmpty(filePath.getYamlSubtype())) {
-                                fileContent = DEFAULT_YAML + "\n"
-                                    + "type: " + filePath.getYamlSubtype();
+                              if (isNotEmpty(entityInformation.getFileContent())) {
+                                fileContent = entityInformation.getFileContent();
                               } else {
                                 fileContent = DEFAULT_YAML;
                               }
                               return GitFileChange.Builder.aGitFileChange()
                                   .withFileContent(fileContent)
-                                  .withFilePath(filePath.getFilePath())
+                                  .withFilePath(entityInformation.getFilePath())
                                   .withAccountId(accountId)
                                   .withChangeType(ChangeType.DELETE)
                                   .build();

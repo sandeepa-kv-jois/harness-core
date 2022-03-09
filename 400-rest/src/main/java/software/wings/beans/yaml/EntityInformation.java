@@ -5,7 +5,7 @@ import lombok.Value;
 
 @Value
 @Builder
-public class FilePathWithSubtype {
+public class EntityInformation {
   String filePath;
-  String yamlSubtype;
+  String fileContent;
 }
