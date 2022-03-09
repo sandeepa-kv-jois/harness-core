@@ -401,7 +401,7 @@ public class RetryExecuteHelperTest extends CategoryTest {
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
   public void testGetStagesParallel() {
-    List<RetryStageInfo> stageDetails = new ArrayList<>();
+    List<RetryStageInfo> stageDetails;
     RetryInfo retryInfo;
 
     // making first stage as parallel and failed
@@ -427,7 +427,7 @@ public class RetryExecuteHelperTest extends CategoryTest {
   @Owner(developers = PRASHANTSHARMA)
   @Category(UnitTests.class)
   public void testGetStagesSeriesAndParallel() {
-    List<RetryStageInfo> stageDetails = new ArrayList<>();
+    List<RetryStageInfo> stageDetails;
     RetryInfo retryInfo;
 
     // parallel step failed after getting success for stages in series
@@ -762,7 +762,7 @@ public class RetryExecuteHelperTest extends CategoryTest {
   public void testGetHistory() {
     String rootExecutionId = "rootExecutionId";
     List<PipelineExecutionSummaryEntity> pipelineExecutionSummaryEntities =
-        Arrays.asList(PipelineExecutionSummaryEntity.builder().build());
+        Collections.singletonList(PipelineExecutionSummaryEntity.builder().build());
 
     // entities are <=1. Checking error message
     when(pmsExecutionSummaryRespository.fetchPipelineSummaryEntityFromRootParentId(rootExecutionId))
@@ -803,7 +803,7 @@ public class RetryExecuteHelperTest extends CategoryTest {
   public void testGetLatestExecutionId() {
     String rootExecutionId = "rootExecutionId";
     List<PipelineExecutionSummaryEntity> pipelineExecutionSummaryEntities =
-        Arrays.asList(PipelineExecutionSummaryEntity.builder().build());
+        Collections.singletonList(PipelineExecutionSummaryEntity.builder().build());
 
     // entities are <=1. Checking error message
     when(pmsExecutionSummaryRespository.fetchPipelineSummaryEntityFromRootParentId(rootExecutionId))
@@ -925,6 +925,49 @@ public class RetryExecuteHelperTest extends CategoryTest {
                         .yaml(originalYaml)
                         .stagesExecutionMetadata(StagesExecutionMetadata.builder().isStagesExecution(false).build())
                         .build()))
+        .when(planExecutionMetadataService)
+        .findByPlanExecutionId(planExecId);
+
+    RetryInfo retryInfo = retryExecuteHelper.validateRetry(accountId, orgId, projectId, pipelineId, planExecId);
+    assertThat(retryInfo.isResumable()).isTrue();
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testValidateRetryForSelectiveStageExecution() {
+    String pipelineYaml = "pipeline:\n"
+        + "  stages:\n"
+        + "  - stage:\n"
+        + "      identifier: s1\n"
+        + "      description: desc>\n"
+        + "  - stage:\n"
+        + "      identifier: s2\n"
+        + "      description: desc\n";
+
+    String s2StageYaml = "pipeline:\n"
+        + "  stages:\n"
+        + "  - stage:\n"
+        + "      identifier: \"s2\"\n"
+        + "      description: \"desc\"\n";
+
+    doReturn(Optional.of(PipelineEntity.builder().yaml(pipelineYaml).build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    doReturn(PipelineExecutionSummaryEntity.builder()
+                 .isLatestExecution(true)
+                 .createdAt(System.currentTimeMillis() - DAY_IN_MS)
+                 .build())
+        .when(executionService)
+        .getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecId, false);
+    doReturn(Optional.of(PlanExecutionMetadata.builder()
+                             .yaml(s2StageYaml)
+                             .stagesExecutionMetadata(StagesExecutionMetadata.builder()
+                                                          .isStagesExecution(true)
+                                                          .stageIdentifiers(Collections.singletonList("s2"))
+                                                          .fullPipelineYaml(pipelineYaml)
+                                                          .build())
+                             .build()))
         .when(planExecutionMetadataService)
         .findByPlanExecutionId(planExecId);
 
