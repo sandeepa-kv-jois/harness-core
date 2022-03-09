@@ -20,13 +20,15 @@ import lombok.EqualsAndHashCode;
 @EqualsAndHashCode(callSuper = false)
 public class EcsDeployRollbackDataFetchRequest extends EcsCommandRequest {
   private EcsResizeParams ecsResizeParams;
+  private boolean blueGreen;
 
   @Builder
   public EcsDeployRollbackDataFetchRequest(String accountId, String appId, String commandName, String activityId,
-      String region, String cluster, AwsConfig awsConfig, EcsResizeParams ecsResizeParams,
+      String region, String cluster, AwsConfig awsConfig, EcsResizeParams ecsResizeParams, boolean blueGreen,
       boolean timeoutErrorSupported) {
     super(accountId, appId, commandName, activityId, region, cluster, awsConfig, DEPLOY_ROLLBACK_DATA_FETCH,
         timeoutErrorSupported);
     this.ecsResizeParams = ecsResizeParams;
+    this.blueGreen = blueGreen;
   }
 }

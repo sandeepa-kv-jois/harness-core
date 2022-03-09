@@ -566,6 +566,10 @@ public class EcsDeployCommandTaskHelper {
    */
   public int getDownsizeByAmount(
       ContextData contextData, int totalOtherInstances, int upsizeDesiredCount, int upsizePreviousCount) {
+    if (contextData.isBlueGreen()) {
+      return 0;
+    }
+
     EcsResizeParams resizeParams = contextData.getResizeParams();
     Integer downsizeDesiredCount = resizeParams.getDownsizeInstanceCount();
     if (downsizeDesiredCount != null) {

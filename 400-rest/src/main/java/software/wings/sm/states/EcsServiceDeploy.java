@@ -28,6 +28,7 @@ import io.harness.ff.FeatureFlagService;
 import io.harness.tasks.ResponseData;
 
 import software.wings.api.CommandStateExecutionData;
+import software.wings.api.ContainerServiceElement;
 import software.wings.beans.Activity;
 import software.wings.beans.InstanceUnitType;
 import software.wings.beans.command.EcsResizeParams;
@@ -107,6 +108,12 @@ public class EcsServiceDeploy extends State {
     Activity activity = ecsStateHelper.createActivity(
         context, ECS_SERVICE_DEPLOY, getStateType(), AWS_ECS_SERVICE_DEPLOY, activityService);
 
+    boolean blueGreen = false;
+    ContainerServiceElement serviceSetupData = ecsStateHelper.getSetupElementFromSweepingOutput(context, false);
+    if (null != serviceSetupData && null != serviceSetupData.getEcsBGSetupData()) {
+      blueGreen = true;
+    }
+
     CommandStateExecutionData executionData = aCommandStateExecutionData()
                                                   .withServiceId(deployDataBag.getService().getUuid())
                                                   .withServiceName(deployDataBag.getService().getName())
@@ -154,9 +161,11 @@ public class EcsServiceDeploy extends State {
                                           .ecsResizeParams(resizeParams)
                                           .timeoutErrorSupported(featureFlagService.isEnabled(
                                               TIMEOUT_FAILURE_SUPPORT, deployDataBag.getApp().getAccountId()))
+                                          .blueGreen(blueGreen)
                                           .build();
 
-    ecsStateHelper.createSweepingOutputForRollback(deployDataBag, activity, delegateService, resizeParams, context);
+    ecsStateHelper.createSweepingOutputForRollback(
+        deployDataBag, activity, delegateService, resizeParams, context, blueGreen);
 
     DelegateTask delegateTask = ecsStateHelper.createAndQueueDelegateTaskForEcsServiceDeploy(
         deployDataBag, request, activity, delegateService, isSelectionLogsTrackingForTasksEnabled());

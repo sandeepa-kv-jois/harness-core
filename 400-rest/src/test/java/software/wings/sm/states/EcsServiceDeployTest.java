@@ -138,7 +138,7 @@ public class EcsServiceDeployTest extends WingsBaseTest {
     ArgumentCaptor<EcsServiceDeployRequest> captor = ArgumentCaptor.forClass(EcsServiceDeployRequest.class);
     verify(mockEcsStateHelper)
         .createAndQueueDelegateTaskForEcsServiceDeploy(any(), captor.capture(), any(), any(), eq(true));
-    verify(mockEcsStateHelper).createSweepingOutputForRollback(any(), any(), any(), any(), any());
+    verify(mockEcsStateHelper).createSweepingOutputForRollback(any(), any(), any(), any(), any(), false);
     verify(mockFeatureFlagService).isEnabled(eq(TIMEOUT_FAILURE_SUPPORT), any());
     EcsServiceDeployRequest request = captor.getValue();
     assertThat(request).isNotNull();

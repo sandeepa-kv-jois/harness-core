@@ -27,6 +27,7 @@ class ContextData {
   private final List<EncryptedDataDetail> encryptedDataDetails;
   private final EcsResizeParams resizeParams;
   private final boolean deployingToHundredPercent;
+  private final boolean blueGreen;
 
   public SettingAttribute getSettingAttribute() {
     return SettingAttribute.Builder.aSettingAttribute()

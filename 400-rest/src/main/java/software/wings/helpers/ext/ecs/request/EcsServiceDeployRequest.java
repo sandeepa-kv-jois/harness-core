@@ -24,11 +24,14 @@ import lombok.EqualsAndHashCode;
 @TargetModule(HarnessModule._950_DELEGATE_TASKS_BEANS)
 public class EcsServiceDeployRequest extends EcsCommandRequest {
   private EcsResizeParams ecsResizeParams;
+  private boolean blueGreen;
 
   @Builder
   public EcsServiceDeployRequest(String accountId, String appId, String commandName, String activityId, String region,
-      String cluster, AwsConfig awsConfig, EcsResizeParams ecsResizeParams, boolean timeoutErrorSupported) {
+      String cluster, AwsConfig awsConfig, EcsResizeParams ecsResizeParams, boolean blueGreen,
+      boolean timeoutErrorSupported) {
     super(accountId, appId, commandName, activityId, region, cluster, awsConfig, SERVICE_DEPLOY, timeoutErrorSupported);
     this.ecsResizeParams = ecsResizeParams;
+    this.blueGreen = blueGreen;
   }
 }

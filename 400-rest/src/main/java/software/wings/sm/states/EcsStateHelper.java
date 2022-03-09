@@ -1296,7 +1296,7 @@ public class EcsStateHelper {
   }
 
   public void createSweepingOutputForRollback(EcsDeployDataBag deployDataBag, Activity activity,
-      DelegateService delegateService, EcsResizeParams resizeParams, ExecutionContext context) {
+      DelegateService delegateService, EcsResizeParams resizeParams, ExecutionContext context, boolean blueGreen) {
     EcsDeployRollbackDataFetchRequest request =
         EcsDeployRollbackDataFetchRequest.builder()
             .accountId(deployDataBag.getApp().getAccountId())
@@ -1307,6 +1307,7 @@ public class EcsStateHelper {
             .cluster(deployDataBag.getEcsInfrastructureMapping().getClusterName())
             .awsConfig(deployDataBag.getAwsConfig())
             .ecsResizeParams(resizeParams)
+            .blueGreen(blueGreen)
             .build();
 
     DelegateTask task =

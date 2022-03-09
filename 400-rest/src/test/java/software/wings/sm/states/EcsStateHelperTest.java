@@ -884,8 +884,9 @@ public class EcsStateHelperTest extends CategoryTest {
     EcsResizeParams ecsResizeParams = mock(EcsResizeParams.class);
     doThrow(new InterruptedException()).when(mockDelegateService).executeTask(any());
 
-    assertThatThrownBy(
-        () -> helper.createSweepingOutputForRollback(bag, activity, mockDelegateService, ecsResizeParams, mockContext))
+    assertThatThrownBy(()
+                           -> helper.createSweepingOutputForRollback(
+                               bag, activity, mockDelegateService, ecsResizeParams, mockContext, false))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Failed to generate rollback information");
   }
@@ -935,7 +936,7 @@ public class EcsStateHelperTest extends CategoryTest {
                                     .build();
     doReturn(phaseElement).when(mockContext).getContextElement(any(), anyString());
 
-    helper.createSweepingOutputForRollback(bag, activity, mockDelegateService, ecsResizeParams, mockContext);
+    helper.createSweepingOutputForRollback(bag, activity, mockDelegateService, ecsResizeParams, mockContext, false);
 
     ArgumentCaptor<DelegateTask> captor = ArgumentCaptor.forClass(DelegateTask.class);
     verify(mockDelegateService).executeTask(captor.capture());

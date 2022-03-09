@@ -73,6 +73,7 @@ public class EcsDeployRollbackDataFetchCommandHandler extends EcsCommandTaskHand
                                     .deployingToHundredPercent(deployingToHundredPercent)
                                     .resizeParams(resizeParams)
                                     .awsConfig(request.getAwsConfig())
+                                    .blueGreen(request.isBlueGreen())
                                     .build();
 
       List<ContainerServiceData> newInstanceDataList;

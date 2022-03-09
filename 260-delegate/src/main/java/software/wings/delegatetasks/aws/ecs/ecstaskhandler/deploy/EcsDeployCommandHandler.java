@@ -78,6 +78,7 @@ public class EcsDeployCommandHandler extends EcsCommandTaskHandler {
                                     .deployingToHundredPercent(deployingToHundredPercent)
                                     .resizeParams(resizeParams)
                                     .awsConfig(request.getAwsConfig())
+                                    .blueGreen(request.isBlueGreen())
                                     .build();
 
       List<ContainerServiceData> newInstanceDataList;
