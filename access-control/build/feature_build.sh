@@ -6,7 +6,7 @@
 
 set -ex
 
-# GCP_KEY, HARNESS_WILD_CERT, KEYSTORE_PASS, JDK, VERSION, PURPOSE are externally provided
+# GCP_KEY, HARNESS_WILD_CERT, KEYSTORE_PASS, JDK, VERSION, PURPOSE, BUILD are externally provided
 # to this script through environment variables.
 
 echo $GCP_KEY | base64 -d > /tmp/storage_secret.json
