@@ -54,9 +54,12 @@ public class VmRunStepSerializer {
         resolveMapParameter("envVariables", "Run", identifier, runStepInfo.getEnvVariables(), false);
 
     List<String> outputVarNames = new ArrayList<>();
-    if (isNotEmpty(runStepInfo.getOutputVariables())) {
-      outputVarNames =
-          runStepInfo.getOutputVariables().stream().map(OutputNGVariable::getName).collect(Collectors.toList());
+    if (isNotEmpty(runStepInfo.getOutputVariables().getValue())) {
+      outputVarNames = runStepInfo.getOutputVariables()
+                           .getValue()
+                           .stream()
+                           .map(OutputNGVariable::getName)
+                           .collect(Collectors.toList());
     }
 
     String earlyExitCommand = SerializerUtils.getEarlyExitCommand(runStepInfo.getShell());
@@ -76,9 +79,9 @@ public class VmRunStepSerializer {
       runStepBuilder.imageConnector(connectorDetails);
     }
 
-    if (runStepInfo.getReports() != null) {
-      if (runStepInfo.getReports().getType() == UnitTestReportType.JUNIT) {
-        JUnitTestReport junitTestReport = (JUnitTestReport) runStepInfo.getReports().getSpec();
+    if (runStepInfo.getReports().getValue() != null) {
+      if (runStepInfo.getReports().getValue().getType() == UnitTestReportType.JUNIT) {
+        JUnitTestReport junitTestReport = (JUnitTestReport) runStepInfo.getReports().getValue().getSpec();
         List<String> resolvedReport = junitTestReport.resolve(identifier, "run");
 
         runStepBuilder.unitTestReport(VmJunitTestReport.builder().paths(resolvedReport).build());

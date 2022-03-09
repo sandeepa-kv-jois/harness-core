@@ -171,7 +171,7 @@ public class NodeExecutionServiceImpl implements NodeExecutionService {
   public List<NodeExecution> fetchWithoutRetriesAndStatusIn(String planExecutionId, EnumSet<Status> statuses) {
     Query query = query(where(NodeExecutionKeys.planExecutionId).is(planExecutionId))
                       .addCriteria(where(NodeExecutionKeys.oldRetry).is(false))
-                      .addCriteria(where(NodeExecutionKeys.status).is(statuses));
+                      .addCriteria(where(NodeExecutionKeys.status).in(statuses));
     query.fields().include(NodeExecutionKeys.status);
     return mongoTemplate.find(query, NodeExecution.class);
   }

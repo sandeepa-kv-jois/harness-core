@@ -12,7 +12,6 @@ shared_dependencies = [
     "//940-feature-flag:module",
     "//940-notification-client:module",
     "//945-account-mgmt:module",
-    "//948-access-control-sdk:module",
     "//950-ng-authentication-service:module",
     "//960-ng-core-beans:module",
     "//960-notification-beans:module",
@@ -20,6 +19,7 @@ shared_dependencies = [
     "//960-persistence:module",
     "//970-telemetry-beans:module",
     "//980-commons:module",
+    "//clients/access-control/sdk:module",
     "@maven//:org_mindrot_jbcrypt",
 ]
 

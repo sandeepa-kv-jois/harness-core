@@ -11,6 +11,8 @@ import static software.wings.ngmigration.NGMigrationEntityType.DUMMY_HEAD;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.MigratedEntityMapping;
+import io.harness.ngmigration.beans.BaseEntityInput;
 import io.harness.ngmigration.beans.DummyNode;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
@@ -34,6 +36,11 @@ import org.apache.commons.lang3.NotImplementedException;
 
 @OwnedBy(HarnessTeam.CDC)
 public class DummyMigrationService implements NgMigrationService {
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    throw new NotImplementedException("Dummy Method not implemented");
+  }
+
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
     throw new NotImplementedException("Dummy Method not implemented");
@@ -71,5 +78,11 @@ public class DummyMigrationService implements NgMigrationService {
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     return new ArrayList<>();
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
+    return null;
   }
 }

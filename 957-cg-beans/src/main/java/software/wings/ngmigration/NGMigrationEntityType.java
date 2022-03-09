@@ -12,6 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(HarnessTeam.CDC)
 public enum NGMigrationEntityType {
+  APPLICATION,
   DUMMY_HEAD,
   WORKFLOW,
   PIPELINE,

@@ -8,7 +8,6 @@ java_library(
     visibility = ["//visibility:public"],
     deps = [
         "//:lombok",
-        "//948-access-control-sdk:module",
         "//950-ng-signup-beans:module",
         "//956-feature-flag-beans:module",
         "//960-ng-core-beans:module",
@@ -16,6 +15,7 @@ java_library(
         "//970-rbac-core:module",
         "//980-commons:module",
         "//999-annotations:module",
+        "//clients/access-control/sdk:module",
         "@maven//:com_fasterxml_jackson_core_jackson_annotations",
         "@maven//:com_google_code_findbugs_annotations",
         "@maven//:com_google_inject_guice",

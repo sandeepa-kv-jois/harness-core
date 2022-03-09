@@ -63,7 +63,7 @@ public class CodebasePlanCreatorTest extends CategoryTest {
 
     codeBase = CodeBase.builder()
                    .repoName(ParameterField.createValueField("main"))
-                   .connectorRef("connectorRef")
+                   .connectorRef(ParameterField.createValueField("connectorRef"))
                    .build(ParameterField.createValueField(build))
                    .build();
   }

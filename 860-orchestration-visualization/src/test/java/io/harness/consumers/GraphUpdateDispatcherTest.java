@@ -13,7 +13,6 @@ import static io.harness.rule.OwnerRule.PRASHANT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.verifyZeroInteractions;
 import static org.mockito.Mockito.when;
 
 import io.harness.OrchestrationVisualizationTestBase;
@@ -22,8 +21,8 @@ import io.harness.eventsframework.api.Consumer;
 import io.harness.rule.Owner;
 import io.harness.service.GraphGenerationService;
 
-import com.google.common.collect.ImmutableList;
 import java.util.List;
+import org.assertj.core.util.Lists;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
@@ -41,7 +40,7 @@ public class GraphUpdateDispatcherTest extends OrchestrationVisualizationTestBas
     String mid1 = generateUuid();
     String mid2 = generateUuid();
     String mid3 = generateUuid();
-    List<String> messageIds = ImmutableList.of(mid1, mid2, mid3);
+    List<String> messageIds = Lists.newArrayList(mid1, mid2, mid3);
     GraphUpdateDispatcher dispatcher = GraphUpdateDispatcher.builder()
                                            .planExecutionId(planExecutionId)
                                            .messageIds(messageIds)
@@ -64,7 +63,7 @@ public class GraphUpdateDispatcherTest extends OrchestrationVisualizationTestBas
     String mid1 = generateUuid();
     String mid2 = generateUuid();
     String mid3 = generateUuid();
-    List<String> messageIds = ImmutableList.of(mid1, mid2, mid3);
+    List<String> messageIds = Lists.newArrayList(mid1, mid2, mid3);
     GraphUpdateDispatcher dispatcher = GraphUpdateDispatcher.builder()
                                            .planExecutionId(planExecutionId)
                                            .messageIds(messageIds)
@@ -74,6 +73,5 @@ public class GraphUpdateDispatcherTest extends OrchestrationVisualizationTestBas
                                            .build();
     when(graphGenerationService.updateGraph(planExecutionId)).thenReturn(false);
     dispatcher.run();
-    verifyZeroInteractions(consumer);
   }
 }

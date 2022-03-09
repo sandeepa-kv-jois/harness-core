@@ -81,7 +81,9 @@ public class RunTestsStepInfo implements CIStepInfo {
   private ParameterField<TIBuildTool> buildTool;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> packages;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> testAnnotations;
-  private UnitTestReport reports;
+  @YamlSchemaTypes({runtime})
+  @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.reports.UnitTestReport")
+  private ParameterField<UnitTestReport> reports;
   @YamlSchemaTypes({string})
   @ApiModelProperty(dataType = BOOLEAN_CLASSPATH)
   private ParameterField<Boolean> runOnlySelectedTests;
@@ -89,7 +91,9 @@ public class RunTestsStepInfo implements CIStepInfo {
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> image;
   @ApiModelProperty(dataType = STRING_CLASSPATH) private ParameterField<String> connectorRef;
   private ContainerResource resources;
-  private List<OutputNGVariable> outputVariables;
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = "[Lio.harness.yaml.core.variables.OutputNGVariable;")
+  private ParameterField<List<OutputNGVariable>> outputVariables;
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = STRING_MAP_CLASSPATH)
   private ParameterField<Map<String, String>> envVariables;
@@ -110,10 +114,10 @@ public class RunTestsStepInfo implements CIStepInfo {
       "outputVariables", "envVariables", "privileged", "runAsUser", "imagePullPolicy", "shell"})
   public RunTestsStepInfo(String identifier, String name, Integer retry, ParameterField<String> args,
       ParameterField<TILanguage> language, ParameterField<TIBuildTool> buildTool, ParameterField<String> image,
-      ParameterField<String> connectorRef, ContainerResource resources, UnitTestReport reports,
+      ParameterField<String> connectorRef, ContainerResource resources, ParameterField<UnitTestReport> reports,
       ParameterField<String> testAnnotations, ParameterField<String> packages,
       ParameterField<Boolean> runOnlySelectedTests, ParameterField<String> preCommand,
-      ParameterField<String> postCommand, List<OutputNGVariable> outputVariables,
+      ParameterField<String> postCommand, ParameterField<List<OutputNGVariable>> outputVariables,
       ParameterField<Map<String, String>> envVariables, ParameterField<Boolean> privileged,
       ParameterField<Integer> runAsUser, ParameterField<ImagePullPolicy> imagePullPolicy,
       ParameterField<CIShellType> shell) {

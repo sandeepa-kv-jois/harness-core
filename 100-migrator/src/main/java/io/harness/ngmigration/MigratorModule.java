@@ -37,4 +37,11 @@ public class MigratorModule extends AbstractModule {
   public ServiceHttpClientConfig pmsClientConfig() {
     return migratorConfig.getPipelineServiceClientConfig();
   }
+
+  @Provides
+  @Singleton
+  @Named("templateServiceClientConfig")
+  public ServiceHttpClientConfig templateServiceClientConfig() {
+    return migratorConfig.getTemplateServiceClientConfig();
+  }
 }
