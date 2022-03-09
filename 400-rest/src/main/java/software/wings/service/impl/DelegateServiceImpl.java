@@ -2868,12 +2868,7 @@ public class DelegateServiceImpl implements DelegateService {
     if (sizeDetails != null) {
       setUnset(updateOperations, DelegateGroupKeys.sizeDetails, sizeDetails);
     }
-
-    DelegateGroup delegateGroup = persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
-    if (delegateSetupDetails != null) {
-      delegateCache.invalidateDelegateGroupCache(accountId, delegateGroup.getUuid());
-    }
-    return delegateGroup;
+    return persistence.upsert(query, updateOperations, HPersistence.upsertReturnNewOptions);
   }
 
   @Override
