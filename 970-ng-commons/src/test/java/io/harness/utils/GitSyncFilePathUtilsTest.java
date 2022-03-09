@@ -16,25 +16,25 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.gitsync.helper.GitEntityFilePath;
-import io.harness.gitsync.helper.GitSyncSdkUtils;
+import io.harness.gitsync.helper.GitSyncFilePathUtils;
 import io.harness.rule.Owner;
 
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @OwnedBy(HarnessTeam.PL)
-public class GitSyncSdkUtilsTest extends CategoryTest {
+public class GitSyncFilePathUtilsTest extends CategoryTest {
   @Test
   @Owner(developers = MOHIT_GARG)
   @Category(UnitTests.class)
   public void testFilePath() {
     String completePath = "testFolder/.harness/test.yaml";
-    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(completePath);
+    GitEntityFilePath gitEntityFilePath = GitSyncFilePathUtils.getRootFolderAndFilePath(completePath);
     assertThat(gitEntityFilePath.getRootFolder()).isEqualTo("/testFolder/.harness/");
     assertThat(gitEntityFilePath.getFilePath()).isEqualTo("test.yaml");
 
     completePath = "testFolder/folder-temp/.harness/harness/test.yaml";
-    gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(completePath);
+    gitEntityFilePath = GitSyncFilePathUtils.getRootFolderAndFilePath(completePath);
     assertThat(gitEntityFilePath.getRootFolder()).isEqualTo("/testFolder/folder-temp/.harness/");
     assertThat(gitEntityFilePath.getFilePath()).isEqualTo("harness/test.yaml");
   }

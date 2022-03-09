@@ -19,7 +19,7 @@ import lombok.experimental.UtilityClass;
 
 @OwnedBy(HarnessTeam.PL)
 @UtilityClass
-public class GitSyncSdkUtils {
+public class GitSyncFilePathUtils {
   private final String FOLDER_PATH = ".harness/";
 
   public GitEntityFilePath getRootFolderAndFilePath(String completeFilePath) {

@@ -28,7 +28,7 @@ import io.harness.gitsync.common.dtos.GitSyncRepoFilesListDTO;
 import io.harness.gitsync.common.dtos.RepoProviders;
 import io.harness.gitsync.common.service.GitEntityService;
 import io.harness.gitsync.helper.GitEntityFilePath;
-import io.harness.gitsync.helper.GitSyncSdkUtils;
+import io.harness.gitsync.helper.GitSyncFilePathUtils;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.EntityDetail;
 import io.harness.repositories.gitFileLocation.GitFileLocationRepository;
@@ -299,7 +299,7 @@ public class GitEntityServiceImpl implements GitEntityService {
 
   public void updateFilePath(
       String accountId, String prevFilePath, String repo, String branchName, String newFilePath) {
-    GitEntityFilePath gitEntityFilePath = GitSyncSdkUtils.getRootFolderAndFilePath(newFilePath);
+    GitEntityFilePath gitEntityFilePath = GitSyncFilePathUtils.getRootFolderAndFilePath(newFilePath);
     Criteria criteria = Criteria.where(GitFileLocationKeys.accountId)
                             .is(accountId)
                             .and(GitFileLocationKeys.completeGitPath)
