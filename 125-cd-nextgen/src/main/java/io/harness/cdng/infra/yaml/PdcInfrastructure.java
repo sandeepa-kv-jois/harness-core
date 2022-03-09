@@ -113,7 +113,11 @@ public class PdcInfrastructure implements Infrastructure, Visitable, WithConnect
 
   @Override
   public String[] getInfrastructureKeyValues() {
-    return new String[] {sshKeyRef.getValue(), connectorRef.getValue()};
+    if (connectorRef == null) {
+      return new String[] {sshKeyRef.getValue()};
+    } else {
+      return new String[] {sshKeyRef.getValue(), connectorRef.getValue()};
+    }
   }
 
   @Override

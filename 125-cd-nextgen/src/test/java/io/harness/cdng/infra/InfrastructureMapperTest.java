@@ -10,10 +10,10 @@ package io.harness.cdng.infra;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ACASIAN;
+import static io.harness.rule.OwnerRule.FILIP;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
@@ -21,8 +21,10 @@ import io.harness.category.element.UnitTests;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sDirectInfrastructureOutcome;
 import io.harness.cdng.infra.beans.K8sGcpInfrastructureOutcome;
+import io.harness.cdng.infra.beans.PdcInfrastructureOutcome;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
+import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.ng.core.environment.beans.EnvironmentType;
@@ -30,6 +32,7 @@ import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
 import io.harness.steps.environment.EnvironmentOutcome;
 
+import java.util.Arrays;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -141,6 +144,77 @@ public class InfrastructureMapperTest extends CategoryTest {
                                                 .cluster(ParameterField.createValueField(""))
                                                 .build();
     assertThatThrownBy(() -> InfrastructureMapper.toOutcome(emptyClusterName, environment, serviceOutcome))
+        .isInstanceOf(InvalidArgumentsException.class);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testPdcInfrastructureWithConnectorToOutcome() {
+    PdcInfrastructure infrastructure =
+        PdcInfrastructure.builder()
+            .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+            .connectorRef(ParameterField.createValueField("connector-ref"))
+            .hostFilters(ParameterField.createValueField(Arrays.asList("host1", "host2")))
+            .build();
+
+    InfrastructureOutcome infrastructureOutcome =
+        InfrastructureMapper.toOutcome(infrastructure, environment, serviceOutcome);
+
+    assertThat(infrastructureOutcome)
+        .isEqualToIgnoringGivenFields(PdcInfrastructureOutcome.builder()
+                                          .sshKeyRef("ssh-key-ref")
+                                          .connectorRef("connector-ref")
+                                          .hostFilters(Arrays.asList("host1", "host2"))
+                                          .environment(environment)
+                                          .build(),
+            "infrastructureKey");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testPdcInfrastructureWithHostsToOutcome() {
+    PdcInfrastructure infrastructure =
+        PdcInfrastructure.builder()
+            .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+            .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2", "host3")))
+            .build();
+
+    InfrastructureOutcome infrastructureOutcome =
+        InfrastructureMapper.toOutcome(infrastructure, environment, serviceOutcome);
+
+    assertThat(infrastructureOutcome)
+        .isEqualToIgnoringGivenFields(PdcInfrastructureOutcome.builder()
+                                          .sshKeyRef("ssh-key-ref")
+                                          .hosts(Arrays.asList("host1", "host2", "host3"))
+                                          .environment(environment)
+                                          .build(),
+            "infrastructureKey");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testPdcInfrastructureEmptySshKeyRef() {
+    PdcInfrastructure emptySshKeyRef =
+        PdcInfrastructure.builder().connectorRef(ParameterField.createValueField("connector-ref")).build();
+
+    assertThatThrownBy(() -> InfrastructureMapper.toOutcome(emptySshKeyRef, environment, serviceOutcome))
+        .isInstanceOf(InvalidArgumentsException.class);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testPdcInfrastructureEmptyHostsAndConnector() {
+    PdcInfrastructure emptySshKeyRef = PdcInfrastructure.builder()
+                                           .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+                                           .hosts(ParameterField.ofNull())
+                                           .connectorRef(ParameterField.ofNull())
+                                           .build();
+
+    assertThatThrownBy(() -> InfrastructureMapper.toOutcome(emptySshKeyRef, environment, serviceOutcome))
         .isInstanceOf(InvalidArgumentsException.class);
   }
 }
