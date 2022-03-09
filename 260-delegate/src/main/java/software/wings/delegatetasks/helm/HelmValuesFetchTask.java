@@ -35,6 +35,8 @@ import io.harness.k8s.model.HelmVersion;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.secret.SecretSanitizerThreadLocal;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.DelegateLogService;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
@@ -75,6 +77,8 @@ public class HelmValuesFetchTask extends AbstractDelegateRunnableTask {
 
     printHelmBinaryPathAndVersion(taskParams.getHelmChartConfigTaskParams().getHelmVersion(), executionLogCallback);
 
+    executionLogCallback.saveExecutionLog(color("\nStarting fetching Helm values", LogColor.White, LogWeight.Bold));
+
     try {
       executionLogCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart for Service", White, Bold));
 
@@ -92,6 +96,9 @@ public class HelmValuesFetchTask extends AbstractDelegateRunnableTask {
       } else {
         executionLogCallback.saveExecutionLog("\nSuccessfully fetched values.yaml files", INFO, SUCCESS);
       }
+
+      executionLogCallback.saveExecutionLog(
+          color("\nFetching helm values completed successfully.", LogColor.White, LogWeight.Bold));
 
       return HelmValuesFetchTaskResponse.builder()
           .commandExecutionStatus(SUCCESS)
@@ -120,7 +127,20 @@ public class HelmValuesFetchTask extends AbstractDelegateRunnableTask {
   }
 
   public void printHelmBinaryPathAndVersion(HelmVersion helmVersion, ExecutionLogCallback logCallback) {
-    String helmPath = (helmVersion == HelmVersion.V3) ? InstallUtils.getHelm3Path() : InstallUtils.getHelm2Path();
+    String helmPath;
+    if (helmVersion == null) {
+      helmVersion = HelmVersion.V2; // Default to V2
+    }
+    switch (helmVersion) {
+      case V3:
+        helmPath = InstallUtils.getHelm3Path();
+        break;
+      case V380:
+        helmPath = InstallUtils.getNewHelm3Path();
+        break;
+      default:
+        helmPath = InstallUtils.getHelm2Path();
+    }
     logCallback.saveExecutionLog("Path of helm binary picked up: " + helmPath);
 
     try {

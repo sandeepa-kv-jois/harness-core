@@ -55,6 +55,7 @@ import io.harness.beans.environment.K8BuildJobEnvInfo;
 import io.harness.beans.environment.K8BuildJobEnvInfo.ConnectorConversionInfo;
 import io.harness.beans.environment.pod.PodSetupInfo;
 import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
+import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.sweepingoutputs.CodeBaseConnectorRefSweepingOutput;
 import io.harness.beans.sweepingoutputs.ContainerPortDetails;
@@ -64,6 +65,7 @@ import io.harness.beans.sweepingoutputs.K8StageInfraDetails;
 import io.harness.beans.sweepingoutputs.PodCleanupDetails;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
+import io.harness.beans.yaml.extended.infrastrucutre.Toleration;
 import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
 import io.harness.delegate.beans.ci.k8s.CIK8InitializeTaskParams;
@@ -74,6 +76,7 @@ import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.ContainerSecrets;
 import io.harness.delegate.beans.ci.pod.ImageDetailsWithConnector;
 import io.harness.delegate.beans.ci.pod.PVCParams;
+import io.harness.delegate.beans.ci.pod.PodToleration;
 import io.harness.delegate.beans.ci.pod.SecretVariableDetails;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
@@ -150,8 +153,10 @@ public class K8BuildSetupUtils {
     final String clusterName = k8sDirectInfraYaml.getSpec().getConnectorRef().getValue();
     Map<String, String> annotations = resolveMapParameter(
         "annotations", "K8BuildInfra", "stageSetup", k8sDirectInfraYaml.getSpec().getAnnotations(), false);
-    Map<String, String> labels = resolveMapParameter(
-        "annotations", "K8BuildInfra", "stageSetup", k8sDirectInfraYaml.getSpec().getLabels(), false);
+    Map<String, String> labels =
+        resolveMapParameter("labels", "K8BuildInfra", "stageSetup", k8sDirectInfraYaml.getSpec().getLabels(), false);
+    Map<String, String> nodeSelector = resolveMapParameter(
+        "nodeSelector", "K8BuildInfra", "stageSetup", k8sDirectInfraYaml.getSpec().getNodeSelector(), false);
 
     Integer stageRunAsUser = resolveIntegerParameter(k8sDirectInfraYaml.getSpec().getRunAsUser(), null);
     String resolveStringParameter = resolveStringParameter(
@@ -160,13 +165,15 @@ public class K8BuildSetupUtils {
     if (resolveStringParameter != null && !resolveStringParameter.equals(UNRESOLVED_PARAMETER)) {
       serviceAccountName = resolveStringParameter;
     }
+
+    List<PodToleration> podTolerations = getPodTolerations(k8sDirectInfraYaml.getSpec().getTolerations());
+
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
 
     ConnectorDetails k8sConnector = connectorUtils.getConnectorDetails(ngAccess, clusterName);
-    String workDir = ((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo()).getWorkDir();
     CIK8PodParams<CIK8ContainerParams> podParams = getPodParams(ngAccess, k8PodDetails, initializeStepInfo, false,
         initializeStepInfo.getCiCodebase(), initializeStepInfo.isSkipGitClone(), logPrefix, ambiance, annotations,
-        labels, stageRunAsUser, serviceAccountName);
+        labels, stageRunAsUser, serviceAccountName, nodeSelector, podTolerations);
 
     log.info("Created pod params for pod name [{}]", podSetupInfo.getName());
     return CIK8InitializeTaskParams.builder()
@@ -199,7 +206,8 @@ public class K8BuildSetupUtils {
   public CIK8PodParams<CIK8ContainerParams> getPodParams(NGAccess ngAccess, K8PodDetails k8PodDetails,
       InitializeStepInfo initializeStepInfo, boolean usePVC, CodeBase ciCodebase, boolean skipGitClone,
       String logPrefix, Ambiance ambiance, Map<String, String> annotations, Map<String, String> labels,
-      Integer stageRunAsUser, String serviceAccountName) {
+      Integer stageRunAsUser, String serviceAccountName, Map<String, String> nodeSelector,
+      List<PodToleration> podTolerations) {
     PodSetupInfo podSetupInfo = getPodSetupInfo((K8BuildJobEnvInfo) initializeStepInfo.getBuildJobEnvInfo());
     ConnectorDetails harnessInternalImageConnector = null;
     if (isNotEmpty(ciExecutionServiceConfig.getDefaultInternalImageConnector())) {
@@ -238,8 +246,7 @@ public class K8BuildSetupUtils {
     }
     K8sDirectInfraYaml k8sDirectInfraYaml = (K8sDirectInfraYaml) infrastructure;
 
-    List<String> containerNames =
-        containerParamsList.stream().map(CIK8ContainerParams::getName).collect(Collectors.toList());
+    List<String> containerNames = containerParamsList.stream().map(CIK8ContainerParams::getName).collect(toList());
     containerNames.add(setupAddOnContainerParams.getName());
 
     consumeSweepingOutput(ambiance,
@@ -274,6 +281,8 @@ public class K8BuildSetupUtils {
         .pvcParamList(pvcParamsList)
         .initContainerParamsList(singletonList(setupAddOnContainerParams))
         .runAsUser(stageRunAsUser)
+        .tolerations(podTolerations)
+        .nodeSelector(nodeSelector)
         .build();
   }
 
@@ -328,8 +337,9 @@ public class K8BuildSetupUtils {
   private Map<String, ConnectorDetails> resolveGitAppFunctor(
       NGAccess ngAccess, InitializeStepInfo initializeStepInfo, Ambiance ambiance) {
     String codeBaseConnectorRef = null;
-    if (initializeStepInfo.getCiCodebase() != null) {
-      codeBaseConnectorRef = initializeStepInfo.getCiCodebase().getConnectorRef();
+    if (initializeStepInfo.getCiCodebase() != null
+        && initializeStepInfo.getCiCodebase().getConnectorRef().getValue() != null) {
+      codeBaseConnectorRef = initializeStepInfo.getCiCodebase().getConnectorRef().getValue();
       if (isNotEmpty(codeBaseConnectorRef)) {
         consumeSweepingOutput(ambiance,
             CodeBaseConnectorRefSweepingOutput.builder().codeBaseConnectorRef(codeBaseConnectorRef).build(),
@@ -612,6 +622,50 @@ public class K8BuildSetupUtils {
     }
 
     return label.matches(LABEL_REGEX);
+  }
+
+  private List<PodToleration> getPodTolerations(ParameterField<List<Toleration>> parameterizedTolerations) {
+    List<PodToleration> podTolerations = new ArrayList<>();
+    List<Toleration> tolerations = RunTimeInputHandler.resolveTolerations(parameterizedTolerations);
+    if (tolerations == null) {
+      return podTolerations;
+    }
+
+    for (Toleration toleration : tolerations) {
+      String effect = resolveStringParameter("effect", null, "infrastructure", toleration.getEffect(), false);
+      String key = resolveStringParameter("key", null, "infrastructure", toleration.getKey(), false);
+      String operator = resolveStringParameter("operator", null, "infrastructure", toleration.getOperator(), false);
+      String value = resolveStringParameter("value", null, "infrastructure", toleration.getValue(), false);
+      Integer tolerationSeconds = resolveIntegerParameter(toleration.getTolerationSeconds(), null);
+
+      validateTolerationEffect(effect);
+      validateTolerationOperator(operator);
+
+      podTolerations.add(PodToleration.builder()
+                             .effect(effect)
+                             .key(key)
+                             .operator(operator)
+                             .value(value)
+                             .tolerationSeconds(tolerationSeconds)
+                             .build());
+    }
+    return podTolerations;
+  }
+
+  private void validateTolerationEffect(String effect) {
+    if (isNotEmpty(effect)) {
+      if (!effect.equals("NoSchedule") && !effect.equals("PreferNoSchedule") && !effect.equals("NoExecute")) {
+        throw new CIStageExecutionException(format("Invalid value %s for effect in toleration", effect));
+      }
+    }
+  }
+
+  private void validateTolerationOperator(String operator) {
+    if (isNotEmpty(operator)) {
+      if (!operator.equals("Equal") && !operator.equals("Exists")) {
+        throw new CIStageExecutionException(format("Invalid value %s for operator in toleration", operator));
+      }
+    }
   }
 
   private RetryPolicy<Object> getRetryPolicy(String failedAttemptMessage, String failureMessage) {

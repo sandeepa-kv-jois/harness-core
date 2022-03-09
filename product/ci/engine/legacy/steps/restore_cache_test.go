@@ -16,9 +16,6 @@ import (
 	"github.com/cenkalti/backoff/v4"
 	"github.com/cespare/xxhash"
 	"github.com/golang/mock/gomock"
-	"github.com/minio/minio-go/v6"
-	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	marchive "github.com/harness/harness-core/commons/go/lib/archive/mocks"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	"github.com/harness/harness-core/commons/go/lib/logs"
@@ -27,6 +24,9 @@ import (
 	mbackoff "github.com/harness/harness-core/commons/go/lib/utils/mocks"
 	"github.com/harness/harness-core/product/ci/engine/output"
 	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/minio/minio-go/v6"
+	"github.com/pkg/errors"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 

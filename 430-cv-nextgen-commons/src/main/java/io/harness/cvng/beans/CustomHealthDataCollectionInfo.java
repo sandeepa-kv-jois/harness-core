@@ -16,6 +16,7 @@ import io.harness.delegate.beans.cvng.customhealth.CustomHealthConnectorValidati
 import io.harness.serializer.JsonUtils;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -30,6 +31,13 @@ import lombok.experimental.FieldDefaults;
 public class CustomHealthDataCollectionInfo extends TimeSeriesDataCollectionInfo<CustomHealthConnectorDTO> {
   String groupName;
   List<CustomHealthMetricInfo> metricInfoList;
+
+  public List<CustomHealthMetricInfo> getMetricInfoList() {
+    if (metricInfoList == null) {
+      return Collections.emptyList();
+    }
+    return metricInfoList;
+  }
 
   @Data
   @Builder
@@ -60,7 +68,7 @@ public class CustomHealthDataCollectionInfo extends TimeSeriesDataCollectionInfo
     List<String> metricValueJSONPaths = new ArrayList<>();
     List<String> serviceInstanceJSONPaths = new ArrayList<>();
 
-    metricInfoList.forEach(metricInfo -> {
+    getMetricInfoList().forEach(metricInfo -> {
       metricNames.add(metricInfo.getMetricName());
       metricIdentifiers.add(metricInfo.getMetricIdentifier());
       bodies.add(isEmpty(metricInfo.getBody()) ? null : JsonUtils.asMap(metricInfo.body));

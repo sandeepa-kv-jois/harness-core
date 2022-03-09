@@ -17,6 +17,7 @@ import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.ng.core.Resource;
 import io.harness.ng.core.ResourceScope;
+import io.harness.persistence.PersistentEntity;
 
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
@@ -46,7 +47,7 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @StoreIn(DbAliases.CIMANAGER)
 @StoreIn(DbAliases.ACCESS_CONTROL)
 @StoreIn(DbAliases.RESOURCEGROUP)
-public class OutboxEvent {
+public class OutboxEvent implements PersistentEntity {
   @Id @org.mongodb.morphia.annotations.Id String id;
 
   @NotNull ResourceScope resourceScope;

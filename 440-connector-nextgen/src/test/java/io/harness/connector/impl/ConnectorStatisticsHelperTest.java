@@ -26,8 +26,12 @@ import io.harness.connector.utils.KubernetesConnectorTestHelper;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.encryption.Scope;
 import io.harness.git.model.ChangeType;
+import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.dto.ConnectorSettings;
+import io.harness.ng.core.accountsetting.entities.AccountSettings;
 import io.harness.outbox.api.OutboxService;
 import io.harness.repositories.ConnectorRepository;
+import io.harness.repositories.accountsetting.AccountSettingRepository;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 
@@ -43,6 +47,7 @@ public class ConnectorStatisticsHelperTest extends ConnectorsTestBase {
   @Inject ConnectorRepository connectorRepository;
   @Inject ConnectorStatisticsHelper connectorStatisticsHelper;
   @Inject OutboxService outboxService;
+  @Inject AccountSettingRepository accountSettingRepository;
   private static final String accountIdentifier = "accountIdentifier";
   private static final String orgIdentifier = "orgIdentifier";
   private static final String projectIdentifier = "projectIdentifier";
@@ -52,6 +57,11 @@ public class ConnectorStatisticsHelperTest extends ConnectorsTestBase {
   @Owner(developers = OwnerRule.DEEPAK)
   @Category(UnitTests.class)
   public void getStats() {
+    accountSettingRepository.save(AccountSettings.builder()
+                                      .accountIdentifier(accountIdentifier)
+                                      .type(AccountSettingType.CONNECTOR)
+                                      .config(ConnectorSettings.builder().builtInSMDisabled(false).build())
+                                      .build());
     for (int i = 0; i < 5; i++) {
       Connector connector = KubernetesConnectorTestHelper.createK8sConnector(
           accountIdentifier, orgIdentifier, projectIdentifier, identifier, Scope.PROJECT);

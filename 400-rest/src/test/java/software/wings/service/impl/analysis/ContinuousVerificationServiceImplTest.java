@@ -63,6 +63,7 @@ import software.wings.beans.TaskType;
 import software.wings.beans.User;
 import software.wings.common.VerificationConstants;
 import software.wings.delegatetasks.DelegateProxyFactory;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.dl.WingsPersistence;
 import software.wings.metrics.MetricType;
 import software.wings.security.AppPermissionSummary;
@@ -703,7 +704,7 @@ public class ContinuousVerificationServiceImplTest extends WingsBaseTest {
   public void testGetDataForNode() {
     String serverConfigId = generateUuid();
     DataDogSetupTestNodeData testNodeData = DataDogSetupTestNodeData.builder()
-                                                .stateType(StateType.DATA_DOG)
+                                                .stateType(DelegateStateType.DATA_DOG)
                                                 .workflowId(generateUuid())
                                                 .settingId(serverConfigId)
                                                 .metrics("kubernetes.cpu.usage.total")
@@ -720,7 +721,7 @@ public class ContinuousVerificationServiceImplTest extends WingsBaseTest {
     when(apmDelegateService.fetch(any(), any())).thenReturn("{}");
     when(datadogService.getConcatenatedListOfMetricsForValidation(anyString(), any(), any(), any()))
         .thenReturn("kubernetes.cpu.usage.total");
-    continuousVerificationService.getDataForNode(accountId, serverConfigId, testNodeData, StateType.DATA_DOG);
+    continuousVerificationService.getDataForNode(accountId, serverConfigId, testNodeData, DelegateStateType.DATA_DOG);
     ArgumentCaptor<APMValidateCollectorConfig> validateCollectorConfigArgumentCaptor =
         ArgumentCaptor.forClass(APMValidateCollectorConfig.class);
     ArgumentCaptor<ThirdPartyApiCallLog> thirdPartyApiCallLogArgumentCaptor =

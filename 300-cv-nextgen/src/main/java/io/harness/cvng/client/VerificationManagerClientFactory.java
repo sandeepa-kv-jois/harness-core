@@ -13,15 +13,11 @@ import io.harness.network.Http;
 import io.harness.network.NoopHostnameVerifier;
 import io.harness.security.ServiceTokenGenerator;
 import io.harness.security.VerificationAuthInterceptor;
-import io.harness.serializer.JsonSubtypeResolver;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.guava.GuavaModule;
-import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.ImmutableList;
 import com.google.inject.Provider;
 import com.google.inject.Singleton;
+import io.serializer.HObjectMapper;
 import java.util.concurrent.TimeUnit;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocketFactory;
@@ -40,16 +36,10 @@ public class VerificationManagerClientFactory implements Provider<VerificationMa
 
   private String baseUrl;
   private ServiceTokenGenerator tokenGenerator;
-  private ObjectMapper objectMapper;
 
   public VerificationManagerClientFactory(String baseUrl, ServiceTokenGenerator tokenGenerator) {
     this.baseUrl = baseUrl;
     this.tokenGenerator = tokenGenerator;
-    this.objectMapper = new ObjectMapper();
-    this.objectMapper.registerModule(new Jdk8Module());
-    this.objectMapper.registerModule(new GuavaModule());
-    this.objectMapper.registerModule(new JavaTimeModule());
-    this.objectMapper.setSubtypeResolver(new JsonSubtypeResolver(objectMapper.getSubtypeResolver()));
   }
 
   @Override
@@ -57,7 +47,7 @@ public class VerificationManagerClientFactory implements Provider<VerificationMa
     Retrofit retrofit = new Retrofit.Builder()
                             .baseUrl(baseUrl)
                             .client(getUnsafeOkHttpClient())
-                            .addConverterFactory(JacksonConverterFactory.create(objectMapper))
+                            .addConverterFactory(JacksonConverterFactory.create(HObjectMapper.NG_DEFAULT_OBJECT_MAPPER))
                             .build();
     return retrofit.create(VerificationManagerClient.class);
   }

@@ -13,7 +13,8 @@ import static io.harness.ng.core.events.ApiKeyCreateEvent.API_KEY_CREATED;
 import static io.harness.ng.core.events.ApiKeyDeleteEvent.API_KEY_DELETED;
 import static io.harness.ng.core.events.ApiKeyUpdateEvent.API_KEY_UPDATED;
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
+
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
 import io.harness.ModuleType;
 import io.harness.annotations.dev.OwnedBy;

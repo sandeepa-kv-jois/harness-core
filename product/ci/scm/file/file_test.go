@@ -441,7 +441,6 @@ func TestFindFilesInBranch(t *testing.T) {
 // 	assert.NotNil(t, len(got.File), "Non-Null file count")
 // }
 
-
 func TestFindFilesInCommit(t *testing.T) {
 	ts := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")

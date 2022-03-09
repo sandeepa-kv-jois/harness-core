@@ -70,7 +70,7 @@ public class PluginStepProtobufSerializer implements ProtobufStepSerializer<Plug
 
     PluginStep.Builder builder = PluginStep.newBuilder();
 
-    UnitTestReport reports = pluginStepInfo.getReports();
+    UnitTestReport reports = pluginStepInfo.getReports().getValue();
     if (reports != null) {
       if (reports.getType() == UnitTestReportType.JUNIT) {
         JUnitTestReport junitTestReport = (JUnitTestReport) reports.getSpec();

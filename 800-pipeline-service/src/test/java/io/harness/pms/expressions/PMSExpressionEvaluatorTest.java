@@ -196,16 +196,6 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
         .thenReturn(asList(nodeExecution4, nodeExecution5));
 
     when(planExecutionService.get(planExecutionId)).thenReturn(PlanExecution.builder().build());
-
-    // pipeline children
-    when(nodeExecutionService.findAllChildren(planExecutionId, nodeExecution1.getUuid(), false,
-             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
-        .thenReturn(Arrays.asList(nodeExecution2, nodeExecution3, nodeExecution4, nodeExecution5));
-
-    // stage children
-    when(nodeExecutionService.findAllChildren(planExecutionId, nodeExecution3.getUuid(), false,
-             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
-        .thenReturn(Arrays.asList(nodeExecution4, nodeExecution5));
   }
 
   @Test
@@ -222,6 +212,11 @@ public class PMSExpressionEvaluatorTest extends PipelineServiceTestBase {
 
     Reflect.on(nodeExecution5).set("status", Status.IGNORE_FAILED);
     Reflect.on(nodeExecution4).set("status", Status.SUCCEEDED);
+
+    // pipeline children
+    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution1.getUuid(), null, false, true,
+             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
+        .thenReturn(Arrays.asList(nodeExecution4, nodeExecution5));
 
     EngineExpressionEvaluator engineExpressionEvaluator = prepareEngineExpressionEvaluator(newAmbiance);
     PmsSdkInstance pmsSdkInstance =

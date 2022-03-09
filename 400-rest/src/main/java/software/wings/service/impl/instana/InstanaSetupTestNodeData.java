@@ -7,8 +7,8 @@
 
 package software.wings.service.impl.instana;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.Collections;
@@ -31,7 +31,7 @@ public class InstanaSetupTestNodeData extends SetupTestNodeData {
       Instance instanceElement, String hostExpression, String workflowId, long fromTime, long toTime, String guid,
       InstanaInfraParams infraParams, InstanaApplicationParams applicationParams, List<InstanaTagFilter> tagFilters) {
     super(appId, settingId, instanceName, isServiceLevel, instanceElement, hostExpression, workflowId, guid,
-        StateType.INSTANA, fromTime, toTime);
+        DelegateStateType.INSTANA, fromTime, toTime);
     this.infraParams = infraParams;
     this.applicationParams = applicationParams;
     this.tagFilters = tagFilters;

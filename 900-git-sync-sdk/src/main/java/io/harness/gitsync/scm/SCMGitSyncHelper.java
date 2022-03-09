@@ -39,6 +39,7 @@ import io.harness.security.dto.ServiceAccountPrincipal;
 import io.harness.security.dto.ServicePrincipal;
 import io.harness.security.dto.UserPrincipal;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.protobuf.StringValue;
@@ -71,7 +72,8 @@ public class SCMGitSyncHelper {
     return ScmGitUtils.createScmPushResponse(yaml, gitBranchInfo, pushFileResponse, entityDetail, changeType);
   }
 
-  private void throwDifferentExceptionInCaseOfChangeTypeAdd(
+  @VisibleForTesting
+  protected void throwDifferentExceptionInCaseOfChangeTypeAdd(
       GitEntityInfo gitBranchInfo, ChangeType changeType, WingsException e) {
     if (changeType.equals(ChangeType.ADD)) {
       final WingsException cause = ExceptionUtils.cause(ErrorCode.SCM_CONFLICT_ERROR, e);
@@ -135,7 +137,8 @@ public class SCMGitSyncHelper {
         .build();
   }
 
-  private void checkForError(PushFileResponse pushFileResponse) {
+  @VisibleForTesting
+  protected void checkForError(PushFileResponse pushFileResponse) {
     if (pushFileResponse.getStatus() != 1) {
       final String errorMessage =
           isNotEmpty(pushFileResponse.getError()) ? pushFileResponse.getError() : "Error in doing git push";

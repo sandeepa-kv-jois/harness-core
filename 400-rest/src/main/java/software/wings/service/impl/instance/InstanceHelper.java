@@ -226,10 +226,15 @@ public class InstanceHelper {
             }
           }
         }
-        if (AWS_SSH.getName().equals(infrastructureMapping.getInfraMappingType())) {
+
+        instanceService.saveOrUpdate(instanceList);
+
+        if (AWS_SSH.getName().equals(infrastructureMapping.getInfraMappingType())
+            || PHYSICAL_DATA_CENTER_SSH.getName().equals(infrastructureMapping.getInfraMappingType())
+            || PHYSICAL_DATA_CENTER_WINRM.getName().equals(infrastructureMapping.getInfraMappingType())) {
           createPerpetualTaskForNewDeploymentIfEnabled(infrastructureMapping, emptyList());
         }
-        instanceService.saveOrUpdate(instanceList);
+
       } else {
         Optional<InstanceHandler> instanceHandlerOptional = getInstanceHandler(infrastructureMapping);
         if (!instanceHandlerOptional.isPresent()) {
@@ -522,14 +527,12 @@ public class InstanceHelper {
       InfrastructureMappingType infrastructureMappingType =
           Utils.getEnumFromString(InfrastructureMappingType.class, infraMapping.getInfraMappingType());
       Preconditions.checkNotNull(infrastructureMappingType, "InfrastructureMappingType should not be null");
-      if (isSupported(infrastructureMappingType)) {
-        InstanceHandler instanceHandler = instanceHandlerFactory.getInstanceHandler(infraMapping);
-        instanceHandler.handleNewDeployment(deploymentSummaries, isRollback, onDemandRollbackInfo);
-        createPerpetualTaskForNewDeploymentIfEnabled(infraMapping, deploymentSummaries);
-        log.info("Handled deployment event for infraMappingId [{}] successfully", infraMappingId);
-      } else {
-        log.info("Skipping deployment event for infraMappingId [{}]", infraMappingId);
-      }
+
+      InstanceHandler instanceHandler = instanceHandlerFactory.getInstanceHandler(infraMapping);
+      instanceHandler.handleNewDeployment(deploymentSummaries, isRollback, onDemandRollbackInfo);
+      createPerpetualTaskForNewDeploymentIfEnabled(infraMapping, deploymentSummaries);
+      log.info("Handled deployment event for infraMappingId [{}] successfully", infraMappingId);
+
     } catch (Exception ex) {
       // We have to catch all kinds of runtime exceptions, log it and move on, otherwise the queue impl keeps retrying
       // forever in case of exception
@@ -539,18 +542,7 @@ public class InstanceHelper {
   }
 
   private Optional<InstanceHandler> getInstanceHandler(InfrastructureMapping infraMapping) {
-    InfrastructureMappingType infrastructureMappingType =
-        Utils.getEnumFromString(InfrastructureMappingType.class, infraMapping.getInfraMappingType());
-    if (isSupported(infrastructureMappingType)) {
-      return Optional.of(instanceHandlerFactory.getInstanceHandler(infraMapping));
-    }
-    return Optional.empty();
-  }
-
-  @VisibleForTesting
-  boolean isSupported(InfrastructureMappingType infrastructureMappingType) {
-    return PHYSICAL_DATA_CENTER_SSH != infrastructureMappingType
-        && PHYSICAL_DATA_CENTER_WINRM != infrastructureMappingType;
+    return Optional.of(instanceHandlerFactory.getInstanceHandler(infraMapping));
   }
 
   public boolean isDeployPhaseStep(PhaseStepType phaseStepType) {
@@ -748,7 +740,7 @@ public class InstanceHelper {
       handler.processInstanceSyncResponseFromPerpetualTask(infrastructureMapping, response);
     } catch (Exception ex) {
       log.error("Error handling Instance sync response. Infrastructure Mapping : [{}], Perpetual Task Id : [{}]",
-          infrastructureMapping.getUuid(), perpetualTaskRecord.getUuid());
+          infrastructureMapping.getUuid(), perpetualTaskRecord.getUuid(), ex);
       String errorMsg = getErrorMsg(ex);
 
       boolean continueSync = instanceService.handleSyncFailure(infrastructureMapping.getAppId(),

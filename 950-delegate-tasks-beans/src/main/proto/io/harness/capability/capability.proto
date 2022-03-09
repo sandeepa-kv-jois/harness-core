@@ -96,6 +96,7 @@ message HelmInstallationParameters {
     HELM_VERSION_UNSPECIFIED = 0;
     V2 = 1;
     V3 = 2;
+    V380 = 3;
   }
   HelmVersion helm_version = 1;
 }

@@ -23,7 +23,6 @@ import io.harness.notification.notificationclient.NotificationClientImpl;
 import io.harness.notification.templates.PredefinedTemplate;
 import io.harness.queue.QueueListenerController;
 import io.harness.remote.CharsetResponseFilter;
-import io.harness.remote.NGObjectMapperHelper;
 
 import com.codahale.metrics.MetricRegistry;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -34,6 +33,7 @@ import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
 import io.dropwizard.configuration.SubstitutingSourceProvider;
 import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
+import io.serializer.HObjectMapper;
 import java.util.EnumSet;
 import javax.servlet.DispatcherType;
 import javax.servlet.FilterRegistration;
@@ -69,7 +69,7 @@ public class NotificationClientApplication extends Application<NotificationClien
     configureObjectMapper(bootstrap.getObjectMapper());
   }
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
   }
 
   @Override

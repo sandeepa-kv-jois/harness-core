@@ -385,8 +385,12 @@ public class InitializeTaskStep implements TaskExecutableWithRbac<StepElementPar
       if (initializeStepInfo.getCiCodebase() == null) {
         throw new CIStageExecutionException("Codebase is mandatory with enabled cloneCodebase flag");
       }
-      entityDetails.add(createEntityDetails(
-          initializeStepInfo.getCiCodebase().getConnectorRef(), accountIdentifier, projectIdentifier, orgIdentifier));
+      if (isEmpty(initializeStepInfo.getCiCodebase().getConnectorRef().getValue())) {
+        throw new CIStageExecutionException("Git connector is mandatory with enabled cloneCodebase flag");
+      }
+
+      entityDetails.add(createEntityDetails(initializeStepInfo.getCiCodebase().getConnectorRef().getValue(),
+          accountIdentifier, projectIdentifier, orgIdentifier));
     }
 
     if (infrastructure.getType() == Infrastructure.Type.VM) {

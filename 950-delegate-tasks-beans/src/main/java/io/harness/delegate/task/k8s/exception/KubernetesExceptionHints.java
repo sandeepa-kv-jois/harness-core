@@ -33,11 +33,13 @@ public class KubernetesExceptionHints {
       "Manifest file contains invalid kubernetes yaml. Check invalid fields name, types or empty manifest";
 
   public final String APPLY_MANIFEST_FAILED =
-      "Manifest could contain invalid values, one of resources name may not match kubernetes requirements or missing permissions to create or update specific kubernetes resources";
+      "Manifest could contain invalid/missing values, one of resources name may not match kubernetes requirements or missing permissions to create or update specific kubernetes resources";
   public final String APPLY_NO_FILEPATH_SPECIFIED = "Please specify a valid file path to manifests from repository";
 
   public final String WAIT_FOR_STEADY_STATE_FAILED =
       "Please check for possible issues in:\n1. Execution logs(under \"Wait for Steady State\" section). \n2. Deployment pods probe checks. \n3. Availability of nodes/resources in the target cluster. \n4. Valid image pull secrets.";
+  public final String DEPLOYMENT_PROGRESS_DEADLINE_DOC_REFERENCE =
+      "\nK8s Documentation (Progress Deadline Error for Deployment): https://kubernetes.io/docs/concepts/workloads/controllers/deployment/#failed-deployment";
   public final String WAIT_FOR_STEADY_STATE_CLI_FAILED =
       "Resource may be deleted in process or may be related to an intermittent connection issue";
   public final String WAIT_FOR_STEADY_STATE_JOB_FAILED = "Verify job logs or output for the failure reason";
@@ -84,4 +86,15 @@ public class KubernetesExceptionHints {
   public final String API_CLIENT_CA_CERT_INVALID_FORMAT = "Check if given CA certificate is a valid X.509 certificate";
   public final String API_CLIENT_CA_CERT_INCOMPLETE =
       "Check if given CA certificate is in encoded in base64 and all data, header and footer are in place";
+  public final String MANIFEST_RENDER_ERROR_GO_TEMPLATE =
+      "Please check if the given manifests are valid and can be rendered by Go template. To know more about Go templating, refer: \nhttps://community.harness.io/t/harness-local-go-templating/460 \nhttps://docs.harness.io/article/mwy6zgz8gu-use-go-templating-in-kubernetes-manifests#notes";
+  public final String MANIFEST_RENDER_ERROR_HELM =
+      "Please check if the given manifests are valid and can be rendered by the `helm template` command.";
+  public final String IMMUTABLE_FIELD = "Please delete the conflicting resource from the cluster and try again.";
+  public final String MISSING_RESOURCE =
+      "Please check manifest(s) for any references to missing resources and create them.";
+  public final String UNSUPPORTED_VALUE = "Please correct any unsupported values in the manifest(s).";
+  public final String MISSING_REQUIRED_FIELD = "Please add the required field(s) to the manifest.";
+  public final String MISSING_OBJECT_ERROR = "Please verify that the resource exists and try again.";
+  public final String INVALID_VALUES_YAML = "Please check if the given values yaml file(s) are valid YAMLs.";
 }

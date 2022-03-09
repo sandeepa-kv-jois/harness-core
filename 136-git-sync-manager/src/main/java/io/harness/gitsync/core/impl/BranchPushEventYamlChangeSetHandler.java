@@ -7,6 +7,7 @@
 
 package io.harness.gitsync.core.impl;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -155,7 +156,7 @@ public class BranchPushEventYamlChangeSetHandler implements YamlChangeSetHandler
       } catch (Exception ex) {
         log.error("Error while processing branch push event {}", yamlChangeSetDTO, ex);
         String gitConnectivityErrorMessage = GitConnectivityExceptionHelper.getErrorMessage(ex);
-        if (!gitConnectivityErrorMessage.isEmpty()) {
+        if (isNotEmpty(gitConnectivityErrorMessage)) {
           recordConnectivityErrors(yamlChangeSetDTO, gitConnectivityErrorMessage);
         }
         // Update the g2h status to ERROR

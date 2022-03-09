@@ -22,10 +22,10 @@ import io.harness.ngtriggers.events.TriggerOutboxEvents;
 import io.harness.ngtriggers.events.TriggerUpdateEvent;
 import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxEventHandler;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -35,8 +35,8 @@ public class TriggerOutboxEventHandler implements OutboxEventHandler {
   private ObjectMapper objectMapper;
   private final AuditClientService auditClientService;
   @Inject
-  TriggerOutboxEventHandler(AuditClientService auditClientService) {
-    this.objectMapper = NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER;
+  public TriggerOutboxEventHandler(AuditClientService auditClientService) {
+    this.objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     this.auditClientService = auditClientService;
   }
 

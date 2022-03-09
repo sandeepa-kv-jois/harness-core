@@ -19,6 +19,7 @@ import static software.wings.utils.SshHelperUtils.createSshSessionConfig;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionStatus;
 import io.harness.concurrent.HTimeLimiter;
+import io.harness.delegate.task.executioncapability.SocketConnectivityCapabilityCheck;
 import io.harness.delegate.task.winrm.WinRmSession;
 import io.harness.delegate.task.winrm.WinRmSessionConfig;
 import io.harness.eraro.ErrorCode;
@@ -31,6 +32,7 @@ import io.harness.shell.SshSessionFactory;
 import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.ExecutionCredential;
 import software.wings.beans.HostConnectionAttributes;
+import software.wings.beans.HostReachabilityInfo;
 import software.wings.beans.HostValidationResponse;
 import software.wings.beans.SSHVaultConfig;
 import software.wings.beans.SettingAttribute;
@@ -39,6 +41,7 @@ import software.wings.beans.command.CommandExecutionContext;
 import software.wings.beans.infrastructure.Host;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.security.SecretManagementDelegateService;
+import software.wings.settings.SettingValue;
 
 import com.google.common.util.concurrent.TimeLimiter;
 import com.google.common.util.concurrent.UncheckedTimeoutException;
@@ -110,6 +113,27 @@ public class HostValidationServiceImpl implements HostValidationService {
       }
     }
     return hostValidationResponses;
+  }
+
+  @Override
+  public List<HostReachabilityInfo> validateReachability(List<String> hostNames, SettingAttribute connectionSetting) {
+    SettingValue settingValue = connectionSetting.getValue();
+    int port = 22;
+    if (settingValue instanceof WinRmConnectionAttributes) {
+      port = ((WinRmConnectionAttributes) settingValue).getPort();
+    } else if (settingValue instanceof HostConnectionAttributes) {
+      port = ((HostConnectionAttributes) settingValue).getSshPort();
+    }
+    final int portf = port;
+
+    List<HostReachabilityInfo> result = new ArrayList<>();
+    for (String host : hostNames) {
+      result.add(HostReachabilityInfo.builder()
+                     .hostName(host)
+                     .reachable(SocketConnectivityCapabilityCheck.connectableHost(host, portf))
+                     .build());
+    }
+    return result;
   }
 
   private HostValidationResponse validateHostSsh(

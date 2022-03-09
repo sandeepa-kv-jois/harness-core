@@ -20,7 +20,6 @@ import io.harness.engine.pms.data.OutcomeException;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.engine.pms.data.PmsSweepingOutputService;
 import io.harness.engine.pms.data.SweepingOutputException;
-import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.expression.ExpressionEvaluatorUtils;
 import io.harness.expression.LateBindingMap;
@@ -38,7 +37,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Value;
@@ -119,14 +117,8 @@ public class NodeExecutionMap extends LateBindingMap {
     if (nodeExecution == null) {
       return Optional.empty();
     }
-    List<NodeExecution> allChildren = nodeExecutionsCache.findAllChildren(nodeExecution.getUuid());
-    List<NodeExecution> childrenNodesWithoutCurrentNodeList =
-        allChildren.stream()
-            .filter(node -> StatusUtils.finalStatuses().contains(node.getStatus()))
-            .collect(Collectors.toList());
-    Status status =
-        OrchestrationUtils.calculateStatus(childrenNodesWithoutCurrentNodeList, ambiance.getPlanExecutionId());
-    return Optional.of(status.name());
+    List<Status> childStatuses = nodeExecutionsCache.findAllTerminalChildrenStatusOnly(nodeExecution.getUuid());
+    return Optional.of(StatusUtils.calculateStatus(childStatuses, ambiance.getPlanExecutionId()).name());
   }
 
   private Optional<Object> fetchNodeExecutionField(String key) {

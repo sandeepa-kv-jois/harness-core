@@ -7,6 +7,7 @@
 
 package io.harness.cvng.core.beans.params;
 
+import javax.validation.constraints.NotNull;
 import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.Data;
@@ -19,7 +20,7 @@ import lombok.experimental.SuperBuilder;
 public class MonitoredServiceParams extends ProjectParams {
   @QueryParam("serviceIdentifier") @Deprecated String serviceIdentifier;
   @QueryParam("environmentIdentifier") @Deprecated String environmentIdentifier;
-  String monitoredServiceIdentifier;
+  @NotNull String monitoredServiceIdentifier;
   // Only for migration code.
   @Deprecated
   public static MonitoredServiceParamsBuilder builderWithServiceEnvParams(

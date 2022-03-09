@@ -27,10 +27,10 @@ import io.harness.pms.events.InputSetUpdateEvent;
 import io.harness.security.PrincipalContextData;
 import io.harness.security.dto.Principal;
 import io.harness.security.dto.ServicePrincipal;
-import io.harness.utils.NGObjectMapperHelper;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.inject.Inject;
+import io.serializer.HObjectMapper;
 import java.io.IOException;
 
 @OwnedBy(HarnessTeam.PIPELINE)
@@ -39,7 +39,7 @@ public class InputSetEventHandler {
   private final AuditClientService auditClientService;
   @Inject
   InputSetEventHandler(AuditClientService auditClientService) {
-    this.objectMapper = NGObjectMapperHelper.NG_PIPELINE_OBJECT_MAPPER;
+    this.objectMapper = HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
     this.auditClientService = auditClientService;
   }
 

@@ -76,11 +76,6 @@ public class VerificationManagerServiceImpl implements VerificationManagerServic
   }
 
   @Override
-  public void deletePerpetualTasks(String accountId, List<String> perpetualTaskIds) {
-    perpetualTaskIds.forEach(dataCollectionWorkerId -> this.deletePerpetualTask(accountId, dataCollectionWorkerId));
-  }
-
-  @Override
   public String getDataCollectionResponse(
       String accountId, String orgIdentifier, String projectIdentifier, DataCollectionRequest request) {
     return requestExecutor

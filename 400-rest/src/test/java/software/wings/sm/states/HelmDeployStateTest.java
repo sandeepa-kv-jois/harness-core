@@ -386,7 +386,13 @@ public class HelmDeployStateTest extends CategoryTest {
           .build();
 
   private Application app = anApplication().uuid(APP_ID).name(APP_NAME).build();
-  private Environment env = anEnvironment().appId(APP_ID).uuid(ENV_ID).name(ENV_NAME).build();
+  private Environment env = anEnvironment()
+                                .appId(APP_ID)
+                                .uuid(ENV_ID)
+                                .name(ENV_NAME)
+                                .environmentType(EnvironmentType.PROD)
+                                .name("Prod Env")
+                                .build();
   private Service service = Service.builder().appId(APP_ID).uuid(SERVICE_ID).name(SERVICE_NAME).build();
   private ContainerServiceParams containerServiceParams =
       ContainerServiceParams.builder()
@@ -417,6 +423,7 @@ public class HelmDeployStateTest extends CategoryTest {
     when(serviceResourceService.getWithDetails(APP_ID, SERVICE_ID)).thenReturn(service);
     when(serviceResourceService.get(APP_ID, SERVICE_ID)).thenReturn(service);
     when(environmentService.get(APP_ID, ENV_ID, false)).thenReturn(env);
+    when(environmentService.get(any(), any())).thenReturn(env);
     when(infrastructureMappingService.get(APP_ID, INFRA_MAPPING_ID)).thenReturn(infrastructureMapping);
     when(infrastructureDefinitionService.get(APP_ID, INFRA_DEFINITION_ID)).thenReturn(infrastructureDefinition);
 

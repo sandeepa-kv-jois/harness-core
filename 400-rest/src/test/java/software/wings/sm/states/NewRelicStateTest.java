@@ -48,6 +48,7 @@ import software.wings.beans.NewRelicConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.TemplateExpression;
 import software.wings.beans.WorkflowExecution;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.MetricType;
 import software.wings.service.impl.analysis.AnalysisContext;
 import software.wings.service.impl.analysis.AnalysisTolerance;
@@ -298,7 +299,7 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     doReturn(serviceId).when(spyNewRelicState).getPhaseServiceId(executionContext);
 
     when(metricAnalysisService.getLastSuccessfulWorkflowExecutionIdWithData(
-             StateType.NEW_RELIC, appId, workflowId, serviceId, infraMappingId, environment.getUuid()))
+             DelegateStateType.NEW_RELIC, appId, workflowId, serviceId, infraMappingId, environment.getUuid()))
         .thenReturn(workflowExecutionId);
     when(executionContext.renderExpression("${workflow.variables.NewRelic_Server}"))
         .thenReturn(settingAttribute.getUuid());
@@ -340,7 +341,7 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     NewRelicDataCollectionInfoV2 dataCollectionInfo =
         (NewRelicDataCollectionInfoV2) newRelicState.createDataCollectionInfo(executionContext, hosts);
 
-    assertThat(StateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
+    assertThat(DelegateStateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
     assertThat(dataCollectionInfo.getNewRelicConfig()).isNull();
     assertThat(dataCollectionInfo.getStateExecutionId()).isEqualTo(executionContext.getStateExecutionInstanceId());
     assertThat(dataCollectionInfo.getConnectorId()).isEqualTo(analysisServerConfigId);
@@ -359,7 +360,7 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     NewRelicDataCollectionInfoV2 dataCollectionInfo =
         (NewRelicDataCollectionInfoV2) newRelicState.createDataCollectionInfo(executionContext, hosts);
 
-    assertThat(StateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
+    assertThat(DelegateStateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
     assertThat(dataCollectionInfo.getNewRelicConfig()).isNull();
     assertThat(dataCollectionInfo.getStateExecutionId()).isEqualTo(executionContext.getStateExecutionInstanceId());
     assertThat(dataCollectionInfo.getConnectorId()).isEqualTo(analysisServerConfigId);
@@ -399,7 +400,7 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     NewRelicDataCollectionInfoV2 dataCollectionInfo =
         (NewRelicDataCollectionInfoV2) spyState.createDataCollectionInfo(executionContext, hosts);
 
-    assertThat(StateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
+    assertThat(DelegateStateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
     assertThat(dataCollectionInfo.getNewRelicConfig()).isNull();
     assertThat(dataCollectionInfo.getStateExecutionId()).isEqualTo(executionContext.getStateExecutionInstanceId());
 
@@ -428,7 +429,7 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     NewRelicDataCollectionInfoV2 dataCollectionInfo =
         (NewRelicDataCollectionInfoV2) spyState.createDataCollectionInfo(executionContext, hosts);
 
-    assertThat(StateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
+    assertThat(DelegateStateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
     assertThat(dataCollectionInfo.getNewRelicConfig()).isNull();
     assertThat(dataCollectionInfo.getStateExecutionId()).isEqualTo(executionContext.getStateExecutionInstanceId());
 
@@ -449,7 +450,7 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     NewRelicDataCollectionInfoV2 dataCollectionInfo =
         (NewRelicDataCollectionInfoV2) spyState.createDataCollectionInfo(executionContext, hosts);
 
-    assertThat(StateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
+    assertThat(DelegateStateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
     assertThat(dataCollectionInfo.getNewRelicConfig()).isNull();
     assertThat(dataCollectionInfo.getStateExecutionId()).isEqualTo(executionContext.getStateExecutionInstanceId());
 
@@ -477,7 +478,7 @@ public class NewRelicStateTest extends APMStateVerificationTestBase {
     NewRelicDataCollectionInfoV2 dataCollectionInfo =
         (NewRelicDataCollectionInfoV2) spyState.createDataCollectionInfo(executionContext, hosts);
 
-    assertThat(StateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
+    assertThat(DelegateStateType.NEW_RELIC).isEqualTo(dataCollectionInfo.getStateType());
     assertThat(dataCollectionInfo.getNewRelicConfig()).isNull();
     assertThat(dataCollectionInfo.getStateExecutionId()).isEqualTo(executionContext.getStateExecutionInstanceId());
 

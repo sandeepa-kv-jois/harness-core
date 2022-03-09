@@ -95,9 +95,8 @@ public class ModuleLicenseHelper {
   }
 
   public static boolean isTrialExisted(List<ModuleLicense> licensesWithSameModuleType) {
-    final long currentTime = Instant.now().toEpochMilli();
     return licensesWithSameModuleType.stream().anyMatch(
-        license -> LicenseType.TRIAL.equals(license.getLicenseType()) && license.checkExpiry(currentTime));
+        license -> license.getTrialExtended() != null && license.getTrialExtended());
   }
 
   public static boolean isTrialLicenseUnderExtendPeriod(long expiryTime) {
@@ -122,7 +121,8 @@ public class ModuleLicenseHelper {
           if (LicenseType.TRIAL.equals(latestLicense.getLicenseType())) {
             // expired trial
             if (currentLicenses.size() == 1
-                && ModuleLicenseHelper.isTrialLicenseUnderExtendPeriod(latestLicense.getExpiryTime())) {
+                && ModuleLicenseHelper.isTrialLicenseUnderExtendPeriod(latestLicense.getExpiryTime())
+                && !ModuleLicenseHelper.isTrialExisted(currentLicenses)) {
               return ModuleLicenseState.EXPIRED_TEAM_TRIAL_CAN_EXTEND;
             } else {
               return ModuleLicenseState.EXPIRED_TEAM_TRIAL;
@@ -147,7 +147,8 @@ public class ModuleLicenseHelper {
           if (LicenseType.TRIAL.equals(latestLicense.getLicenseType())) {
             // expired trial
             if (currentLicenses.size() == 1
-                && ModuleLicenseHelper.isTrialLicenseUnderExtendPeriod(latestLicense.getExpiryTime())) {
+                && ModuleLicenseHelper.isTrialLicenseUnderExtendPeriod(latestLicense.getExpiryTime())
+                && !ModuleLicenseHelper.isTrialExisted(currentLicenses)) {
               return ModuleLicenseState.EXPIRED_ENTERPRISE_TRIAL_CAN_EXTEND;
             } else {
               return ModuleLicenseState.EXPIRED_ENTERPRISE_TRIAL;
@@ -186,6 +187,9 @@ public class ModuleLicenseHelper {
     }
     if (update.getLicenseType() != null && !update.getLicenseType().equals(current.getLicenseType())) {
       current.setLicenseType(update.getLicenseType());
+    }
+    if (update.getTrialExtended() != null && !update.getTrialExtended().equals(current.getTrialExtended())) {
+      current.setTrialExtended(update.getTrialExtended());
     }
 
     switch (update.getModuleType()) {

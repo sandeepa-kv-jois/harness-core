@@ -11,6 +11,8 @@ import io.harness.accesscontrol.preference.services.AccessControlPreferenceServi
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.security.annotations.InternalApi;
+import io.harness.security.annotations.NextGenManagerAuth;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -22,11 +24,13 @@ import lombok.extern.slf4j.Slf4j;
 @ValidateOnExecution
 @Singleton
 @Slf4j
+@NextGenManagerAuth
 @OwnedBy(HarnessTeam.PL)
 public class AccessControlPreferenceResourceImpl implements AccessControlPreferenceResource {
   private final AccessControlPreferenceService accessControlPreferenceService;
 
   @Override
+  @InternalApi
   public ResponseDTO<Boolean> upsertAccessControlPreference(String accountIdentifier, boolean enabled) {
     return ResponseDTO.newResponse(
         accessControlPreferenceService.upsertAccessControlEnabled(accountIdentifier, enabled));

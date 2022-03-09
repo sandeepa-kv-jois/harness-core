@@ -51,10 +51,12 @@ import io.harness.pms.governance.ExpansionRequest;
 import io.harness.pms.governance.ExpansionRequestsExtractor;
 import io.harness.pms.governance.ExpansionsMerger;
 import io.harness.pms.governance.JsonExpander;
+import io.harness.pms.instrumentaion.PipelineInstrumentationConstants;
 import io.harness.pms.pipeline.CommonStepInfo;
 import io.harness.pms.pipeline.ExecutionSummaryInfo;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
+import io.harness.pms.pipeline.PipelineEntityUtils;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
 import io.harness.pms.pipeline.PipelineMetadata;
 import io.harness.pms.pipeline.StepCategory;
@@ -543,6 +545,8 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     properties.put(ORG_ID, entity.getOrgIdentifier());
     properties.put(PROJECT_ID, entity.getProjectIdentifier());
     properties.put(PIPELINE_SAVE_ACTION_TYPE, actionType);
+    properties.put(PipelineInstrumentationConstants.MODULE_NAME,
+        PipelineEntityUtils.getModuleNameFromPipelineEntity(entity, "cd"));
     telemetryReporter.sendTrackEvent(
         PIPELINE_SAVE, properties, Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
   }

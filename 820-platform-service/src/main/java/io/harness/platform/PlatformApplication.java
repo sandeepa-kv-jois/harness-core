@@ -38,7 +38,6 @@ import io.harness.platform.notification.NotificationServiceSetup;
 import io.harness.platform.remote.HealthResource;
 import io.harness.platform.resourcegroup.ResourceGroupServiceModule;
 import io.harness.platform.resourcegroup.ResourceGroupServiceSetup;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.request.RequestContextFilter;
 import io.harness.secret.ConfigSecretUtils;
 import io.harness.security.InternalApiAuthFilter;
@@ -65,6 +64,7 @@ import io.dropwizard.setup.Bootstrap;
 import io.dropwizard.setup.Environment;
 import io.federecio.dropwizard.swagger.SwaggerBundle;
 import io.federecio.dropwizard.swagger.SwaggerBundleConfiguration;
+import io.serializer.HObjectMapper;
 import io.swagger.v3.jaxrs2.integration.resources.OpenApiResource;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.integration.SwaggerConfiguration;
@@ -135,7 +135,7 @@ public class PlatformApplication extends Application<PlatformConfiguration> {
   }
 
   public static void configureObjectMapper(final ObjectMapper mapper) {
-    NGObjectMapperHelper.configureNGObjectMapper(mapper);
+    HObjectMapper.configureObjectMapperForNG(mapper);
   }
 
   @Override

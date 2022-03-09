@@ -17,6 +17,7 @@ import lombok.Data;
 @OwnedBy(HarnessTeam.PL)
 @Data
 @Builder
+/*This class cannot be moved since it is missing type alias*/
 public class DynamicResourceSelector implements ResourceSelector {
   @NotNull String resourceType;
   Boolean includeChildScopes;

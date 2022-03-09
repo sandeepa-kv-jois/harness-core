@@ -1257,6 +1257,15 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
     return workflowExecution;
   }
 
+  @Override
+  public String getPipelineExecutionId(String appId, String workflowExecutionId) {
+    return wingsPersistence.createQuery(WorkflowExecution.class)
+        .filter("_id", workflowExecutionId)
+        .project(WorkflowExecutionKeys.pipelineExecutionId, true)
+        .get()
+        .getPipelineExecutionId();
+  }
+
   private void populateNodeHierarchy(
       WorkflowExecution workflowExecution, boolean includeGraph, boolean includeStatus, boolean upToDate) {
     if (includeGraph) {

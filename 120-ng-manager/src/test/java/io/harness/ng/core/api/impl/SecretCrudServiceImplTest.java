@@ -40,8 +40,8 @@ import io.harness.eventsframework.api.Producer;
 import io.harness.eventsframework.producer.Message;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
 import io.harness.ng.core.accountsetting.dto.AccountSettingType;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.api.NGEncryptedDataService;
 import io.harness.ng.core.api.NGSecretServiceV2;
 import io.harness.ng.core.dto.secrets.SecretDTOV2;
@@ -85,14 +85,14 @@ public class SecretCrudServiceImplTest extends CategoryTest {
   @Mock private SecretCrudServiceImpl secretCrudService;
   @Mock private Producer eventProducer;
   @Mock private NGEncryptedDataService encryptedDataService;
-  @Mock private AccountSettingsHelper accountSettingsHelper;
+  @Mock private NGAccountSettingService accountSettingService;
   @Mock private NGConnectorSecretManagerService connectorService;
 
   @Before
   public void setup() {
     initMocks(this);
     secretCrudServiceSpy = new SecretCrudServiceImpl(secretEntityReferenceHelper, fileUploadLimit, ngSecretServiceV2,
-        eventProducer, encryptedDataService, accountSettingsHelper, connectorService);
+        eventProducer, encryptedDataService, accountSettingService, connectorService);
     secretCrudService = spy(secretCrudServiceSpy);
   }
 
@@ -129,7 +129,7 @@ public class SecretCrudServiceImplTest extends CategoryTest {
                                             .build())
                                   .build();
     doReturn(true)
-        .when(accountSettingsHelper)
+        .when(accountSettingService)
         .getIsBuiltInSMDisabled("accountId", null, null, AccountSettingType.CONNECTOR);
     doReturn(true).when(secretCrudService).checkIfSecretManagerUsedIsHarnessManaged("accountId", secretDTOV2);
     assertThatThrownBy(() -> secretCrudService.create("accountId", secretDTOV2))
@@ -152,7 +152,7 @@ public class SecretCrudServiceImplTest extends CategoryTest {
                                             .build())
                                   .build();
     doReturn(true)
-        .when(accountSettingsHelper)
+        .when(accountSettingService)
         .getIsBuiltInSMDisabled("accountId", null, null, AccountSettingType.CONNECTOR);
     doReturn(false).when(secretCrudService).checkIfSecretManagerUsedIsHarnessManaged("accountId", secretDTOV2);
     SecretResponseWrapper responseWrapper = secretCrudService.create("accountId", secretDTOV2);
@@ -179,7 +179,7 @@ public class SecretCrudServiceImplTest extends CategoryTest {
                                             .build())
                                   .build();
     doReturn(false)
-        .when(accountSettingsHelper)
+        .when(accountSettingService)
         .getIsBuiltInSMDisabled("accountId", null, null, AccountSettingType.CONNECTOR);
     doReturn(true).when(secretCrudService).checkIfSecretManagerUsedIsHarnessManaged("accountId", secretDTOV2);
     SecretResponseWrapper responseWrapper = secretCrudService.create("accountId", secretDTOV2);

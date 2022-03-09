@@ -35,14 +35,17 @@ public class AddMetricIdentifierInCVConfigsAndMetricPacks implements CVNGMigrati
     });
 
     hPersistence.createQuery(MetricCVConfig.class).asList().forEach(cvConfig -> {
-      cvConfig.getMetricPack().getMetrics().forEach(metricDefinition -> {
-        if (isEmpty(metricDefinition.getIdentifier())) {
-          String identifier = metricDefinition.getName().replaceAll(" ", "_");
-          identifier = identifier.replaceAll("\\(", "");
-          identifier = identifier.replaceAll("\\)", "");
-          metricDefinition.setIdentifier(identifier);
-        }
-      });
+      if (cvConfig.getMetricPack() != null && cvConfig.getMetricPack().getMetrics() != null) {
+        cvConfig.getMetricPack().getMetrics().forEach(metricDefinition -> {
+          if (metricDefinition != null && isEmpty(metricDefinition.getIdentifier())) {
+            String identifier = metricDefinition.getName().replaceAll(" ", "_");
+            identifier = identifier.replaceAll("\\(", "");
+            identifier = identifier.replaceAll("\\)", "");
+            metricDefinition.setIdentifier(identifier);
+          }
+        });
+      }
+
       hPersistence.save(cvConfig);
     });
   }

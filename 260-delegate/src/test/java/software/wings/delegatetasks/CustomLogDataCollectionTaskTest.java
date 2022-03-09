@@ -36,13 +36,11 @@ import io.harness.time.Timestamp;
 
 import software.wings.beans.TaskType;
 import software.wings.delegatetasks.cv.RequestExecutor;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
 import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
-import software.wings.sm.states.CustomLogVerificationState;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 
 import com.google.common.base.Charsets;
 import com.google.common.io.Resources;
@@ -76,7 +74,8 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
   @Mock private RequestExecutor requestExecutor;
   private CustomLogDataCollectionTask dataCollectionTask;
 
-  public void setup(Map<String, Map<String, ResponseMapper>> logDefinition, Set<String> hosts) throws Exception {
+  public void setup(Map<String, Map<String, CustomLogResponseMapper>> logDefinition, Set<String> hosts)
+      throws Exception {
     String delegateId = UUID.randomUUID().toString();
     String appId = UUID.randomUUID().toString();
     String envId = UUID.randomUUID().toString();
@@ -111,7 +110,7 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
   }
 
   private CustomLogDataCollectionInfo getDataCollectionInfo(
-      Map<String, Map<String, ResponseMapper>> logDefinition, Set<String> hosts) {
+      Map<String, Map<String, CustomLogResponseMapper>> logDefinition, Set<String> hosts) {
     Map<String, String> header = new HashMap<>();
     header.put("Content-Type", "application/json");
     return CustomLogDataCollectionInfo.builder()
@@ -122,7 +121,7 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
         .startMinute(0)
         .responseDefinition(logDefinition)
         .headers(header)
-        .stateType(StateType.LOG_VERIFICATION)
+        .stateType(DelegateStateType.LOG_VERIFICATION)
         .stateExecutionId("12345asdaf")
         .baseUrl("http://ec2-34-227-84-170.compute-1.amazonaws.com:9200/integration-test/")
         .shouldDoHostBasedFiltering(true)
@@ -137,27 +136,27 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     String textLoad = Resources.toString(
         CustomLogDataCollectionTaskTest.class.getResource("/apm/elkMultipleHitsResponse.json"), Charsets.UTF_8);
     String searchUrl = "_search?pretty=true&q=*&size=5";
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("hits.hits[*]._source.timestamp"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .build());
     responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("host")
             .jsonPath(Arrays.asList("hits.hits[*]._source.host"))
             .build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("hits.hits[*]._source.title"))
             .build());
-    Map<String, Map<String, ResponseMapper>> logDefinition = new HashMap<>();
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinition = new HashMap<>();
     logDefinition.put(searchUrl, responseMappers);
     setup(logDefinition, new HashSet<>(Arrays.asList("test.hostname.2", "test.hostname.22", "test.hostname.12")));
-    when(logAnalysisStoreService.save(any(StateType.class), anyString(), anyString(), anyString(), anyString(),
+    when(logAnalysisStoreService.save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(),
              anyString(), anyString(), anyString(), anyString(), any(List.class)))
         .thenReturn(true);
     when(requestExecutor.executeRequest(any(), any(), any())).thenReturn(textLoad);
@@ -180,8 +179,8 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     callsList.forEach(call -> assertThat(call.request().url().toString().contains("apiKey=decryptedApiKey")));
 
     verify(logAnalysisStoreService, times(1))
-        .save(any(StateType.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
-            anyString(), anyString(), any(List.class));
+        .save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(), anyString(),
+            anyString(), anyString(), anyString(), any(List.class));
   }
 
   @Test
@@ -193,27 +192,27 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     String textLoad = Resources.toString(
         CustomLogDataCollectionTaskTest.class.getResource("/apm/elkMultipleHitsResponse.json"), Charsets.UTF_8);
     String searchUrl = "_search?pretty=true&q=*&size=5&startTime=${start_time}&endTime=${end_time}";
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("hits.hits[*]._source.timestamp"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .build());
     responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("host")
             .jsonPath(Arrays.asList("hits.hits[*]._source.host"))
             .build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("hits.hits[*]._source.title"))
             .build());
-    Map<String, Map<String, ResponseMapper>> logDefinition = new HashMap<>();
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinition = new HashMap<>();
     logDefinition.put(searchUrl, responseMappers);
     setup(logDefinition, new HashSet<>(Arrays.asList("test.hostname.2", "test.hostname.22", "test.hostname.12")));
-    dataCollectionInfo.setStateType(StateType.DATA_DOG_LOG);
+    dataCollectionInfo.setStateType(DelegateStateType.DATA_DOG_LOG);
     dataCollectionInfo.setStartMinute((int) startMin);
     TaskData taskData = TaskData.builder()
                             .async(true)
@@ -225,7 +224,7 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     dataCollectionTask = new CustomLogDataCollectionTask(
         DelegateTaskPackage.builder().delegateId(generateUuid()).data(taskData).build(), null, null, null);
     setupMocks();
-    when(logAnalysisStoreService.save(any(StateType.class), anyString(), anyString(), anyString(), anyString(),
+    when(logAnalysisStoreService.save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(),
              anyString(), anyString(), anyString(), anyString(), any(List.class)))
         .thenReturn(true);
     when(requestExecutor.executeRequest(any(), any(), any())).thenReturn(textLoad);
@@ -253,8 +252,8 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     });
 
     verify(logAnalysisStoreService, times(1))
-        .save(any(StateType.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
-            anyString(), anyString(), any(List.class));
+        .save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(), anyString(),
+            anyString(), anyString(), anyString(), any(List.class));
   }
 
   @Test
@@ -265,27 +264,27 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     String textLoad = Resources.toString(
         CustomLogDataCollectionTaskTest.class.getResource("/apm/elkMultipleHitsResponse.json"), Charsets.UTF_8);
     String searchUrl = "_search?pretty=true&q=*&size=5";
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("hits.hits[*]._source.timestamp"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .build());
     responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("host")
             .jsonPath(Arrays.asList("hits.hits[*]._source.host"))
             .build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("hits.hits[*]._source.title"))
             .build());
-    Map<String, Map<String, ResponseMapper>> logDefinition = new HashMap<>();
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinition = new HashMap<>();
     logDefinition.put(searchUrl, responseMappers);
     setup(logDefinition, new HashSet<>(Arrays.asList("test.hostname.2", "test.hostname.22", "test.hostname.12")));
-    when(logAnalysisStoreService.save(any(StateType.class), anyString(), anyString(), anyString(), anyString(),
+    when(logAnalysisStoreService.save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(),
              anyString(), anyString(), anyString(), anyString(), any(List.class)))
         .thenReturn(true);
     when(requestExecutor.executeRequest(any(), any(), any())).thenReturn(textLoad);
@@ -310,8 +309,8 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     callsList.forEach(call -> assertThat(call.request().url().toString().contains("apiKey=decryptedApiKey")));
 
     verify(logAnalysisStoreService, times(1))
-        .save(any(StateType.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
-            anyString(), anyString(), any(List.class));
+        .save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(), anyString(),
+            anyString(), anyString(), anyString(), any(List.class));
   }
 
   @Test
@@ -322,26 +321,26 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     String textLoad =
         Resources.toString(CustomLogDataCollectionTaskTest.class.getResource("/apm/azuresample.json"), Charsets.UTF_8);
     String searchUrl = "_search?pretty=true&q=*&size=5";
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("tables[*].rows[*].[1]"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SS'Z'")
             .build());
-    responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder().fieldName("host").fieldValue("samplehostname").build());
+    responseMappers.put(
+        "host", CustomLogResponseMapper.builder().fieldName("host").fieldValue("samplehostname").build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("tables[*].rows[*].[0]"))
             .build());
 
-    Map<String, Map<String, ResponseMapper>> logDefinition = new HashMap<>();
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinition = new HashMap<>();
     logDefinition.put(searchUrl, responseMappers);
     setup(logDefinition, new HashSet<>(Arrays.asList("test.hostname.2", "test.hostname.22", "test.hostname.12")));
 
-    when(logAnalysisStoreService.save(any(StateType.class), anyString(), anyString(), anyString(), anyString(),
+    when(logAnalysisStoreService.save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(),
              anyString(), anyString(), anyString(), anyString(), any(List.class)))
         .thenReturn(true);
     Map tokenResponse = new HashMap();
@@ -394,27 +393,27 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     // setup
 
     String searchUrl = "_search?pretty=true&q=*&size=5&apiKey=${apiKey}";
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     responseMappers.put("timestamp",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("timestamp")
             .jsonPath(Arrays.asList("hits.hits[*]._source.timestamp"))
             .timestampFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX")
             .build());
     responseMappers.put("host",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("host")
             .jsonPath(Arrays.asList("hits.hits[*]._source.host"))
             .build());
     responseMappers.put("logMessage",
-        CustomLogVerificationState.ResponseMapper.builder()
+        CustomLogResponseMapper.builder()
             .fieldName("logMessage")
             .jsonPath(Arrays.asList("hits.hits[*]._source.title"))
             .build());
-    Map<String, Map<String, ResponseMapper>> logDefinition = new HashMap<>();
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinition = new HashMap<>();
     logDefinition.put(searchUrl, responseMappers);
     setup(logDefinition, new HashSet<>(Arrays.asList("test.hostname.2", "test.hostname.22", "test.hostname.12")));
-    when(logAnalysisStoreService.save(any(StateType.class), anyString(), anyString(), anyString(), anyString(),
+    when(logAnalysisStoreService.save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(),
              anyString(), anyString(), anyString(), anyString(), any(List.class)))
         .thenThrow(new IOException("This is bad"))
         .thenReturn(true);
@@ -437,7 +436,7 @@ public class CustomLogDataCollectionTaskTest extends CategoryTest {
     callsList.forEach(call -> assertThat(call.request().url().toString().contains("apiKey=decryptedApiKey")));
 
     verify(logAnalysisStoreService, times(2))
-        .save(any(StateType.class), anyString(), anyString(), anyString(), anyString(), anyString(), anyString(),
-            anyString(), anyString(), any(List.class));
+        .save(any(DelegateStateType.class), anyString(), anyString(), anyString(), anyString(), anyString(),
+            anyString(), anyString(), anyString(), any(List.class));
   }
 }

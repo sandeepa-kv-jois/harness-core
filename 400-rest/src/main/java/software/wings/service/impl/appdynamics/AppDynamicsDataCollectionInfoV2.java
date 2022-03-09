@@ -17,13 +17,13 @@ import io.harness.security.encryption.EncryptionConfig;
 import software.wings.annotation.EncryptableSetting;
 import software.wings.beans.AppDynamicsConfig;
 import software.wings.beans.TaskType;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.cv.AppDynamicsDataCollector;
 import software.wings.delegatetasks.cv.DataCollector;
 import software.wings.delegatetasks.delegatecapability.CapabilityHelper;
 import software.wings.service.impl.analysis.DataCollectionInfoV2;
 import software.wings.service.impl.analysis.MetricsDataCollectionInfo;
 import software.wings.settings.SettingValue;
-import software.wings.sm.StateType;
 
 import com.google.common.base.Preconditions;
 import java.time.Instant;
@@ -67,8 +67,8 @@ public class AppDynamicsDataCollectionInfoV2 extends MetricsDataCollectionInfo {
   }
 
   @Override
-  public StateType getStateType() {
-    return StateType.APP_DYNAMICS;
+  public DelegateStateType getStateType() {
+    return DelegateStateType.APP_DYNAMICS;
   }
 
   @Override

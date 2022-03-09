@@ -14,6 +14,7 @@ import io.harness.aggregator.models.AggregatorSecondarySyncState;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.security.annotations.InternalApi;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -33,12 +34,14 @@ public class AggregatorResourceImpl implements AggregatorResource {
   }
 
   @Override
+  @InternalApi
   public ResponseDTO<AggregatorSecondarySyncStateDTO> triggerSecondarySync() {
     AggregatorSecondarySyncState aggregatorSecondarySyncState = aggregatorService.requestSecondarySync();
     return ResponseDTO.newResponse(toDTO(aggregatorSecondarySyncState));
   }
 
   @Override
+  @InternalApi
   public ResponseDTO<AggregatorSecondarySyncStateDTO> switchToPrimary() {
     AggregatorSecondarySyncState aggregatorSecondarySyncState = aggregatorService.requestSwitchToPrimary();
     return ResponseDTO.newResponse(toDTO(aggregatorSecondarySyncState));

@@ -24,9 +24,9 @@ import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ProjectResponse;
 import io.harness.project.remote.ProjectClient;
 import io.harness.resourcegroup.beans.ValidatorType;
-import io.harness.resourcegroup.framework.beans.ResourceGroupConstants;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.beans.ResourceGroupConstants;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;

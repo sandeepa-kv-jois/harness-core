@@ -38,12 +38,12 @@ import io.harness.exception.DuplicateFieldException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageRequest;
 import io.harness.ng.beans.PageResponse;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.utils.PageTestUtils;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.serializer.HObjectMapper;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -133,8 +133,7 @@ public class RoleAssignmentDaoImplTest extends AccessControlCoreTestBase {
   public void testListCriteria() {
     PageRequest pageRequest = PageRequest.builder().pageIndex(0).pageSize(50).build();
     RoleAssignmentFilter roleAssignmentFilter = getRoleAssignmentFilter(false);
-    RoleAssignmentFilter roleAssignmentFilterClone =
-        (RoleAssignmentFilter) NGObjectMapperHelper.clone(roleAssignmentFilter);
+    RoleAssignmentFilter roleAssignmentFilterClone = (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
     ArgumentCaptor<Criteria> criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
     when(roleAssignmentRepository.findAll(any(), any())).thenReturn(PageTestUtils.getPage(emptyList(), 0));
     roleAssignmentDao.list(pageRequest, roleAssignmentFilter);
@@ -142,7 +141,7 @@ public class RoleAssignmentDaoImplTest extends AccessControlCoreTestBase {
     assertFilterCriteria(roleAssignmentFilterClone, criteriaArgumentCaptor);
 
     roleAssignmentFilter = getRoleAssignmentFilter(true);
-    roleAssignmentFilterClone = (RoleAssignmentFilter) NGObjectMapperHelper.clone(roleAssignmentFilter);
+    roleAssignmentFilterClone = (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
     criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
     roleAssignmentDao.list(pageRequest, roleAssignmentFilter);
     verify(roleAssignmentRepository, times(2)).findAll(criteriaArgumentCaptor.capture(), any());
@@ -173,13 +172,13 @@ public class RoleAssignmentDaoImplTest extends AccessControlCoreTestBase {
             .resourceGroupIdentifier(currentRoleAssignment.getResourceGroupIdentifier())
             .disabled(false)
             .build();
-    RoleAssignment roleAssignmentUpdateClone = (RoleAssignment) NGObjectMapperHelper.clone(roleAssignmentUpdate);
+    RoleAssignment roleAssignmentUpdateClone = (RoleAssignment) HObjectMapper.clone(roleAssignmentUpdate);
     RoleAssignmentDBO roleAssignmentUpdateCloneDBO = toDBO(roleAssignmentUpdateClone);
     roleAssignmentUpdateCloneDBO.setId(currentRoleAssignmentDBO.getId());
     roleAssignmentUpdateCloneDBO.setCreatedAt(currentRoleAssignmentDBO.getCreatedAt());
     roleAssignmentUpdateCloneDBO.setLastModifiedAt(currentRoleAssignmentDBO.getLastModifiedAt());
     RoleAssignmentDBO roleAssignmentForValidation =
-        (RoleAssignmentDBO) NGObjectMapperHelper.clone(roleAssignmentUpdateCloneDBO);
+        (RoleAssignmentDBO) HObjectMapper.clone(roleAssignmentUpdateCloneDBO);
     when(roleAssignmentRepository.findByIdentifierAndScopeIdentifier(
              roleAssignmentUpdate.getIdentifier(), roleAssignmentUpdate.getScopeIdentifier()))
         .thenReturn(Optional.of(currentRoleAssignmentDBO));
@@ -276,8 +275,7 @@ public class RoleAssignmentDaoImplTest extends AccessControlCoreTestBase {
   @Category(UnitTests.class)
   public void testDeleteMultiCriteria() {
     RoleAssignmentFilter roleAssignmentFilter = getRoleAssignmentFilter(false);
-    RoleAssignmentFilter roleAssignmentFilterClone =
-        (RoleAssignmentFilter) NGObjectMapperHelper.clone(roleAssignmentFilter);
+    RoleAssignmentFilter roleAssignmentFilterClone = (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
     ArgumentCaptor<Criteria> criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
     when(roleAssignmentRepository.deleteMulti(any())).thenReturn(0L);
     roleAssignmentDao.deleteMulti(roleAssignmentFilter);
@@ -285,7 +283,7 @@ public class RoleAssignmentDaoImplTest extends AccessControlCoreTestBase {
     assertFilterCriteria(roleAssignmentFilterClone, criteriaArgumentCaptor);
 
     roleAssignmentFilter = getRoleAssignmentFilter(true);
-    roleAssignmentFilterClone = (RoleAssignmentFilter) NGObjectMapperHelper.clone(roleAssignmentFilter);
+    roleAssignmentFilterClone = (RoleAssignmentFilter) HObjectMapper.clone(roleAssignmentFilter);
     criteriaArgumentCaptor = ArgumentCaptor.forClass(Criteria.class);
     roleAssignmentDao.deleteMulti(roleAssignmentFilter);
     verify(roleAssignmentRepository, times(2)).deleteMulti(criteriaArgumentCaptor.capture());

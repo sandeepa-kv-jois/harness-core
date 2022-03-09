@@ -19,7 +19,6 @@ import io.harness.engine.executions.node.NodeExecutionService;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.engine.interrupts.InterruptHandler;
 import io.harness.engine.interrupts.InterruptService;
-import io.harness.engine.utils.OrchestrationUtils;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
@@ -99,11 +98,13 @@ public abstract class MarkStatusInterruptHandler implements InterruptHandler {
   }
 
   private void handlePlanStatus(String planExecutionId, String nodeExecutionId) {
-    List<NodeExecution> nodeExecutions = nodeExecutionService.fetchNodeExecutionsWithoutOldRetriesAndStatusIn(
-        planExecutionId, StatusUtils.activeStatuses());
-    List<NodeExecution> filteredExecutions =
-        nodeExecutions.stream().filter(ne -> !ne.getUuid().equals(nodeExecutionId)).collect(Collectors.toList());
-    Status planStatus = OrchestrationUtils.calculateStatus(filteredExecutions, planExecutionId);
+    List<NodeExecution> nodeExecutions =
+        nodeExecutionService.fetchWithoutRetriesAndStatusIn(planExecutionId, StatusUtils.activeStatuses());
+    List<Status> filteredExecutions = nodeExecutions.stream()
+                                          .filter(ne -> !ne.getUuid().equals(nodeExecutionId))
+                                          .map(NodeExecution::getStatus)
+                                          .collect(Collectors.toList());
+    Status planStatus = StatusUtils.calculateStatus(filteredExecutions, planExecutionId);
     if (!StatusUtils.isFinalStatus(planStatus)) {
       planExecutionService.updateStatus(planExecutionId, planStatus);
     }

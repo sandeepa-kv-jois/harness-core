@@ -10,12 +10,14 @@ package software.wings.sm.states.k8s;
 import static io.harness.annotations.dev.HarnessModule._870_CG_ORCHESTRATION;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.delegate.task.k8s.K8sTaskType.APPLY;
+import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.BOJANA;
 import static io.harness.rule.OwnerRule.TMACARI;
 import static io.harness.rule.OwnerRule.YOGESH;
 
 import static software.wings.beans.GcpKubernetesInfrastructureMapping.Builder.aGcpKubernetesInfrastructureMapping;
+import static software.wings.beans.appmanifest.StoreType.Remote;
 import static software.wings.sm.StateExecutionInstance.Builder.aStateExecutionInstance;
 import static software.wings.sm.StateType.K8S_APPLY;
 import static software.wings.sm.states.k8s.K8sApplyState.K8S_APPLY_STATE;
@@ -56,13 +58,16 @@ import io.harness.tasks.ResponseData;
 import software.wings.api.k8s.K8sStateExecutionData;
 import software.wings.beans.Activity;
 import software.wings.beans.Application;
+import software.wings.beans.GitFileConfig;
 import software.wings.beans.appmanifest.AppManifestKind;
+import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.command.CommandUnit;
 import software.wings.common.VariableProcessor;
 import software.wings.expression.ManagerExpressionEvaluator;
 import software.wings.helpers.ext.k8s.request.K8sApplyTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sDelegateManifestConfig;
 import software.wings.helpers.ext.k8s.request.K8sTaskParameters;
+import software.wings.helpers.ext.k8s.request.K8sValuesLocation;
 import software.wings.helpers.ext.k8s.response.K8sApplyResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 import software.wings.helpers.ext.openshift.OpenShiftManagerService;
@@ -420,5 +425,25 @@ public class K8sApplyStateTest extends CategoryTest {
   public void testHandleAbortEvent() {
     k8sApplyState.handleAbortEvent(context);
     verify(k8sApplyState, times(1)).handleAbortEvent(any(ExecutionContext.class));
+  }
+
+  @Test
+  @Owner(developers = ACHYUTH)
+  @Category(UnitTests.class)
+  public void testFetchRenderedValuesFilesAndAddInlineStepOverride() {
+    k8sApplyState.setInlineStepOverride("canaryWeight: 25");
+
+    Map<K8sValuesLocation, ApplicationManifest> appManifestMap = new HashMap<>();
+    appManifestMap.put(K8sValuesLocation.Service,
+        ApplicationManifest.builder()
+            .gitFileConfig(GitFileConfig.builder().build())
+            .kind(AppManifestKind.VALUES)
+            .storeType(Remote)
+            .build());
+
+    doReturn(new ArrayList<>()).when(k8sApplyState).fetchRenderedValuesFiles(any(), any());
+
+    assertThat(k8sApplyState.fetchRenderedValuesFilesAndAddInlineStepOverride(appManifestMap, context))
+        .contains("canaryWeight: 25");
   }
 }

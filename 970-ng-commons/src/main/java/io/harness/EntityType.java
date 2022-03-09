@@ -163,6 +163,12 @@ public enum EntityType {
   @JsonProperty(EntityTypeConstants.SERVICENOW_APPROVAL)
   SERVICENOW_APPROVAL_STEP(ModuleType.CD, EntityTypeConstants.SERVICENOW_APPROVAL, IdentifierRef.class,
       EntityYamlRootNames.SERVICENOW_APPROVAL),
+  @JsonProperty(EntityTypeConstants.SERVICENOW_CREATE)
+  SERVICENOW_CREATE_STEP(ModuleType.PMS, EntityTypeConstants.SERVICENOW_CREATE, IdentifierRef.class,
+      EntityYamlRootNames.SERVICENOW_CREATE),
+  @JsonProperty(EntityTypeConstants.SERVICENOW_UPDATE)
+  SERVICENOW_UPDATE_STEP(ModuleType.PMS, EntityTypeConstants.SERVICENOW_UPDATE, IdentifierRef.class,
+      EntityYamlRootNames.SERVICENOW_UPDATE),
   @JsonProperty(EntityTypeConstants.OPAPOLICIES)
   OPAPOLICIES(ModuleType.CORE, EntityTypeConstants.OPAPOLICIES, IdentifierRef.class, EntityYamlRootNames.OPAPOLICY),
   POLICY_STEP(ModuleType.PMS, EntityTypeConstants.POLICY_STEP, IdentifierRef.class, EntityYamlRootNames.POLICY_STEP),

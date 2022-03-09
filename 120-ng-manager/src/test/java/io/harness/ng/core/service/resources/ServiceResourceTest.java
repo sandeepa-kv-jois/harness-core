@@ -77,6 +77,9 @@ public class ServiceResourceTest extends CategoryTest {
                              .name("Service")
                              .tags(singletonMap("k1", "v1"))
                              .version(0L)
+                             .yaml("service:\n  name: \"Service\"\n  identifier: \"IDENTIFIER\"\n  "
+                                 + "orgIdentifier: \"ORG_ID\"\n  projectIdentifier: \"PROJECT_ID\"\n  tags:\n    "
+                                 + "k1: \"v1\"\n")
                              .build();
     serviceEntity = ServiceEntity.builder()
                         .accountId("ACCOUNT_ID")
@@ -85,6 +88,9 @@ public class ServiceResourceTest extends CategoryTest {
                         .projectIdentifier("PROJECT_ID")
                         .name("Service")
                         .tags(tags)
+                        .yaml("service:\n  name: \"Service\"\n  identifier: \"IDENTIFIER\"\n  "
+                            + "orgIdentifier: \"ORG_ID\"\n  projectIdentifier: \"PROJECT_ID\"\n  tags:\n    "
+                            + "k1: \"v1\"\n")
                         .version(0L)
                         .build();
   }

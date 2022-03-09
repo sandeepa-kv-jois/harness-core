@@ -10,6 +10,7 @@ package io.harness.engine.expressions.functors;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ARCHIT;
 import static io.harness.rule.OwnerRule.GARVIT;
+import static io.harness.rule.OwnerRule.PRASHANT;
 
 import static java.util.Arrays.asList;
 import static org.assertj.core.api.Assertions.assertThat;
@@ -33,6 +34,7 @@ import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.data.stepparameters.PmsStepParameters;
 import io.harness.pms.execution.utils.NodeProjectionUtils;
+import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.serializer.recaster.RecastOrchestrationUtils;
 import io.harness.rule.Owner;
 import io.harness.utils.steps.TestStepParameters;
@@ -318,7 +320,7 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = ARCHIT)
   @Category(UnitTests.class)
-  public void testNodeExecutionCurrentStatus() {
+  public void testNodeExecutionCurrentStatusSucceeded() {
     Ambiance newAmbiance = nodeExecution8.getAmbiance();
     NodeExecutionAncestorFunctor functor =
         NodeExecutionAncestorFunctor.builder()
@@ -328,24 +330,66 @@ public class NodeExecutionValueTest extends OrchestrationTestBase {
             .groupAliases(ImmutableMap.of("stage", "STAGE"))
             .build();
 
-    when(nodeExecutionService.findAllChildren(planExecutionId, nodeExecution4.getUuid(), false,
-             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
-        .thenReturn(asList(nodeExecution8, nodeExecution7, nodeExecution6));
-
     Reflect.on(nodeExecution4).set(NodeExecutionKeys.status, Status.RUNNING);
     Reflect.on(nodeExecution6).set(NodeExecutionKeys.status, Status.RUNNING);
     Reflect.on(nodeExecution7).set(NodeExecutionKeys.status, Status.SUCCEEDED);
     Reflect.on(nodeExecution8).set(NodeExecutionKeys.status, Status.QUEUED);
 
+    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution4.getUuid(),
+             StatusUtils.finalStatuses(), false, true,
+             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
+        .thenReturn(Collections.singletonList(nodeExecution7));
     // Check current status for SUCCEEDED
     assertThat(engine.getProperty(functor, "stage.currentStatus")).isEqualTo("SUCCEEDED");
+  }
 
-    // Check current status for FAILED
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void testNodeExecutionCurrentStatusFailed() {
+    Ambiance newAmbiance = nodeExecution8.getAmbiance();
+    NodeExecutionAncestorFunctor functor =
+        NodeExecutionAncestorFunctor.builder()
+            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, planService, newAmbiance))
+            .pmsOutcomeService(pmsOutcomeService)
+            .ambiance(newAmbiance)
+            .groupAliases(ImmutableMap.of("stage", "STAGE"))
+            .build();
+
+    Reflect.on(nodeExecution4).set(NodeExecutionKeys.status, Status.RUNNING);
+    Reflect.on(nodeExecution6).set(NodeExecutionKeys.status, Status.RUNNING);
     Reflect.on(nodeExecution7).set(NodeExecutionKeys.status, Status.FAILED);
-    assertThat(engine.getProperty(functor, "stage.currentStatus")).isEqualTo("FAILED");
+    Reflect.on(nodeExecution8).set(NodeExecutionKeys.status, Status.QUEUED);
 
-    // Check current status for ERRORED
+    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution4.getUuid(), null, false, true,
+             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
+        .thenReturn(Collections.singletonList(nodeExecution7));
+    // Check current status for FAILED
+    assertThat(engine.getProperty(functor, "stage.currentStatus")).isEqualTo("FAILED");
+  }
+
+  @Test
+  @Owner(developers = PRASHANT)
+  @Category(UnitTests.class)
+  public void testNodeExecutionCurrentStatusErrored() {
+    Ambiance newAmbiance = nodeExecution8.getAmbiance();
+    NodeExecutionAncestorFunctor functor =
+        NodeExecutionAncestorFunctor.builder()
+            .nodeExecutionsCache(new NodeExecutionsCache(nodeExecutionService, planService, newAmbiance))
+            .pmsOutcomeService(pmsOutcomeService)
+            .ambiance(newAmbiance)
+            .groupAliases(ImmutableMap.of("stage", "STAGE"))
+            .build();
+
+    Reflect.on(nodeExecution4).set(NodeExecutionKeys.status, Status.RUNNING);
+    Reflect.on(nodeExecution6).set(NodeExecutionKeys.status, Status.RUNNING);
     Reflect.on(nodeExecution7).set(NodeExecutionKeys.status, Status.ERRORED);
+    Reflect.on(nodeExecution8).set(NodeExecutionKeys.status, Status.QUEUED);
+
+    when(nodeExecutionService.findAllChildrenWithStatusIn(planExecutionId, nodeExecution4.getUuid(), null, false, true,
+             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet()))
+        .thenReturn(Collections.singletonList(nodeExecution7));
+    // Check current status for ERRORED
     assertThat(engine.getProperty(functor, "stage.currentStatus")).isEqualTo("ERRORED");
   }
 

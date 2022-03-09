@@ -11,14 +11,18 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
+
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
+import io.harness.ff.FeatureFlagService;
 
 import software.wings.beans.artifact.NexusArtifactStream;
 import software.wings.beans.artifact.NexusArtifactStream.Yaml;
 import software.wings.beans.yaml.ChangeContext;
 import software.wings.utils.RepositoryFormat;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 /**
@@ -28,6 +32,8 @@ import com.google.inject.Singleton;
 @Singleton
 public class NexusArtifactStreamYamlHandler
     extends ArtifactStreamYamlHandler<NexusArtifactStream.Yaml, NexusArtifactStream> {
+  @Inject FeatureFlagService featureFlagService;
+
   @Override
   public Yaml toYaml(NexusArtifactStream bean, String appId) {
     Yaml yaml = Yaml.builder().build();
@@ -43,7 +49,7 @@ public class NexusArtifactStreamYamlHandler
     yaml.setPackageName(bean.getPackageName());
     yaml.setRepositoryFormat(bean.getRepositoryFormat());
     if (!bean.getRepositoryFormat().equals(RepositoryFormat.docker.name())) {
-      yaml.setMetadataOnly(bean.isMetadataOnly());
+      yaml.setMetadataOnly(metadataOnlyBehindFlag(featureFlagService, bean.getAccountId(), bean.isMetadataOnly()));
     } else {
       yaml.setMetadataOnly(true);
     }

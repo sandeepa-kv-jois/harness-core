@@ -19,6 +19,8 @@ import io.harness.beans.PageRequest;
 import io.harness.beans.PageRequest.PageRequestBuilder;
 import io.harness.beans.SearchFilter;
 import io.harness.beans.WorkflowType;
+import io.harness.persistence.PersistentEntity;
+import io.harness.persistence.ValidUntilAccess;
 
 import software.wings.beans.Base;
 import software.wings.beans.PipelineExecution;
@@ -184,7 +186,7 @@ public class WorkflowExecutionBaselineServiceImpl implements WorkflowExecutionBa
   }
 
   private void updateDataAndAnalysisRecords(String workflowExecutionId, String appId) {
-    updateTtl(workflowExecutionId, appId, NewRelicMetricDataRecord.class);
+    updateValidUntillTtl(workflowExecutionId, appId, NewRelicMetricDataRecord.class);
     updateTtl(workflowExecutionId, appId, NewRelicMetricAnalysisRecord.class);
     updateTtl(workflowExecutionId, appId, TimeSeriesMLAnalysisRecord.class);
     updateTtl(workflowExecutionId, appId, LogMLAnalysisRecord.class);
@@ -196,6 +198,14 @@ public class WorkflowExecutionBaselineServiceImpl implements WorkflowExecutionBa
                                 .filter("workflowExecutionId", workflowExecutionId)
                                 .filter(WorkflowExecutionKeys.appId, appId),
         wingsPersistence.createUpdateOperations(recordClass).set("validUntil", BASELINE_TTL));
+  }
+
+  private <T extends PersistentEntity & ValidUntilAccess> void updateValidUntillTtl(
+      String workflowExecutionId, String appId, Class<T> recordClass) {
+    wingsPersistence.update(wingsPersistence.createQuery(recordClass)
+                                .filter("workflowExecutionId", workflowExecutionId)
+                                .filter(WorkflowExecutionKeys.appId, appId),
+        wingsPersistence.createUpdateOperations(recordClass).set(ValidUntilAccess.VALID_UNTIL_KEY, BASELINE_TTL));
   }
 
   private void updateTtlForDataRecords(String workflowExecutionId) {

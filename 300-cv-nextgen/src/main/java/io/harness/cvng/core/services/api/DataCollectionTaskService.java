@@ -39,6 +39,8 @@ public interface DataCollectionTaskService {
 
   List<DataCollectionTask> getLatestDataCollectionTasks(String accountId, String verificationTaskId, int count);
 
+  List<DataCollectionTask> getAllDataCollectionTasks(String accountId, String verificationTaskId);
+
   void populateMetricPack(CVConfig cvConfig);
 
   void validateIfAlreadyExists(DataCollectionTask dataCollectionTask);

@@ -25,7 +25,6 @@ import software.wings.service.impl.analysis.DataCollectionTaskResult.DataCollect
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.impl.sumo.SumoDataCollectionInfo;
 import software.wings.service.impl.sumo.SumoDelegateServiceImpl;
-import software.wings.sm.StateType;
 
 import com.google.inject.Inject;
 import com.sumologic.client.SumoLogicClient;
@@ -58,14 +57,16 @@ public class SumoDataCollectionTask extends AbstractDelegateDataCollectionTask {
   }
 
   @Override
-  protected StateType getStateType() {
-    return StateType.SUMO;
+  protected DelegateStateType getStateType() {
+    return DelegateStateType.SUMO;
   }
 
   @Override
   protected DataCollectionTaskResult initDataCollection(TaskParameters parameters) {
-    DataCollectionTaskResult taskResult =
-        DataCollectionTaskResult.builder().status(DataCollectionTaskStatus.SUCCESS).stateType(StateType.SUMO).build();
+    DataCollectionTaskResult taskResult = DataCollectionTaskResult.builder()
+                                              .status(DataCollectionTaskStatus.SUCCESS)
+                                              .stateType(DelegateStateType.SUMO)
+                                              .build();
     this.dataCollectionInfo = (SumoDataCollectionInfo) parameters;
     log.info("log collection - dataCollectionInfo: {}", dataCollectionInfo);
     sumoClient = sumoDelegateService.getSumoClient(
@@ -148,7 +149,7 @@ public class SumoDataCollectionTask extends AbstractDelegateDataCollectionTask {
             }
           }
 
-          boolean response = logAnalysisStoreService.save(StateType.SUMO, dataCollectionInfo.getAccountId(),
+          boolean response = logAnalysisStoreService.save(DelegateStateType.SUMO, dataCollectionInfo.getAccountId(),
               dataCollectionInfo.getApplicationId(), dataCollectionInfo.getCvConfigId(),
               dataCollectionInfo.getStateExecutionId(), dataCollectionInfo.getWorkflowId(),
               dataCollectionInfo.getWorkflowExecutionId(), dataCollectionInfo.getServiceId(), delegateTaskId,

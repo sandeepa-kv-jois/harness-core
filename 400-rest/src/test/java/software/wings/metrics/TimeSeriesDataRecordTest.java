@@ -45,7 +45,7 @@ public class TimeSeriesDataRecordTest extends CategoryTest {
     Map<String, Double> values = new HashMap<>();
     metricNames.forEach(name -> values.put(name, 3.4));
     return NewRelicMetricDataRecord.builder()
-        .stateType(stateType)
+        .stateType(stateType.getDelegateStateType())
         .workflowId(workflowId)
         .workflowExecutionId(workflowExecutionId)
         .serviceId(serviceId)
@@ -65,7 +65,7 @@ public class TimeSeriesDataRecordTest extends CategoryTest {
     HashBasedTable<String, String, Double> values = HashBasedTable.create();
     metricNames.forEach((key, list) -> list.forEach(value -> values.put(key, value, 3.4)));
     return TimeSeriesDataRecord.builder()
-        .stateType(stateType)
+        .stateType(stateType.getDelegateStateType())
         .workflowId(workflowId)
         .workflowExecutionId(workflowExecutionId)
         .serviceId(serviceId)

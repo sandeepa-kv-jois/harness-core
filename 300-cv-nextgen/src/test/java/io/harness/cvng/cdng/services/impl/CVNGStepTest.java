@@ -42,6 +42,7 @@ import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
 import io.harness.cvng.verificationjob.services.api.VerificationJobInstanceService;
 import io.harness.eraro.ErrorCode;
 import io.harness.persistence.HPersistence;
+import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.AsyncExecutableResponse;
@@ -51,12 +52,14 @@ import io.harness.pms.contracts.execution.failure.FailureInfo;
 import io.harness.pms.contracts.execution.failure.FailureType;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
+import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.StepInputPackage;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepOutcome;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.rule.Owner;
 
+import com.google.inject.AbstractModule;
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import java.time.Duration;
@@ -88,11 +91,16 @@ public class CVNGStepTest extends CvNextGenTestBase {
   private String envIdentifier;
   private MonitoredServiceDTO monitoredServiceDTO;
   long activityStartTime;
-
   @Before
   public void setup() throws IllegalAccessException {
     cvngStep = new CVNGStep();
-    injector.injectMembers(cvngStep);
+    Injector withPMSSDK = injector.createChildInjector(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(ExecutionSweepingOutputService.class).toInstance(mock(ExecutionSweepingOutputService.class));
+      }
+    });
+    withPMSSDK.injectMembers(cvngStep);
     builderFactory = BuilderFactory.getDefault();
     accountId = builderFactory.getContext().getAccountId();
     projectIdentifier = builderFactory.getContext().getProjectIdentifier();
@@ -112,9 +120,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
   public void testExecuteAsync_noMonitoringSourceDefined() {
     Ambiance ambiance = getAmbiance();
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
+        cvngStep.executeAsync(ambiance, stepElementParameters, stepInputPackage, null);
     assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
     String callbackId = asyncExecutableResponse.getCallbackIds(0);
     CVNGStepTask cvngStepTask =
@@ -131,9 +139,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
         builderFactory.getContext().getProjectParams(), serviceIdentifier, envIdentifier);
     Ambiance ambiance = getAmbiance();
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
+        cvngStep.executeAsync(ambiance, stepElementParameters, stepInputPackage, null);
     assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
     String callbackId = asyncExecutableResponse.getCallbackIds(0);
     CVNGStepTask cvngStepTask =
@@ -148,9 +156,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
   public void testExecuteAsync_skipWhenMonitoredServiceDoesNotExists() {
     Ambiance ambiance = getAmbiance();
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
+        cvngStep.executeAsync(ambiance, stepElementParameters, stepInputPackage, null);
     assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
     String callbackId = asyncExecutableResponse.getCallbackIds(0);
     CVNGStepTask cvngStepTask = cvngStepTaskService.getByCallBackId(callbackId);
@@ -166,9 +174,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
     metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
+        cvngStep.executeAsync(ambiance, stepElementParameters, stepInputPackage, null);
     assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
     String callbackId = asyncExecutableResponse.getCallbackIds(0);
     CVNGStepTask cvngStepTask = cvngStepTaskService.getByCallBackId(callbackId);
@@ -190,9 +198,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
     metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
+        cvngStep.executeAsync(ambiance, stepElementParameters, stepInputPackage, null);
     assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
     String callbackId = asyncExecutableResponse.getCallbackIds(0);
     CVNGStepTask cvngStepTask =
@@ -216,9 +224,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
     metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
+        cvngStep.executeAsync(ambiance, stepElementParameters, stepInputPackage, null);
     assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
     String callbackId = asyncExecutableResponse.getCallbackIds(0);
     CVNGStepTask cvngStepTask =
@@ -244,10 +252,10 @@ public class CVNGStepTest extends CvNextGenTestBase {
     metricPackService.createDefaultMetricPackAndThresholds(accountId, orgIdentifier, projectIdentifier);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
     StepInputPackage stepInputPackage = StepInputPackage.builder().build();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
-    cvngStepParameter.setSensitivity(ParameterField.createValueField("Medium"));
+    StepElementParameters stepElementParameters = getStepElementParameters();
+    ((CVNGStepParameter) stepElementParameters.getSpec()).setSensitivity(ParameterField.createValueField("Medium"));
     AsyncExecutableResponse asyncExecutableResponse =
-        cvngStep.executeAsync(ambiance, cvngStepParameter, stepInputPackage, null);
+        cvngStep.executeAsync(ambiance, stepElementParameters, stepInputPackage, null);
     assertThat(asyncExecutableResponse.getCallbackIdsList()).hasSize(1);
     String callbackId = asyncExecutableResponse.getCallbackIds(0);
     CVNGStepTask cvngStepTask =
@@ -265,7 +273,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testHandleAsyncResponse() {
     Ambiance ambiance = getAmbiance();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     String activityId = generateUuid();
     ActivityStatusDTO activityStatusDTO = ActivityStatusDTO.builder()
                                               .activityId(activityId)
@@ -274,7 +282,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
                                               .remainingTimeMs(0)
                                               .durationMs(Duration.ofMinutes(30).toMillis())
                                               .build();
-    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, cvngStepParameter,
+    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, stepElementParameters,
         Collections.singletonMap(activityId,
             CVNGStep.CVNGResponseData.builder().activityId(activityId).activityStatusDTO(activityStatusDTO).build()));
     assertThat(stepResponse.getStatus()).isEqualTo(Status.SUCCEEDED);
@@ -295,7 +303,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testHandleAsyncResponse_verificationFailure() {
     Ambiance ambiance = getAmbiance();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     String activityId = generateUuid();
     ActivityStatusDTO activityStatusDTO = ActivityStatusDTO.builder()
                                               .activityId(activityId)
@@ -304,7 +312,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
                                               .remainingTimeMs(0)
                                               .durationMs(Duration.ofMinutes(30).toMillis())
                                               .build();
-    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, cvngStepParameter,
+    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, stepElementParameters,
         Collections.singletonMap(activityId,
             CVNGStep.CVNGResponseData.builder().activityId(activityId).activityStatusDTO(activityStatusDTO).build()));
     assertThat(stepResponse.getStatus()).isEqualTo(Status.FAILED);
@@ -333,7 +341,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testHandleAsyncResponse_inProgress() {
     Ambiance ambiance = getAmbiance();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     String activityId = generateUuid();
     ActivityStatusDTO activityStatusDTO = ActivityStatusDTO.builder()
                                               .activityId(activityId)
@@ -343,7 +351,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
                                               .durationMs(Duration.ofMinutes(30).toMillis())
                                               .build();
     assertThatThrownBy(()
-                           -> cvngStep.handleAsyncResponse(ambiance, cvngStepParameter,
+                           -> cvngStep.handleAsyncResponse(ambiance, stepElementParameters,
                                Collections.singletonMap(activityId,
                                    CVNGStep.CVNGResponseData.builder()
                                        .activityId(activityId)
@@ -357,9 +365,9 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testHandleAsyncResponse_skip() {
     Ambiance ambiance = getAmbiance();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     String activityId = generateUuid();
-    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, cvngStepParameter,
+    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, stepElementParameters,
         Collections.singletonMap(activityId, CVNGStep.CVNGResponseData.builder().skip(true).build()));
     assertThat(stepResponse.getStatus()).isEqualTo(Status.SKIPPED);
     assertThat(stepResponse.getFailureInfo())
@@ -379,7 +387,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testHandleAsyncResponse_error() {
     Ambiance ambiance = getAmbiance();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     String activityId = generateUuid();
     ActivityStatusDTO activityStatusDTO = ActivityStatusDTO.builder()
                                               .activityId(activityId)
@@ -388,7 +396,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
                                               .remainingTimeMs(Duration.ofMinutes(3).toMillis())
                                               .durationMs(Duration.ofMinutes(30).toMillis())
                                               .build();
-    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, cvngStepParameter,
+    StepResponse stepResponse = cvngStep.handleAsyncResponse(ambiance, stepElementParameters,
         Collections.singletonMap(activityId,
             CVNGStep.CVNGResponseData.builder().activityId(activityId).activityStatusDTO(activityStatusDTO).build()));
     assertThat(stepResponse.getStatus()).isEqualTo(Status.FAILED);
@@ -417,7 +425,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testHandleProgress() {
     Ambiance ambiance = getAmbiance();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     String activityId = generateUuid();
     ActivityStatusDTO activityStatusDTO = ActivityStatusDTO.builder()
                                               .activityId(activityId)
@@ -426,7 +434,7 @@ public class CVNGStepTest extends CvNextGenTestBase {
                                               .remainingTimeMs(Duration.ofMinutes(3).toMillis())
                                               .durationMs(Duration.ofMinutes(30).toMillis())
                                               .build();
-    VerifyStepOutcome verifyStepOutcome = (VerifyStepOutcome) cvngStep.handleProgress(ambiance, cvngStepParameter,
+    VerifyStepOutcome verifyStepOutcome = (VerifyStepOutcome) cvngStep.handleProgress(ambiance, stepElementParameters,
         CVNGStep.CVNGResponseData.builder().activityId(activityId).activityStatusDTO(activityStatusDTO).build());
     VerifyStepOutcome expected = VerifyStepOutcome.builder()
                                      .progressPercentage(50)
@@ -441,29 +449,31 @@ public class CVNGStepTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testHandleAbort() throws IllegalAccessException {
     Ambiance ambiance = getAmbiance();
-    CVNGStepParameter cvngStepParameter = getCvngStepParameter();
+    StepElementParameters stepElementParameters = getStepElementParameters();
     CVNGStepTask cvngStepTask = builderFactory.cvngStepTaskBuilder().build();
     hPersistence.save(cvngStepTask);
     ActivityService activityService = mock(ActivityService.class);
     FieldUtils.writeField(cvngStep, "activityService", activityService, true);
 
-    cvngStep.handleAbort(ambiance, cvngStepParameter,
+    cvngStep.handleAbort(ambiance, stepElementParameters,
         AsyncExecutableResponse.newBuilder().addCallbackIds(cvngStepTask.getCallbackId()).build());
     Mockito.verify(activityService).abort(cvngStepTask.getActivityId());
   }
 
-  private CVNGStepParameter getCvngStepParameter() {
+  private StepElementParameters getStepElementParameters() {
     TestVerificationJobSpec spec = TestVerificationJobSpec.builder()
                                        .deploymentTag(randomParameter())
                                        .duration(ParameterField.<String>builder().value("5m").build())
                                        .sensitivity(ParameterField.<String>builder().value("High").build())
                                        .build();
-    return CVNGStepParameter.builder()
-        .serviceIdentifier(ParameterField.createValueField(serviceIdentifier))
-        .envIdentifier(ParameterField.createValueField(envIdentifier))
-        .verificationJobBuilder(getVerificationJobBuilder())
-        .deploymentTag(spec.getDeploymentTag())
-        .sensitivity(spec.getSensitivity())
+    return StepElementParameters.builder()
+        .spec(CVNGStepParameter.builder()
+                  .serviceIdentifier(ParameterField.createValueField(serviceIdentifier))
+                  .envIdentifier(ParameterField.createValueField(envIdentifier))
+                  .verificationJobBuilder(getVerificationJobBuilder())
+                  .deploymentTag(spec.getDeploymentTag())
+                  .sensitivity(spec.getSensitivity())
+                  .build())
         .build();
   }
   private Ambiance getAmbiance() {

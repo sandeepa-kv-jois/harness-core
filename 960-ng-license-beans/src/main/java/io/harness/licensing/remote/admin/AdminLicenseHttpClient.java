@@ -13,6 +13,7 @@ import io.harness.ng.core.dto.ResponseDTO;
 
 import retrofit2.Call;
 import retrofit2.http.Body;
+import retrofit2.http.DELETE;
 import retrofit2.http.GET;
 import retrofit2.http.POST;
 import retrofit2.http.PUT;
@@ -32,4 +33,8 @@ public interface AdminLicenseHttpClient {
   @PUT(ADMIN_LICENSE_API + "/{identifier}")
   Call<ResponseDTO<ModuleLicenseDTO>> updateModuleLicense(@Path("identifier") String identifier,
       @Query("accountIdentifier") String accountIdentifier, @Body ModuleLicenseDTO moduleLicenseDTO);
+
+  @DELETE(ADMIN_LICENSE_API + "/{identifier}")
+  Call<ResponseDTO<Void>> deleteModuleLicense(
+      @Path("identifier") String identifier, @Query("accountIdentifier") String accountIdentifier);
 }

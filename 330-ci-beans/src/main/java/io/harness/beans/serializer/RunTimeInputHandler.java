@@ -21,6 +21,7 @@ import io.harness.beans.yaml.extended.CIShellType;
 import io.harness.beans.yaml.extended.ImagePullPolicy;
 import io.harness.beans.yaml.extended.TIBuildTool;
 import io.harness.beans.yaml.extended.TILanguage;
+import io.harness.beans.yaml.extended.infrastrucutre.Toleration;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.ngexception.CIStageExecutionUserException;
 import io.harness.pms.yaml.ParameterField;
@@ -51,6 +52,14 @@ public class RunTimeInputHandler {
       return null;
     } else {
       return buildDetails.getValue();
+    }
+  }
+
+  public List<Toleration> resolveTolerations(ParameterField<List<Toleration>> tolerations) {
+    if (tolerations == null || tolerations.isExpression() || tolerations.getValue() == null) {
+      return null;
+    } else {
+      return tolerations.getValue();
     }
   }
 
@@ -123,7 +132,7 @@ public class RunTimeInputHandler {
             format("Failed to resolve mandatory field %s in step type %s with identifier %s", fieldName, stepType,
                 stepIdentifier));
       } else {
-        return UNRESOLVED_PARAMETER;
+        return null;
       }
     }
 
@@ -136,7 +145,7 @@ public class RunTimeInputHandler {
       } else {
         log.warn(format("Failed to resolve optional field %s in step type %s with identifier %s", fieldName, stepType,
             stepIdentifier));
-        return UNRESOLVED_PARAMETER;
+        return null;
       }
     }
 

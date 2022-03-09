@@ -30,7 +30,7 @@ import io.harness.ng.NextGenConfiguration;
 import io.harness.ng.accesscontrol.migrations.models.AccessControlMigration;
 import io.harness.ng.accesscontrol.migrations.services.AccessControlMigrationService;
 import io.harness.ng.core.AccountOrgProjectValidator;
-import io.harness.ng.core.accountsetting.AccountSettingsHelper;
+import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.dto.OrganizationDTO;
 import io.harness.ng.core.entities.Organization;
 import io.harness.ng.core.services.OrganizationService;
@@ -70,7 +70,7 @@ public class NGAccountSetupService {
   private final HarnessSMManager harnessSMManager;
   private final CIDefaultEntityManager ciDefaultEntityManager;
   private final boolean shouldAssignAdmins;
-  private final AccountSettingsHelper accountSettingsHelper;
+  private final NGAccountSettingService accountSettingService;
 
   @Inject
   public NGAccountSetupService(OrganizationService organizationService,
@@ -78,7 +78,7 @@ public class NGAccountSetupService {
       @Named("PRIVILEGED") AccessControlAdminClient accessControlAdminClient, NgUserService ngUserService,
       UserClient userClient, AccessControlMigrationService accessControlMigrationService,
       HarnessSMManager harnessSMManager, CIDefaultEntityManager ciDefaultEntityManager,
-      NextGenConfiguration nextGenConfiguration, AccountSettingsHelper accountSettingsHelper) {
+      NextGenConfiguration nextGenConfiguration, NGAccountSettingService accountSettingService) {
     this.organizationService = organizationService;
     this.accountOrgProjectValidator = accountOrgProjectValidator;
     this.accessControlAdminClient = accessControlAdminClient;
@@ -90,7 +90,7 @@ public class NGAccountSetupService {
     this.shouldAssignAdmins =
         nextGenConfiguration.getAccessControlAdminClientConfiguration().getMockAccessControlService().equals(
             Boolean.FALSE);
-    this.accountSettingsHelper = accountSettingsHelper;
+    this.accountSettingService = accountSettingService;
   }
 
   public void setupAccountForNG(String accountIdentifier) {
@@ -107,7 +107,7 @@ public class NGAccountSetupService {
     log.info("[NGAccountSetupService]: Global SM Created Successfully for account{}", accountIdentifier);
     harnessSMManager.createHarnessSecretManager(accountIdentifier, null, null);
     ciDefaultEntityManager.createCIDefaultEntities(accountIdentifier, null, null);
-    accountSettingsHelper.setUpDefaultAccountSettings(accountIdentifier);
+    accountSettingService.setUpDefaultAccountSettings(accountIdentifier);
   }
 
   private Organization createDefaultOrg(String accountIdentifier) {

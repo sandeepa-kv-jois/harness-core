@@ -17,9 +17,9 @@ import io.harness.annotations.dev.TargetModule;
 
 import software.wings.api.DeploymentType;
 import software.wings.beans.DatadogConfig;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.sm.ExecutionContext;
 import software.wings.sm.StateType;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 import software.wings.stencils.DefaultValue;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
@@ -114,23 +114,24 @@ public class DatadogLogState extends AbstractLogAnalysisState {
     }
   }
 
-  public static Map<String, Map<String, ResponseMapper>> constructLogDefinitions(
+  public static Map<String, Map<String, CustomLogResponseMapper>> constructLogDefinitions(
       DatadogConfig datadogConfig, String hostnameField, boolean is24x7) {
-    Map<String, Map<String, ResponseMapper>> logDefinition = new HashMap<>();
-    Map<String, ResponseMapper> responseMappers = new HashMap<>();
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinition = new HashMap<>();
+    Map<String, CustomLogResponseMapper> responseMappers = new HashMap<>();
     List<String> pathList = Collections.singletonList("logs[*].content.timestamp");
-    responseMappers.put(
-        "timestamp", ResponseMapper.builder().fieldName("timestamp").jsonPath(pathList).timestampFormat("").build());
+    responseMappers.put("timestamp",
+        CustomLogResponseMapper.builder().fieldName("timestamp").jsonPath(pathList).timestampFormat("").build());
     List<String> pathList2 = Collections.singletonList("logs[*].content.message");
-    responseMappers.put("logMessage", ResponseMapper.builder().fieldName("logMessage").jsonPath(pathList2).build());
+    responseMappers.put(
+        "logMessage", CustomLogResponseMapper.builder().fieldName("logMessage").jsonPath(pathList2).build());
 
     if (HOST_NAME_RESERVED_FIELD.equals(hostnameField)) {
       List<String> pathList3 = Collections.singletonList("logs[*].content." + hostnameField);
-      responseMappers.put("host", ResponseMapper.builder().fieldName("host").jsonPath(pathList3).build());
+      responseMappers.put("host", CustomLogResponseMapper.builder().fieldName("host").jsonPath(pathList3).build());
     } else {
       List<String> pathList3 = Collections.singletonList("logs[*].content.tags.[*]");
       responseMappers.put("host",
-          ResponseMapper.builder()
+          CustomLogResponseMapper.builder()
               .fieldName("host")
               .regexs(Collections.singletonList("((?<=" + hostnameField + ":)(.*))"))
               .jsonPath(pathList3)

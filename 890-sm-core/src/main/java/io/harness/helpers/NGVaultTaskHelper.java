@@ -157,7 +157,6 @@ public class NGVaultTaskHelper {
           "Failed to %s for Vault: %s And Namespace: %s due to the following error from vault: \"%s\".", operation,
           baseVaultConfig.getName(), baseVaultConfig.getNamespace(), response.message() + response.body());
     }
-    log.error(errorMsg);
     throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR, errorMsg, USER);
   }
 

@@ -32,6 +32,7 @@ import io.harness.time.Timestamp;
 
 import software.wings.beans.TaskType;
 import software.wings.delegatetasks.cv.RequestExecutor;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.helpers.ext.apm.APMRestClient;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.service.impl.analysis.AzureLogAnalyticsConnectionDetails;
@@ -40,8 +41,6 @@ import software.wings.service.impl.analysis.DataCollectionTaskResult;
 import software.wings.service.impl.analysis.DataCollectionTaskResult.DataCollectionTaskStatus;
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.impl.log.LogResponseParser;
-import software.wings.sm.StateType;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.BiMap;
@@ -88,7 +87,7 @@ public class CustomLogDataCollectionTask extends AbstractDelegateDataCollectionT
   }
 
   @Override
-  protected StateType getStateType() {
+  protected DelegateStateType getStateType() {
     return dataCollectionInfo.getStateType();
   }
 
@@ -175,7 +174,7 @@ public class CustomLogDataCollectionTask extends AbstractDelegateDataCollectionT
     }
 
     private boolean isPerMinuteWorkflowState() {
-      return dataCollectionInfo.getStateType().equals(StateType.DATA_DOG_LOG);
+      return dataCollectionInfo.getStateType().equals(DelegateStateType.DATA_DOG_LOG);
     }
 
     private Map<String, String> fetchAdditionalHeaders(CustomLogDataCollectionInfo dataCollectionInfo) {
@@ -362,7 +361,7 @@ public class CustomLogDataCollectionTask extends AbstractDelegateDataCollectionT
             logCollectionMinute = (int) (TimeUnit.MILLISECONDS.toMinutes(endTime - collectionStartTime) - 1);
           }
 
-          for (Map.Entry<String, Map<String, ResponseMapper>> logDataInfo :
+          for (Map.Entry<String, Map<String, CustomLogResponseMapper>> logDataInfo :
               dataCollectionInfo.getLogResponseDefinition().entrySet()) {
             List<LogElement> logs = new ArrayList<>();
             String tempHost = dataCollectionInfo.getHosts().iterator().next();
