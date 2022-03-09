@@ -12,6 +12,7 @@ import io.harness.gitsync.sdk.EntityGitDetails;
 import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.envGroup.beans.EnvironmentGroupConfig;
 import io.harness.ng.core.envGroup.beans.EnvironmentGroupEntity;
+import io.harness.ng.core.envGroup.beans.EnvironmentGroupEntity.EnvironmentGroupKeys;
 
 import java.util.List;
 import java.util.Optional;
@@ -81,27 +82,27 @@ public class EnvironmentGroupEntityGitSyncHelper
 
   @Override
   public String getObjectIdOfYamlKey() {
-    return null;
+    return EnvironmentGroupKeys.objectIdOfYaml;
   }
 
   @Override
   public String getIsFromDefaultBranchKey() {
-    return null;
+    return EnvironmentGroupKeys.isFromDefaultBranch;
   }
 
   @Override
   public String getYamlGitConfigRefKey() {
-    return null;
+    return EnvironmentGroupKeys.yamlGitConfigRef;
   }
 
   @Override
   public String getUuidKey() {
-    return null;
+    return EnvironmentGroupKeys.uuid;
   }
 
   @Override
   public String getBranchKey() {
-    return null;
+    return EnvironmentGroupKeys.branch;
   }
 
   @Override

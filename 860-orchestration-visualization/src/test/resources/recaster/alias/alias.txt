@@ -37,4 +37,3 @@ io.harness.plancreator.stages.stage.StageElementConfig
 io.harness.plancreator.stages.StageElementWrapperConfig
 io.harness.plancreator.execution.StepsExecutionConfig
 io.harness.yaml.core.parallelStepElementConfig
-io.harness.ng.core.envGroup.beans.EnvironmentGroupConfig

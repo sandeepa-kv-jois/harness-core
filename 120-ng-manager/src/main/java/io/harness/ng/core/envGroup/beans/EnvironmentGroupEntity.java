@@ -13,7 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
 import io.harness.data.validator.Trimmed;
-import io.harness.gitsync.persistance.GitSyncable;
 import io.harness.gitsync.persistance.GitSyncableEntity;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -23,7 +22,6 @@ import io.harness.persistence.PersistentEntity;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.validation.constraints.Size;
-
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
