@@ -296,8 +296,8 @@ mongo:
     mongoTrustStorePath:
     mongoTrustStorePassword:
   analyticNodeConfig:
-    mongoTagKey: nodeType
-    mongoTagValue: ANALYTICS
+    mongoTagKey: none
+    mongoTagValue: none
 
 events-mongo:
   uri: mongodb://localhost:27017/events
