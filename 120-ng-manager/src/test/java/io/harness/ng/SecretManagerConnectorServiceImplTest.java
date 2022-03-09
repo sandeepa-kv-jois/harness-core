@@ -8,6 +8,7 @@
 package io.harness.ng;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.rule.OwnerRule.BOOPESH;
 import static io.harness.rule.OwnerRule.PHOENIKX;
 
 import static io.github.benas.randombeans.api.EnhancedRandom.random;
@@ -159,6 +160,20 @@ public class SecretManagerConnectorServiceImplTest extends CategoryTest {
                                     .build()));
     ConnectorResponseDTO connectorDTO = secretManagerConnectorService.update(getRequestDTO(), ACCOUNT);
     assertThat(connectorDTO).isEqualTo(null);
+  }
+
+  @Test(expected = InvalidRequestException.class)
+  @Owner(developers = BOOPESH)
+  @Category(UnitTests.class)
+  public void testthrowExceptionIfMandatoryFieldsNotPassed() {
+    SecretManagerConfigDTO secretManagerConfigDTO = random(VaultConfigDTO.class);
+    when(defaultConnectorService.get(any(), any(), any(), any())).thenReturn(Optional.empty());
+    when(ngSecretManagerService.createSecretManager(any())).thenReturn(secretManagerConfigDTO);
+    when(defaultConnectorService.create(any(), any())).thenReturn(null);
+    when(connectorRepository.updateMultiple(any(), any())).thenReturn(null);
+    ConnectorDTO requestDTO = getRequestDTO();
+    ((VaultConnectorDTO) requestDTO.getConnectorInfo().getConnectorConfig()).setVaultUrl(null);
+    secretManagerConnectorService.create(requestDTO, ACCOUNT);
   }
 
   @Test

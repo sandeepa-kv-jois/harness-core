@@ -77,7 +77,7 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
   @SecretReference
   @ApiModelProperty(dataType = "string")
   private SecretRefData secretId;
-  @Schema private boolean isDefault;
+  @Schema(description = SecretManagerDescriptionConstants.DEFAULT) private boolean isDefault;
   @Schema(description = SecretManagerDescriptionConstants.SECRET_ENGINE_VERSION) private int secretEngineVersion;
   @Schema(description = SecretManagerDescriptionConstants.DELEGATE_SELECTORS) private Set<String> delegateSelectors;
   @Schema(description = SecretManagerDescriptionConstants.NAMESPACE) private String namespace;
@@ -112,7 +112,10 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
     try {
       new URL(vaultUrl);
     } catch (MalformedURLException malformedURLException) {
-      throw new InvalidRequestException("Please check the url and try again.", INVALID_REQUEST, USER);
+      throw new InvalidRequestException("Please check the Vault url and try again.", INVALID_REQUEST, USER);
+    }
+    if (isBlank(vaultUrl)){
+      throw new InvalidRequestException( String.format("Invalid value for Vault URL"), INVALID_REQUEST, USER);
     }
     if (secretEngineVersion <= 0) {
       throw new InvalidRequestException(
