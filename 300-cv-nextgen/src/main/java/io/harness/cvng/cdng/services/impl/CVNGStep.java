@@ -21,10 +21,10 @@ import io.harness.cvng.cdng.beans.CVNGStepType;
 import io.harness.cvng.cdng.entities.CVNGStepTask;
 import io.harness.cvng.cdng.entities.CVNGStepTask.CVNGStepTaskBuilder;
 import io.harness.cvng.cdng.services.api.CVNGStepTaskService;
-import io.harness.cvng.core.beans.monitoredService.MonitoredServiceDTO;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.sidekick.DemoActivitySideKickData;
 import io.harness.cvng.core.entities.CVConfig;
+import io.harness.cvng.core.entities.MonitoredService;
 import io.harness.cvng.core.services.api.FeatureFlagService;
 import io.harness.cvng.core.services.api.SideKickService;
 import io.harness.cvng.core.services.api.monitoredService.HealthSourceService;
@@ -112,12 +112,13 @@ public class CVNGStep extends AsyncExecutableWithRollback {
                                                             .environmentIdentifier(envIdentifier)
                                                             .build();
 
-    MonitoredServiceDTO monitoredServiceDTO = monitoredServiceService.getMonitoredServiceDTO(serviceEnvironmentParams);
+    MonitoredService monitoredService =
+        monitoredServiceService.getApplicationMonitoredService(serviceEnvironmentParams);
     Instant deploymentStartTime = Instant.ofEpochMilli(
         AmbianceUtils.getStageLevelFromAmbiance(ambiance)
             .orElseThrow(() -> new IllegalStateException("verify step needs to be part of a stage."))
             .getStartTs());
-    if (monitoredServiceDTO == null || monitoredServiceDTO.getSources().getHealthSources().isEmpty()) {
+    if (monitoredService == null || monitoredService.getHealthSourceIdentifiers().isEmpty()) {
       CVNGStepTaskBuilder cvngStepTaskBuilder = CVNGStepTask.builder();
       cvngStepTaskBuilder.skip(true);
       cvngStepTaskBuilder.callbackId(UUID.randomUUID().toString());
@@ -134,14 +135,14 @@ public class CVNGStep extends AsyncExecutableWithRollback {
     } else {
       String verificationJobInstanceId;
       DeploymentActivity activity = getDeploymentActivity(
-          stepParameters, serviceEnvironmentParams, monitoredServiceDTO, ambiance, deploymentStartTime);
+          stepParameters, serviceEnvironmentParams, monitoredService, ambiance, deploymentStartTime);
       boolean isDemoEnabled = isDemoEnabled(accountId, ambiance);
       boolean shouldFailVerification = false;
       if (isDemoEnabled) {
         shouldFailVerification = shouldFailVerification(ambiance, stepParameters.getSensitivity());
         VerificationJobInstance verificationJobInstance =
             getVerificationJobInstanceForDemo(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
-                stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime,
+                stepParameters, serviceEnvironmentParams, monitoredService, deploymentStartTime,
                 shouldFailVerification(ambiance, stepParameters.getSensitivity())
                     ? ActivityVerificationStatus.VERIFICATION_FAILED
                     : ActivityVerificationStatus.VERIFICATION_PASSED);
@@ -151,7 +152,7 @@ public class CVNGStep extends AsyncExecutableWithRollback {
       } else {
         VerificationJobInstanceBuilder verificationJobInstanceBuilder =
             getVerificationJobInstanceBuilder(AmbianceUtils.obtainCurrentLevel(ambiance).getIdentifier(),
-                stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime);
+                stepParameters, serviceEnvironmentParams, monitoredService, deploymentStartTime);
         activity.fillInVerificationJobInstanceDetails(verificationJobInstanceBuilder);
         verificationJobInstanceId = verificationJobInstanceService.create(verificationJobInstanceBuilder.build());
       }
@@ -194,7 +195,7 @@ public class CVNGStep extends AsyncExecutableWithRollback {
 
   private VerificationJobInstanceBuilder getVerificationJobInstanceBuilder(String stepName,
       CVNGStepParameter stepParameters, ServiceEnvironmentParams serviceEnvironmentParams,
-      MonitoredServiceDTO monitoredServiceDTO, Instant deploymentStartTime) {
+      MonitoredService monitoredService, Instant deploymentStartTime) {
     Instant verificationStartTime = clock.instant();
     VerificationJob verificationJob =
         stepParameters.getVerificationJobBuilder()
@@ -203,12 +204,11 @@ public class CVNGStep extends AsyncExecutableWithRollback {
             .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
             .orgIdentifier(serviceEnvironmentParams.getOrgIdentifier())
             .accountId(serviceEnvironmentParams.getAccountIdentifier())
-            .monitoringSources(monitoredServiceDTO.getSources()
-                                   .getHealthSources()
+            .monitoringSources(monitoredService.getHealthSourceIdentifiers()
                                    .stream()
-                                   .map(healthSource
+                                   .map(healthSourceIdentifier
                                        -> HealthSourceService.getNameSpacedIdentifier(
-                                           monitoredServiceDTO.getIdentifier(), healthSource.getIdentifier()))
+                                           monitoredService.getIdentifier(), healthSourceIdentifier))
                                    .collect(Collectors.toList()))
             .build();
     VerificationJobInstanceBuilder verificationJobInstanceBuilder =
@@ -220,10 +220,10 @@ public class CVNGStep extends AsyncExecutableWithRollback {
   }
 
   private VerificationJobInstance getVerificationJobInstanceForDemo(String stepName, CVNGStepParameter stepParameters,
-      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredServiceDTO monitoredServiceDTO,
-      Instant deploymentStartTime, ActivityVerificationStatus activityVerificationStatus) {
+      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredService monitoredService, Instant deploymentStartTime,
+      ActivityVerificationStatus activityVerificationStatus) {
     VerificationJobInstanceBuilder verificationJobInstanceBuilder = getVerificationJobInstanceBuilder(
-        stepName, stepParameters, serviceEnvironmentParams, monitoredServiceDTO, deploymentStartTime);
+        stepName, stepParameters, serviceEnvironmentParams, monitoredService, deploymentStartTime);
     verificationJobInstanceBuilder.verificationStatus(activityVerificationStatus);
     verificationJobInstanceBuilder.startTime(clock.instant().minus(Duration.ofMinutes(15)));
     verificationJobInstanceBuilder.deploymentStartTime(clock.instant().minus(Duration.ofMinutes(16)));
@@ -240,7 +240,7 @@ public class CVNGStep extends AsyncExecutableWithRollback {
 
   @NotNull
   private DeploymentActivity getDeploymentActivity(CVNGStepParameter stepParameters,
-      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredServiceDTO monitoredServiceDTO, Ambiance ambiance,
+      ServiceEnvironmentParams serviceEnvironmentParams, MonitoredService monitoredService, Ambiance ambiance,
       Instant activityStartTime) {
     Instant startTime = clock.instant();
     VerificationJob verificationJob =
@@ -250,12 +250,11 @@ public class CVNGStep extends AsyncExecutableWithRollback {
             .projectIdentifier(serviceEnvironmentParams.getProjectIdentifier())
             .orgIdentifier(serviceEnvironmentParams.getOrgIdentifier())
             .accountId(serviceEnvironmentParams.getAccountIdentifier())
-            .monitoringSources(monitoredServiceDTO.getSources()
-                                   .getHealthSources()
+            .monitoringSources(monitoredService.getHealthSourceIdentifiers()
                                    .stream()
-                                   .map(healthSource
+                                   .map(healthSourceIdentifier
                                        -> HealthSourceService.getNameSpacedIdentifier(
-                                           monitoredServiceDTO.getIdentifier(), healthSource.getIdentifier()))
+                                           monitoredService.getIdentifier(), healthSourceIdentifier))
                                    .collect(Collectors.toList()))
             .build();
     DeploymentActivity deploymentActivity =

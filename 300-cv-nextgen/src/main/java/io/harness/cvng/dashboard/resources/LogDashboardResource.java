@@ -50,8 +50,6 @@ public class LogDashboardResource {
   public RestResponse<PageResponse<AnalyzedLogDataDTO>> getAllLogsData(@QueryParam("accountId") String accountId,
       @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
       @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @QueryParam("serviceIdentifier") String serviceIdentifier,
-      @QueryParam("environmentIdentifier") String environmentIdentifier,
       @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
       @QueryParam("clusterTypes") List<LogAnalysisTag> clusterTypes,
       @NotNull @QueryParam("startTime") Long startTimeMillis, @NotNull @QueryParam("endTime") Long endTimeMillis,
@@ -61,8 +59,6 @@ public class LogDashboardResource {
                                                           .accountIdentifier(accountId)
                                                           .orgIdentifier(orgIdentifier)
                                                           .projectIdentifier(projectIdentifier)
-                                                          .serviceIdentifier(serviceIdentifier)
-                                                          .environmentIdentifier(environmentIdentifier)
                                                           .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                           .build();
     TimeRangeParams timeRangeParams = TimeRangeParams.builder()
@@ -88,8 +84,6 @@ public class LogDashboardResource {
   public RestResponse<List<LiveMonitoringLogAnalysisClusterDTO>> getLogsClusterData(
       @QueryParam("accountId") String accountId, @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
       @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @QueryParam("serviceIdentifier") String serviceIdentifier,
-      @QueryParam("environmentIdentifier") String environmentIdentifier,
       @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
       @QueryParam("clusterTypes") List<LogAnalysisTag> clusterTypes,
       @NotNull @QueryParam("startTime") Long startTimeMillis, @NotNull @QueryParam("endTime") Long endTimeMillis,
@@ -98,8 +92,6 @@ public class LogDashboardResource {
                                                           .accountIdentifier(accountId)
                                                           .orgIdentifier(orgIdentifier)
                                                           .projectIdentifier(projectIdentifier)
-                                                          .serviceIdentifier(serviceIdentifier)
-                                                          .environmentIdentifier(environmentIdentifier)
                                                           .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                                           .build();
     TimeRangeParams timeRangeParams = TimeRangeParams.builder()

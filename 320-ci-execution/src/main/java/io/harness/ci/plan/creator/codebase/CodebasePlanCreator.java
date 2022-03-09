@@ -68,7 +68,7 @@ public class CodebasePlanCreator {
             .stepParameters(CodeBaseStepParameters.builder()
                                 .codeBaseSyncTaskId(codeBaseSyncTask.getUuid())
                                 .codeBaseDelegateTaskId(codeBaseDelegateTask.getUuid())
-                                .connectorRef(ciCodeBase.getConnectorRef())
+                                .connectorRef(ciCodeBase.getConnectorRef().getValue())
                                 .executionSource(executionSource)
                                 .build())
             .facilitatorObtainment(
@@ -92,7 +92,7 @@ public class CodebasePlanCreator {
   PlanNode createPlanForCodeBaseTask(
       CodeBase ciCodeBase, ExecutionSource executionSource, String facilitatorType, String codeBaseId) {
     CodeBaseTaskStepParameters codeBaseTaskStepParameters = CodeBaseTaskStepParameters.builder()
-                                                                .connectorRef(ciCodeBase.getConnectorRef())
+                                                                .connectorRef(ciCodeBase.getConnectorRef().getValue())
                                                                 .repoName(ciCodeBase.getRepoName().getValue())
                                                                 .executionSource(executionSource)
                                                                 .build();

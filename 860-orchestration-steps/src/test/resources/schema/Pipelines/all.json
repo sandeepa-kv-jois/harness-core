@@ -477,14 +477,32 @@
           "type": "string"
         },
         "depth": {
-          "type": "integer",
-          "format": "int32"
+          "oneOf": [
+            {
+              "type": "integer",
+              "format": "int32"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
         },
         "prCloneStrategy": {
-          "type": "string",
-          "enum": [
-            "MergeCommit",
-            "SourceBranch"
+          "oneOf": [
+            {
+              "type": "string",
+              "enum": [
+                "MergeCommit",
+                "SourceBranch"
+              ]
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
           ]
         },
         "repoName": {
@@ -494,7 +512,16 @@
           "$ref": "#/definitions/ContainerResource"
         },
         "sslVerify": {
-          "type": "boolean"
+          "oneOf": [
+            {
+              "type": "boolean"
+            },
+            {
+              "type": "string",
+              "pattern": "^<\\+input>(\\.(allowedValues|regex)\\(.+?\\))*$",
+              "minLength": 1
+            }
+          ]
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"
@@ -1260,7 +1287,7 @@
         },
         "memory": {
           "type": "string",
-          "pattern": "^(([0-9]*[.])?[0-9]+)([GM]i?)$"
+          "pattern": "^(([0-9]*[.])?[0-9]+)([GM]i?)|<\\+input>$"
         }
       },
       "$schema": "http://json-schema.org/draft-07/schema#"

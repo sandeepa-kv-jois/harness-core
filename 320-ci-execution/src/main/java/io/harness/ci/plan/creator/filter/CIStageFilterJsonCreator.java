@@ -92,10 +92,10 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
     if (ciCodeBase != null) {
       if (ciCodeBase.getRepoName().getValue() != null) {
         ciFilterBuilder.repoName(ciCodeBase.getRepoName().getValue());
-      } else if (ciCodeBase.getConnectorRef() != null) {
+      } else if (ciCodeBase.getConnectorRef().getValue() != null) {
         try {
           ConnectorDetails connectorDetails =
-              connectorUtils.getConnectorDetails(baseNGAccess, ciCodeBase.getConnectorRef());
+              connectorUtils.getConnectorDetails(baseNGAccess, ciCodeBase.getConnectorRef().getValue());
           String repoName = getGitRepo(connectorUtils.retrieveURL(connectorDetails));
           ciFilterBuilder.repoName(repoName);
         } catch (Exception exception) {
@@ -118,7 +118,7 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
       throw new CIStageExecutionException("Infrastructure is mandatory for execution");
     }
     if (infrastructure.getType() == Infrastructure.Type.VM) {
-      ValidationUtils.validateVmInfraDependencies(integrationStageConfig.getServiceDependencies());
+      ValidationUtils.validateVmInfraDependencies(integrationStageConfig.getServiceDependencies().getValue());
     }
   }
 
@@ -145,9 +145,9 @@ public class CIStageFilterJsonCreator extends GenericStageFilterJsonCreator {
           YamlUtils.getFullyQualifiedName(filterCreationContext.getCurrentField().getNode()) + PATH_CONNECTOR
           + YAMLFieldNameConstants.SPEC + PATH_CONNECTOR + ciCodeBase.getConnectorRef();
 
-      result.add(
-          convertToEntityDetailProtoDTO(accountIdentifier, orgIdentifier, projectIdentifier, fullQualifiedDomainName,
-              ParameterField.createValueField(ciCodeBase.getConnectorRef()), EntityTypeProtoEnum.CONNECTORS));
+      result.add(convertToEntityDetailProtoDTO(accountIdentifier, orgIdentifier, projectIdentifier,
+          fullQualifiedDomainName, ParameterField.createValueField(ciCodeBase.getConnectorRef().getValue()),
+          EntityTypeProtoEnum.CONNECTORS));
     }
 
     IntegrationStageConfig integrationStage = (IntegrationStageConfig) stageElementConfig.getStageType();

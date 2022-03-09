@@ -337,8 +337,9 @@ public class K8BuildSetupUtils {
   private Map<String, ConnectorDetails> resolveGitAppFunctor(
       NGAccess ngAccess, InitializeStepInfo initializeStepInfo, Ambiance ambiance) {
     String codeBaseConnectorRef = null;
-    if (initializeStepInfo.getCiCodebase() != null) {
-      codeBaseConnectorRef = initializeStepInfo.getCiCodebase().getConnectorRef();
+    if (initializeStepInfo.getCiCodebase() != null
+        && initializeStepInfo.getCiCodebase().getConnectorRef().getValue() != null) {
+      codeBaseConnectorRef = initializeStepInfo.getCiCodebase().getConnectorRef().getValue();
       if (isNotEmpty(codeBaseConnectorRef)) {
         consumeSweepingOutput(ambiance,
             CodeBaseConnectorRefSweepingOutput.builder().codeBaseConnectorRef(codeBaseConnectorRef).build(),
