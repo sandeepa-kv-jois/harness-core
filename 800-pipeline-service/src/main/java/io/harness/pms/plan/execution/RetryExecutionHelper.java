@@ -27,6 +27,7 @@ import io.harness.plan.Plan;
 import io.harness.pms.execution.ExecutionStatus;
 import io.harness.pms.merger.YamlConfig;
 import io.harness.pms.merger.fqn.FQN;
+import io.harness.pms.merger.helpers.InputSetMergeHelper;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
@@ -146,7 +147,9 @@ public class RetryExecutionHelper {
     }
     PlanExecutionMetadata planExecutionMetadata = byPlanExecutionId.get();
     String executedPipeline = planExecutionMetadata.getYaml();
-    return getRetryStages(updatedPipeline, executedPipeline, planExecutionId);
+    String stageFilteredUpdatedPipeline = InputSetMergeHelper.removeNonRequiredStages(
+        updatedPipeline, planExecutionMetadata.getStagesExecutionMetadata().getStageIdentifiers());
+    return getRetryStages(stageFilteredUpdatedPipeline, executedPipeline, planExecutionId);
   }
 
   public boolean validateRetry(String updatedYaml, String executedYaml) {

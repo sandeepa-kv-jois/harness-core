@@ -16,6 +16,7 @@ import io.harness.engine.executions.retry.RetryExecutionParameters;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.PlanExecution;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.execution.StagesExecutionMetadata;
 import io.harness.gitsync.sdk.EntityGitDetailsMapper;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
 import io.harness.pms.ngpipeline.inputset.helpers.ValidateAndMergeHelper;
@@ -144,15 +145,18 @@ public class PipelineExecutor {
     if (!optionalPlanExecutionMetadata.isPresent()) {
       throw new InvalidRequestException(String.format("No plan exist for %s planExecutionId", previousExecutionId));
     }
-    String previousProcessedYaml = optionalPlanExecutionMetadata.get().getProcessedYaml();
+    PlanExecutionMetadata planExecutionMetadata = optionalPlanExecutionMetadata.get();
+    String previousProcessedYaml = planExecutionMetadata.getProcessedYaml();
     List<String> identifierOfSkipStages = new ArrayList<>();
 
     // RetryExecutionParameters
     RetryExecutionParameters retryExecutionParameters =
         buildRetryExecutionParameters(true, previousProcessedYaml, retryStagesIdentifier, identifierOfSkipStages);
 
-    ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntity, moduleType, inputSetPipelineYaml, null, null,
-        triggerInfo, previousExecutionId, retryExecutionParameters);
+    StagesExecutionMetadata stagesExecutionMetadata = planExecutionMetadata.getStagesExecutionMetadata();
+    ExecArgs execArgs = executionHelper.buildExecutionArgs(pipelineEntity, moduleType, inputSetPipelineYaml,
+        stagesExecutionMetadata.getStageIdentifiers(), stagesExecutionMetadata.getExpressionValues(), triggerInfo,
+        previousExecutionId, retryExecutionParameters);
     PlanExecution planExecution;
     if (useV2) {
       planExecution =
