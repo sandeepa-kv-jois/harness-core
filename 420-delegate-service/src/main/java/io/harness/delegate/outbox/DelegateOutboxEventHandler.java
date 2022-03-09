@@ -150,14 +150,14 @@ public class DelegateOutboxEventHandler implements OutboxEventHandler {
 
   private boolean handleDelegateUnRegisterEvent(OutboxEvent outboxEvent) throws IOException {
     GlobalContext globalContext = outboxEvent.getGlobalContext();
-    DelegateUnregisterEvent delegateRegisterEvent =
+    DelegateUnregisterEvent delegateUnRegisterEvent =
         objectMapper.readValue(outboxEvent.getEventData(), DelegateUnregisterEvent.class);
     AuditEntry auditEntry = AuditEntry.builder()
                                 .action(Action.DELETE)
                                 .module(ModuleType.CORE)
                                 .timestamp(outboxEvent.getCreatedAt())
                                 .resource(ResourceDTO.fromResource(outboxEvent.getResource()))
-                                .newYaml(getYamlString(delegateRegisterEvent.getDelegateSetupDetails()))
+                                .newYaml(getYamlString(delegateUnRegisterEvent.getDelegateSetupDetails()))
                                 .resourceScope(ResourceScopeDTO.fromResourceScope(outboxEvent.getResourceScope()))
                                 .insertId(outboxEvent.getId())
                                 .build();

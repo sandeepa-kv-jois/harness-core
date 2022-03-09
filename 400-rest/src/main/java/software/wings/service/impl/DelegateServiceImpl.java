@@ -3908,7 +3908,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private void sendUnregisterDelegateAuditEvent(DelegateUnregisterRequest request, String accountId) {
-    outboxService.save(DelegateRegisterEvent.builder()
+    outboxService.save(DelegateUnregisterEvent.builder()
                            .accountIdentifier(accountId)
                            .orgIdentifier(request.getOrgIdentifier())
                            .projectIdentifier(request.getProjectIdentifier())
@@ -3917,7 +3917,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   private void sendRegisterDelegateAuditEvent(DelegateSetupDetails delegateSetupDetails, String accountId) {
-    outboxService.save(DelegateUnregisterEvent.builder()
+    outboxService.save(DelegateRegisterEvent.builder()
                            .accountIdentifier(accountId)
                            .orgIdentifier(delegateSetupDetails.getOrgIdentifier())
                            .projectIdentifier(delegateSetupDetails.getProjectIdentifier())
