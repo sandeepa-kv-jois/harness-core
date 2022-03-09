@@ -206,6 +206,11 @@ public class GitClientImpl implements GitClient {
   public synchronized GitDiffResult diff(
       GitOperationContext gitOperationContext, boolean excludeFilesOutsideSetupFolder) {
     GitConfig gitConfig = gitOperationContext.getGitConfig();
+
+    File repoDir =
+        new File(gitClientHelper.getFileDownloadRepoDirectory(gitConfig, gitOperationContext.getGitConnectorId()));
+    gitClientHelper.checkIndexLock(repoDir);
+
     String startCommitIdStr = gitOperationContext.getGitDiffRequest().getLastProcessedCommitId();
     final String endCommitIdStr =
         StringUtils.defaultIfEmpty(gitOperationContext.getGitDiffRequest().getEndCommitId(), "HEAD");
@@ -371,6 +376,9 @@ public class GitClientImpl implements GitClient {
   @VisibleForTesting
   synchronized GitCheckoutResult checkout(GitOperationContext gitOperationContext) throws GitAPIException, IOException {
     GitConfig gitConfig = gitOperationContext.getGitConfig();
+    File repoDir =
+        new File(gitClientHelper.getFileDownloadRepoDirectory(gitConfig, gitOperationContext.getGitConnectorId()));
+    gitClientHelper.checkIndexLock(repoDir);
     Git git = Git.open(new File(gitClientHelper.getRepoDirectory(gitOperationContext)));
     try {
       if (isNotEmpty(gitConfig.getBranch())) {
@@ -566,6 +574,10 @@ public class GitClientImpl implements GitClient {
 
     synchronized (gitClientHelper.getLockObject(gitConnectorId)) {
       try {
+        File repoDir =
+            new File(gitClientHelper.getFileDownloadRepoDirectory(gitConfig, gitRequest.getGitConnectorId()));
+        gitClientHelper.checkIndexLock(repoDir);
+
         log.info(new StringBuilder(128)
                      .append(" Processing Git command: FILES_BETWEEN_COMMITS ")
                      .append("Account: ")
@@ -694,6 +706,9 @@ public class GitClientImpl implements GitClient {
     String gitConnectorId = gitRequest.getGitConnectorId();
     synchronized (gitClientHelper.getLockObject(gitConnectorId)) {
       try {
+        File repoDir =
+            new File(gitClientHelper.getFileDownloadRepoDirectory(gitConfig, gitRequest.getGitConnectorId()));
+        gitClientHelper.checkIndexLock(repoDir);
         String latestCommitSha = checkoutFiles(gitConfig, gitRequest, shouldExportCommitSha);
         String repoPath = gitClientHelper.getRepoPathForFileDownload(gitConfig, gitRequest.getGitConnectorId());
 
@@ -746,6 +761,10 @@ public class GitClientImpl implements GitClient {
      * */
     synchronized (gitClientHelper.getLockObject(gitConnectorId)) {
       try {
+        File repoDir =
+            new File(gitClientHelper.getFileDownloadRepoDirectory(gitConfig, gitRequest.getGitConnectorId()));
+        gitClientHelper.checkIndexLock(repoDir);
+
         String latestCommitSHA = checkoutFiles(gitConfig, gitRequest, shouldExportCommitSha);
 
         String repoPath = gitClientHelper.getRepoPathForFileDownload(gitConfig, gitRequest.getGitConnectorId());
@@ -948,7 +967,7 @@ public class GitClientImpl implements GitClient {
   }
 
   @Override
-  public String validate(GitConfig gitConfig) {
+  public synchronized String validate(GitConfig gitConfig) {
     String repoUrl = gitConfig.getRepoUrl();
     try {
       // Init Git repo
@@ -1040,6 +1059,8 @@ public class GitClientImpl implements GitClient {
     GitConfig gitConfig = gitOperationContext.getGitConfig();
 
     File repoDir = new File(gitClientHelper.getRepoDirectory(gitOperationContext));
+    gitClientHelper.checkIndexLock(repoDir);
+
     boolean executionFailed = false;
     if (repoDir.exists()) {
       // Check URL change (ssh, https) and update in .git/config

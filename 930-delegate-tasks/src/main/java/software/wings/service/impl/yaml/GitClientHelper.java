@@ -20,6 +20,7 @@ import static io.harness.git.model.ChangeType.MODIFY;
 import static io.harness.git.model.ChangeType.RENAME;
 import static io.harness.govern.Switch.unhandled;
 
+import static java.nio.file.Files.exists;
 import static org.apache.commons.codec.binary.Hex.encodeHexString;
 
 import io.harness.annotations.dev.BreakDependencyOn;
@@ -50,6 +51,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.MessageDigest;
+import java.time.Duration;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -271,6 +273,19 @@ public class GitClientHelper {
       return encodeHexString(messageDigest);
     } catch (Exception e) {
       throw new YamlException(String.format("Error while calculating hash for input [%s].", input), e, ADMIN_SRE);
+    }
+  }
+
+  public void checkIndexLock(File path) {
+    while (exists(Paths.get(path.toString(), ".git/index.lock"))) {
+      try {
+        log.info("Waiting on index.lock to be available");
+        Thread.sleep(Duration.ofSeconds(5).toMillis());
+      } catch (InterruptedException e) {
+        Thread.interrupted();
+        log.warn("error in sleep step");
+        return;
+      }
     }
   }
 }
