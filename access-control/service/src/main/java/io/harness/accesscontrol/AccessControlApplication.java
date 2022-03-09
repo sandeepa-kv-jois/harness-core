@@ -70,6 +70,9 @@ import io.harness.security.NextGenAuthenticationFilter;
 import io.harness.security.annotations.InternalApi;
 import io.harness.security.annotations.PublicApi;
 import io.harness.swagger.SwaggerBundleConfigurationFactory;
+import io.harness.telemetry.TelemetryReporter;
+import io.harness.telemetry.filter.APIAuthTelemetryFilter;
+import io.harness.telemetry.filter.APIAuthTelemetryResponseFilter;
 import io.harness.token.remote.TokenClient;
 
 import com.codahale.metrics.MetricRegistry;
@@ -164,6 +167,7 @@ public class AccessControlApplication extends Application<AccessControlConfigura
     registerCorrelationFilter(environment, injector);
     registerRequestContextFilter(environment);
     registerAuthFilters(appConfig, environment, injector);
+    registerAPIAuthTelemetryFilters(appConfig, environment, injector);
     registerHealthCheck(environment, injector);
     registerManagedBeans(appConfig, environment, injector);
     registerMigrations(injector);
@@ -301,6 +305,24 @@ public class AccessControlApplication extends Application<AccessControlConfigura
       registerAccessControlAuthFilter(configuration, environment, injector);
       registerInternalApiAuthFilter(configuration, environment);
     }
+  }
+
+  private void registerAPIAuthTelemetryFilters(
+      AccessControlConfiguration configuration, Environment environment, Injector injector) {
+    if (configuration.getSegmentConfiguration() != null && configuration.getSegmentConfiguration().isEnabled()) {
+      registerAPIAuthTelemetryFilter(environment, injector);
+      registerAPIAuthTelemetryResponseFilter(environment, injector);
+    }
+  }
+
+  private void registerAPIAuthTelemetryFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryFilter(telemetryReporter));
+  }
+
+  private void registerAPIAuthTelemetryResponseFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryResponseFilter(telemetryReporter));
   }
 
   private Predicate<Pair<ResourceInfo, ContainerRequestContext>> getAuthenticationExemptedRequestsPredicate() {
