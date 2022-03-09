@@ -626,6 +626,7 @@ public class WorkflowServiceImpl implements WorkflowService, DataProvider {
    */
   @Override
   public PageResponse<Workflow> listWorkflowsWithoutOrchestration(PageRequest<Workflow> pageRequest) {
+    pageRequest.addFieldsExcluded(WorkflowKeys.orchestration);
     return wingsPersistence.query(Workflow.class, pageRequest);
   }
 
