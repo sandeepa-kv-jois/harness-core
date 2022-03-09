@@ -27,7 +27,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.k8s.K8sRollingRollbackBaseHandler;
 import io.harness.delegate.k8s.K8sRollingRollbackBaseHandler.ResourceRecreationStatus;
 import io.harness.delegate.k8s.beans.K8sRollingRollbackHandlerConfig;
-import io.harness.delegate.task.k8s.K8sTaskHelperBase;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.K8sDelegateTaskParams;

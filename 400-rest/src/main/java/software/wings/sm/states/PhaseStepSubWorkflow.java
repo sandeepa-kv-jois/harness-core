@@ -103,6 +103,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Stream;
 import org.mongodb.morphia.annotations.Transient;
 
 /**
@@ -401,12 +402,22 @@ public class PhaseStepSubWorkflow extends SubWorkflowState {
       }
       case K8S_PHASE_STEP: {
         {
-          Optional<StepExecutionSummary> first = phaseStepExecutionSummary.getStepExecutionSummaryList()
-                                                     .stream()
-                                                     .filter(s -> s instanceof K8sExecutionSummary)
-                                                     .filter(s -> !((K8sExecutionSummary) s).isExportManifests())
-                                                     .filter(s -> ((K8sExecutionSummary) s).getReleaseNumber() != null)
-                                                     .findFirst();
+          List<StepExecutionSummary> executionSummaries =
+              phaseStepExecutionSummary.getStepExecutionSummaryList()
+                  .stream()
+                  .filter(K8sExecutionSummary.class ::isInstance)
+                  .filter(s -> !((K8sExecutionSummary) s).isExportManifests())
+                  .collect(toList());
+
+          Optional<StepExecutionSummary> first;
+          if (executionSummaries.stream().anyMatch(s -> ((K8sExecutionSummary) s).getReleaseNumber() != null)) {
+            first = executionSummaries.stream()
+                        .filter(s -> ((K8sExecutionSummary) s).getReleaseNumber() != null)
+                        .findFirst();
+          } else {
+            first = executionSummaries.stream().findFirst();
+          }
+
           if (!first.isPresent()) {
             Optional<StepExecutionSummary> firstScriptStateExecutionSummary =
                 phaseStepExecutionSummary.getStepExecutionSummaryList()
