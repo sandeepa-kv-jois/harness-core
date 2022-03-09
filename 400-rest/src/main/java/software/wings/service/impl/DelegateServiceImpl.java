@@ -2934,16 +2934,18 @@ public class DelegateServiceImpl implements DelegateService {
         UUID currentUUID = convertFromBase64(heartbeat.getDelegateConnectionId());
         UUID existingUUID = convertFromBase64(existingConnection.getUuid());
         if (existingUUID.timestamp() > currentUUID.timestamp()) {
-          boolean notSameLocationForShellScriptDelegate = DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())
-              && (isNotEmpty(heartbeat.getLocation()) && isNotEmpty(existingConnection.getLocation())
-                  && !heartbeat.getLocation().equals(existingConnection.getLocation()));
-          if (notSameLocationForShellScriptDelegate) {
-            log.error(
-                "Newer delegate connection found for the delegate id! Will initiate self destruct sequence for the current delegate.");
-            destroyTheCurrentDelegate(accountId, delegateId, heartbeat.getDelegateConnectionId(), connectionMode);
-            delegateConnectionDao.replaceWithNewerConnection(heartbeat.getDelegateConnectionId(), existingConnection);
-          } else {
-            log.error("Two delegates with the same identity");
+          if (DelegateType.SHELL_SCRIPT.equals(delegate.getDelegateType())) {
+            boolean notSameLocationForShellScriptDelegate = isNotEmpty(heartbeat.getLocation())
+                && isNotEmpty(existingConnection.getLocation())
+                && !heartbeat.getLocation().equals(existingConnection.getLocation());
+            if (notSameLocationForShellScriptDelegate) {
+              log.error(
+                  "Newer delegate connection found for the delegate id! Will initiate self destruct sequence for the current delegate.");
+              destroyTheCurrentDelegate(accountId, delegateId, heartbeat.getDelegateConnectionId(), connectionMode);
+              delegateConnectionDao.replaceWithNewerConnection(heartbeat.getDelegateConnectionId(), existingConnection);
+            } else {
+              log.error("Two delegates with the same identity");
+            }
           }
         } else {
           delegateMetricsService.recordDelegateMetrics(delegate, DELEGATE_RESTARTED);
