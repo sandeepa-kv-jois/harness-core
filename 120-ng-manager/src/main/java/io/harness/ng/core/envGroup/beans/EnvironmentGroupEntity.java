@@ -23,7 +23,12 @@ import io.harness.persistence.PersistentEntity;
 import com.google.common.collect.ImmutableList;
 import java.util.List;
 import javax.validation.constraints.Size;
-import lombok.*;
+
+import lombok.AccessLevel;
+import lombok.Builder;
+import lombok.Data;
+import lombok.Getter;
+import lombok.Singular;
 import lombok.experimental.FieldNameConstants;
 import lombok.experimental.NonFinal;
 import lombok.experimental.Wither;
