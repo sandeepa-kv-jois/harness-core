@@ -120,7 +120,7 @@ public class GitSyncModule extends AbstractModule {
   @Provides
   @Singleton
   List<Microservice> getMicroservicesProcessingOrder() {
-    return Arrays.asList(CORE, PMS, TEMPLATESERVICE, CF, POLICYMGMT);
+    return Arrays.asList(CORE, TEMPLATESERVICE, PMS, CF, POLICYMGMT);
   }
 
   @Override
