@@ -35,6 +35,7 @@ import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.OrgAndProjectValidationHelper;
@@ -47,7 +48,12 @@ import io.harness.ng.core.environment.beans.EnvironmentType;
 import io.harness.ng.core.environment.dto.EnvironmentRequestDTO;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.environment.mappers.EnvironmentMapper;
+import io.harness.ng.core.environment.mappers.NGEnvironmentEntityMapper;
 import io.harness.ng.core.environment.services.EnvironmentService;
+import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
+import io.harness.ng.core.service.entity.ServiceEntity;
+import io.harness.ng.core.service.mappers.NGServiceEntityMapper;
+import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.ng.core.utils.CoreCriteriaUtils;
 import io.harness.rbac.CDNGRbacUtility;
 import io.harness.security.annotations.NextGenManagerAuth;
@@ -155,6 +161,10 @@ public class EnvironmentResourceV2 {
     String version = "0";
     if (environment.isPresent()) {
       version = environment.get().getVersion().toString();
+      if (EmptyPredicate.isEmpty(environment.get().getYaml())) {
+        NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environment.get());
+        environment.get().setYaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig));
+      }
     }
     return ResponseDTO.newResponse(version, environment.map(EnvironmentMapper::toResponseWrapper).orElse(null));
   }
@@ -306,9 +316,14 @@ public class EnvironmentResourceV2 {
     } else {
       pageRequest = PageUtils.getPageRequest(page, size, sort);
     }
-    Page<EnvironmentResponse> environmentList =
-        environmentService.list(criteria, pageRequest).map(EnvironmentMapper::toResponseWrapper);
-    return ResponseDTO.newResponse(getNGPageResponse(environmentList));
+    Page<Environment> environmentEntities = environmentService.list(criteria, pageRequest);
+    environmentEntities.forEach(environment -> {
+      if (EmptyPredicate.isEmpty(environment.getYaml())) {
+        NGEnvironmentConfig ngEnvironmentConfig = NGEnvironmentEntityMapper.toNGEnvironmentConfig(environment);
+        environment.setYaml(NGEnvironmentEntityMapper.toYaml(ngEnvironmentConfig));
+      }
+    });
+    return ResponseDTO.newResponse(getNGPageResponse(environmentEntities.map(EnvironmentMapper::toResponseWrapper)));
   }
 
   @GET

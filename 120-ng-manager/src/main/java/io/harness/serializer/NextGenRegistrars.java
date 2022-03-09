@@ -12,6 +12,7 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.ng.core.dto.secrets.SecretRequestWrapper;
+import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
 import io.harness.ng.core.service.yaml.NGServiceConfig;
 import io.harness.serializer.morphia.FeedbackMorphiaRegistrars;
 import io.harness.serializer.morphia.InvitesMorphiaRegistrar;
@@ -92,6 +93,13 @@ public class NextGenRegistrars {
                    .availableAtAccountLevel(true)
                    .availableAtOrgLevel(true)
                    .clazz(NGServiceConfig.class)
+                   .build())
+          .add(YamlSchemaRootClass.builder()
+                   .entityType(EntityType.ENVIRONMENT)
+                   .availableAtProjectLevel(true)
+                   .availableAtAccountLevel(true)
+                   .availableAtOrgLevel(true)
+                   .clazz(NGEnvironmentConfig.class)
                    .build())
           .build();
 

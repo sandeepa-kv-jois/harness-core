@@ -24,8 +24,10 @@ import java.util.List;
 import javax.validation.constraints.Size;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Setter;
 import lombok.Singular;
 import lombok.experimental.FieldNameConstants;
+import lombok.experimental.NonFinal;
 import lombok.experimental.Wither;
 import org.hibernate.validator.constraints.NotEmpty;
 import org.mongodb.morphia.annotations.Entity;
@@ -74,4 +76,13 @@ public class Environment implements PersistentEntity {
   @Wither @LastModifiedDate Long lastModifiedAt;
   @Wither @Version Long version;
   @Builder.Default Boolean deleted = Boolean.FALSE;
+  String yaml;
+
+  // GitSync entities
+  @Wither @Setter @NonFinal String objectIdOfYaml;
+  @Setter @NonFinal Boolean isFromDefaultBranch;
+  @Setter @NonFinal String branch;
+  @Setter @NonFinal String yamlGitConfigRef;
+  @Setter @NonFinal String filePath;
+  @Setter @NonFinal String rootFolder;
 }

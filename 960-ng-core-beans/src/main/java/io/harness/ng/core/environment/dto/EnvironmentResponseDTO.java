@@ -35,4 +35,5 @@ public class EnvironmentResponseDTO {
   boolean deleted;
   Map<String, String> tags;
   @JsonIgnore Long version;
+  String yaml;
 }
