@@ -19,6 +19,7 @@ import io.harness.validation.OneOfField;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.annotations.ApiModel;
 import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
@@ -41,6 +42,8 @@ import org.hibernate.validator.constraints.NotBlank;
 @FieldDefaults(level = AccessLevel.PRIVATE)
 @ApiModel("ServiceNowConnector")
 @OneOfField(fields = {"username", "usernameRef"})
+@Schema(
+    name = "ServiceNowConnector", description = "This is the view of the ServiceNowConfig entity defined in Harness")
 public class ServiceNowConnectorDTO extends ConnectorConfigDTO implements DecryptableEntity, DelegateSelectable {
   @NotNull @NotBlank String serviceNowUrl;
   String username;
