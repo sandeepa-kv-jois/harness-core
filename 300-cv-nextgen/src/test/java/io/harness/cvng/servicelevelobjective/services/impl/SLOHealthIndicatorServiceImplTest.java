@@ -25,17 +25,14 @@ import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
 import io.harness.cvng.servicelevelobjective.services.api.SLIRecordService;
 import io.harness.cvng.servicelevelobjective.services.api.SLOHealthIndicatorService;
 import io.harness.cvng.servicelevelobjective.services.api.ServiceLevelIndicatorService;
-import io.harness.persistence.HPersistence;
 import io.harness.rule.Owner;
 
 import com.google.inject.Inject;
-import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Objects;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -44,8 +41,6 @@ public class SLOHealthIndicatorServiceImplTest extends CvNextGenTestBase {
   @Inject SLOHealthIndicatorService sloHealthIndicatorService;
   @Inject SLIRecordService sliRecordService;
   @Inject ServiceLevelIndicatorService serviceLevelIndicatorService;
-  @Inject Clock clock;
-  @Inject HPersistence hPersistence;
 
   private BuilderFactory builderFactory;
 
