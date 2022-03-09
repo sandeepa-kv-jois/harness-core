@@ -19,8 +19,6 @@ import io.harness.ng.core.environment.dto.EnvironmentRequestDTO;
 import io.harness.ng.core.environment.dto.EnvironmentResponse;
 import io.harness.ng.core.environment.dto.EnvironmentResponseDTO;
 import io.harness.ng.core.environment.yaml.NGEnvironmentConfig;
-import io.harness.ng.core.service.mappers.NGServiceEntityMapper;
-import io.harness.ng.core.service.yaml.NGServiceConfig;
 
 import java.util.Optional;
 import lombok.experimental.UtilityClass;
