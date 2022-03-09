@@ -117,7 +117,7 @@ public class PdcInfrastructure implements Infrastructure, Visitable, WithConnect
   }
 
   @Override
-  public Infrastructure applyOverrides(Infrastructure overrideConfig) {
+  public PdcInfrastructure applyOverrides(Infrastructure overrideConfig) {
     PdcInfrastructure config = (PdcInfrastructure) overrideConfig;
     PdcInfrastructure resultantInfra = this;
     if (!ParameterField.isNull(config.getSshKeyRef())) {
