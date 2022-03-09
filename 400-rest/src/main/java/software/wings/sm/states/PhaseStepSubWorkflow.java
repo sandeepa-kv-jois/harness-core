@@ -405,6 +405,7 @@ public class PhaseStepSubWorkflow extends SubWorkflowState {
                                                      .stream()
                                                      .filter(s -> s instanceof K8sExecutionSummary)
                                                      .filter(s -> !((K8sExecutionSummary) s).isExportManifests())
+                                                     .filter(s -> ((K8sExecutionSummary) s).getReleaseNumber() != null)
                                                      .findFirst();
           if (!first.isPresent()) {
             Optional<StepExecutionSummary> firstScriptStateExecutionSummary =

@@ -480,6 +480,7 @@ import software.wings.helpers.ext.k8s.response.K8sBlueGreenDeployResponse;
 import software.wings.helpers.ext.k8s.response.K8sCanaryDeployResponse;
 import software.wings.helpers.ext.k8s.response.K8sDeleteResponse;
 import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
+import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
 import software.wings.helpers.ext.k8s.response.K8sScaleResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 import software.wings.helpers.ext.k8s.response.K8sTrafficSplitResponse;
@@ -1595,6 +1596,7 @@ public class ManagerMorphiaRegistrar implements MorphiaRegistrar {
     w.put("api.terraform.TerraformOutputVariables", TerraformOutputVariables.class);
     w.put("api.terragrunt.TerragruntOutputVariables", TerragruntOutputVariables.class);
     w.put("api.arm.ARMOutputVariables", ARMOutputVariables.class);
+    w.put("helpers.ext.k8s.response.K8sRollingDeployRollbackResponse", K8sRollingDeployRollbackResponse.class);
 
     MorphiaRegistrarHelperPut sm = (name, clazz) -> w.put("sm.states.spotinst." + name, clazz);
 

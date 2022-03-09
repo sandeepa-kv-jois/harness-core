@@ -27,9 +27,11 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.delegate.k8s.K8sRollingRollbackBaseHandler;
 import io.harness.delegate.k8s.K8sRollingRollbackBaseHandler.ResourceRecreationStatus;
 import io.harness.delegate.k8s.beans.K8sRollingRollbackHandlerConfig;
+import io.harness.delegate.task.k8s.K8sTaskHelperBase;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.K8sDelegateTaskParams;
+import io.harness.k8s.model.K8sPod;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.logging.CommandExecutionStatus;
 
@@ -38,6 +40,7 @@ import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
 import software.wings.helpers.ext.k8s.request.K8sRollingDeployRollbackTaskParameters;
 import software.wings.helpers.ext.k8s.request.K8sTaskParameters;
+import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -45,6 +48,7 @@ import com.google.inject.Inject;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -114,9 +118,20 @@ public class K8sRollingDeployRollbackTaskHandler extends K8sTaskHandler {
     try {
       k8sRollingRollbackBaseHandler.steadyStateCheck(rollbackHandlerConfig, k8sDelegateTaskParams,
           request.getTimeoutIntervalInMin(), waitForSteadyStateLogCallback);
+
+      List<K8sPod> pods = k8sRollingRollbackBaseHandler.getPods(request.getTimeoutIntervalInMin(),
+          rollbackHandlerConfig.getPreviousManagedWorkloads(),
+          rollbackHandlerConfig.getPreviousCustomManagedWorkloads(), rollbackHandlerConfig.getKubernetesConfig(),
+          request.getReleaseName());
+
+      K8sRollingDeployRollbackResponse rollbackResponse =
+          K8sRollingDeployRollbackResponse.builder().k8sPodList(pods).build();
       k8sRollingRollbackBaseHandler.postProcess(rollbackHandlerConfig, request.getReleaseName());
       waitForSteadyStateLogCallback.saveExecutionLog("\nDone.", INFO, CommandExecutionStatus.SUCCESS);
-      return K8sTaskExecutionResponse.builder().commandExecutionStatus(CommandExecutionStatus.SUCCESS).build();
+      return K8sTaskExecutionResponse.builder()
+          .k8sTaskResponse(rollbackResponse)
+          .commandExecutionStatus(CommandExecutionStatus.SUCCESS)
+          .build();
     } catch (Exception e) {
       waitForSteadyStateLogCallback.saveExecutionLog(getMessage(e), ERROR, FAILURE);
       throw e;

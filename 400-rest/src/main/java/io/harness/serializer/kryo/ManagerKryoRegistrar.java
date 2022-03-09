@@ -494,6 +494,7 @@ import software.wings.helpers.ext.k8s.response.K8sCanaryDeployResponse;
 import software.wings.helpers.ext.k8s.response.K8sDeleteResponse;
 import software.wings.helpers.ext.k8s.response.K8sInstanceSyncResponse;
 import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
+import software.wings.helpers.ext.k8s.response.K8sRollingDeployRollbackResponse;
 import software.wings.helpers.ext.k8s.response.K8sScaleResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskResponse;
@@ -1705,5 +1706,6 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(RancherKubernetesInfrastructure.ClusterSelectionCriteriaEntry.class, 50008);
     kryo.register(RancherStateExecutionData.class, 50009);
     kryo.register(UserGroupEntityReference.class, 50010);
+    kryo.register(K8sRollingDeployRollbackResponse.class, 50011);
   }
 }
