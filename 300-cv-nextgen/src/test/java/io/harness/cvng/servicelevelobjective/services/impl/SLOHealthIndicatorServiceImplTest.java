@@ -88,10 +88,10 @@ public class SLOHealthIndicatorServiceImplTest extends CvNextGenTestBase {
     }
 
     sliRecordService.create(
-        getSLIRecordParam(startTime, sliStateList, increment), sliId, verificationTaskId, sliVersion);
+        getSLIRecordParams(startTime, sliStateList, increment), sliId, verificationTaskId, sliVersion);
   }
 
-  private List<SLIRecord.SLIRecordParam> getSLIRecordParam(
+  private List<SLIRecord.SLIRecordParam> getSLIRecordParams(
       Instant startTime, List<SLIRecord.SLIState> sliStates, Duration increment) {
     List<SLIRecord.SLIRecordParam> sliRecordParams = new ArrayList<>();
     for (int i = 0; i < sliStates.size(); i++) {
