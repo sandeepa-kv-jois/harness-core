@@ -8,6 +8,7 @@
 package software.wings.delegatetasks.k8s.taskhandler;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.k8s.K8sCommandUnitConstants.FetchFiles;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 
 import static software.wings.delegatetasks.k8s.K8sTestHelper.deployment;
@@ -23,6 +24,7 @@ import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Matchers.anyLong;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.doReturn;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -81,6 +83,9 @@ public class K8sDeleteTaskHandlerTest extends WingsBaseTest {
     doReturn(kubernetesConfig)
         .when(deploymentDelegateHelper)
         .getKubernetesConfig(any(K8sClusterConfig.class), eq(false));
+    doReturn(mock(ExecutionLogCallback.class))
+        .when(k8sTaskHelper)
+        .getExecutionLogCallback(any(K8sDeleteTaskParameters.class), eq(FetchFiles));
     doReturn(asList(deployment().getResourceId(), service().getResourceId(), deploymentConfig().getResourceId(),
                  namespace().getResourceId()))
         .when(k8sTaskHelper)

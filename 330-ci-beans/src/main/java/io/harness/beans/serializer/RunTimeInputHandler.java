@@ -132,7 +132,7 @@ public class RunTimeInputHandler {
             format("Failed to resolve mandatory field %s in step type %s with identifier %s", fieldName, stepType,
                 stepIdentifier));
       } else {
-        return UNRESOLVED_PARAMETER;
+        return null;
       }
     }
 
@@ -145,7 +145,7 @@ public class RunTimeInputHandler {
       } else {
         log.warn(format("Failed to resolve optional field %s in step type %s with identifier %s", fieldName, stepType,
             stepIdentifier));
-        return UNRESOLVED_PARAMETER;
+        return null;
       }
     }
 

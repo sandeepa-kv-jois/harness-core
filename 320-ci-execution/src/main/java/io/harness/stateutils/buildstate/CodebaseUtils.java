@@ -338,9 +338,9 @@ public class CodebaseUtils {
       throw new CIStageExecutionException("CI codebase is mandatory in case git clone is enabled");
     }
 
-    if (codeBase.getConnectorRef() == null) {
+    if (codeBase.getConnectorRef().getValue() == null) {
       throw new CIStageExecutionException("Git connector is mandatory in case git clone is enabled");
     }
-    return connectorUtils.getConnectorDetails(ngAccess, codeBase.getConnectorRef());
+    return connectorUtils.getConnectorDetails(ngAccess, codeBase.getConnectorRef().getValue());
   }
 }

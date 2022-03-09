@@ -27,6 +27,7 @@ import io.harness.batch.processing.tasklet.support.K8SWorkloadService;
 import io.harness.ccm.commons.beans.InstanceType;
 import io.harness.ccm.commons.beans.JobConstants;
 import io.harness.ccm.commons.entities.k8s.K8sWorkload;
+import io.harness.ccm.commons.service.intf.InstanceDataService;
 
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.LoadingCache;
@@ -66,6 +67,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 public class ClusterDataToBigQueryTasklet implements Tasklet {
   @Autowired private BatchMainConfig config;
   @Autowired private BillingDataServiceImpl billingDataService;
+  @Autowired private InstanceDataService instanceDataService;
   @Autowired private GoogleCloudStorageServiceImpl googleCloudStorageService;
   @Autowired private HarnessTagService harnessTagService;
   @Autowired private HarnessEntitiesService harnessEntitiesService;
@@ -143,6 +145,20 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
   public List<ClusterBillingData> getClusterBillingDataForBatch(List<InstanceBillingData> instanceBillingDataList) {
     List<ClusterBillingData> clusterBillingDataList = new ArrayList<>();
 
+    Map<String, Map<String, String>> instanceIdToLabelMapping = new HashMap<>();
+    List<String> instanceIdList =
+        instanceBillingDataList.stream()
+            .filter(instanceBillingData
+                -> ImmutableSet
+                       .of(InstanceType.ECS_TASK_FARGATE.name(), InstanceType.ECS_CONTAINER_INSTANCE.name(),
+                           InstanceType.ECS_TASK_EC2.name())
+                       .contains(instanceBillingData.getInstanceType()))
+            .map(InstanceBillingData::getInstanceId)
+            .collect(Collectors.toList());
+    if (!instanceIdList.isEmpty()) {
+      instanceIdToLabelMapping = instanceDataService.fetchLabelsForGivenInstances(instanceIdList);
+    }
+
     Map<Key, List<InstanceBillingData>> instanceBillingDataGrouped =
         instanceBillingDataList.stream().collect(Collectors.groupingBy(Key::getKeyFromInstanceData));
 
@@ -155,7 +171,8 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
         Map<String, String> labels = labelMap.get(
             new K8SWorkloadService.CacheKey(instanceBillingData.getAccountId(), instanceBillingData.getClusterId(),
                 instanceBillingData.getNamespace(), instanceBillingData.getWorkloadName()));
-        ClusterBillingData clusterBillingData = convertInstanceBillingDataToAVROObjects(instanceBillingData, labels);
+        ClusterBillingData clusterBillingData = convertInstanceBillingDataToAVROObjects(
+            instanceBillingData, labels, instanceIdToLabelMapping.get(instanceBillingData.getInstanceId()));
         clusterBillingDataList.add(clusterBillingData);
       }
     }
@@ -198,7 +215,7 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
   }
 
   private ClusterBillingData convertInstanceBillingDataToAVROObjects(
-      InstanceBillingData instanceBillingData, Map<String, String> k8sWorkloadLabel) {
+      InstanceBillingData instanceBillingData, Map<String, String> k8sWorkloadLabel, Map<String, String> labelMap) {
     String accountId = instanceBillingData.getAccountId();
     ClusterBillingData clusterBillingData = new ClusterBillingData();
     clusterBillingData.setAppid(instanceBillingData.getAppId());
@@ -303,6 +320,15 @@ public class ClusterDataToBigQueryTasklet implements Tasklet {
           labels.add(workloadLabel);
         });
       }
+    }
+
+    if (null != labelMap) {
+      labelMap.forEach((key, value) -> {
+        Label label = new Label();
+        label.setKey(key);
+        label.setValue(value);
+        labels.add(label);
+      });
     }
 
     if (null != instanceBillingData.getAppId()) {

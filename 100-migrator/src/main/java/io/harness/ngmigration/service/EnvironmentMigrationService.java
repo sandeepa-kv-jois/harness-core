@@ -13,16 +13,22 @@ import static io.harness.ng.core.environment.beans.EnvironmentType.Production;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.MigratedEntityMapping;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.encryption.Scope;
 import io.harness.ng.core.environment.beans.EnvironmentType;
+import io.harness.ngmigration.beans.BaseEntityInput;
+import io.harness.ngmigration.beans.BaseInputDefinition;
 import io.harness.ngmigration.beans.MigrationInputDTO;
+import io.harness.ngmigration.beans.MigratorInputType;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
 
 import software.wings.beans.Environment;
 import software.wings.infra.InfrastructureDefinition;
+import software.wings.ngmigration.CgBasicInfo;
 import software.wings.ngmigration.CgEntityId;
 import software.wings.ngmigration.CgEntityNode;
 import software.wings.ngmigration.DiscoveryNode;
@@ -42,11 +48,33 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @OwnedBy(HarnessTeam.CDC)
 public class EnvironmentMigrationService implements NgMigrationService {
   @Inject private EnvironmentService environmentService;
   @Inject private InfrastructureDefinitionService infrastructureDefinitionService;
+
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    // TODO: @deepakputhraya fix org & project identifier.
+    CgBasicInfo basicInfo = yamlFile.getCgBasicInfo();
+    EnvironmentYaml environmentYaml = (EnvironmentYaml) yamlFile.getYaml();
+    return MigratedEntityMapping.builder()
+        .appId(basicInfo.getAppId())
+        .accountId(basicInfo.getAccountId())
+        .cgEntityId(basicInfo.getId())
+        .entityType(NGMigrationEntityType.ENVIRONMENT.name())
+        .accountIdentifier(basicInfo.getAccountId())
+        .orgIdentifier(null)
+        .projectIdentifier(null)
+        .identifier(environmentYaml.getIdentifier())
+        .scope(Scope.PROJECT)
+        .fullyQualifiedIdentifier(MigratorMappingService.getFullyQualifiedIdentifier(
+            basicInfo.getAccountId(), null, null, environmentYaml.getIdentifier()))
+        .build();
+  }
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -85,12 +113,29 @@ public class EnvironmentMigrationService implements NgMigrationService {
 
   @Override
   public void migrate(String auth, NGClient ngClient, PmsClient pmsClient, MigrationInputDTO inputDTO,
-      NGYamlFile yamlFile) throws IOException {}
+      NGYamlFile yamlFile) throws IOException {
+    if (yamlFile.isExists()) {
+      log.info("Skipping creation of Pipeline entity as it already exists");
+      return;
+    }
+  }
 
   @Override
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     return new ArrayList<>();
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
+    Environment environment = (Environment) entities.get(entityId).getEntity();
+    return BaseEntityInput.builder()
+        .migrationStatus(MigratorInputType.CREATE_NEW)
+        .identifier(BaseInputDefinition.buildIdentifier(MigratorUtility.generateIdentifier(environment.getName())))
+        .name(BaseInputDefinition.buildName(environment.getName()))
+        .spec(null)
+        .build();
   }
 
   public EnvironmentYaml getEnvironmentYaml(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,

@@ -10,6 +10,7 @@ package io.harness.serializer.morphia;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.OrchestrationEventLog;
 import io.harness.engine.interrupts.AbortInterruptCallback;
 import io.harness.engine.pms.resume.EngineResumeAllCallback;
 import io.harness.engine.pms.resume.EngineResumeCallback;
@@ -23,7 +24,9 @@ import java.util.Set;
 @OwnedBy(CDC)
 public class OrchestrationMorphiaRegistrar implements MorphiaRegistrar {
   @Override
-  public void registerClasses(Set<Class> set) {}
+  public void registerClasses(Set<Class> set) {
+    set.add(OrchestrationEventLog.class);
+  }
 
   @Override
   public void registerImplementationClasses(MorphiaRegistrarHelperPut h, MorphiaRegistrarHelperPut w) {

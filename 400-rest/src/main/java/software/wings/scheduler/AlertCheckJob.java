@@ -8,11 +8,9 @@
 package software.wings.scheduler;
 
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.obfuscate.Obfuscator.obfuscate;
 
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
-import static software.wings.beans.ManagerConfiguration.MATCH_ALL_VERSION;
 import static software.wings.common.Constants.ACCOUNT_ID_KEY;
 
 import io.harness.alert.AlertData;
@@ -25,12 +23,10 @@ import io.harness.scheduler.PersistentScheduler;
 
 import software.wings.app.MainConfiguration;
 import software.wings.beans.Account;
-import software.wings.beans.ManagerConfiguration;
 import software.wings.beans.alert.AlertType;
 import software.wings.beans.alert.DelegatesDownAlert;
 import software.wings.beans.alert.InvalidSMTPConfigAlert;
 import software.wings.dl.WingsPersistence;
-import software.wings.service.impl.DelegateConnectionDao;
 import software.wings.service.intfc.AlertService;
 import software.wings.service.intfc.DelegateService;
 import software.wings.utils.EmailHelperUtils;
@@ -41,12 +37,9 @@ import com.google.inject.name.Named;
 import java.security.SecureRandom;
 import java.time.Clock;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
@@ -72,7 +65,6 @@ public class AlertCheckJob implements Job {
   @Inject private WingsPersistence wingsPersistence;
   @Inject private EmailHelperUtils emailHelperUtils;
   @Inject private MainConfiguration mainConfiguration;
-  @Inject private DelegateConnectionDao delegateConnectionDao;
   @Inject private DelegateService delegateService;
   @Inject @Named("BackgroundJobScheduler") private PersistentScheduler jobScheduler;
   @Inject private Clock clock;
@@ -128,9 +120,7 @@ public class AlertCheckJob implements Job {
         return;
       }
     }
-    if (!isEmpty(delegates)
-        && !delegates.stream().allMatch(
-            delegate -> System.currentTimeMillis() - delegate.getLastHeartBeat() > MAX_HB_TIMEOUT)) {
+    if (!isEmpty(delegates)) {
       checkIfAnyDelegatesAreDown(accountId, delegates);
     }
     checkForInvalidValidSMTP(accountId);
@@ -148,10 +138,6 @@ public class AlertCheckJob implements Job {
   }
 
   private void checkIfAnyDelegatesAreDown(String accountId, List<Delegate> delegates) {
-    String primaryVersion = wingsPersistence.createQuery(ManagerConfiguration.class).get().getPrimaryVersion();
-    Set<String> primaryConnections =
-        delegateConnectionDao.obtainConnectedDelegates(accountId, primaryVersion, MATCH_ALL_VERSION);
-
     for (Delegate delegate : delegates) {
       AlertData alertData = DelegatesDownAlert.builder()
                                 .accountId(accountId)
@@ -159,33 +145,11 @@ public class AlertCheckJob implements Job {
                                 .obfuscatedIpAddress(obfuscate(delegate.getIp()))
                                 .build();
 
-      if (primaryConnections.contains(delegate.getUuid())) {
+      if (!delegate.isNg() && System.currentTimeMillis() - delegate.getLastHeartBeat() <= MAX_HB_TIMEOUT) {
         alertService.closeAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown, alertData);
-      } else {
-        if (isEmpty(delegate.getDelegateGroupName())) {
-          alertService.openAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown, alertData);
-        }
+      } else if (!delegate.isNg() && (System.currentTimeMillis() - delegate.getLastHeartBeat() > MAX_HB_TIMEOUT)) {
+        alertService.openAlert(accountId, GLOBAL_APP_ID, AlertType.DelegatesDown, alertData);
       }
     }
-
-    processDelegateWhichBelongsToGroup(delegates, primaryConnections);
-  }
-
-  @VisibleForTesting
-  protected void processDelegateWhichBelongsToGroup(List<Delegate> delegates, Set<String> primaryConnections) {
-    Set<String> connectedScalingGroups = new HashSet<>();
-    for (Delegate delegate : delegates) {
-      if (primaryConnections.contains(delegate.getUuid()) && isNotEmpty(delegate.getDelegateGroupName())) {
-        String delegateGroupName = delegate.getDelegateGroupName();
-        connectedScalingGroups.add(delegateGroupName);
-      }
-    }
-
-    Set<String> allScalingGroups = delegates.stream()
-                                       .filter(x -> isNotEmpty(x.getDelegateGroupName()))
-                                       .map(Delegate::getDelegateGroupName)
-                                       .collect(Collectors.toSet());
-
-    allScalingGroups.removeAll(connectedScalingGroups);
   }
 }
