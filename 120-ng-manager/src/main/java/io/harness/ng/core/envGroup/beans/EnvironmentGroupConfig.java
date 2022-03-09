@@ -6,6 +6,7 @@ import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.validator.EntityIdentifier;
 import io.harness.data.validator.EntityName;
+import io.harness.gitsync.beans.YamlDTO;
 import io.harness.ng.core.common.beans.NGTag;
 
 import java.util.List;
@@ -16,7 +17,7 @@ import lombok.Data;
 @Data
 @Builder
 @RecasterAlias("io.harness.ng.core.envGroup.beans.EnvironmentGroupConfig")
-public class EnvironmentGroupConfig {
+public class EnvironmentGroupConfig implements YamlDTO {
   @EntityName String name;
   @EntityIdentifier String identifier;
 
