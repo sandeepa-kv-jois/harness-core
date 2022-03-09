@@ -85,10 +85,10 @@ public class WorkflowDataFetcherTest extends AbstractDataFetcherTestBase {
     assertThat(qlWorkflow.getApplicationId()).isEqualTo(APP1_ID_ACCOUNT1);
     assertThat(qlWorkflow.getName()).isEqualTo(WORKFLOW1);
 
-    qlWorkflow =
-        workflowDataFetcher.fetch(QLWorkflowQueryParameters.builder().workflowId("fakeId").build(), ACCOUNT1_ID);
-
-    assertThat(qlWorkflow).isNull();
+    assertThatThrownBy(
+        () -> workflowDataFetcher.fetch(QLWorkflowQueryParameters.builder().workflowId("fakeId").build(), ACCOUNT1_ID))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessage("Workflow does not exist");
 
     try {
       qlWorkflow = workflowDataFetcher.fetch(

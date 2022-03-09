@@ -8,6 +8,7 @@
 package io.harness.gitsync.scm;
 
 import static io.harness.rule.OwnerRule.MEET;
+import static io.harness.rule.OwnerRule.MOHIT_GARG;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -21,12 +22,21 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.category.element.UnitTests;
 import io.harness.common.EntityReference;
+import io.harness.eraro.ErrorCode;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
+import io.harness.exception.ExplanationException;
+import io.harness.exception.HintException;
+import io.harness.exception.InvalidRequestException;
+import io.harness.exception.SCMExceptionHints;
+import io.harness.exception.ScmException;
+import io.harness.exception.WingsException;
+import io.harness.exception.ngexception.beans.ScmErrorMetadataDTO;
 import io.harness.git.model.ChangeType;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.HarnessToGitPushInfoServiceGrpc;
 import io.harness.gitsync.PushFileResponse;
 import io.harness.gitsync.common.helper.GitSyncGrpcClientUtils;
+import io.harness.gitsync.exceptions.GitSyncException;
 import io.harness.gitsync.interceptor.GitEntityInfo;
 import io.harness.gitsync.persistance.GitSyncSdkService;
 import io.harness.gitsync.scm.beans.ScmPushResponse;
@@ -143,6 +153,60 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
     MDC.clear();
   }
 
+  @Test
+  @Owner(developers = MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void testCheckForError() {
+    String errorMessage = "errorMessage";
+    scmGitSyncHelper.checkForError(buildPushFileResponse(1, 200, errorMessage));
+
+    assertThatThrownBy(() -> scmGitSyncHelper.checkForError(buildPushFileResponse(0, 0, errorMessage)))
+        .hasMessage(errorMessage)
+        .isInstanceOf(GitSyncException.class);
+
+    assertThatThrownBy(() -> scmGitSyncHelper.checkForError(buildPushFileResponse(1, 304, errorMessage)))
+        .isInstanceOf(ExplanationException.class)
+        .hasMessage(errorMessage);
+
+    assertThatThrownBy(() -> scmGitSyncHelper.checkForError(buildPushFileResponse(1, 304, "")))
+        .isInstanceOf(ScmException.class)
+        .hasMessage("");
+
+    assertThatThrownBy(() -> scmGitSyncHelper.checkForError(buildPushFileResponse(1, 404, errorMessage)))
+        .isInstanceOf(HintException.class)
+        .hasMessage(SCMExceptionHints.INVALID_CREDENTIALS);
+
+    try {
+      scmGitSyncHelper.checkForError(buildPushFileResponse(1, 304, errorMessage));
+    } catch (WingsException ex) {
+      assertThat(ex.getMetadata()).isNotNull();
+      assertThat(ex.getMetadata() instanceof ScmErrorMetadataDTO).isTrue();
+      assertThat(((ScmErrorMetadataDTO) ex.getMetadata()).getConflictCommitId().equals(commitId)).isTrue();
+    }
+  }
+
+  @Test
+  @Owner(developers = MOHIT_GARG)
+  @Category(UnitTests.class)
+  public void testThrowDifferentExceptionInCaseOfChangeTypeAddMethod() {
+    WingsException exception = new WingsException("dummy");
+    assertThatThrownBy(()
+                           -> scmGitSyncHelper.throwDifferentExceptionInCaseOfChangeTypeAdd(
+                               GitEntityInfo.builder().build(), ChangeType.DELETE, exception))
+        .isEqualTo(exception);
+
+    assertThatThrownBy(()
+                           -> scmGitSyncHelper.throwDifferentExceptionInCaseOfChangeTypeAdd(
+                               GitEntityInfo.builder().build(), ChangeType.ADD, exception))
+        .isEqualTo(exception);
+
+    WingsException exception2 = new ScmException(ErrorCode.SCM_CONFLICT_ERROR);
+    assertThatThrownBy(()
+                           -> scmGitSyncHelper.throwDifferentExceptionInCaseOfChangeTypeAdd(
+                               GitEntityInfo.builder().build(), ChangeType.ADD, exception2))
+        .isInstanceOf(InvalidRequestException.class);
+  }
+
   private GitEntityInfo buildGitEntityInfo(String branch, String baseBranch, String commitId, String commitMsg,
       String filePath, String folderPath, Boolean isFullSyncFlow, boolean findDefaultFromOtherRepos,
       Boolean isNewBranch, Boolean isSyncFromGit, String lastObjectId, String yamlGitConfigId) {
@@ -167,6 +231,7 @@ public class SCMGitSyncHelperTest extends GitSdkTestBase {
         .setStatus(status)
         .setScmResponseCode(scmResponseCode)
         .setError(errorMsg)
+        .setCommitId(commitId)
         .build();
   }
 }

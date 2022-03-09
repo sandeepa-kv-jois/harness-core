@@ -9,6 +9,7 @@ package software.wings.graphql.datafetcher.outcome;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
+import static io.harness.beans.SearchFilter.Operator.IN;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.annotations.dev.HarnessModule;
@@ -17,7 +18,6 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.FeatureName;
 import io.harness.beans.PageRequest;
 import io.harness.beans.PageResponse;
-import io.harness.beans.SearchFilter;
 import io.harness.ff.FeatureFlagService;
 
 import software.wings.beans.ElementExecutionSummary;
@@ -99,12 +99,8 @@ public class OutcomeConnectionDataFetcher
   private void getOutcomeWithInfraDef(
       QLOutcomesQueryParameters qlQuery, WorkflowExecution execution, QLOutcomeConnectionBuilder connectionBuilder) {
     final List<String> infraMappingIds = execution.getInfraMappingIds();
-    final PageRequest pageRequest = aPageRequest()
-                                        .addFilter(SearchFilter.builder()
-                                                       .fieldName(InfrastructureMapping.ID)
-                                                       .fieldValues(infraMappingIds.toArray(new Object[0]))
-                                                       .build())
-                                        .build();
+    final PageRequest pageRequest =
+        aPageRequest().addFilter(InfrastructureMapping.ID, IN, infraMappingIds.toArray()).build();
     final PageResponse<InfrastructureMapping> infraMappings = infrastructureMappingService.list(pageRequest);
     for (InfrastructureMapping infraMapping : infraMappings) {
       QLDeploymentOutcomeBuilder deployment = QLDeploymentOutcome.builder().context(

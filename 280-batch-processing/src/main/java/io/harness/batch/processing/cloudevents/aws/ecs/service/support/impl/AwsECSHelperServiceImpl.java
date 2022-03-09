@@ -23,8 +23,12 @@ import com.amazonaws.auth.AWSCredentialsProvider;
 import com.amazonaws.auth.STSAssumeRoleSessionCredentialsProvider;
 import com.amazonaws.services.ecs.AmazonECSClient;
 import com.amazonaws.services.ecs.AmazonECSClientBuilder;
+import com.amazonaws.services.ecs.model.Cluster;
+import com.amazonaws.services.ecs.model.ClusterField;
 import com.amazonaws.services.ecs.model.ContainerInstance;
 import com.amazonaws.services.ecs.model.ContainerInstanceField;
+import com.amazonaws.services.ecs.model.DescribeClustersRequest;
+import com.amazonaws.services.ecs.model.DescribeClustersResult;
 import com.amazonaws.services.ecs.model.DescribeContainerInstancesRequest;
 import com.amazonaws.services.ecs.model.DescribeContainerInstancesResult;
 import com.amazonaws.services.ecs.model.DescribeServicesRequest;
@@ -68,6 +72,33 @@ public class AwsECSHelperServiceImpl implements AwsECSHelperService {
       log.error(exceptionMessage, awsCrossAccountAttributes, region, ex.getMessage());
       return Collections.emptyList();
     }
+  }
+
+  @Override
+  public List<Cluster> describeECSClusters(
+      String region, AwsCrossAccountAttributes awsCrossAccountAttributes, List<String> ecsClusters) {
+    try (CloseableAmazonWebServiceClient<AmazonECSClient> closeableAmazonECSClient =
+             new CloseableAmazonWebServiceClient(getAmazonECSClient(region, awsCrossAccountAttributes))) {
+      int counter = 0;
+      List<Cluster> clusters = newArrayList();
+      DescribeClustersRequest describeClustersRequest = new DescribeClustersRequest().withInclude(ClusterField.TAGS);
+      List<String> arnsBatch = newArrayList();
+      for (String clusterArn : ecsClusters) {
+        arnsBatch.add(clusterArn);
+        counter++;
+        if (counter % 100 == 0 || counter == ecsClusters.size()) {
+          describeClustersRequest.withClusters(arnsBatch);
+          DescribeClustersResult describeClustersResult =
+              closeableAmazonECSClient.getClient().describeClusters(describeClustersRequest);
+          clusters.addAll(describeClustersResult.getClusters());
+          arnsBatch = newArrayList();
+        }
+      }
+      return clusters;
+    } catch (Exception ex) {
+      log.warn("Exception describing Clusters - Skipping Adding Tags {}", ex.getMessage());
+    }
+    return emptyList();
   }
 
   @Override

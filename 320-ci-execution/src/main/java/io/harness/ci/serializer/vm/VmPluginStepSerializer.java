@@ -85,9 +85,9 @@ public class VmPluginStepSerializer {
       pluginStepBuilder.imageConnector(connectorDetails);
     }
 
-    if (pluginStepInfo.getReports() != null) {
-      if (pluginStepInfo.getReports().getType() == UnitTestReportType.JUNIT) {
-        JUnitTestReport junitTestReport = (JUnitTestReport) pluginStepInfo.getReports().getSpec();
+    if (pluginStepInfo.getReports().getValue() != null) {
+      if (pluginStepInfo.getReports().getValue().getType() == UnitTestReportType.JUNIT) {
+        JUnitTestReport junitTestReport = (JUnitTestReport) pluginStepInfo.getReports().getValue().getSpec();
         List<String> resolvedReport = junitTestReport.resolve(identifier, stepName);
 
         pluginStepBuilder.unitTestReport(VmJunitTestReport.builder().paths(resolvedReport).build());

@@ -49,4 +49,28 @@ public class CEClusterDao {
         hPersistence.createQuery(CECluster.class, excludeAuthority).field(CEClusterKeys.uuid).equal(uuid);
     return hPersistence.delete(query);
   }
+
+  public boolean upsert(CECluster ceCluster) {
+    return (hPersistence.upsert(hPersistence.createQuery(CECluster.class)
+                                    .field(CEClusterKeys.accountId)
+                                    .equal(ceCluster.getAccountId())
+                                    .field(CEClusterKeys.infraAccountId)
+                                    .equal(ceCluster.getInfraAccountId())
+                                    .field(CEClusterKeys.region)
+                                    .equal(ceCluster.getRegion())
+                                    .field(CEClusterKeys.clusterName)
+                                    .equal(ceCluster.getClusterName()),
+               hPersistence.createUpdateOperations(CECluster.class)
+                   .set(CEClusterKeys.accountId, ceCluster.getAccountId())
+                   .set(CEClusterKeys.clusterName, ceCluster.getClusterName())
+                   .set(CEClusterKeys.clusterArn, ceCluster.getClusterArn())
+                   .set(CEClusterKeys.region, ceCluster.getRegion())
+                   .set(CEClusterKeys.infraAccountId, ceCluster.getInfraAccountId())
+                   .set(CEClusterKeys.infraMasterAccountId, ceCluster.getInfraMasterAccountId())
+                   .set(CEClusterKeys.parentAccountSettingId, ceCluster.getParentAccountSettingId())
+                   .set(CEClusterKeys.labels, ceCluster.getLabels())
+                   .set(CEClusterKeys.hash, ceCluster.getHash()),
+               HPersistence.upsertReturnNewOptions))
+        != null;
+  }
 }

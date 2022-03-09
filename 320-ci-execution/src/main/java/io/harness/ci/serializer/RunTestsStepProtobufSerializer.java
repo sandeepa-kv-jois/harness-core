@@ -82,9 +82,12 @@ public class RunTestsStepProtobufSerializer implements ProtobufStepSerializer<Ru
     runTestsStepBuilder.setRunOnlySelectedTests(
         resolveBooleanParameter(runTestsStepInfo.getRunOnlySelectedTests(), true));
 
-    if (isNotEmpty(runTestsStepInfo.getOutputVariables())) {
-      List<String> outputVarNames =
-          runTestsStepInfo.getOutputVariables().stream().map(OutputNGVariable::getName).collect(Collectors.toList());
+    if (isNotEmpty(runTestsStepInfo.getOutputVariables().getValue())) {
+      List<String> outputVarNames = runTestsStepInfo.getOutputVariables()
+                                        .getValue()
+                                        .stream()
+                                        .map(OutputNGVariable::getName)
+                                        .collect(Collectors.toList());
       runTestsStepBuilder.addAllEnvVarOutputs(outputVarNames);
     }
 
@@ -106,7 +109,7 @@ public class RunTestsStepProtobufSerializer implements ProtobufStepSerializer<Ru
       runTestsStepBuilder.setPackages(packages);
     }
 
-    UnitTestReport reports = runTestsStepInfo.getReports();
+    UnitTestReport reports = runTestsStepInfo.getReports().getValue();
     if (reports != null) {
       if (reports.getType() == UnitTestReportType.JUNIT) {
         JUnitTestReport junitTestReport = (JUnitTestReport) reports.getSpec();

@@ -17,6 +17,7 @@ import static software.wings.ngmigration.NGMigrationEntityType.WORKFLOW;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.MigratedEntityMapping;
 import io.harness.beans.OrchestrationWorkflowType;
 import io.harness.cdng.creator.plan.stage.DeploymentStageConfig;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
@@ -27,7 +28,10 @@ import io.harness.cdng.service.beans.ServiceConfig;
 import io.harness.data.structure.CollectionUtils;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.executions.steps.StepSpecTypeConstants;
+import io.harness.ngmigration.beans.BaseEntityInput;
+import io.harness.ngmigration.beans.BaseInputDefinition;
 import io.harness.ngmigration.beans.MigrationInputDTO;
+import io.harness.ngmigration.beans.MigratorInputType;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
 import io.harness.ngmigration.client.PmsClient;
@@ -72,7 +76,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
+import lombok.extern.slf4j.Slf4j;
 
+@Slf4j
 @OwnedBy(HarnessTeam.CDC)
 public class WorkflowMigrationService implements NgMigrationService {
   @Inject private InfraMigrationService infraMigrationService;
@@ -81,6 +87,11 @@ public class WorkflowMigrationService implements NgMigrationService {
   @Inject private WorkflowService workflowService;
   @Inject private RollingWorkflowYamlHandler rollingWorkflowYamlHandler;
   @Inject private ApplicationManifestService applicationManifestService;
+
+  @Override
+  public MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile) {
+    throw new IllegalAccessError("Mapping not allowed for Workflow entities");
+  }
 
   @Override
   public DiscoveryNode discover(NGMigrationEntity entity) {
@@ -243,6 +254,18 @@ public class WorkflowMigrationService implements NgMigrationService {
   public List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities) {
     return new ArrayList<>();
+  }
+
+  @Override
+  public BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId) {
+    Workflow workflow = (Workflow) entities.get(entityId).getEntity();
+    return BaseEntityInput.builder()
+        .migrationStatus(MigratorInputType.CREATE_NEW)
+        .identifier(BaseInputDefinition.buildIdentifier(MigratorUtility.generateIdentifier(workflow.getName())))
+        .name(BaseInputDefinition.buildName(workflow.getName()))
+        .spec(null)
+        .build();
   }
 
   private StepElementConfig getStepElementConfig(StepYaml step) {
