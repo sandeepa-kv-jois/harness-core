@@ -21,7 +21,7 @@ public class DebeziumServiceApplication extends Application<io.harness.DebeziumS
   @Override
   public void run(io.harness.DebeziumServiceConfiguration appConfig, Environment environment) throws Exception {
     if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
-      new DebeziumEngineStarter().startDebeziumEngine(appConfig.getDebeziumConfig());
+      DebeziumEngineStarter.startDebeziumEngine(appConfig.getDebeziumConfig());
     }
   }
 }

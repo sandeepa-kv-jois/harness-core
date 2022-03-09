@@ -14,17 +14,11 @@ import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class DebeziumEngineStarter {
-  DebeziumConfiguration debeziumConfiguration;
-
-  public DebeziumEngineStarter() {
-    this.debeziumConfiguration = new DebeziumConfiguration();
-  }
-
-  public void startDebeziumEngine(DebeziumConfig debeziumConfig) {
+  public static void startDebeziumEngine(DebeziumConfig debeziumConfig) {
     ExecutorService debeziumExecutorService =
         Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("debezium-controller").build());
     DebeziumController debeziumController =
-        new DebeziumController(debeziumConfiguration.getDebeziumProperties(debeziumConfig));
+        new DebeziumController(DebeziumConfiguration.getDebeziumProperties(debeziumConfig));
     debeziumExecutorService.submit(debeziumController);
   }
 }

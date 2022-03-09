@@ -37,7 +37,7 @@ public class DebeziumConfiguration {
       "io.debezium.connector.mongodb.transforms.ExtractNewDocumentState";
   public static final String REDIS_OFFSETS_KEY = "debezium:offsets";
 
-  public Properties getDebeziumProperties(DebeziumConfig debeziumConfig) {
+  public static Properties getDebeziumProperties(DebeziumConfig debeziumConfig) {
     Properties props = new Properties();
     props.setProperty(CONNECTOR_NAME, debeziumConfig.getConnectorName());
     props.setProperty(OFFSET_STORAGE, RedisOffsetBackingStore.class.getName());
