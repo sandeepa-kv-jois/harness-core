@@ -12,6 +12,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.HealthSourceQueryType;
 import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
 import io.harness.cvng.core.entities.CVConfig;
@@ -31,7 +32,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
-import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
 import lombok.Builder;
 import lombok.Data;
@@ -51,7 +51,8 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
   @Builder
   public static class Key {
     String groupName;
-    String category;
+    CVMonitoringCategory category;
+    HealthSourceQueryType queryType;
   }
 
   @Override
@@ -64,16 +65,21 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
       String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
       String identifier, String name, List<CVConfig> existingCVConfigs, MetricPackService metricPackService) {
     List<CustomHealthCVConfig> existingDBCVConfigs = (List<CustomHealthCVConfig>) (List<?>) existingCVConfigs;
-    Map<String, CustomHealthCVConfig> existingConfigs = new HashMap<>();
-    existingDBCVConfigs.forEach(
-        config -> existingConfigs.put(getKey(config.getGroupName(), config.getCategory()), config));
+    Map<Key, CustomHealthCVConfig> existingConfigs = new HashMap<>();
+    existingDBCVConfigs.forEach(config
+        -> existingConfigs.put(Key.builder()
+                                   .groupName(config.getGroupName())
+                                   .category(config.getCategory())
+                                   .queryType(config.getQueryType())
+                                   .build(),
+            config));
 
-    Map<String, CustomHealthCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
+    Map<Key, CustomHealthCVConfig> currentCVConfigs = getCVConfigs(accountId, orgIdentifier, projectIdentifier,
         environmentRef, serviceRef, monitoredServiceIdentifier, identifier, name);
 
-    Set<String> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
-    Set<String> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
-    Set<String> updated = Sets.intersection(existingConfigs.keySet(), currentCVConfigs.keySet());
+    Set<Key> deleted = Sets.difference(existingConfigs.keySet(), currentCVConfigs.keySet());
+    Set<Key> added = Sets.difference(currentCVConfigs.keySet(), existingConfigs.keySet());
+    Set<Key> updated = Sets.intersection(existingConfigs.keySet(), currentCVConfigs.keySet());
 
     List<CVConfig> updatedConfigs = updated.stream().map(currentCVConfigs::get).collect(Collectors.toList());
     List<CVConfig> updatedConfigWithUuid = updated.stream().map(existingConfigs::get).collect(Collectors.toList());
@@ -87,10 +93,9 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
         .build();
   }
 
-  public Map<String, CustomHealthCVConfig> getCVConfigs(String accountId, String orgIdentifier,
-      String projectIdentifier, String environmentRef, String serviceRef, String monitoredServiceIdentifier,
-      String identifier, String name) {
-    Map<String, CustomHealthCVConfig> cvConfigMap = new HashMap<>();
+  public Map<Key, CustomHealthCVConfig> getCVConfigs(String accountId, String orgIdentifier, String projectIdentifier,
+      String environmentRef, String serviceRef, String monitoredServiceIdentifier, String identifier, String name) {
+    Map<Key, CustomHealthCVConfig> cvConfigMap = new HashMap<>();
     metricDefinitions.forEach(metricDefinition -> {
       String groupName = metricDefinition.getGroupName();
       RiskProfile riskProfile = metricDefinition.getRiskProfile();
@@ -99,7 +104,11 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
         return;
       }
 
-      String cvConfigKey = getKey(groupName, riskProfile.getCategory());
+      Key cvConfigKey = Key.builder()
+                            .groupName(groupName)
+                            .category(riskProfile.getCategory())
+                            .queryType(metricDefinition.getQueryType())
+                            .build();
       CustomHealthCVConfig existingCvConfig = cvConfigMap.get(cvConfigKey);
       List<MetricDefinition> cvConfigMetricDefinitions =
           existingCvConfig != null && isNotEmpty(existingCvConfig.getMetricDefinitions())
@@ -113,7 +122,6 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
               .metricType(riskProfile.getMetricType())
               .identifier(metricDefinition.getIdentifier())
               .method(metricDefinition.getMethod())
-              .queryType(metricDefinition.getQueryType())
               .metricResponseMapping(metricResponseMapping)
               .requestBody(metricDefinition.getRequestBody())
               .startTime(metricDefinition.getStartTime())
@@ -127,6 +135,7 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
 
       CustomHealthCVConfig mappedCVConfig = CustomHealthCVConfig.builder()
                                                 .groupName(groupName)
+                                                .queryType(metricDefinition.getQueryType())
                                                 .metricDefinitions(cvConfigMetricDefinitions)
                                                 .accountId(accountId)
                                                 .orgIdentifier(orgIdentifier)
@@ -150,9 +159,5 @@ public class CustomHealthSourceSpec extends MetricHealthSourceSpec {
 
   public List<CustomHealthMetricDefinition> getMetricDefinitions() {
     return metricDefinitions;
-  }
-
-  public String getKey(String groupName, @NotNull CVMonitoringCategory category) {
-    return String.format("%s%s", groupName, category);
   }
 }

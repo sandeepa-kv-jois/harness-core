@@ -17,6 +17,7 @@ import io.harness.gitsync.interceptor.GitEntityFindInfoDTO;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.servicenow.ServiceNowFieldAllowedValueNG;
 import io.harness.servicenow.ServiceNowFieldNG;
 import io.harness.servicenow.ServiceNowTicketTypeDTO;
 import io.harness.servicenow.ServiceNowTicketTypeNG;
@@ -27,8 +28,11 @@ import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiResponse;
 import io.swagger.annotations.ApiResponses;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.BeanParam;
@@ -82,5 +86,23 @@ public class ServiceNowResource {
     List<ServiceNowFieldNG> issueCreateMetadataResponse =
         serviceNowResourceService.getIssueCreateMetadata(connectorRef, orgId, projectId, ticketType);
     return ResponseDTO.newResponse(issueCreateMetadataResponse);
+  }
+
+  @GET
+  @Path("issueFields")
+  @ApiOperation(value = "Get fields for an issue type", nickname = "getServiceNowIssueFields")
+  public ResponseDTO<Map<String, List<ServiceNowFieldAllowedValueNG>>> getFieldsForIssueType(
+      @NotNull @QueryParam("connectorRef") String serviceNowConnectorRef,
+      @NotNull @QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountId,
+      @QueryParam(NGCommonEntityConstants.ORG_KEY) String orgId,
+      @QueryParam(NGCommonEntityConstants.PROJECT_KEY) String projectId, @QueryParam("ticketType") String ticketType,
+      @BeanParam GitEntityFindInfoDTO gitEntityBasicInfo) {
+    IdentifierRef connectorRef =
+        IdentifierRefHelper.getIdentifierRef(serviceNowConnectorRef, accountId, orgId, projectId);
+    Map<String, List<ServiceNowFieldAllowedValueNG>> issueTypeFieldsMetadata = new HashMap<>();
+    issueTypeFieldsMetadata.put("impact",
+        new ArrayList<>(Arrays.asList(ServiceNowFieldAllowedValueNG.builder().id("1").name("1 - High").build())));
+
+    return ResponseDTO.newResponse(issueTypeFieldsMetadata);
   }
 }

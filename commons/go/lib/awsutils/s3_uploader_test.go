@@ -10,10 +10,10 @@ import (
 	"errors"
 	"github.com/aws/aws-sdk-go/service/s3/s3manager"
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/awsutils/mocks"
 	"github.com/harness/harness-core/commons/go/lib/filesystem"
 	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"io"
 

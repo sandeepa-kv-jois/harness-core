@@ -345,7 +345,6 @@ public class PerspectiveResource {
   @Hidden
   @Timed
   @ExceptionMetered
-  @Consumes(MediaType.APPLICATION_JSON)
   @ApiOperation(value = "Clone perspective", nickname = "clonePerspective")
   @FeatureRestrictionCheck(FeatureRestrictionName.PERSPECTIVES)
   @LogAccountIdentifier

@@ -38,6 +38,7 @@ import software.wings.beans.DatadogConfig;
 import software.wings.beans.GcpConfig;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SumoConfig;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.RiskLevel;
 import software.wings.service.impl.VerificationLogContext;
 import software.wings.service.impl.analysis.AnalysisContext;
@@ -137,7 +138,8 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
   @Override
   public ExecutionResponse execute(ExecutionContext executionContext) {
     try (VerificationLogContext ignored = new VerificationLogContext(executionContext.getAccountId(), null,
-             executionContext.getStateExecutionInstanceId(), StateType.valueOf(getStateType()), OVERRIDE_ERROR)) {
+             executionContext.getStateExecutionInstanceId(), DelegateStateType.valueOf(getStateType()),
+             OVERRIDE_ERROR)) {
       getLogger().info("Executing state {}", executionContext.getStateExecutionInstanceId());
       String correlationId = UUID.randomUUID().toString();
       Logger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
@@ -183,6 +185,13 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
 
         if (analysisContext.isSkipVerification()) {
           getLogger().warn("Could not find test nodes to compare the data");
+
+          if (shouldFailOnEmptyNodes(analysisContext.getAccountId())) {
+            getLogger().info("Could not find newly deployed instances. failOnEmptyNodes is true. Failing execution");
+            return generateAnalysisResponse(analysisContext, ExecutionStatus.FAILED, false,
+                "Could not find newly deployed instances. Marking execution as failed.");
+          }
+
           return generateAnalysisResponse(analysisContext, ExecutionStatus.SKIPPED, false,
               "Could not find newly deployed instances. Skipping verification");
         }
@@ -191,6 +200,15 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
         if (isEmpty(lastExecutionNodes)) {
           if (getComparisonStrategy() == COMPARE_WITH_CURRENT) {
             getLogger().info("No nodes with older version found to compare the logs. Skipping analysis");
+
+            if (shouldFailOnEmptyNodes(analysisContext.getAccountId())) {
+              getLogger().info(
+                  "No nodes with older version found to compare the logs. failOnEmptyNodes is true. Failing execution");
+              return generateAnalysisResponse(analysisContext, ExecutionStatus.FAILED, false,
+                  "As no previous version instances exist for comparison, analysis will be marked as failed."
+                      + " Check your setup if this is the first deployment or if the previous instances have been deleted or replaced.");
+            }
+
             return generateAnalysisResponse(analysisContext, ExecutionStatus.SKIPPED, false,
                 "As no previous version instances exist for comparison, analysis will be skipped. Check your setup if this is the first deployment or if the previous instances have been deleted or replaced.");
           }
@@ -547,7 +565,7 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
                     datadogConfig.fetchLogBodyMap(false), analysisContext.getHostNameField()))
                 .query(getRenderedQuery())
                 .hosts(Sets.newHashSet(DUMMY_HOST_NAME))
-                .stateType(StateType.DATA_DOG_LOG)
+                .stateType(DelegateStateType.DATA_DOG_LOG)
                 .applicationId(analysisContext.getAppId())
                 .stateExecutionId(analysisContext.getStateExecutionId())
                 .workflowId(analysisContext.getWorkflowId())
@@ -571,7 +589,7 @@ public abstract class AbstractLogAnalysisState extends AbstractAnalysisState {
             .gcpConfig(gcpConfig)
             .projectId(stackDriverLogState.getProjectId())
             .hostnameField(getResolvedFieldValue(executionContext, AnalysisContextKeys.hostNameField, hostnameField))
-            .stateType(StateType.STACK_DRIVER_LOG)
+            .stateType(DelegateStateType.STACK_DRIVER_LOG)
             .applicationId(analysisContext.getAppId())
             .logMessageField(getResolvedFieldValue(
                 executionContext, StackDriverLogStateKeys.messageField, stackDriverLogState.getMessageField()))

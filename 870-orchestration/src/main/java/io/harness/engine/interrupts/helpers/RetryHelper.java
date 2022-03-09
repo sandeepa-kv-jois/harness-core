@@ -14,11 +14,12 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
+import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.utils.PmsLevelUtils;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.interrupts.InterruptEffect;
-import io.harness.plan.PlanNode;
+import io.harness.plan.Node;
 import io.harness.pms.contracts.advisers.InterventionWaitAdvise;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
@@ -42,13 +43,14 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(CDC)
 @Slf4j
 public class RetryHelper {
+  @Inject private PlanService planService;
   @Inject private NodeExecutionService nodeExecutionService;
   @Inject private OrchestrationEngine engine;
   @Inject @Named("EngineExecutorService") private ExecutorService executorService;
 
   public void retryNodeExecution(String nodeExecutionId, String interruptId, InterruptConfig interruptConfig) {
     NodeExecution nodeExecution = Preconditions.checkNotNull(nodeExecutionService.get(nodeExecutionId));
-    PlanNode node = nodeExecution.getNode();
+    Node node = planService.fetchNode(nodeExecution.getPlanId(), nodeExecution.getNodeId());
     String newUuid = generateUuid();
 
     Ambiance oldAmbiance = nodeExecution.getAmbiance();
@@ -141,12 +143,14 @@ public class RetryHelper {
         .retryIds(retryIds)
         .oldRetry(false)
         .originalNodeExecutionId(nodeExecution.getOriginalNodeExecutionId())
-        .module(nodeExecution.module())
-        .name(nodeExecution.name())
-        .skipGraphType(nodeExecution.skipGraphType())
-        .identifier(nodeExecution.identifier())
-        .stepType(nodeExecution.stepType())
-        .nodeId(nodeExecution.nodeId())
+        .module(nodeExecution.getModule())
+        .name(nodeExecution.getName())
+        .skipGraphType(nodeExecution.getSkipGraphType())
+        .identifier(nodeExecution.getIdentifier())
+        .stepType(nodeExecution.getStepType())
+        .nodeId(nodeExecution.getNodeId())
+        .stageFqn(nodeExecution.getStageFqn())
+        .group(nodeExecution.getGroup())
         .build();
   }
 }

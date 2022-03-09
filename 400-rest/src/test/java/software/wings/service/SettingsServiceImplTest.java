@@ -261,7 +261,7 @@ public class SettingsServiceImplTest extends WingsBaseTest {
   @Owner(developers = RAMA)
   @Category(UnitTests.class)
   public void shouldListSettings() {
-    settingsService.list(aPageRequest().build(), null, null);
+    settingsService.list(aPageRequest().build(), null, null, false);
     verify(mockWingsPersistence).query(eq(SettingAttribute.class), any(PageRequest.class));
   }
 

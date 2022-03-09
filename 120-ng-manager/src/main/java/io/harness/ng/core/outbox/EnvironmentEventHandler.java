@@ -10,8 +10,9 @@ package io.harness.ng.core.outbox;
 import static io.harness.AuthorizationServiceHeader.NG_MANAGER;
 import static io.harness.audit.beans.AuthenticationInfoDTO.fromSecurityPrincipal;
 import static io.harness.ng.core.utils.NGYamlUtils.getYamlString;
-import static io.harness.remote.NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER;
 import static io.harness.security.PrincipalContextData.PRINCIPAL_CONTEXT;
+
+import static io.serializer.HObjectMapper.NG_DEFAULT_OBJECT_MAPPER;
 
 import io.harness.ModuleType;
 import io.harness.annotations.dev.HarnessTeam;

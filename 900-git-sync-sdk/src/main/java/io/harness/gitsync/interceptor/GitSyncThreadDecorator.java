@@ -58,6 +58,8 @@ public class GitSyncThreadDecorator implements ContainerRequestFilter, Container
         getRequestParamFromContext(GitSyncApiConstants.DEFAULT_FROM_OTHER_REPO, pathParameters, queryParameters);
     final String baseBranch =
         getRequestParamFromContext(GitSyncApiConstants.BASE_BRANCH, pathParameters, queryParameters);
+    final String resolvedConflictCommitId =
+        getRequestParamFromContext(GitSyncApiConstants.RESOLVED_CONFLICT_COMMIT_ID, pathParameters, queryParameters);
     final GitEntityInfo branchInfo = GitEntityInfo.builder()
                                          .branch(branchName)
                                          .filePath(filePath)
@@ -68,6 +70,7 @@ public class GitSyncThreadDecorator implements ContainerRequestFilter, Container
                                          .isNewBranch(Boolean.valueOf(isNewBranch))
                                          .findDefaultFromOtherRepos(Boolean.valueOf(findDefaultFromOtherBranches))
                                          .baseBranch(baseBranch)
+                                         .resolvedConflictCommitId(resolvedConflictCommitId)
                                          .build();
     if (!GlobalContextManager.isAvailable()) {
       GlobalContextManager.set(new GlobalContext());

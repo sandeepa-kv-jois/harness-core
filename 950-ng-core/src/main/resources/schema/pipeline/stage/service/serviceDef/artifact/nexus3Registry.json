@@ -1,0 +1,28 @@
+{
+	"$schema": "http://json-schema.org/draft-07/schema#",
+	"type": "object",
+			"properties": {
+				"connectorRef": {
+					"type": "string"
+				},
+				"repository": {
+					"type": "string"
+				},
+				"repositoryPort": {
+					"type": ["integer", "string"]
+				},
+				"imagePath": {
+					"type": "string"
+				},
+				"repositoryUrl": {
+					"type": "string"
+				},
+				"repositoryFormat": {
+					"type": "string"
+				},
+				"tag": {
+					"type": "string"
+				}
+			}
+
+}

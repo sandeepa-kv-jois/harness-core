@@ -31,6 +31,7 @@ import io.harness.time.Timestamp;
 import io.harness.version.VersionInfoManager;
 
 import software.wings.beans.GcpConfig;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.RiskLevel;
 import software.wings.service.impl.VerificationLogContext;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
@@ -131,7 +132,7 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
   @Override
   public ExecutionResponse execute(ExecutionContext context) {
     try (VerificationLogContext ignored = new VerificationLogContext(context.getAccountId(), null,
-             context.getStateExecutionInstanceId(), StateType.valueOf(getStateType()), OVERRIDE_ERROR)) {
+             context.getStateExecutionInstanceId(), DelegateStateType.valueOf(getStateType()), OVERRIDE_ERROR)) {
       getLogger().info("Executing state {}", context.getStateExecutionInstanceId());
       Logger activityLogger = cvActivityLogService.getLoggerByStateExecutionId(
           context.getAccountId(), context.getStateExecutionInstanceId());
@@ -212,6 +213,13 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
         if (analysisContext.isSkipVerification()) {
           getLogger().warn(
               "id: {}, Could not find test nodes to compare the data", context.getStateExecutionInstanceId());
+
+          if (shouldFailOnEmptyNodes(analysisContext.getAccountId())) {
+            getLogger().info("Could not find newly deployed instances. failOnEmptyNodes is true. Failing execution");
+            return generateAnalysisResponse(analysisContext, ExecutionStatus.FAILED, false,
+                "Could not find newly deployed instances. Marking execution as failed.");
+          }
+
           return generateAnalysisResponse(analysisContext, ExecutionStatus.SKIPPED, false,
               "Could not find newly deployed instances. Skipping verification");
         }
@@ -220,6 +228,14 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
         if (isEmpty(lastExecutionNodes) && !isAwsLambdaState(context)) {
           if (getComparisonStrategy() == AnalysisComparisonStrategy.COMPARE_WITH_CURRENT) {
             getLogger().info("No nodes with older version found to compare the logs. Skipping analysis");
+
+            if (shouldFailOnEmptyNodes(analysisContext.getAccountId())) {
+              getLogger().info(
+                  "No nodes with older version found to compare the logs. failOnEmptyNodes is true. Failing execution");
+              return generateAnalysisResponse(analysisContext, ExecutionStatus.FAILED, false,
+                  "As no previous version instances exist for comparison, analysis will be marked as failed."
+                      + " Check your setup if this is the first deployment or if the previous instances have been deleted or replaced.");
+            }
             return generateAnalysisResponse(analysisContext, ExecutionStatus.SKIPPED, false,
                 "As no previous version instances exist for comparison, analysis will be skipped. Check your setup if this is the first deployment or if the previous instances have been deleted or replaced.");
           }
@@ -253,10 +269,10 @@ public abstract class AbstractMetricAnalysisState extends AbstractAnalysisState 
           if (isEmpty(baselineWorkflowExecutionId)) {
             responseMessage = "No baseline was set for the workflow. Workflow running with auto baseline.";
             getLogger().info(responseMessage);
-            baselineWorkflowExecutionId =
-                metricAnalysisService.getLastSuccessfulWorkflowExecutionIdWithData(analysisContext.getStateType(),
-                    analysisContext.getAppId(), analysisContext.getWorkflowId(), analysisContext.getServiceId(),
-                    getPhaseInfraMappingId(context), workflowStandardParams.getEnv().getUuid());
+            baselineWorkflowExecutionId = metricAnalysisService.getLastSuccessfulWorkflowExecutionIdWithData(
+                analysisContext.getStateType().getDelegateStateType(), analysisContext.getAppId(),
+                analysisContext.getWorkflowId(), analysisContext.getServiceId(), getPhaseInfraMappingId(context),
+                workflowStandardParams.getEnv().getUuid());
           } else {
             responseMessage = "Baseline is fixed for the workflow. Analyzing against fixed baseline.";
             getLogger().info("Baseline execution is {}", baselineWorkflowExecutionId);

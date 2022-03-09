@@ -69,29 +69,31 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
     YamlGitConfigDTO yamlGitConfigDTO = yamlGitConfigService.get(gitConfigScope.getProjectId().getValue(),
         gitConfigScope.getOrgId().getValue(), gitConfigScope.getAccountId(), gitConfigScope.getIdentifier());
     boolean isEntitiesAvailableForFullSync = false;
+
     for (Map.Entry<Microservice, FullSyncServiceBlockingStub> fullSyncStubEntry :
         fullSyncServiceBlockingStubMap.entrySet()) {
       FullSyncServiceBlockingStub fullSyncServiceBlockingStub = fullSyncStubEntry.getValue();
       Microservice microservice = fullSyncStubEntry.getKey();
       FileChanges entitiesForFullSync = null;
-      try {
-        // todo(abhinav): add retryInputSetReferenceProtoDTO
-        log.info("Trying to get of the files for the message Id {} for the microservice {}", messageId, microservice);
-        entitiesForFullSync = GitSyncGrpcClientUtils.retryAndProcessException(
-            fullSyncServiceBlockingStub::getEntitiesForFullSync, scopeDetails);
-      } catch (Exception e) {
-        log.error("Error encountered while getting entities while full sync for msvc {}", microservice, e);
-        continue;
+      if (isFullSyncEnabled(microservice)) {
+        try {
+          // todo(abhinav): add retryInputSetReferenceProtoDTO
+          log.info("Trying to get of the files for the message Id {} for the microservice {}", messageId, microservice);
+          entitiesForFullSync = GitSyncGrpcClientUtils.retryAndProcessException(
+              fullSyncServiceBlockingStub::getEntitiesForFullSync, scopeDetails);
+        } catch (Exception e) {
+          log.error("Error encountered while getting entities while full sync for msvc {}", microservice, e);
+          continue;
+        }
       }
-      int fileNumber = entitiesForFullSync == null ? 0 : emptyIfNull(entitiesForFullSync.getFileChangesList()).size();
-      if (fileNumber > 0) {
-        isEntitiesAvailableForFullSync = true;
+      if (entitiesForFullSync != null) {
+        isEntitiesAvailableForFullSync =
+            checkIfEntitiesAvailableForFullSync(entitiesForFullSync, microservice) || isEntitiesAvailableForFullSync;
+        emptyIfNull(entitiesForFullSync.getFileChangesList()).forEach(entityForFullSync -> {
+          saveFullSyncEntityInfo(gitConfigScope, messageId, microservice, entityForFullSync,
+              fullSyncEventRequest.getBranch(), fullSyncEventRequest.getRootFolder(), yamlGitConfigDTO);
+        });
       }
-      log.info("Saving {} files for the microservice {}", fileNumber, microservice);
-      emptyIfNull(entitiesForFullSync.getFileChangesList()).forEach(entityForFullSync -> {
-        saveFullSyncEntityInfo(gitConfigScope, messageId, microservice, entityForFullSync,
-            fullSyncEventRequest.getBranch(), fullSyncEventRequest.getRootFolder(), yamlGitConfigDTO);
-      });
     }
 
     if (!isEntitiesAvailableForFullSync) {
@@ -109,6 +111,19 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
       log.info("The job is not created for the message id {}, as a job with id already exists", messageId);
       return;
     }
+  }
+
+  private boolean checkIfEntitiesAvailableForFullSync(FileChanges entitiesForFullSync, Microservice microservice) {
+    int fileNumber = emptyIfNull(entitiesForFullSync.getFileChangesList()).size();
+    log.info("Saving {} files for the microservice {}", fileNumber, microservice);
+    if (fileNumber > 0) {
+      return true;
+    }
+    return false;
+  }
+
+  private boolean isFullSyncEnabled(Microservice microservice) {
+    return microservice != Microservice.POLICYMGMT;
   }
 
   private GitFullSyncJob saveTheFullSyncJob(FullSyncEventRequest fullSyncEventRequest, String messageId) {
@@ -190,7 +205,7 @@ public class FullSyncAccumulatorServiceImpl implements FullSyncAccumulatorServic
         gitBranchService.get(gitConfigScope.getAccountId(), repoUrl, fullSyncEventRequest.getBranch());
     if (gitBranch != null) {
       throw new InvalidRequestException(
-          String.format("A branch with name {} already exists in Harness", fullSyncEventRequest.getBranch()));
+          String.format("A branch with name [{}] already exists in Harness", fullSyncEventRequest.getBranch()));
     }
     InfoForGitPush infoForGitPush = InfoForGitPush.builder()
                                         .accountId(gitConfigScope.getAccountId())

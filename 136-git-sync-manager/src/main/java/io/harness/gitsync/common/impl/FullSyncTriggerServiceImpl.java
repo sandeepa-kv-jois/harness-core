@@ -87,7 +87,6 @@ public class FullSyncTriggerServiceImpl implements FullSyncTriggerService {
     if (messageId == null) {
       return TriggerFullSyncResponseDTO.builder().isFullSyncTriggered(false).build();
     }
-    log.info("Triggered full sync with the message id {}", messageId);
     return TriggerFullSyncResponseDTO.builder().isFullSyncTriggered(true).build();
   }
 
@@ -125,12 +124,12 @@ public class FullSyncTriggerServiceImpl implements FullSyncTriggerService {
                                                       .putAllMetadata(ImmutableMap.of("accountId", accountIdentifier))
                                                       .setData(builder.build().toByteString())
                                                       .build());
-      log.info("Produced event with id [{}] for full sync for accountId [{}]  for yamlgitconfig [{}]", messageId,
-          accountIdentifier, fullSyncRequest.getYamlGitConfigIdentifier());
+      log.info("Produced full sync event with id [{}] for accountId [{}], orgId [{}] and projectId [{}]", messageId,
+          accountIdentifier, orgIdentifier, projectIdentifier);
       return messageId;
     } catch (Exception e) {
-      log.error("Event to send git config update failed for accountId [{}] for yamlgitconfig [{}]", accountIdentifier,
-          fullSyncRequest.getYamlGitConfigIdentifier(), e);
+      log.error("Event to trigger full sync failed for accountId [{}], orgId [{}] and projectId [{}]",
+          accountIdentifier, orgIdentifier, projectIdentifier, e);
       return null;
     }
   }

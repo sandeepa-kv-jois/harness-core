@@ -23,6 +23,8 @@ import io.harness.cache.CacheConfig.CacheConfigBuilder;
 import io.harness.cache.CacheModule;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.ci.config.CIExecutionServiceConfig;
+import io.harness.ci.config.CIStepConfig;
+import io.harness.ci.config.StepImageConfig;
 import io.harness.delegate.DelegateServiceGrpc;
 import io.harness.engine.pms.tasks.NgDelegate2TaskExecutor;
 import io.harness.entitysetupusageclient.EntitySetupUsageClientModule;
@@ -139,6 +141,21 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
 
     modules.add(TestMongoModule.getInstance());
     modules.add(new SpringPersistenceTestModule());
+    CIStepConfig ciStepConfig =
+        CIStepConfig.builder()
+            .gitCloneConfig(StepImageConfig.builder().image("gc:1.2.3").build())
+            .buildAndPushDockerRegistryConfig(StepImageConfig.builder().image("bpdr:1.2.3").build())
+            .buildAndPushECRConfig(StepImageConfig.builder().image("bpecr:1.2.3").build())
+            .buildAndPushGCRConfig(StepImageConfig.builder().image("bpgcr:1.2.3").build())
+            .gcsUploadConfig(StepImageConfig.builder().image("gcsupload:1.2.3").build())
+            .s3UploadConfig(StepImageConfig.builder().image("s3upload:1.2.3").build())
+            .artifactoryUploadConfig(StepImageConfig.builder().image("art:1.2.3").build())
+            .securityConfig(StepImageConfig.builder().image("sc:1.2.3").build())
+            .cacheGCSConfig(StepImageConfig.builder().image("cachegcs:1.2.3").build())
+            .cacheS3Config(StepImageConfig.builder().image("caches3:1.2.3").build())
+            .gcsUploadConfig(StepImageConfig.builder().image("gcsUpload:1.2.3").build())
+            .build();
+
     modules.add(new CIExecutionServiceModule(CIExecutionServiceConfig.builder()
                                                  .addonImageTag("v1.4-alpha")
                                                  .defaultCPULimit(200)
@@ -146,9 +163,10 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
                                                  .defaultMemoryLimit(200)
                                                  .delegateServiceEndpointVariableValue("delegate-service:8080")
                                                  .liteEngineImageTag("v1.4-alpha")
-                                                 .addonImage("harness/ci-addon:1.0")
-                                                 .liteEngineImage("harness/ci-lite-engine:1.0")
+                                                 .addonImage("harness/ci-addon:1.4.0")
+                                                 .liteEngineImage("harness/ci-lite-engine:1.4.0")
                                                  .pvcDefaultStorageSize(25600)
+                                                 .stepConfig(ciStepConfig)
                                                  .build(),
         false));
     modules.add(TimeModule.getInstance());

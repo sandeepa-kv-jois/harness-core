@@ -13,6 +13,10 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.InvalidRequestException;
 import io.harness.pms.yaml.ParameterField;
+import io.harness.pms.yaml.YAMLFieldNameConstants;
+import io.harness.utils.YamlPipelineUtils;
+import io.harness.yaml.core.properties.CIProperties;
+import io.harness.yaml.core.properties.NGProperties;
 import io.harness.yaml.core.variables.NGVariable;
 import io.harness.yaml.core.variables.SecretNGVariable;
 
@@ -20,9 +24,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 @UtilityClass
+@Slf4j
 public class NGVariablesUtils {
   public Map<String, Object> getMapOfVariables(List<NGVariable> variables, long expressionFunctorToken) {
     Map<String, Object> mapOfVariables = new HashMap<>();
@@ -44,6 +50,20 @@ public class NGVariablesUtils {
         }
       }
     }
+    return mapOfVariables;
+  }
+
+  public Map<String, Object> getMapOfNGProperties(NGProperties ngProperties) {
+    Map<String, Object> mapOfVariables = new HashMap<>();
+    if (ngProperties != null) {
+      try {
+        CIProperties ciProperties = YamlPipelineUtils.read(ngProperties.getCi().toString(), CIProperties.class);
+        mapOfVariables.put(YAMLFieldNameConstants.CI, ciProperties);
+      } catch (Exception e) {
+        log.warn("invalid ci properties");
+      }
+    }
+
     return mapOfVariables;
   }
 

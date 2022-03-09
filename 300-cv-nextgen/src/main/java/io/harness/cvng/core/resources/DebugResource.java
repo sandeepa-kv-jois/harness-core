@@ -14,7 +14,9 @@ import io.harness.accesscontrol.ResourceIdentifier;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.core.beans.SLODebugResponse;
+import io.harness.cvng.core.beans.VerifyStepDebugResponse;
 import io.harness.cvng.core.beans.params.ProjectParams;
+import io.harness.cvng.core.entities.DataCollectionTask;
 import io.harness.cvng.core.services.api.DebugService;
 import io.harness.rest.RestResponse;
 import io.harness.security.annotations.NextGenManagerAuth;
@@ -26,6 +28,7 @@ import io.swagger.annotations.ApiOperation;
 import io.swagger.annotations.ApiParam;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.GET;
+import javax.ws.rs.PUT;
 import javax.ws.rs.Path;
 import javax.ws.rs.PathParam;
 import javax.ws.rs.Produces;
@@ -56,5 +59,43 @@ public class DebugResource {
                                       .build();
 
     return new RestResponse<>(debugService.getSLODebugResponse(projectParams, identifier));
+  }
+
+  @GET
+  @Timed
+  @Path("verify-step/{identifier}")
+  @ApiOperation(value = "Gets Verify Step debug data", nickname = "getVerifyStepDebugData")
+  public RestResponse<VerifyStepDebugResponse> getVerifyStepDebug(
+      @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
+      @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String identifier,
+      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
+      @ApiParam(required = true) @NotNull @QueryParam(
+          "projectIdentifier") @ProjectIdentifier String projectIdentifier) {
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
+
+    return new RestResponse<>(debugService.getVerifyStepDebugResponse(projectParams, identifier));
+  }
+
+  @PUT
+  @Timed
+  @Path("datacollectiontask/{identifier}/retry")
+  @ApiOperation(value = "Updates DataCollectionTask for Debugging", nickname = "updateDataCollectionTaskDebugData")
+  public RestResponse<DataCollectionTask> updateDataCollectionTaskDebug(
+      @ApiParam(required = true) @NotNull @QueryParam("accountId") @AccountIdentifier String accountId,
+      @ApiParam(required = true) @NotNull @PathParam("identifier") @ResourceIdentifier String identifier,
+      @ApiParam(required = true) @NotNull @QueryParam("orgIdentifier") @OrgIdentifier String orgIdentifier,
+      @ApiParam(required = true) @NotNull @QueryParam(
+          "projectIdentifier") @ProjectIdentifier String projectIdentifier) {
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
+
+    return new RestResponse<>(debugService.retryDataCollectionTask(projectParams, identifier));
   }
 }

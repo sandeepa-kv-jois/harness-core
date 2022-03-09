@@ -7,6 +7,7 @@
 
 package io.harness.migrations;
 
+import io.harness.migrations.all.AddRingDetailsToDelegateRing;
 import io.harness.migrations.seedata.IISInstallCommandMigration;
 import io.harness.migrations.seedata.ReImportTemplatesMigration;
 import io.harness.migrations.seedata.TemplateGalleryDefaultTemplatesMigration;
@@ -35,6 +36,7 @@ public class SeedDataMigrationList {
         .add(Pair.of(12, io.harness.migrations.BaseSeedDataMigration.class))
         .add(Pair.of(13, ReImportTemplatesMigration.class))
         .add(Pair.of(14, BaseSeedDataMigration.class))
+        .add(Pair.of(15, AddRingDetailsToDelegateRing.class))
         .build();
   }
 }

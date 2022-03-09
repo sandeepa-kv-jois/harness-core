@@ -8,8 +8,9 @@
 package io.harness.cvng.analysis.beans;
 
 import lombok.Builder;
-import lombok.Value;
-@Value
+import lombok.Data;
+
+@Data
 @Builder
 public class TimeSeriesRecordDTO {
   String verificationTaskId;

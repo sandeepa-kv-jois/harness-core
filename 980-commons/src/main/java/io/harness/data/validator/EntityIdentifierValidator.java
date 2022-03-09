@@ -71,7 +71,7 @@ public class EntityIdentifierValidator implements ConstraintValidator<EntityIden
     }
     if (!hasAllowedWords(identifier)) {
       context.disableDefaultConstraintViolation();
-      context.buildConstraintViolationWithTemplate(identifier + "is a keyword, so cannot be used")
+      context.buildConstraintViolationWithTemplate(identifier + " is a keyword, so cannot be used")
           .addConstraintViolation();
       return false;
     }

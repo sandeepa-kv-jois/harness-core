@@ -31,6 +31,7 @@ import static io.harness.helm.HelmConstants.REPO_URL;
 import static io.harness.helm.HelmConstants.USERNAME;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_CACHE_HOME;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_CACHE_HOME_PATH;
+import static io.harness.helm.HelmConstants.V3Commands.HELM_REPO_ADD_FORCE_UPDATE;
 import static io.harness.helm.HelmConstants.V3Commands.HELM_REPO_FLAGS;
 import static io.harness.helm.HelmConstants.VALUES_YAML;
 import static io.harness.helm.HelmConstants.WORKING_DIR_BASE;
@@ -76,6 +77,8 @@ import io.harness.logging.LogCallback;
 import io.harness.security.encryption.SecretDecryptionService;
 import io.harness.utils.FieldWithPlainTextOrSecretValueHelper;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.delegatetasks.ExceptionMessageSanitizer;
 
 import com.esotericsoftware.yamlbeans.YamlException;
@@ -156,8 +159,8 @@ public class HelmTaskHelperBase {
     log.info(repoAddCommandForLogging);
     log.info(ADD_COMMAND_FOR_REPOSITORY + repoDisplayName);
 
-    ProcessResult processResult = executeCommand(environment, repoAddCommand, chartDirectory,
-        "add helm repo. Executed command" + repoAddCommandForLogging, timeoutInMillis, HelmCliCommandType.REPO_ADD);
+    ProcessResult processResult = executeAddRepo(
+        repoAddCommand, environment, chartDirectory, timeoutInMillis, repoAddCommandForLogging, helmVersion);
     if (processResult.getExitValue() != 0) {
       throw new HelmClientException("Failed to add helm repo. Executed command " + repoAddCommandForLogging + ". "
               + processResult.getOutput().getUTF8(),
@@ -176,6 +179,28 @@ public class HelmTaskHelperBase {
     addRepo(
         repoName, repoDisplayName, chartRepoUrl, username, password, chartDirectory, helmVersion, timeoutInMillis, dir);
     updateRepo(repoName, chartDirectory, helmVersion, timeoutInMillis, dir);
+  }
+
+  private ProcessResult executeAddRepo(String addCommand, Map<String, String> env, String chartDirectory,
+      long timeoutInMillis, String addCommandLogging, HelmVersion helmVersion) {
+    ProcessResult processResult = executeCommand(env, addCommand, chartDirectory,
+        "add helm repo. Executed command" + addCommandLogging, timeoutInMillis, HelmCliCommandType.REPO_ADD);
+    if (HelmVersion.V3.equals(helmVersion) && processResult.getExitValue() != 0) {
+      String output = processResult.hasOutput() ? processResult.getOutput().getUTF8() : null;
+      // Starting from helm 3.3.4, when --force-update not enabled and there is an update in repo configuration
+      // (for example, password is updated) helm repo add will fail with: repository name (repo-name) already exists,
+      // please specify a different name. For this case will try again with --force-update
+      if (isNotEmpty(output) && output.contains("already exists")) {
+        String forceAddRepoCommand = addCommand + HELM_REPO_ADD_FORCE_UPDATE;
+        String forceAddCommandLogging = addCommandLogging + HELM_REPO_ADD_FORCE_UPDATE;
+        log.info("Detected repository configuration change after executing: {}. Try again using: {}", addCommandLogging,
+            forceAddCommandLogging);
+        return executeCommand(env, forceAddRepoCommand, chartDirectory,
+            "add helm repo. Executed command" + forceAddCommandLogging, timeoutInMillis, HelmCliCommandType.REPO_ADD);
+      }
+    }
+
+    return processResult;
   }
 
   private String getHttpRepoAddCommand(String repoName, String chartRepoUrl, String username, char[] password,
@@ -643,6 +668,7 @@ public class HelmTaskHelperBase {
 
   public String fetchValuesYamlFromChart(HelmChartManifestDelegateConfig helmChartManifestDelegateConfig,
       long timeoutInMillis, LogCallback logCallback) throws Exception {
+    logCallback.saveExecutionLog(color("\nStarting fetching Helm values", LogColor.White, LogWeight.Bold));
     String workingDirectory = createNewDirectoryAtPath(Paths.get(WORKING_DIR_BASE).toString());
     logCallback.saveExecutionLog(color("\nFetching values.yaml from helm chart repo", White, Bold));
 

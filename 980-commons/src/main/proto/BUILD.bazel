@@ -4,6 +4,7 @@ harness_grpc_library(
     name = "980_commons_java_proto",
     visibility = ["//visibility:public"],
     deps = [
+        "//980-commons/src/main/proto/io/harness/security:980_commons_security_proto",
         "//980-commons/src/main/proto/io/harness/virtualstack:980_commons_proto",
     ],
 )

@@ -18,14 +18,14 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.gitsync.FileInfo;
 import io.harness.gitsync.GitSyncTestBase;
-import io.harness.gitsync.Principal;
-import io.harness.gitsync.ServicePrincipal;
-import io.harness.gitsync.UserPrincipal;
 import io.harness.gitsync.common.impl.HarnessToGitHelperServiceImpl;
 import io.harness.manage.GlobalContextManager;
 import io.harness.rule.Owner;
+import io.harness.security.Principal;
 import io.harness.security.SecurityContextBuilder;
+import io.harness.security.ServicePrincipal;
 import io.harness.security.SourcePrincipalContextBuilder;
+import io.harness.security.UserPrincipal;
 import io.harness.security.dto.PrincipalType;
 
 import com.google.inject.Inject;

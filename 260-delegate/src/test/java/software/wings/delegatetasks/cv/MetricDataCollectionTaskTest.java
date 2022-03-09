@@ -32,12 +32,12 @@ import io.harness.rule.Owner;
 import io.harness.time.Timestamp;
 
 import software.wings.WingsBaseTest;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.MetricDataStoreService;
 import software.wings.service.impl.analysis.MetricElement;
 import software.wings.service.impl.analysis.MetricsDataCollectionInfo;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.analysis.ClusterLevel;
-import software.wings.sm.StateType;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
@@ -298,7 +298,7 @@ public class MetricDataCollectionTaskTest extends WingsBaseTest {
   }
 
   private MetricsDataCollectionInfo createMetricDataCollectionInfo() {
-    StateType stateType = StateType.NEW_RELIC;
+    DelegateStateType stateType = DelegateStateType.NEW_RELIC;
     MetricsDataCollectionInfo dataCollectionInfo = mock(MetricsDataCollectionInfo.class);
     when(dataCollectionInfo.getAccountId()).thenReturn(UUID.randomUUID().toString());
     when(dataCollectionInfo.getApplicationId()).thenReturn(UUID.randomUUID().toString());

@@ -35,4 +35,6 @@ public interface PmsOutcomeService extends Resolver {
   List<String> cloneForRetryExecution(Ambiance ambiance, String originalNodeExecutionId);
 
   List<StepOutcomeRef> fetchOutcomeRefs(String nodeExecutionId);
+
+  Map<String, List<StepOutcomeRef>> fetchOutcomeRefs(List<String> nodeExecutionIds);
 }

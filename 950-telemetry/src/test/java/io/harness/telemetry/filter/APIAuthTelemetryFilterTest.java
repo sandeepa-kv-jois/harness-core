@@ -16,6 +16,7 @@ import static io.harness.telemetry.filter.APIAuthTelemetryFilter.API_ENDPOINTS_A
 import static io.harness.telemetry.filter.APIAuthTelemetryFilter.AUTH_TYPE;
 import static io.harness.telemetry.filter.APIAuthTelemetryFilter.DEFAULT_RATE_LIMIT;
 import static io.harness.telemetry.filter.APIAuthTelemetryFilter.X_API_KEY;
+import static io.harness.telemetry.filter.APIAuthTelemetryResponseFilter.API_TYPE;
 
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -51,6 +52,7 @@ public class APIAuthTelemetryFilterTest {
   public static final String SOME_API_KEY = "some-api-key";
   public static final String SOME_ACCOUNT_ID = "some-account-id";
   public static final String SOME_API_ENDPOINT = "/some-api-endpoint";
+  public static final String GET = "GET";
   public static final int CUSTOM_REQUEST_LIMIT = 10;
   @Mock private TelemetryReporter telemetryReporter;
   @Mock private ContainerRequestContext containerRequestContext;
@@ -63,6 +65,7 @@ public class APIAuthTelemetryFilterTest {
   @Before
   public void setup() {
     when(containerRequestContext.getUriInfo()).thenReturn(uriRoutingContext);
+    when(containerRequestContext.getMethod()).thenReturn(GET);
 
     when(uriRoutingContext.getPath()).thenReturn(SOME_API_ENDPOINT);
     when(uriRoutingContext.getQueryParameters()).thenReturn(parametersMap);
@@ -74,6 +77,7 @@ public class APIAuthTelemetryFilterTest {
 
     properties.put(ACCOUNT_IDENTIFIER, SOME_ACCOUNT_ID);
     properties.put(API_ENDPOINT, SOME_API_ENDPOINT);
+    properties.put(API_TYPE, GET);
   }
 
   @Test

@@ -18,11 +18,11 @@ import io.harness.iterator.PersistenceIteratorFactory;
 import io.harness.mongo.iterator.MongoPersistenceIterator;
 import io.harness.mongo.iterator.filter.SpringFilterExpander;
 import io.harness.mongo.iterator.provider.SpringPersistenceProvider;
-import io.harness.resourcegroup.framework.remote.mapper.ResourceGroupMapper;
-import io.harness.resourcegroup.framework.service.ResourceGroupService;
-import io.harness.resourcegroup.framework.service.impl.ResourceGroupValidatorServiceImpl;
-import io.harness.resourcegroup.model.ResourceGroup;
-import io.harness.resourcegroup.model.ResourceGroup.ResourceGroupKeys;
+import io.harness.resourcegroup.framework.v1.remote.mapper.ResourceGroupMapper;
+import io.harness.resourcegroup.framework.v1.service.ResourceGroupService;
+import io.harness.resourcegroup.framework.v1.service.impl.ResourceGroupValidatorServiceImpl;
+import io.harness.resourcegroup.v1.model.ResourceGroup;
+import io.harness.resourcegroup.v1.model.ResourceGroup.ResourceGroupKeys;
 
 import com.google.inject.Inject;
 import lombok.AllArgsConstructor;

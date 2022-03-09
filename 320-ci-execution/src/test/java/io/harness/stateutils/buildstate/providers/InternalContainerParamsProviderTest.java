@@ -54,7 +54,7 @@ public class InternalContainerParamsProviderTest extends CIExecutionTestBase {
     ConnectorDetails connectorDetails = ConnectorDetails.builder().build();
 
     CIK8ContainerParams containerParams =
-        internalContainerParamsProvider.getSetupAddonContainerParams(connectorDetails, null, "workspace");
+        internalContainerParamsProvider.getSetupAddonContainerParams(connectorDetails, null, "workspace", "account");
 
     assertThat(containerParams.getName()).isEqualTo(SETUP_ADDON_CONTAINER_NAME);
     assertThat(containerParams.getContainerType()).isEqualTo(CIContainerType.ADD_ON);

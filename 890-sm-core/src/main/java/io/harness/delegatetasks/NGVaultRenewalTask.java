@@ -78,7 +78,6 @@ public class NGVaultRenewalTask extends AbstractDelegateRunnableTask {
         }
       } catch (Exception e) {
         failedAttempts++;
-        log.warn("renewal failed. trial num: {}", failedAttempts, e);
         if (failedAttempts == NUM_OF_RETRIES) {
           String message = "renewal failed after " + NUM_OF_RETRIES + " retries";
           throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR, message, e, USER);

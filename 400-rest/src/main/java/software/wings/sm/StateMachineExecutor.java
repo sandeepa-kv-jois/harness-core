@@ -75,6 +75,7 @@ import io.harness.beans.ExecutionInterruptType;
 import io.harness.beans.ExecutionStatus;
 import io.harness.beans.FeatureName;
 import io.harness.beans.PageResponse;
+import io.harness.beans.WorkflowType;
 import io.harness.config.PipelineConfig;
 import io.harness.delay.DelayEventHelper;
 import io.harness.delegate.beans.DelegateResponseData;
@@ -937,11 +938,16 @@ public class StateMachineExecutor implements StateInspectionListener {
 
         // Open an alert
         Environment environment = context.getEnv();
+        String pipelineExecutionId = workflowExecutionService.getPipelineExecutionId(
+            stateExecutionInstance.getAppId(), context.getWorkflowExecutionId());
+        WorkflowType workflowType = pipelineExecutionId != null ? WorkflowType.PIPELINE : WorkflowType.ORCHESTRATION;
         ManualInterventionNeededAlert manualInterventionNeededAlert =
             ManualInterventionNeededAlert.builder()
                 .envId(environment != null ? environment.getUuid() : null)
                 .stateExecutionInstanceId(stateExecutionInstance.getUuid())
                 .executionId(context.getWorkflowExecutionId())
+                .pipelineExecutionId(pipelineExecutionId)
+                .workflowType(workflowType)
                 .name(context.getWorkflowExecutionName())
                 .build();
         openAnAlert(context, manualInterventionNeededAlert);
@@ -955,19 +961,24 @@ public class StateMachineExecutor implements StateInspectionListener {
         updateStateExecutionInstanceForManualInterventions(stateExecutionInstance, status, executionEventAdvice);
 
         // Open an alert
+        WorkflowExecution workflowExecution =
+            workflowExecutionService.getWorkflowExecution(context.getAppId(), context.getWorkflowExecutionId());
         Environment environment = context.getEnv();
+        String pipelineExecutionId = workflowExecution.getPipelineExecutionId();
+        WorkflowType workflowType = pipelineExecutionId != null ? WorkflowType.PIPELINE : WorkflowType.ORCHESTRATION;
         ManualInterventionNeededAlert manualInterventionNeededAlert =
             ManualInterventionNeededAlert.builder()
                 .envId(environment != null ? environment.getUuid() : null)
                 .stateExecutionInstanceId(stateExecutionInstance.getUuid())
                 .executionId(context.getWorkflowExecutionId())
+                .pipelineExecutionId(pipelineExecutionId)
+                .workflowType(workflowType)
                 .name(context.getWorkflowExecutionName())
                 .build();
         openAnAlert(context, manualInterventionNeededAlert);
         StateStatusUpdateInfo arg =
             StateStatusUpdateInfo.buildFromStateExecutionInstance(stateExecutionInstance, false);
-        WorkflowExecution workflowExecution =
-            workflowExecutionService.getWorkflowExecution(context.getAppId(), context.getWorkflowExecutionId());
+
         // Change this to WF_PAUSE once it is merged
         workflowExecutionUpdate.publish(workflowExecution, arg, EventType.PIPELINE_PAUSE);
         sendManualInterventionNeededNotification(context, stateExecutionInstance.getExpiryTs());

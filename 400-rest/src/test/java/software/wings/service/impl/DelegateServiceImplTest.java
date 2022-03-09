@@ -37,7 +37,6 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyBoolean;
-import static org.mockito.Matchers.anyObject;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.atLeastOnce;
@@ -52,7 +51,6 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
-import io.harness.audit.ResourceTypeConstants;
 import io.harness.beans.Cd1SetupFields;
 import io.harness.beans.DelegateTask;
 import io.harness.beans.ExecutionStatus;
@@ -74,28 +72,18 @@ import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.DelegateTaskResponse.ResponseCode;
 import io.harness.delegate.beans.DelegateType;
-import io.harness.delegate.beans.K8sConfigDetails;
-import io.harness.delegate.beans.K8sPermissionType;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
-import io.harness.delegate.events.DelegateGroupDeleteEvent;
-import io.harness.delegate.events.DelegateGroupUpsertEvent;
 import io.harness.delegate.service.intfc.DelegateRingService;
 import io.harness.delegate.task.http.HttpTaskParameters;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.k8s.model.response.CEK8sDelegatePrerequisite;
-import io.harness.ng.core.ProjectScope;
-import io.harness.ng.core.Resource;
 import io.harness.observer.Subject;
-import io.harness.outbox.OutboxEvent;
 import io.harness.outbox.api.OutboxService;
-import io.harness.outbox.filter.OutboxEventFilter;
 import io.harness.persistence.HPersistence;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.security.encryption.EncryptionConfig;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.serializer.KryoSerializer;
 import io.harness.service.dto.RetryDelegate;
 import io.harness.service.impl.DelegateSyncServiceImpl;
@@ -127,10 +115,8 @@ import software.wings.service.intfc.EmailNotificationService;
 import software.wings.service.intfc.SettingsService;
 import software.wings.sm.states.HttpState.HttpStateExecutionResponse;
 
-import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -329,17 +315,13 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldExecuteTask() {
     Delegate delegate = createDelegateBuilder().build();
     persistence.save(delegate);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
-        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
     DelegateTask delegateTask = getDelegateTask();
-    BatchDelegateSelectionLog batch = BatchDelegateSelectionLog.builder().build();
-    when(delegateSelectionLogsService.createBatch(delegateTask)).thenReturn(batch);
-    when(assignDelegateService.canAssign(eq(batch), anyString(), any())).thenReturn(true);
-    when(assignDelegateService.retrieveActiveDelegates(
-             eq(delegateTask.getAccountId()), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any()))
+        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
+        .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
+    when(assignDelegateService.canAssign(eq(delegateTask.getDelegateId()), any())).thenReturn(true);
+    when(assignDelegateService.retrieveActiveDelegates(eq(delegateTask.getAccountId()), any()))
         .thenReturn(Collections.singletonList(delegate.getUuid()));
 
     RetryDelegate retryDelegate = RetryDelegate.builder().retryPossible(true).delegateTask(delegateTask).build();
@@ -359,8 +341,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
       new Thread(delegateSyncService).start();
     });
     thread.start();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateResponseData responseData = delegateTaskServiceClassic.executeTask(delegateTask);
@@ -387,7 +368,6 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldSaveDelegateTaskWithPreAssignedDelegateId_Async() {
     DelegateTask delegateTask = getDelegateTask();
     delegateTask.getData().setAsync(true);
-    thrown.expect(NoEligibleDelegatesInAccountException.class);
     delegateTaskServiceClassic.processDelegateTask(delegateTask, DelegateTask.Status.QUEUED);
     assertThat(delegateTask.getBroadcastCount()).isZero();
     verify(broadcastHelper, times(0)).rebroadcastDelegateTask(any());
@@ -399,17 +379,15 @@ public class DelegateServiceImplTest extends WingsBaseTest {
   public void shouldSaveDelegateTaskWithoutPreAssignedDelegateIdSetToMustExecuteOn() {
     String delegateId = generateUuid();
     String taskId = generateUuid();
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateTask delegateTask = getDelegateTask();
     delegateTask.getData().setAsync(false);
     delegateTask.setUuid(taskId);
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     delegateTaskServiceClassic.processDelegateTask(delegateTask, DelegateTask.Status.QUEUED);
@@ -454,10 +432,9 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     Delegate delegate = createDelegateBuilder().build();
     doReturn(delegate).when(delegateCache).get(ACCOUNT_ID, delegate.getUuid(), false);
 
-    when(assignDelegateService.getEligibleDelegatesToExecuteTask(
-             any(DelegateTask.class), any(BatchDelegateSelectionLog.class)))
+    when(assignDelegateService.getEligibleDelegatesToExecuteTask(any(DelegateTask.class)))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
-    when(assignDelegateService.getConnectedDelegateList(any(), anyString(), anyObject()))
+    when(assignDelegateService.getConnectedDelegateList(any(), any()))
         .thenReturn(new ArrayList<>(singletonList(DELEGATE_ID)));
 
     DelegateTask delegateTask = getDelegateTask();
@@ -469,7 +446,7 @@ public class DelegateServiceImplTest extends WingsBaseTest {
         .when(spydelegateTaskServiceClassic)
         .assignTask(anyString(), anyString(), any(DelegateTask.class), anyString());
 
-    when(assignDelegateService.canAssign(any(), anyString(), any())).thenReturn(true);
+    when(assignDelegateService.canAssign(anyString(), any())).thenReturn(true);
     when(assignDelegateService.isWhitelisted(any(), anyString())).thenReturn(true);
     when(assignDelegateService.shouldValidate(any(), anyString())).thenReturn(false);
 
@@ -1047,96 +1024,6 @@ public class DelegateServiceImplTest extends WingsBaseTest {
     assertThat(delegateInitializationDetails.get(3).getDelegateId()).isEqualTo(delegateIds.get(3));
     assertThat(delegateInitializationDetails.get(3).isInitialized()).isFalse();
     assertThat(delegateInitializationDetails.get(3).isProfileError()).isFalse();
-  }
-
-  @Test
-  @Owner(developers = NICOLAS)
-  @Category(UnitTests.class)
-  public void testUpsertDelegateGroup_noExistingGroup() throws IOException {
-    K8sConfigDetails k8sConfigDetails =
-        K8sConfigDetails.builder().k8sPermissionType(K8sPermissionType.NAMESPACE_ADMIN).namespace("namespace").build();
-    final ImmutableSet<String> tags = ImmutableSet.of("sometag", "anothertag");
-    DelegateGroup returnedDelegateGroup = delegateService.upsertDelegateGroup(TEST_DELEGATE_GROUP_NAME, ACCOUNT_ID,
-        DelegateSetupDetails.builder()
-            .name(TEST_DELEGATE_GROUP_NAME)
-            .orgIdentifier(ORG_ID)
-            .projectIdentifier(PROJECT_ID)
-            .k8sConfigDetails(k8sConfigDetails)
-            .description("description")
-            .size(DelegateSize.LAPTOP)
-            .identifier(DELEGATE_GROUP_IDENTIFIER)
-            .tags(tags)
-            .delegateType(DelegateType.KUBERNETES)
-            .build());
-
-    assertThat(returnedDelegateGroup).isNotNull();
-    assertThat(returnedDelegateGroup.getUuid()).isNotEmpty();
-    assertThat(returnedDelegateGroup.getAccountId()).isEqualTo(ACCOUNT_ID);
-    assertThat(returnedDelegateGroup.getOwner().getIdentifier()).isEqualTo(ORG_ID + "/" + PROJECT_ID);
-    assertThat(returnedDelegateGroup.getName()).isEqualTo(TEST_DELEGATE_GROUP_NAME);
-    assertThat(returnedDelegateGroup.getK8sConfigDetails()).isEqualTo(k8sConfigDetails);
-    assertThat(returnedDelegateGroup.getDescription()).isEqualTo("description");
-    assertThat(returnedDelegateGroup.getSizeDetails().getSize()).isEqualTo(DelegateSize.LAPTOP);
-    assertThat(returnedDelegateGroup.isNg()).isTrue();
-    assertThat(returnedDelegateGroup.getIdentifier()).isEqualTo(DELEGATE_GROUP_IDENTIFIER);
-    assertThat(returnedDelegateGroup.getTags()).containsAll(tags);
-
-    List<OutboxEvent> outboxEvents = outboxService.list(OutboxEventFilter.builder().maximumEventsPolled(100).build());
-    assertThat(outboxEvents.size()).isEqualTo(1);
-    OutboxEvent outboxEvent = outboxEvents.get(0);
-    assertThat(outboxEvent.getResourceScope().equals(new ProjectScope(ACCOUNT_ID, ORG_ID, PROJECT_ID))).isTrue();
-    assertThat(outboxEvent.getResource())
-        .isEqualTo(Resource.builder()
-                       .type(ResourceTypeConstants.DELEGATE)
-                       .identifier(returnedDelegateGroup.getUuid())
-                       .build());
-    assertThat(outboxEvent.getEventType()).isEqualTo(DelegateGroupUpsertEvent.builder().build().getEventType());
-    DelegateGroupUpsertEvent delegateGroupUpsertEvent = NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER.readValue(
-        outboxEvent.getEventData(), DelegateGroupUpsertEvent.class);
-    assertThat(delegateGroupUpsertEvent.getAccountIdentifier()).isEqualTo(ACCOUNT_ID);
-    assertThat(delegateGroupUpsertEvent.getOrgIdentifier()).isEqualTo(ORG_ID);
-    assertThat(delegateGroupUpsertEvent.getProjectIdentifier()).isEqualTo(PROJECT_ID);
-    assertThat(delegateGroupUpsertEvent.getDelegateSetupDetails())
-        .isEqualTo(DelegateSetupDetails.builder()
-                       .name(TEST_DELEGATE_GROUP_NAME)
-                       .orgIdentifier(ORG_ID)
-                       .projectIdentifier(PROJECT_ID)
-                       .k8sConfigDetails(k8sConfigDetails)
-                       .description("description")
-                       .size(DelegateSize.LAPTOP)
-                       .identifier(DELEGATE_GROUP_IDENTIFIER)
-                       .tags(tags)
-                       .delegateType(DelegateType.KUBERNETES)
-                       .build());
-
-    // test delete event
-    delegateService.deleteDelegateGroup(ACCOUNT_ID, returnedDelegateGroup.getUuid());
-    outboxEvents = outboxService.list(OutboxEventFilter.builder().maximumEventsPolled(100).build());
-    assertThat(outboxEvents.size()).isEqualTo(2);
-    outboxEvent = outboxEvents.get(1);
-    assertThat(outboxEvent.getResourceScope().equals(new ProjectScope(ACCOUNT_ID, ORG_ID, PROJECT_ID))).isTrue();
-    assertThat(outboxEvent.getResource())
-        .isEqualTo(Resource.builder()
-                       .type(ResourceTypeConstants.DELEGATE)
-                       .identifier(returnedDelegateGroup.getUuid())
-                       .build());
-    assertThat(outboxEvent.getEventType()).isEqualTo(DelegateGroupDeleteEvent.builder().build().getEventType());
-    DelegateGroupDeleteEvent delegateGroupDeleteEvent = NGObjectMapperHelper.NG_DEFAULT_OBJECT_MAPPER.readValue(
-        outboxEvent.getEventData(), DelegateGroupDeleteEvent.class);
-    assertThat(delegateGroupDeleteEvent.getAccountIdentifier()).isEqualTo(ACCOUNT_ID);
-    assertThat(delegateGroupDeleteEvent.getOrgIdentifier()).isEqualTo(ORG_ID);
-    assertThat(delegateGroupDeleteEvent.getProjectIdentifier()).isEqualTo(PROJECT_ID);
-    assertThat(delegateGroupDeleteEvent.getDelegateSetupDetails())
-        .isEqualTo(DelegateSetupDetails.builder()
-                       .orgIdentifier(ORG_ID)
-                       .name("testDelegateGroupName")
-                       .projectIdentifier(PROJECT_ID)
-                       .k8sConfigDetails(k8sConfigDetails)
-                       .description("description")
-                       .size(DelegateSize.LAPTOP)
-                       .identifier(null)
-                       .delegateType(DelegateType.KUBERNETES)
-                       .build());
   }
 
   @Test

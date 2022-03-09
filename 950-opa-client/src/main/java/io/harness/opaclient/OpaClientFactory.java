@@ -14,6 +14,7 @@ import io.harness.network.Http;
 import io.harness.security.PmsAuthInterceptor;
 import io.harness.serializer.kryo.KryoConverterFactory;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import com.fasterxml.jackson.datatype.guava.GuavaModule;
@@ -58,6 +59,7 @@ public class OpaClientFactory implements Provider<OpaServiceClient> {
     }
 
     ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     objectMapper.registerModule(new Jdk8Module());
     objectMapper.registerModule(new GuavaModule());
     objectMapper.registerModule(new JavaTimeModule());

@@ -37,6 +37,6 @@ public class RedisProgressEventPublisher implements ProgressEventPublisher {
                                       .build();
 
     return eventSender.sendEvent(nodeExecution.getAmbiance(), progressEvent.toByteString(),
-        PmsEventCategory.PROGRESS_EVENT, nodeExecution.module(), false);
+        PmsEventCategory.PROGRESS_EVENT, nodeExecution.getModule(), false);
   }
 }

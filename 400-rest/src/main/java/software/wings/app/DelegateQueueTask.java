@@ -10,7 +10,6 @@ package software.wings.app;
 import static io.harness.beans.DelegateTask.Status.QUEUED;
 import static io.harness.beans.FeatureName.DELEGATE_TASK_REBROADCAST_ITERATOR;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
-import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.exception.WingsException.ExecutionContext.MANAGER;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.maintenance.MaintenanceController.getMaintenanceFlag;
@@ -30,7 +29,6 @@ import io.harness.logging.ExceptionLogger;
 import io.harness.metrics.intfc.DelegateMetricsService;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
-import io.harness.selection.log.BatchDelegateSelectionLog;
 import io.harness.service.intfc.DelegateTaskService;
 import io.harness.version.VersionInfoManager;
 
@@ -167,14 +165,7 @@ public class DelegateQueueTask implements Runnable {
           continue;
         }
         delegateTask.setBroadcastToDelegateIds(broadcastToDelegates);
-
-        BatchDelegateSelectionLog batch = delegateSelectionLogsService.createBatch(delegateTask);
-        if (isNotEmpty(broadcastToDelegates)) {
-          delegateSelectionLogsService.logBroadcastToDelegate(
-              batch, Sets.newHashSet(broadcastToDelegates), delegateTask.getAccountId());
-        }
-
-        delegateSelectionLogsService.save(batch);
+        delegateSelectionLogsService.logBroadcastToDelegate(Sets.newHashSet(broadcastToDelegates), delegateTask);
 
         try (AutoLogContext ignore1 = new TaskLogContext(delegateTask.getUuid(), delegateTask.getData().getTaskType(),
                  TaskType.valueOf(delegateTask.getData().getTaskType()).getTaskGroup().name(), OVERRIDE_ERROR);

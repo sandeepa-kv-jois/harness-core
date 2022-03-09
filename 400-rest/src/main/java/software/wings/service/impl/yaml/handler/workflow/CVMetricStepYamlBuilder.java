@@ -26,6 +26,7 @@ import com.google.gson.reflect.TypeToken;
 import com.google.inject.Inject;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -38,6 +39,8 @@ import lombok.extern.slf4j.Slf4j;
 public abstract class CVMetricStepYamlBuilder extends StepYamlBuilder {
   private static final String CUSTOM_THRESHOLD_KEY = "customThresholdRefId";
   private static final String THRESHOLDS_KEY = "metric-thresholds";
+  private static final String ACCOUNT_TO_DEBUG = "78iEHpolS_uhk2XmjVO-4Q";
+
   @Inject private MetricDataAnalysisService metricDataAnalysisService;
 
   @Override
@@ -46,12 +49,13 @@ public abstract class CVMetricStepYamlBuilder extends StepYamlBuilder {
     if (name.equals(CUSTOM_THRESHOLD_KEY)) {
       List<TimeSeriesMLTransactionThresholds> thresholds =
           metricDataAnalysisService.getCustomThreshold((String) objectValue);
-      List<TimeSeriesMLTransactionThresholdsDTO> thresholdsDTOList = new ArrayList<>();
+      Set<TimeSeriesMLTransactionThresholdsDTO> thresholdsDTOSet = new HashSet<>();
       if (isNotEmpty(thresholds)) {
         thresholds.forEach(threshold
-            -> thresholdsDTOList.add(TimeSeriesMLTransactionThresholdsDTO.fromTransactionThresholdsEntity(threshold)));
+            -> thresholdsDTOSet.add(TimeSeriesMLTransactionThresholdsDTO.fromTransactionThresholdsEntity(threshold)));
       }
-      outputProperties.put(THRESHOLDS_KEY, thresholdsDTOList);
+
+      outputProperties.put(THRESHOLDS_KEY, new ArrayList<>(thresholdsDTOSet));
     }
     if (!name.equals(THRESHOLDS_KEY)) {
       outputProperties.put(name, objectValue);
@@ -65,6 +69,7 @@ public abstract class CVMetricStepYamlBuilder extends StepYamlBuilder {
       super.convertNameToIdForKnownTypes(name, objectValue, outputProperties, appId, accountId, inputProperties);
     } else {
       if (inputProperties.get(CUSTOM_THRESHOLD_KEY) == null) {
+        log.info("No custom threshold ref ID present, so creating a new one for {}, {}", accountId, appId);
         // no threshold refIds yet. So create one
         String cutomThresholdId = generateUuid();
         outputProperties.put(CUSTOM_THRESHOLD_KEY, cutomThresholdId);
@@ -87,9 +92,20 @@ public abstract class CVMetricStepYamlBuilder extends StepYamlBuilder {
         Type type = new TypeToken<List<TimeSeriesMLTransactionThresholdsDTO>>() {}.getType();
         List<TimeSeriesMLTransactionThresholdsDTO> thresholdsDTOList =
             gson.fromJson(JsonUtils.asJson(objectValue), type);
-        if (thresholdsDTOList != null) {
+
+        // For some reason, for one of our customers, we are seeing duplicates when the value is coming in from Yaml.
+        // We are converting to a set to eliminate that duplicate here.
+        Set<TimeSeriesMLTransactionThresholdsDTO> thresholdsDTOSet = new HashSet<>(thresholdsDTOList);
+        if (thresholdsDTOList.size() != thresholdsDTOSet.size()) {
+          log.info(
+              "Number of custom thresholds coming in from Yaml for threshold ID {} is {}. But after converting to a set: {}",
+              customThresholdRefId, thresholdsDTOList.size(), thresholdsDTOSet.size());
+        }
+
+        if (thresholdsDTOSet != null) {
           List<TimeSeriesMLTransactionThresholds> thresholds = new ArrayList<>();
-          thresholdsDTOList.forEach(dto -> thresholds.add(dto.toEntity(customThresholdRefId)));
+          thresholdsDTOSet.forEach(dto -> thresholds.add(dto.toEntity(customThresholdRefId)));
+
           metricDataAnalysisService.saveCustomThreshold(null, null, thresholds);
           metricDataAnalysisService.deleteCustomThreshold(new ArrayList<>(thresholdIds));
         }

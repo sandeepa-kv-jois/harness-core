@@ -18,6 +18,7 @@ import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.exception.HttpResponseException;
+import io.harness.exception.InvalidRequestException;
 import io.harness.network.SafeHttpCall;
 import io.harness.opaclient.OpaServiceClient;
 import io.harness.opaclient.model.OpaEvaluationResponseHolder;
@@ -31,6 +32,8 @@ import io.harness.pms.yaml.YamlUtils;
 import io.harness.rule.Owner;
 import io.harness.steps.policy.PolicyStepSpecParameters;
 import io.harness.steps.policy.custom.CustomPolicyStepSpec;
+import io.harness.steps.policy.step.outcome.PolicyStepOutcome;
+import io.harness.steps.policy.step.outcome.PolicyStepOutcomeMapper;
 
 import java.io.IOException;
 import java.util.Collections;
@@ -49,7 +52,7 @@ import retrofit2.Call;
 
 @RunWith(PowerMockRunner.class)
 @OwnedBy(PIPELINE)
-@PrepareForTest({SafeHttpCall.class})
+@PrepareForTest({SafeHttpCall.class, PolicyStepOutcomeMapper.class})
 public class PolicyStepTest extends CategoryTest {
   @InjectMocks PolicyStep policyStep;
   @Mock OpaServiceClient opaServiceClient;
@@ -66,6 +69,7 @@ public class PolicyStepTest extends CategoryTest {
   public void setUp() {
     MockitoAnnotations.initMocks(this);
     PowerMockito.mockStatic(SafeHttpCall.class);
+    PowerMockito.mockStatic(PolicyStepOutcomeMapper.class);
     ambiance = Ambiance.newBuilder()
                    .putSetupAbstractions("accountId", accountId)
                    .putSetupAbstractions("orgIdentifier", orgId)
@@ -142,11 +146,39 @@ public class PolicyStepTest extends CategoryTest {
     String urlPolicySets = "ps1";
     when(opaServiceClient.evaluateWithCredentialsByID(accountId, orgId, projectId, urlPolicySets, payloadObj))
         .thenReturn(request);
-    when(SafeHttpCall.executeWithExceptions(request)).thenThrow(new HttpResponseException(400, "My Invalid Request"));
+    when(SafeHttpCall.executeWithErrorMessage(request)).thenThrow(new HttpResponseException(400, "My Invalid Request"));
     StepResponse stepResponse = policyStep.executeSync(ambiance, stepParameters, null, null);
     assertThat(stepResponse.getStatus()).isEqualTo(Status.FAILED);
     assertThat(stepResponse.getFailureInfo().getFailureData(0).getMessage())
         .isEqualTo("Unexpected error occurred while evaluating Policies.");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testExecuteSyncWithPolicyNotFoundError() throws IOException {
+    String payload = "{\"this\" : \"that\"}";
+    YamlField payloadObj = YamlUtils.readTree(payload);
+    PolicyStepSpecParameters policyStepSpecParameters =
+        PolicyStepSpecParameters.builder()
+            .policySets(ParameterField.createValueField(projLevelPolicySet))
+            .type("Custom")
+            .policySpec(CustomPolicyStepSpec.builder().payload(ParameterField.createValueField(payload)).build())
+            .build();
+    stepParameters = StepElementParameters.builder().spec(policyStepSpecParameters).build();
+
+    String urlPolicySets = "ps1";
+    when(opaServiceClient.evaluateWithCredentialsByID(accountId, orgId, projectId, urlPolicySets, payloadObj))
+        .thenReturn(request);
+    String errorString = "{\n"
+        + "    \"identifier\" : \"thisSet\",\n"
+        + "    \"message\" : \"policy set 'thisSet' is disabled.\"\n"
+        + "}";
+    when(SafeHttpCall.executeWithErrorMessage(request)).thenThrow(new InvalidRequestException(errorString));
+    StepResponse stepResponse = policyStep.executeSync(ambiance, stepParameters, null, null);
+    assertThat(stepResponse.getStatus()).isEqualTo(Status.FAILED);
+    assertThat(stepResponse.getFailureInfo().getFailureData(0).getMessage())
+        .isEqualTo("Policy Set 'thisSet' is disabled.");
   }
 
   @Test
@@ -168,7 +200,9 @@ public class PolicyStepTest extends CategoryTest {
         .thenReturn(request);
 
     OpaEvaluationResponseHolder evaluationResponse = OpaEvaluationResponseHolder.builder().status("error").build();
-    when(SafeHttpCall.executeWithExceptions(request)).thenReturn(evaluationResponse);
+    when(SafeHttpCall.executeWithErrorMessage(request)).thenReturn(evaluationResponse);
+    when(PolicyStepOutcomeMapper.toOutcome(evaluationResponse))
+        .thenReturn(PolicyStepOutcome.builder().status("error").build());
     StepResponse stepResponse = policyStep.executeSync(ambiance, stepParameters, null, null);
     assertThat(stepResponse.getStatus()).isEqualTo(Status.FAILED);
     assertThat(stepResponse.getFailureInfo().getFailureData(0).getMessage())
@@ -194,7 +228,9 @@ public class PolicyStepTest extends CategoryTest {
         .thenReturn(request);
 
     OpaEvaluationResponseHolder evaluationResponse = OpaEvaluationResponseHolder.builder().status("pass").build();
-    when(SafeHttpCall.executeWithExceptions(request)).thenReturn(evaluationResponse);
+    when(SafeHttpCall.executeWithErrorMessage(request)).thenReturn(evaluationResponse);
+    when(PolicyStepOutcomeMapper.toOutcome(evaluationResponse))
+        .thenReturn(PolicyStepOutcome.builder().status("pass").build());
     StepResponse stepResponse = policyStep.executeSync(ambiance, stepParameters, null, null);
     assertThat(stepResponse.getStatus()).isEqualTo(Status.SUCCEEDED);
   }

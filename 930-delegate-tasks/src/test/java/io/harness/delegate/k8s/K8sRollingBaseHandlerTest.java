@@ -261,9 +261,49 @@ public class K8sRollingBaseHandlerTest extends CategoryTest {
     verify(resource, never()).addLabelsInDeploymentSelector(anyMap());
   }
 
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testAddLabelsInDeploymentSelectorWrapper() {
+    KubernetesResource resource1 = mock(KubernetesResource.class);
+    KubernetesResource resource2 = mock(KubernetesResource.class);
+    prepareMockedKubernetesResourceList(asList(resource1, resource2));
+    when(k8sTaskHelperBase.getDeploymentContainingTrackStableSelector(any(), any(), any()))
+        .thenReturn(asList(resource1));
+
+    k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(
+        true, true, asList(resource1, resource2), KubernetesConfig.builder().build());
+    verify(resource1, times(1)).addLabelsInDeploymentSelector(anyMap());
+    verify(resource2, never()).addLabelsInDeploymentSelector(anyMap());
+  }
+
+  @Test
+  @Owner(developers = TATHAGAT)
+  @Category(UnitTests.class)
+  public void testAddLabelsInDeploymentSelectorWrapperFfOf() {
+    KubernetesResource resource1 = mock(KubernetesResource.class);
+    KubernetesResource resource2 = mock(KubernetesResource.class);
+    prepareMockedKubernetesResourceList(asList(resource1, resource2));
+    when(k8sTaskHelperBase.getDeploymentContainingTrackStableSelector(any(), any(), any()))
+        .thenReturn(asList(resource1));
+
+    k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(
+        true, false, asList(resource1, resource2), KubernetesConfig.builder().build());
+    verify(resource1, times(1)).addLabelsInDeploymentSelector(anyMap());
+    verify(resource2, times(1)).addLabelsInDeploymentSelector(anyMap());
+  }
+
   private void prepareMockedKubernetesResource(KubernetesResource resource) {
     KubernetesResourceId resourceId = mock(KubernetesResourceId.class);
     when(resource.getResourceId()).thenReturn(resourceId);
     when(resourceId.getKind()).thenReturn(Kind.Deployment.name());
+  }
+
+  private void prepareMockedKubernetesResourceList(List<KubernetesResource> resourceList) {
+    for (KubernetesResource resource : resourceList) {
+      KubernetesResourceId mockedResource = mock(KubernetesResourceId.class);
+      when(resource.getResourceId()).thenReturn(mockedResource);
+      when(mockedResource.getKind()).thenReturn(Kind.Deployment.name());
+    }
   }
 }

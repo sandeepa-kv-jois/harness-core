@@ -43,6 +43,7 @@ import io.harness.migrations.all.AddLoginSettingsToAccountMigration;
 import io.harness.migrations.all.AddNgFieldToDelegateGroupMigration;
 import io.harness.migrations.all.AddReplCtrlNameToKubeSetupProperties;
 import io.harness.migrations.all.AddRestrictionsToSecretManagerConfig;
+import io.harness.migrations.all.AddRingDetailsToDelegateRing;
 import io.harness.migrations.all.AddScopedToAccountAttributeToEncryptedData;
 import io.harness.migrations.all.AddTagManagementPermissionToAdminUserGroup;
 import io.harness.migrations.all.AddTemplateMgmtPermissionToAdminUserGroup;
@@ -450,6 +451,7 @@ public class MigrationList {
         .add(Pair.of(370, ManageAccountDefaultsPermissionMigration.class))
         .add(Pair.of(371, BaseMigration.class))
         .add(Pair.of(372, BaseMigration.class))
+        .add(Pair.of(373, AddRingDetailsToDelegateRing.class))
         .build();
   }
 }

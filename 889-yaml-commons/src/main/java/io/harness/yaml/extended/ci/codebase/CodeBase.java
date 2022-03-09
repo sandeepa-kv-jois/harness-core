@@ -7,8 +7,10 @@
 
 package io.harness.yaml.extended.ci.codebase;
 
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
+import io.harness.beans.SwaggerConstants;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.yaml.YamlSchemaTypes;
 import io.harness.yaml.extended.ci.container.ContainerResource;
@@ -25,14 +27,20 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @TypeAlias("io.harness.yaml.extended.ci.CodeBase")
 public class CodeBase {
-  @NotNull String connectorRef;
-  String repoName;
+  @NotNull @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> connectorRef;
+  @ApiModelProperty(dataType = SwaggerConstants.STRING_CLASSPATH) ParameterField<String> repoName;
   @YamlSchemaTypes(value = {string})
   @ApiModelProperty(dataType = "io.harness.yaml.extended.ci.codebase.Build")
   @NotNull
   ParameterField<Build> build;
-  Integer depth;
-  Boolean sslVerify;
-  PRCloneStrategy prCloneStrategy;
+  @YamlSchemaTypes({runtime})
+  @ApiModelProperty(dataType = SwaggerConstants.INTEGER_CLASSPATH)
+  ParameterField<Integer> depth;
+  @YamlSchemaTypes({runtime})
+  @ApiModelProperty(dataType = SwaggerConstants.BOOLEAN_CLASSPATH)
+  ParameterField<Boolean> sslVerify;
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = "io.harness.yaml.extended.ci.codebase.PRCloneStrategy")
+  ParameterField<PRCloneStrategy> prCloneStrategy;
   ContainerResource resources;
 }

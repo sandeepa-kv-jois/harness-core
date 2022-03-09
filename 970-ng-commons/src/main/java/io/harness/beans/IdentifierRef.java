@@ -37,6 +37,19 @@ public class IdentifierRef implements EntityReference {
         accountIdentifier, orgIdentifier, projectIdentifier, identifier);
   }
 
+  public String buildScopedIdentifier() {
+    switch (scope) {
+      case ACCOUNT:
+        return "account." + identifier;
+      case ORG:
+        return "org." + identifier;
+      case PROJECT:
+        return identifier;
+      default:
+        return "";
+    }
+  }
+
   @Override
   public Boolean isDefault() {
     return isDefault;

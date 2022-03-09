@@ -27,7 +27,12 @@ import static org.jfrog.artifactory.client.ArtifactoryRequest.Method.GET;
 import static org.jfrog.artifactory.client.ArtifactoryRequest.Method.POST;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifact.ArtifactMetadataKeys;
+import io.harness.artifact.ArtifactUtilities;
+import io.harness.artifacts.beans.BuildDetailsInternal;
+import io.harness.artifacts.comparator.BuildDetailsInternalComparatorAscending;
 import io.harness.eraro.ErrorCode;
+import io.harness.exception.ArtifactoryRegistryException;
 import io.harness.exception.ArtifactoryServerException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.NestedExceptionUtils;
@@ -38,8 +43,12 @@ import software.wings.common.AlphanumComparator;
 import software.wings.helpers.ext.artifactory.FolderPath;
 import software.wings.helpers.ext.jenkins.BuildDetails;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.net.HttpURLConnection;
+import java.net.MalformedURLException;
 import java.net.SocketTimeoutException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -53,6 +62,7 @@ import java.util.Set;
 import java.util.regex.Pattern;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.Credentials;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.apache.http.HttpHost;
 import org.apache.http.client.HttpResponseException;
@@ -122,8 +132,8 @@ public class ArtifactoryClientImpl {
       }
       if (artifactoryResponse.getStatusLine().getStatusCode() == 404) {
         throw NestedExceptionUtils.hintWithExplanationException(
-            "Check if the URL is correct. Consider appending `/artifactory` to the connector endpoint if you have not already.",
-            "Artifactory connector URL may be incorrect or the server is down or the server is not reachable from the delegate",
+            "Check if the URL is correct. Consider appending `/artifactory` to the connector endpoint if you have not already. Check artifact configuration (repository and artifact path field values).",
+            "Artifactory connector URL or artifact configuration may be incorrect or the server is down or the server is not reachable from the delegate",
             new ArtifactoryServerException(
                 "Artifactory Server responded with Not Found.", ErrorCode.INVALID_ARTIFACT_SERVER, USER));
       }
@@ -507,6 +517,150 @@ public class ArtifactoryClientImpl {
       log.error("Exception occurred in retrieving folder paths", e);
     }
     return folderPaths;
+  }
+
+  public List<BuildDetailsInternal> getArtifactsDetails(ArtifactoryConfigRequest artifactoryConfig,
+      String repositoryName, String artifactName, String repositoryFormat, int maxNumberOfBuilds) {
+    log.info("Retrieving artifact tags");
+    List<BuildDetailsInternal> buildDetailsInternals;
+    Artifactory artifactoryClient = getArtifactoryClient(artifactoryConfig);
+    String artifactoryUrl = null;
+    try {
+      artifactoryUrl = ArtifactUtilities.getBaseUrl(artifactoryClient.getUri());
+    } catch (MalformedURLException e) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Please check Artifactory connector configuration and verify that URL is valid.",
+          String.format("URL [%s] is malformed.", artifactoryConfig.getArtifactoryUrl()),
+          new ArtifactoryRegistryException(e.getMessage()));
+    }
+
+    ArtifactoryRequest artifactoryRequest =
+        new ArtifactoryRequestImpl()
+            .apiUrl("api/docker/" + repositoryName + "/v2/" + artifactName + "/tags/list")
+            .method(GET)
+            .responseType(JSON);
+
+    ArtifactoryResponse artifactoryResponse;
+
+    try {
+      artifactoryResponse = artifactoryClient.restCall(artifactoryRequest);
+    } catch (IOException e) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Please check Artifactory connector configuration and verify that URL is valid.",
+          String.format("Failed to execute API call '%s %s'", artifactoryRequest.getMethod(),
+              artifactoryUrl + artifactoryRequest.getApiUrl()),
+          new ArtifactoryRegistryException(e.getMessage()));
+    }
+
+    Map response;
+
+    try {
+      if (artifactoryResponse.getStatusLine().getStatusCode() == 404) {
+        throw NestedExceptionUtils.hintWithExplanationException(
+            "Check if the URL is correct. Check artifact configuration (repository and artifact path field values).",
+            String.format(
+                "Artifactory connector URL or artifact configuration may be incorrect or the server is down or the server is not reachable from the delegate. Executed API call '%s %s' and got response code '%s'",
+                artifactoryRequest.getMethod(), artifactoryUrl + artifactoryRequest.getApiUrl(),
+                artifactoryResponse.getStatusLine().getStatusCode()),
+            new ArtifactoryRegistryException("Artifactory Server responded with 'Not Found'.", USER));
+      }
+      handleErrorResponse(artifactoryResponse);
+      response = artifactoryResponse.parseBody(Map.class);
+    } catch (IOException e) {
+      throw NestedExceptionUtils.hintWithExplanationException(
+          "Please check Artifactory connector configuration and verify that URL is valid.",
+          String.format("Failed to parse response for API call '%s %s' and got response code %s",
+              artifactoryRequest.getMethod(), artifactoryUrl + artifactoryRequest.getApiUrl(),
+              artifactoryResponse.getStatusLine().getStatusCode()),
+          new ArtifactoryRegistryException(e.getMessage()));
+    }
+
+    if (!isEmpty(response)) {
+      List<String> tags = (List<String>) response.get("tags");
+      if (isNotEmpty(tags)) {
+        String tagUrl = getBaseUrl(artifactoryConfig) + repositoryName + "/" + artifactName + "/";
+        String repoName = ArtifactUtilities.getArtifactoryRepositoryName(artifactoryConfig.getArtifactoryUrl(),
+            artifactoryConfig.getArtifactRepositoryUrl(), repositoryName, artifactName);
+        buildDetailsInternals =
+            tags.stream()
+                .map(tag -> {
+                  Map<String, String> metadata = new HashMap();
+                  metadata.put(ArtifactMetadataKeys.IMAGE, repoName + ":" + tag);
+                  metadata.put(ArtifactMetadataKeys.TAG, tag);
+                  metadata.put(ArtifactMetadataKeys.ARTIFACT_MANIFEST_URL,
+                      generateArtifactManifestUrl(artifactoryConfig, repositoryName, artifactName, tag));
+                  return BuildDetailsInternal.builder()
+                      .number(tag)
+                      .buildUrl(tagUrl + tag)
+                      .metadata(metadata)
+                      .uiDisplayName("Tag# " + tag)
+                      .build();
+                })
+                .collect(toList());
+        if (tags.size() < 10) {
+          log.info("Retrieving artifact tags from artifactory url {} and repo key {} and artifact {} success. Tags {}",
+              artifactoryUrl + artifactoryRequest.getApiUrl(), repositoryName, artifactName, tags);
+        } else {
+          log.info("Retrieving artifact tags from artifactory url {} and repo key {} and artifact {} success. Tags {}",
+              artifactoryUrl + artifactoryRequest.getApiUrl(), repositoryName, artifactName, tags.size());
+        }
+
+        buildDetailsInternals.sort(new BuildDetailsInternalComparatorAscending());
+        return buildDetailsInternals;
+      }
+    }
+    throw NestedExceptionUtils.hintWithExplanationException("Please check your artifact configuration.",
+        String.format("Failed to retrieve artifact tags by API call '%s %s' and got response code '%s'",
+            artifactoryRequest.getMethod(), artifactoryUrl + artifactoryRequest.getApiUrl(),
+            artifactoryResponse.getStatusLine().getStatusCode()),
+        new ArtifactoryRegistryException(
+            String.format("No tags found for artifact [repositoryFormat=%s, repository=%s, artifact=%s].",
+                repositoryFormat, repositoryName, artifactName)));
+  }
+
+  public boolean verifyArtifactManifestUrl(ArtifactoryConfigRequest artifactoryConfig, String artifactManifestUrl) {
+    String authorization = null;
+    if (artifactoryConfig.isHasCredentials()) {
+      authorization = Credentials.basic(artifactoryConfig.getUsername(), new String(artifactoryConfig.getPassword()));
+    }
+
+    String additionalMsg = null;
+    HttpURLConnection connection = null;
+    try {
+      connection = (HttpURLConnection) new URL(artifactManifestUrl).openConnection();
+      connection.setRequestMethod("GET");
+      connection.setConnectTimeout(15000);
+      connection.setReadTimeout(15000);
+      if (isNotEmpty(authorization)) {
+        connection.setRequestProperty("Authorization", authorization);
+      }
+      if (connection.getResponseCode() == 200) {
+        return true;
+      }
+    } catch (IOException e) {
+      log.error("Failed to pull artifact manifest", e);
+      additionalMsg = e.getMessage();
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+
+    throw NestedExceptionUtils.hintWithExplanationException(
+        "Please verify your Artifactory configuration artifact repository URL field.",
+        String.format("Can not pull the artifact manifest. Check was performed with API call '%s %s'", "GET",
+            artifactManifestUrl),
+        new ArtifactoryRegistryException(
+            "Could not retrieve artifact manifest." + (isNotEmpty(additionalMsg) ? additionalMsg : "")));
+  }
+
+  private String generateArtifactManifestUrl(
+      ArtifactoryConfigRequest artifactoryConfig, String repositoryName, String artifactName, String tag) {
+    return ArtifactUtilities.getArtifactoryRegistryUrl(
+               artifactoryConfig.getArtifactoryUrl(), artifactoryConfig.getArtifactRepositoryUrl(), repositoryName)
+        + "/artifactory/" + ArtifactUtilities.trimSlashforwardChars(repositoryName) + "/"
+        + ArtifactUtilities.trimSlashforwardChars(artifactName) + "/" + ArtifactUtilities.trimSlashforwardChars(tag)
+        + "/manifest.json";
   }
 
   @Data

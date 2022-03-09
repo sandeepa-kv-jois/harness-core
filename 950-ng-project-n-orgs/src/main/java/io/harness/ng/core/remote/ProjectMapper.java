@@ -19,9 +19,7 @@ import io.harness.ng.core.dto.ProjectDTO;
 import io.harness.ng.core.dto.ProjectResponse;
 import io.harness.ng.core.entities.Project;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.util.Optional;
-import lombok.SneakyThrows;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(PL)
@@ -58,11 +56,5 @@ public class ProjectMapper {
         .lastModifiedAt(project.getLastModifiedAt())
         .project(writeDTO(project))
         .build();
-  }
-
-  @SneakyThrows
-  public static Project applyUpdateToProject(Project project, ProjectDTO updateProjectDTO) {
-    String jsonString = new ObjectMapper().writer().writeValueAsString(updateProjectDTO);
-    return new ObjectMapper().readerForUpdating(project).readValue(jsonString);
   }
 }

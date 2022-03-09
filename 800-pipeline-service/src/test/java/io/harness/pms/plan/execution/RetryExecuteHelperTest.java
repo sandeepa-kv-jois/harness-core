@@ -7,11 +7,13 @@
 
 package io.harness.pms.plan.execution;
 
+import static io.harness.rule.OwnerRule.NAMAN;
 import static io.harness.rule.OwnerRule.PRASHANTSHARMA;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
 import io.harness.CategoryTest;
@@ -19,12 +21,14 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.engine.executions.node.NodeExecutionServiceImpl;
+import io.harness.engine.executions.plan.PlanExecutionMetadataService;
 import io.harness.engine.executions.retry.RetryGroup;
 import io.harness.engine.executions.retry.RetryHistoryResponseDto;
 import io.harness.engine.executions.retry.RetryInfo;
 import io.harness.engine.executions.retry.RetryLatestExecutionResponseDto;
 import io.harness.engine.executions.retry.RetryStageInfo;
 import io.harness.exception.InvalidRequestException;
+import io.harness.execution.PlanExecutionMetadata;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.plan.Node;
 import io.harness.plan.NodeType;
@@ -35,7 +39,10 @@ import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.execution.ExecutionStatus;
+import io.harness.pms.pipeline.PipelineEntity;
+import io.harness.pms.pipeline.service.PMSPipelineService;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
+import io.harness.pms.plan.execution.service.PMSExecutionService;
 import io.harness.repositories.executions.PmsExecutionSummaryRespository;
 import io.harness.rule.Owner;
 
@@ -51,6 +58,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -63,6 +71,18 @@ public class RetryExecuteHelperTest extends CategoryTest {
   @InjectMocks private RetryExecutionHelper retryExecuteHelper;
   @Mock private NodeExecutionServiceImpl nodeExecutionService;
   @Mock private PmsExecutionSummaryRespository pmsExecutionSummaryRespository;
+  @Mock private PMSPipelineService pipelineService;
+  @Mock private PMSExecutionService executionService;
+  @Mock private PlanExecutionMetadataService planExecutionMetadataService;
+
+  String accountId = "acc";
+  String orgId = "org";
+  String projectId = "proj";
+  String pipelineId = "pipeline";
+  String planExecId = "plan";
+
+  private final long HR_IN_MS = 60 * 60 * 1000;
+  private final long DAY_IN_MS = 24 * HR_IN_MS;
 
   @Before
   public void setUp() throws IOException {
@@ -815,5 +835,95 @@ public class RetryExecuteHelperTest extends CategoryTest {
     retryLatestExecutionResponse = retryExecuteHelper.getRetryLatestExecutionId(rootExecutionId);
     assertThat(retryLatestExecutionResponse.getErrorMessage()).isNull();
     assertThat(retryLatestExecutionResponse.getLatestExecutionId()).isEqualTo("uuid1");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testValidateRetryWithPipelineDeleted() {
+    doReturn(Optional.empty()).when(pipelineService).get(accountId, orgId, projectId, pipelineId, false);
+    RetryInfo retryInfo = retryExecuteHelper.validateRetry(accountId, orgId, projectId, pipelineId, planExecId);
+    assertThat(retryInfo.isResumable()).isFalse();
+    assertThat(retryInfo.getErrorMessage())
+        .isEqualTo("Pipeline with the given ID: pipeline does not exist or has been deleted");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testValidateRetryWhenNotTheLatestExecution() {
+    doReturn(Optional.of(PipelineEntity.builder().build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    doReturn(PipelineExecutionSummaryEntity.builder().isLatestExecution(false).build())
+        .when(executionService)
+        .getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecId, false);
+    RetryInfo retryInfo = retryExecuteHelper.validateRetry(accountId, orgId, projectId, pipelineId, planExecId);
+    assertThat(retryInfo.isResumable()).isFalse();
+    assertThat(retryInfo.getErrorMessage())
+        .isEqualTo(
+            "This execution is not the latest of all retried execution. You can only retry the latest execution.");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testValidateRetryWhenThirtyDaysHavePassed() {
+    doReturn(Optional.of(PipelineEntity.builder().build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    doReturn(PipelineExecutionSummaryEntity.builder()
+                 .isLatestExecution(true)
+                 .createdAt(System.currentTimeMillis() - 60 * DAY_IN_MS)
+                 .build())
+        .when(executionService)
+        .getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecId, false);
+    RetryInfo retryInfo = retryExecuteHelper.validateRetry(accountId, orgId, projectId, pipelineId, planExecId);
+    assertThat(retryInfo.isResumable()).isFalse();
+    assertThat(retryInfo.getErrorMessage()).isEqualTo("Execution is more than 30 days old. Cannot retry");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testValidateRetryWhenPlanExecutionDoesNotExist() {
+    doReturn(Optional.of(PipelineEntity.builder().build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    doReturn(PipelineExecutionSummaryEntity.builder()
+                 .isLatestExecution(true)
+                 .createdAt(System.currentTimeMillis() - DAY_IN_MS)
+                 .build())
+        .when(executionService)
+        .getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecId, false);
+    doReturn(Optional.empty()).when(planExecutionMetadataService).findByPlanExecutionId(planExecId);
+
+    RetryInfo retryInfo = retryExecuteHelper.validateRetry(accountId, orgId, projectId, pipelineId, planExecId);
+    assertThat(retryInfo.isResumable()).isFalse();
+    assertThat(retryInfo.getErrorMessage()).isEqualTo("No Plan Execution exists for id plan");
+  }
+
+  @Test
+  @Owner(developers = NAMAN)
+  @Category(UnitTests.class)
+  public void testValidateRetryWhenNoChangeInPipeline() {
+    String originalYamlFile = "retry-original1.yaml";
+    String originalYaml = readFile(originalYamlFile);
+
+    doReturn(Optional.of(PipelineEntity.builder().yaml(originalYaml).build()))
+        .when(pipelineService)
+        .get(accountId, orgId, projectId, pipelineId, false);
+    doReturn(PipelineExecutionSummaryEntity.builder()
+                 .isLatestExecution(true)
+                 .createdAt(System.currentTimeMillis() - DAY_IN_MS)
+                 .build())
+        .when(executionService)
+        .getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecId, false);
+    doReturn(Optional.of(PlanExecutionMetadata.builder().yaml(originalYaml).build()))
+        .when(planExecutionMetadataService)
+        .findByPlanExecutionId(planExecId);
+
+    RetryInfo retryInfo = retryExecuteHelper.validateRetry(accountId, orgId, projectId, pipelineId, planExecId);
+    assertThat(retryInfo.isResumable()).isTrue();
   }
 }

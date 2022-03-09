@@ -11,9 +11,9 @@ import (
 	"time"
 
 	gomock "github.com/golang/mock/gomock"
+	"github.com/harness/harness-core/commons/go/lib/logs"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
-	"github.com/harness/harness-core/commons/go/lib/logs"
 
 	"github.com/harness/harness-core/product/log-service/client"
 	"github.com/harness/harness-core/product/log-service/mock"

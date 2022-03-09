@@ -7,8 +7,8 @@
 
 package software.wings.service.impl.bugsnag;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
@@ -32,7 +32,7 @@ public class BugsnagSetupTestData extends SetupTestNodeData {
 
   @Builder
   public BugsnagSetupTestData(String appId, String settingId, String instanceName, boolean isServiceLevel,
-      Instance instanceElement, String hostExpression, String workflowId, String guid, StateType stateType,
+      Instance instanceElement, String hostExpression, String workflowId, String guid, DelegateStateType stateType,
       long fromTime, long toTime, String orgId, String projectId, String releaseStage, String query,
       boolean browserApplication) {
     super(appId, settingId, instanceName, isServiceLevel, instanceElement, hostExpression, workflowId, guid, stateType,

@@ -12,21 +12,18 @@ import static io.harness.cvng.core.utils.DateTimeUtils.roundDownToMinBoundary;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
-import io.harness.cvng.activity.entities.Activity;
-import io.harness.cvng.activity.services.api.ActivityService;
 import io.harness.cvng.analysis.beans.Risk;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.TimeSeriesMetricType;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.PageParams;
-import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.beans.params.TimeRangeParams;
 import io.harness.cvng.core.beans.params.filterParams.TimeSeriesAnalysisFilter;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.TimeSeriesRecord;
 import io.harness.cvng.core.services.api.CVConfigService;
 import io.harness.cvng.core.services.api.TimeSeriesRecordService;
-import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.dashboard.beans.TimeSeriesMetricDataDTO;
 import io.harness.cvng.dashboard.beans.TimeSeriesMetricDataDTO.MetricData;
 import io.harness.cvng.dashboard.services.api.TimeSeriesDashboardService;
@@ -34,13 +31,11 @@ import io.harness.cvng.utils.CVNGParallelExecutor;
 import io.harness.ng.beans.PageResponse;
 import io.harness.utils.PageUtils;
 
-import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -56,27 +51,21 @@ import java.util.stream.Collectors;
 public class TimeSeriesDashboardServiceImpl implements TimeSeriesDashboardService {
   @Inject private CVConfigService cvConfigService;
   @Inject private TimeSeriesRecordService timeSeriesRecordService;
-  @Inject private VerificationTaskService verificationTaskService;
   @Inject private CVNGParallelExecutor cvngParallelExecutor;
-  @Inject private ActivityService activityService;
 
   @Override
-  public PageResponse<TimeSeriesMetricDataDTO> getTimeSeriesMetricData(
-      ServiceEnvironmentParams serviceEnvironmentParams, TimeRangeParams timeRangeParams,
-      TimeSeriesAnalysisFilter timeSeriesAnalysisFilter, PageParams pageParams) {
+  public PageResponse<TimeSeriesMetricDataDTO> getTimeSeriesMetricData(MonitoredServiceParams monitoredServiceParams,
+      TimeRangeParams timeRangeParams, TimeSeriesAnalysisFilter timeSeriesAnalysisFilter, PageParams pageParams) {
     List<CVConfig> cvConfigs;
     if (timeSeriesAnalysisFilter.filterByHealthSourceIdentifiers()) {
-      cvConfigs = cvConfigService.list(serviceEnvironmentParams, timeSeriesAnalysisFilter.getHealthSourceIdentifiers());
+      cvConfigs = cvConfigService.list(monitoredServiceParams, timeSeriesAnalysisFilter.getHealthSourceIdentifiers());
     } else {
-      cvConfigs = cvConfigService.list(serviceEnvironmentParams);
+      cvConfigs = cvConfigService.list(monitoredServiceParams);
     }
     List<String> cvConfigIds = cvConfigs.stream().map(CVConfig::getUuid).collect(Collectors.toList());
-    PageResponse<TimeSeriesMetricDataDTO> timeSeriesMetricDataDTOPageResponse = getMetricData(cvConfigIds,
-        serviceEnvironmentParams.getAccountIdentifier(), serviceEnvironmentParams.getProjectIdentifier(),
-        serviceEnvironmentParams.getOrgIdentifier(), serviceEnvironmentParams.getEnvironmentIdentifier(),
-        serviceEnvironmentParams.getServiceIdentifier(), null, timeRangeParams.getStartTime(),
-        timeRangeParams.getEndTime(), timeRangeParams.getStartTime(), timeSeriesAnalysisFilter.isAnomalousMetricsOnly(),
-        pageParams.getPage(), pageParams.getSize(), timeSeriesAnalysisFilter.getFilter());
+    PageResponse<TimeSeriesMetricDataDTO> timeSeriesMetricDataDTOPageResponse =
+        getMetricData(cvConfigIds, monitoredServiceParams, null, timeRangeParams.getStartTime(),
+            timeRangeParams.getEndTime(), timeRangeParams.getStartTime(), pageParams, timeSeriesAnalysisFilter);
     setUpMetricDataForFullTimeRange(timeRangeParams, timeSeriesMetricDataDTOPageResponse);
     return timeSeriesMetricDataDTOPageResponse;
   }
@@ -123,48 +112,25 @@ public class TimeSeriesDashboardServiceImpl implements TimeSeriesDashboardServic
     }
     List<String> cvConfigIds = cvConfigList.stream().map(CVConfig::getUuid).collect(Collectors.toList());
 
-    return getMetricData(cvConfigIds, accountId, projectIdentifier, orgIdentifier, environmentIdentifier,
-        serviceIdentifier, monitoringCategory, startTime, endTime, analysisStartTime, anomalous, page, size, filter);
+    return getMetricData(cvConfigIds,
+        MonitoredServiceParams.builder()
+            .accountIdentifier(accountId)
+            .orgIdentifier(orgIdentifier)
+            .projectIdentifier(projectIdentifier)
+            .serviceIdentifier(serviceIdentifier)
+            .environmentIdentifier(environmentIdentifier)
+            .build(),
+        monitoringCategory, startTime, endTime, analysisStartTime, PageParams.builder().page(page).size(size).build(),
+        TimeSeriesAnalysisFilter.builder().anomalousMetricsOnly(anomalous).filter(filter).build());
   }
 
-  @Override
-  public PageResponse<TimeSeriesMetricDataDTO> getActivityMetrics(String activityId, String accountId,
-      String projectIdentifier, String orgIdentifier, String environmentIdentifier, String serviceIdentifier,
-      Long startTimeMillis, Long endTimeMillis, boolean anomalousOnly, int page, int size) {
-    Activity activity = activityService.get(activityId);
-    Preconditions.checkState(activity != null, "Invalid activityID");
-    List<String> verificationJobInstanceIds = activity.getVerificationJobInstanceIds();
-    Set<String> verificationTaskIds =
-        verificationJobInstanceIds.stream()
-            .map(verificationJobInstanceId
-                -> verificationTaskService.maybeGetVerificationTaskIds(accountId, verificationJobInstanceId))
-            .flatMap(Collection::stream)
-            .collect(Collectors.toSet());
-
-    List<String> cvConfigIds = verificationTaskIds.stream()
-                                   .map(verificationTaskId -> verificationTaskService.getCVConfigId(verificationTaskId))
-                                   .collect(Collectors.toList());
-    return getMetricData(cvConfigIds, accountId, projectIdentifier, orgIdentifier, environmentIdentifier,
-        serviceIdentifier, null, Instant.ofEpochMilli(startTimeMillis), Instant.ofEpochMilli(endTimeMillis),
-        activity.getActivityStartTime(), anomalousOnly, page, size, null);
-  }
-
-  private PageResponse<TimeSeriesMetricDataDTO> getMetricData(List<String> cvConfigIds, String accountId,
-      String projectIdentifier, String orgIdentifier, String environmentIdentifier, String serviceIdentifier,
-      CVMonitoringCategory monitoringCategory, Instant startTime, Instant endTime, Instant analysisStartTime,
-      boolean anomalousOnly, int page, int size, String filter) {
+  private PageResponse<TimeSeriesMetricDataDTO> getMetricData(List<String> cvConfigIds,
+      MonitoredServiceParams monitoredServiceParams, CVMonitoringCategory monitoringCategory, Instant startTime,
+      Instant endTime, Instant analysisStartTime, PageParams pageParams,
+      TimeSeriesAnalysisFilter timeSeriesAnalysisFilter) {
     List<Callable<List<TimeSeriesRecord>>> recordsPerId = new ArrayList<>();
-
-    // TODO: this should be passed as parameter, needs refactoring in other methods as well
-    ServiceEnvironmentParams serviceEnvironmentParams = ServiceEnvironmentParams.builder()
-                                                            .accountIdentifier(accountId)
-                                                            .orgIdentifier(orgIdentifier)
-                                                            .projectIdentifier(projectIdentifier)
-                                                            .serviceIdentifier(serviceIdentifier)
-                                                            .environmentIdentifier(environmentIdentifier)
-                                                            .build();
     Map<String, DataSourceType> cvConfigIdToDataSourceTypeMap =
-        cvConfigService.getDataSourceTypeForCVConfigs(serviceEnvironmentParams, cvConfigIds);
+        cvConfigService.getDataSourceTypeForCVConfigs(monitoredServiceParams);
     cvConfigIds.forEach(cvConfigId -> recordsPerId.add(() -> {
       List<TimeSeriesRecord> timeSeriesRecordsfromDB =
           timeSeriesRecordService.getTimeSeriesRecordsForConfigs(Arrays.asList(cvConfigId), startTime, endTime, false);
@@ -172,7 +138,7 @@ public class TimeSeriesDashboardServiceImpl implements TimeSeriesDashboardServic
       if (isEmpty(timeSeriesRecordsfromDB)) {
         return timeSeriesRecords;
       }
-      if (!anomalousOnly) {
+      if (!timeSeriesAnalysisFilter.isAnomalousMetricsOnly()) {
         timeSeriesRecords.addAll(timeSeriesRecordsfromDB);
       } else {
         // it is possible that there are some transactions with good risk and some with bad.
@@ -230,8 +196,9 @@ public class TimeSeriesDashboardServiceImpl implements TimeSeriesDashboardServic
       record.getTimeSeriesGroupValues().forEach(timeSeriesGroupValue -> {
         String txnName = timeSeriesGroupValue.getGroupName();
         String key = txnName + "." + metricName;
-        if (isNotEmpty(filter) && !txnName.toLowerCase().contains(filter)
-            && !metricName.toLowerCase().contains(filter.toLowerCase())) {
+        if (isNotEmpty(timeSeriesAnalysisFilter.getFilter())
+            && !txnName.toLowerCase().contains(timeSeriesAnalysisFilter.getFilter())
+            && !metricName.toLowerCase().contains(timeSeriesAnalysisFilter.getFilter().toLowerCase())) {
           return;
         }
         if (!transactionMetricDataMap.containsKey(key)) {
@@ -240,10 +207,11 @@ public class TimeSeriesDashboardServiceImpl implements TimeSeriesDashboardServic
                   .metricName(metricName)
                   .groupName(txnName)
                   .category(monitoringCategory)
-                  .environmentIdentifier(environmentIdentifier)
-                  .serviceIdentifier(serviceIdentifier)
-                  .projectIdentifier(projectIdentifier)
-                  .orgIdentifier(orgIdentifier)
+                  .projectIdentifier(monitoredServiceParams.getProjectIdentifier())
+                  .orgIdentifier(monitoredServiceParams.getOrgIdentifier())
+                  .environmentIdentifier(monitoredServiceParams.getEnvironmentIdentifier())
+                  .serviceIdentifier(monitoredServiceParams.getServiceIdentifier())
+                  .monitoredServiceIdentifier(monitoredServiceParams.getMonitoredServiceIdentifier())
                   .metricType(record.getMetricType())
                   .dataSourceType(cvConfigIdToDataSourceTypeMap.get(record.getVerificationTaskId()))
                   .build());
@@ -265,7 +233,7 @@ public class TimeSeriesDashboardServiceImpl implements TimeSeriesDashboardServic
     });
     SortedSet<TimeSeriesMetricDataDTO> sortedMetricData = new TreeSet<>(transactionMetricDataMap.values());
     // updateLastWindowRisk(sortedMetricData, endTime);
-    return PageUtils.offsetAndLimit(new ArrayList<>(sortedMetricData), page, size);
+    return PageUtils.offsetAndLimit(new ArrayList<>(sortedMetricData), pageParams.getPage(), pageParams.getSize());
   }
 
   private void updateLastWindowRisk(SortedSet<TimeSeriesMetricDataDTO> sortedMetricData, Instant endTime) {

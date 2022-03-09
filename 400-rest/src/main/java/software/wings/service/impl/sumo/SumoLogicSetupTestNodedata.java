@@ -7,8 +7,8 @@
 
 package software.wings.service.impl.sumo;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.SetupTestNodeData;
-import software.wings.sm.StateType;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Builder;
@@ -32,7 +32,7 @@ public class SumoLogicSetupTestNodedata extends SetupTestNodeData {
       Instance instanceElement, String hostExpression, String workflowId, long fromTime, long toTime, String query,
       String hostNameField, String guid) {
     super(appId, settingId, instanceName, isServiceLevel, instanceElement, hostExpression, workflowId, guid,
-        StateType.SUMO, fromTime, toTime);
+        DelegateStateType.SUMO, fromTime, toTime);
     this.query = query;
     this.hostNameField = hostNameField;
   }

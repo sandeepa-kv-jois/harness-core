@@ -14,16 +14,12 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 import io.harness.OrchestrationTestBase;
 import io.harness.category.element.UnitTests;
-import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
-import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.resume.EngineResumeCallback;
-import io.harness.plan.Node;
-import io.harness.plan.PlanNode;
+import io.harness.execution.InitiateNodeHelper;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.ambiance.Level;
 import io.harness.pms.contracts.execution.ChildExecutableResponse;
@@ -44,9 +40,8 @@ import org.mockito.Mock;
 
 public class SpawnChildRequestProcessorTest extends OrchestrationTestBase {
   @Mock NodeExecutionService nodeExecutionService;
-  @Mock PlanService planService;
+  @Mock InitiateNodeHelper initiateNodeHelper;
   @Mock WaitNotifyEngine waitNotifyEngine;
-  @Mock OrchestrationEngine orchestrationEngine;
 
   @Inject @InjectMocks SpawnChildRequestProcessor processor;
 
@@ -82,35 +77,17 @@ public class SpawnChildRequestProcessorTest extends OrchestrationTestBase {
             .setAmbiance(ambiance)
             .build();
 
-    PlanNode node = PlanNode.builder()
-                        .uuid(child1Id)
-                        .name("child1")
-                        .identifier(generateUuid())
-                        .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
-                        .serviceName("CD")
-                        .build();
-    when(planService.fetchNode(eq(planId), eq(child1Id))).thenReturn(node);
-
     processor.handleEvent(event);
 
-    ArgumentCaptor<Ambiance> ambianceCaptor = ArgumentCaptor.forClass(Ambiance.class);
-    ArgumentCaptor<PlanNode> nodeCaptor = ArgumentCaptor.forClass(PlanNode.class);
-    verify(orchestrationEngine).triggerNode(ambianceCaptor.capture(), nodeCaptor.capture(), eq(null));
-
-    Ambiance childAmbiance = ambianceCaptor.getValue();
-
-    assertThat(childAmbiance.getLevelsCount()).isEqualTo(2);
-    assertThat(childAmbiance.getLevels(1).getSetupId()).isEqualTo(child1Id);
-
-    Node planNode = nodeCaptor.getValue();
-    assertThat(planNode).isEqualTo(node);
+    ArgumentCaptor<String> runtimeIdCaptor = ArgumentCaptor.forClass(String.class);
+    verify(initiateNodeHelper).publishEvent(eq(ambiance), eq(child1Id), runtimeIdCaptor.capture());
 
     ArgumentCaptor<EngineResumeCallback> callbackCaptor = ArgumentCaptor.forClass(EngineResumeCallback.class);
     ArgumentCaptor<String> exIdCaptor = ArgumentCaptor.forClass(String.class);
     verify(waitNotifyEngine).waitForAllOn(any(), callbackCaptor.capture(), exIdCaptor.capture());
 
     assertThat(callbackCaptor.getValue().getAmbiance()).isEqualTo(ambiance);
-    assertThat(childAmbiance.getLevels(1).getRuntimeId()).isEqualTo(exIdCaptor.getValue());
+    assertThat(runtimeIdCaptor.getValue()).isEqualTo(exIdCaptor.getValue());
 
     verify(nodeExecutionService).updateV2(eq(nodeExecutionId), any());
   }

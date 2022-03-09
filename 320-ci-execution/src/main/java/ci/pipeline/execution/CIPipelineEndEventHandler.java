@@ -7,6 +7,7 @@
 
 package ci.pipeline.execution;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.telemetry.Destination.AMPLITUDE;
 
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
@@ -86,9 +87,9 @@ public class CIPipelineEndEventHandler implements OrchestrationEventHandler {
     BaseNGAccess baseNGAccess = retrieveBaseNGAccess(ambiance);
     if (initializeStepInfo != null && initializeStepInfo.getCiCodebase() != null) {
       ciBuiltMap.put(USED_CODEBASE, true);
-      if (initializeStepInfo.getCiCodebase().getConnectorRef() != null) {
-        ConnectorDetails connectorDetails =
-            connectorUtils.getConnectorDetails(baseNGAccess, initializeStepInfo.getCiCodebase().getConnectorRef());
+      if (isNotEmpty(initializeStepInfo.getCiCodebase().getConnectorRef().getValue())) {
+        ConnectorDetails connectorDetails = connectorUtils.getConnectorDetails(
+            baseNGAccess, initializeStepInfo.getCiCodebase().getConnectorRef().getValue());
         ciBuiltMap.put(URL, connectorUtils.retrieveURL(connectorDetails));
       }
     } else {

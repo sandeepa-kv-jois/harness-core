@@ -45,7 +45,7 @@ import org.hibernate.validator.constraints.NotEmpty;
 @NoArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
 @EqualsAndHashCode(callSuper = true)
-public class DynatraceHealthSourceSpec extends HealthSourceSpec {
+public class DynatraceHealthSourceSpec extends MetricHealthSourceSpec {
   @NotNull String feature;
   @NotEmpty String serviceId;
   String serviceName;
@@ -144,6 +144,7 @@ public class DynatraceHealthSourceSpec extends HealthSourceSpec {
                                    .dynatraceServiceName(serviceName)
                                    .dynatraceServiceId(serviceId)
                                    .envIdentifier(environmentRef)
+                                   .serviceMethodIds(serviceMethodIds)
                                    .serviceIdentifier(serviceRef)
                                    .groupName(metricDefinitionList.get(0).getGroupName())
                                    .category(metricDefinitionList.get(0).getRiskProfile().getCategory())

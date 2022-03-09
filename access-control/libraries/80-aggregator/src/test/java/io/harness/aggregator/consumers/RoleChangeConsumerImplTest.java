@@ -37,12 +37,12 @@ import io.harness.aggregator.AggregatorTestBase;
 import io.harness.aggregator.controllers.AggregatorBaseSyncController.AggregatorJobType;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 import io.harness.utils.PageTestUtils;
 
 import com.google.inject.Inject;
 import com.google.inject.name.Named;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -125,7 +125,7 @@ public class RoleChangeConsumerImplTest extends AggregatorTestBase {
     List<RoleAssignmentDBO> roleAssignments = createACLsForRoleAssignments(numRoleAssignments, role);
     verifyACLs(roleAssignments, role.getPermissions().size(), 1, resourceGroup.getResourceSelectors().size());
 
-    RoleDBO updatedRole = (RoleDBO) NGObjectMapperHelper.clone(role);
+    RoleDBO updatedRole = (RoleDBO) HObjectMapper.clone(role);
     updatedRole.getPermissions().add(getRandomString(10));
     mockRoleServices(updatedRole);
     roleChangeConsumer.consumeUpdateEvent(updatedRole.getId(), updatedRole);
@@ -143,7 +143,7 @@ public class RoleChangeConsumerImplTest extends AggregatorTestBase {
     List<RoleAssignmentDBO> roleAssignments = createACLsForRoleAssignments(numRoleAssignments, newRole);
     verifyACLs(roleAssignments, newRole.getPermissions().size(), 0, 0);
 
-    RoleDBO updatedRole = (RoleDBO) NGObjectMapperHelper.clone(newRole);
+    RoleDBO updatedRole = (RoleDBO) HObjectMapper.clone(newRole);
     updatedRole.getPermissions().add(getRandomString(10));
     updatedRole.getPermissions().add(getRandomString(10));
     mockRoleServices(updatedRole);
@@ -163,7 +163,7 @@ public class RoleChangeConsumerImplTest extends AggregatorTestBase {
     List<RoleAssignmentDBO> roleAssignments = createACLsForRoleAssignments(numRoleAssignments, newRole);
     verifyACLs(roleAssignments, newRole.getPermissions().size(), 1, resourceGroup.getResourceSelectors().size());
 
-    RoleDBO updatedRole = (RoleDBO) NGObjectMapperHelper.clone(newRole);
+    RoleDBO updatedRole = (RoleDBO) HObjectMapper.clone(newRole);
     updatedRole.getPermissions().removeAll(updatedRole.getPermissions());
     mockRoleServices(updatedRole);
 

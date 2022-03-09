@@ -11,7 +11,6 @@ import static io.harness.batch.processing.pricing.gcp.bigquery.BQConst.CLOUD_PRO
 import static io.harness.batch.processing.service.impl.BillingDataPipelineServiceImpl.DATA_SET_NAME_TEMPLATE;
 import static io.harness.batch.processing.service.impl.BillingDataPipelineServiceImpl.getDataSetDescription;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
-import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 
 import static java.lang.String.format;
 
@@ -30,8 +29,6 @@ import io.harness.delegate.beans.connector.CcmConnectorFilter;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
 import io.harness.filter.FilterType;
-import io.harness.logging.AccountLogContext;
-import io.harness.logging.AutoLogContext;
 import io.harness.ng.beans.PageResponse;
 import io.harness.utils.RestCallToNGManagerClientUtils;
 
@@ -75,7 +72,6 @@ public class AwsAccountTagsCollectionService {
     List<Account> accounts = accountShardService.getCeEnabledAccounts();
     log.info("accounts size: {}", accounts.size());
     for (Account account : accounts) {
-      AutoLogContext ignore = new AccountLogContext(account.getUuid(), OVERRIDE_ERROR);
       log.info("Fetching connectors for accountName {}, accountId {}", account.getAccountName(), account.getUuid());
       List<ConnectorResponseDTO> nextGenAwsConnectorResponses = getNextGenAwsConnectorResponses(account.getUuid());
       for (ConnectorResponseDTO connector : nextGenAwsConnectorResponses) {
@@ -88,7 +84,6 @@ public class AwsAccountTagsCollectionService {
               connectorInfo.getIdentifier(), account.getUuid(), e);
         }
       }
-      ignore.close();
     }
   }
 

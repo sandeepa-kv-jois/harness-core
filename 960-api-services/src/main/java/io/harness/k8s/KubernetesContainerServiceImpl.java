@@ -78,6 +78,7 @@ import io.harness.exception.UrlNotProvidedException;
 import io.harness.exception.UrlNotReachableException;
 import io.harness.exception.WingsException;
 import io.harness.filesystem.FileIo;
+import io.harness.k8s.apiclient.KubernetesApiCall;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.model.Kind;
 import io.harness.k8s.model.KubernetesClusterAuthType;
@@ -465,6 +466,16 @@ public class KubernetesContainerServiceImpl implements KubernetesContainerServic
     if (!isHostConnectable) {
       throw new UrlNotReachableException("Could not connect to the master url: " + url);
     }
+  }
+
+  @Override
+  public void validateCredentials(KubernetesConfig kubernetesConfig) {
+    final Supplier<Void> versionApiCall = () -> {
+      ApiClient apiClient = kubernetesHelperService.getApiClient(kubernetesConfig);
+      KubernetesApiCall.call(apiClient, () -> new VersionApi(apiClient).getCodeCall(null));
+      return null;
+    };
+    retry.executeSupplier(versionApiCall);
   }
 
   @Override

@@ -8,6 +8,7 @@
 package software.wings.beans.alert;
 
 import io.harness.alert.AlertData;
+import io.harness.beans.WorkflowType;
 
 import lombok.Builder;
 import lombok.Data;
@@ -22,6 +23,8 @@ public class ManualInterventionNeededAlert implements AlertData {
   private String stateExecutionInstanceId;
   private String name;
   private String envId;
+  private WorkflowType workflowType;
+  private String pipelineExecutionId;
 
   @Override
   public boolean matches(AlertData alertData) {

@@ -627,6 +627,25 @@ public class AccountResource {
     }
   }
 
+  @DELETE
+  @Path("{accountId}/ng/license")
+  public RestResponse<Void> deleteNgLicense(
+      @PathParam("accountId") String accountId, @QueryParam("identifier") String identifier) {
+    User existingUser = UserThreadLocal.get();
+    if (existingUser == null) {
+      throw new InvalidRequestException("Invalid User");
+    }
+
+    if (harnessUserGroupService.isHarnessSupportUser(existingUser.getUuid())) {
+      return new RestResponse<>(getResponse(adminLicenseHttpClient.deleteModuleLicense(identifier, accountId)));
+    } else {
+      return RestResponse.Builder.aRestResponse()
+          .withResponseMessages(Lists.newArrayList(
+              ResponseMessage.builder().message("User not allowed to delete module license").build()))
+          .build();
+    }
+  }
+
   @GET
   @Path("{accountId}/ng/license")
   public RestResponse<AccountLicenseDTO> getNgAccountLicense(@PathParam("accountId") String accountId) {

@@ -49,6 +49,8 @@ import io.harness.k8s.model.ReleaseHistory;
 import io.harness.logging.CommandExecutionStatus;
 
 import software.wings.beans.GitFetchFilesConfig;
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -104,9 +106,13 @@ public class K8sCanaryDeployTaskHandler extends K8sTaskHandler {
         return getFailureResponse();
       }
     } else {
+      ExecutionLogCallback executionLogCallback = getLogCallBack(k8sCanaryDeployTaskParameters, FetchFiles);
+      executionLogCallback.saveExecutionLog(
+          color("\nStarting Kubernetes Canary Deployment", LogColor.White, LogWeight.Bold));
+
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sCanaryDeployTaskParameters.getK8sDelegateManifestConfig(), canaryHandlerConfig.getManifestFilesDirectory(),
-          getLogCallBack(k8sCanaryDeployTaskParameters, FetchFiles), timeoutInMillis);
+          executionLogCallback, timeoutInMillis);
       if (!success) {
         return getFailureResponse();
       }

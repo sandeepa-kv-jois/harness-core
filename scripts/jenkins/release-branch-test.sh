@@ -6,7 +6,18 @@
 
 set -e
 
-PROJECTS="ART|BT|CCE|CCM|CDC|CDNG|CDP|CDS|CE|CI|CV|CVNG|CVS|DEL|DOC|DX|ER|FFM|OPS|PIE|PL|SEC|SWAT|GTM|ONP"
+function check_file_present(){
+     local_file=$1
+     if [ ! -f "$local_file" ]; then
+        echo "ERROR: $LINENO: File $local_file not found. Exiting"
+        exit 1
+     fi
+}
+
+SHDIR=$(dirname "$0")
+PROJFILE="$SHDIR/jira-projects.txt"
+check_file_present $PROJFILE
+PROJECTS=$(<$PROJFILE)
 
 git log --remotes=origin/release/* --pretty=oneline --abbrev-commit | grep -iE "\[(${PROJECTS})-[0-9]+]:" -o | sort | uniq | tr '[:lower:]' '[:upper:]' > release.txt
 git log --remotes=origin/develop* --pretty=oneline --abbrev-commit | grep -iE "\[(${PROJECTS})-[0-9]+]:" -o | sort | uniq | tr '[:lower:]' '[:upper:]' > master.txt

@@ -39,6 +39,7 @@ public class MetricPackDTO {
   @Builder
   public static class MetricDefinitionDTO {
     String name;
+    String metricIdentifier;
     TimeSeriesMetricType type;
     String path;
     String validationPath;

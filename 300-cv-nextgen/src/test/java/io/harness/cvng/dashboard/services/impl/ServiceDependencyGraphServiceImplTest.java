@@ -115,11 +115,17 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
         builderFactory.monitoredServiceDTOBuilder().sources(Sources.builder().build()).build();
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
 
-    HeatMap heatMap = builderFactory.heatMapBuilder().heatMapResolution(FIVE_MIN).build();
+    HeatMap heatMap = builderFactory.heatMapBuilder()
+                          .monitoredServiceIdentifier(monitoredServiceDTO.getIdentifier())
+                          .heatMapResolution(FIVE_MIN)
+                          .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
     hPersistence.save(heatMap);
-    heatMap =
-        builderFactory.heatMapBuilder().heatMapResolution(FIVE_MIN).category(CVMonitoringCategory.PERFORMANCE).build();
+    heatMap = builderFactory.heatMapBuilder()
+                  .monitoredServiceIdentifier(monitoredServiceDTO.getIdentifier())
+                  .heatMapResolution(FIVE_MIN)
+                  .category(CVMonitoringCategory.PERFORMANCE)
+                  .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
     hPersistence.save(heatMap);
 
@@ -169,6 +175,257 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
     assertThat(graphDTO.getEdges().size()).isEqualTo(2);
   }
 
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetDependencyGraph_withServicesAtRiskFilter() {
+    Instant endTime = roundDownTo5MinBoundary(clock.instant());
+    MonitoredServiceDTOBuilder monitoredServiceDTOBuilder = builderFactory.monitoredServiceDTOBuilder()
+                                                                .identifier("monitoredServiceIdentifier")
+                                                                .serviceRef(serviceIdentifier)
+                                                                .environmentRef(environmentIdentifier)
+                                                                .name("monitoredServiceName")
+                                                                .tags(tags);
+    MonitoredServiceDTO monitoredServiceOneDTO =
+        createMonitoredServiceDTOWithCustomDependencies(monitoredServiceDTOBuilder, "service_1_local",
+            environmentParams.getServiceIdentifier(), Sets.newHashSet("service_2_local"));
+    MonitoredServiceDTO monitoredServiceTwoDTO = createMonitoredServiceDTOWithCustomDependencies(
+        monitoredServiceDTOBuilder, "service_2_local", "service_2", Sets.newHashSet());
+    MonitoredServiceDTO monitoredServiceThreeDTO = createMonitoredServiceDTOWithCustomDependencies(
+        monitoredServiceDTOBuilder, "service_3_local", "service_3", Sets.newHashSet("service_1_local"));
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceOneDTO);
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceTwoDTO);
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceThreeDTO);
+
+    HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msOneHeatMap);
+    msOneHeatMap = builderFactory.heatMapBuilder()
+                       .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+                       .serviceIdentifier(environmentParams.getServiceIdentifier())
+                       .heatMapResolution(FIVE_MIN)
+                       .category(CVMonitoringCategory.PERFORMANCE)
+                       .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msOneHeatMap);
+
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .serviceIdentifier("service_2")
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msTwoHeatMap);
+    msTwoHeatMap = builderFactory.heatMapBuilder()
+                       .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                       .serviceIdentifier("service_2")
+                       .heatMapResolution(FIVE_MIN)
+                       .category(CVMonitoringCategory.PERFORMANCE)
+                       .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msTwoHeatMap);
+
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .serviceIdentifier("service_3")
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
+    hPersistence.save(msThreeHeatMap);
+    msThreeHeatMap = builderFactory.heatMapBuilder()
+                         .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                         .serviceIdentifier("service_3")
+                         .heatMapResolution(FIVE_MIN)
+                         .category(CVMonitoringCategory.PERFORMANCE)
+                         .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
+    hPersistence.save(msThreeHeatMap);
+
+    ServiceDependencyGraphDTO graphDTO =
+        serviceDependencyGraphService.getDependencyGraph(context.getProjectParams(), null, null, true);
+    graphDTO.getNodes().sort(Comparator.comparing(ServiceDependencyGraphDTO.ServiceSummaryDetails::getIdentifierRef));
+
+    assertThat(graphDTO).isNotNull();
+    assertThat(graphDTO.getNodes().size()).isEqualTo(2);
+    assertThat(graphDTO.getNodes().get(0).getIdentifierRef()).isEqualTo(monitoredServiceOneDTO.getIdentifier());
+    assertThat(graphDTO.getNodes().get(0).getServiceRef()).isEqualTo(monitoredServiceOneDTO.getServiceRef());
+    assertThat(graphDTO.getNodes().get(0).getEnvironmentRef()).isEqualTo(monitoredServiceOneDTO.getEnvironmentRef());
+    assertThat(graphDTO.getNodes().get(0).getRiskData())
+        .isEqualTo(RiskData.builder().riskStatus(Risk.NEED_ATTENTION).healthScore(25).build());
+    assertThat(graphDTO.getNodes().get(0).getType()).isEqualTo(MonitoredServiceType.APPLICATION);
+    assertThat(graphDTO.getNodes().get(0).getIdentifierRef()).isNotEqualTo("service_3_local");
+    assertThat(graphDTO.getNodes().get(1).getIdentifierRef()).isNotEqualTo("service_3_local");
+    assertThat(graphDTO.getEdges().size()).isEqualTo(1);
+    assertThat(graphDTO.getEdges().contains(new ServiceDependencyGraphDTO.Edge("service_2_local", "service_1_local")))
+        .isEqualTo(true);
+    assertThat(graphDTO.getEdges().contains(new ServiceDependencyGraphDTO.Edge("service_1_local", "service_3_local")))
+        .isEqualTo(false);
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetDependencyGraphWithMonitoredServiceIdentifier() {
+    Instant endTime = roundDownTo5MinBoundary(clock.instant());
+    MonitoredServiceDTO monitoredServiceDTO =
+        builderFactory.monitoredServiceDTOBuilder().sources(Sources.builder().build()).build();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+
+    HeatMap heatMap = builderFactory.heatMapBuilder()
+                          .monitoredServiceIdentifier(monitoredServiceDTO.getIdentifier())
+                          .heatMapResolution(FIVE_MIN)
+                          .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
+    hPersistence.save(heatMap);
+    heatMap = builderFactory.heatMapBuilder()
+                  .monitoredServiceIdentifier(monitoredServiceDTO.getIdentifier())
+                  .heatMapResolution(FIVE_MIN)
+                  .category(CVMonitoringCategory.PERFORMANCE)
+                  .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
+    hPersistence.save(heatMap);
+
+    ServiceDependencyGraphDTO graphDTO = serviceDependencyGraphService.getDependencyGraph(context.getProjectParams(),
+        Arrays.asList(context.getMonitoredServiceParams().getMonitoredServiceIdentifier()), false);
+
+    assertThat(graphDTO).isNotNull();
+    assertThat(graphDTO.getNodes().size()).isEqualTo(1);
+    assertThat(graphDTO.getNodes().get(0).getIdentifierRef()).isEqualTo(monitoredServiceDTO.getIdentifier());
+    assertThat(graphDTO.getNodes().get(0).getServiceRef()).isEqualTo(context.getServiceIdentifier());
+    assertThat(graphDTO.getNodes().get(0).getEnvironmentRef()).isEqualTo(context.getEnvIdentifier());
+    assertThat(graphDTO.getNodes().get(0).getRiskLevel()).isEqualTo(Risk.HEALTHY);
+    assertThat(graphDTO.getNodes().get(0).getRiskData())
+        .isEqualTo(RiskData.builder().riskStatus(Risk.HEALTHY).healthScore(75).build());
+    assertThat(graphDTO.getNodes().get(0).getType()).isEqualTo(MonitoredServiceType.APPLICATION);
+    assertThat(graphDTO.getEdges().size()).isEqualTo(2);
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetDependencyGraphWithMonitoredServiceIdentifier_forMonitoredService() {
+    Instant endTime = roundDownTo5MinBoundary(clock.instant());
+    MonitoredServiceDTO monitoredServiceDTO =
+        builderFactory.monitoredServiceDTOBuilder().sources(Sources.builder().build()).build();
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+
+    MonitoredServiceDTO edgeDTO =
+        builderFactory.monitoredServiceDTOBuilder().sources(Sources.builder().build()).build();
+    edgeDTO.setIdentifier(monitoredServiceDTO.getDependencies().iterator().next().getMonitoredServiceIdentifier());
+    edgeDTO.setServiceRef(monitoredServiceDTO.getDependencies().iterator().next().getMonitoredServiceIdentifier());
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), edgeDTO);
+
+    HeatMap heatMap = builderFactory.heatMapBuilder().heatMapResolution(FIVE_MIN).build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
+    hPersistence.save(heatMap);
+    heatMap =
+        builderFactory.heatMapBuilder().heatMapResolution(FIVE_MIN).category(CVMonitoringCategory.PERFORMANCE).build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(heatMap, endTime, 0.15, 0.25);
+    hPersistence.save(heatMap);
+
+    ServiceDependencyGraphDTO graphDTO = serviceDependencyGraphService.getDependencyGraph(context.getProjectParams(),
+        Arrays.asList(context.getMonitoredServiceParams().getMonitoredServiceIdentifier()), false);
+
+    assertThat(graphDTO).isNotNull();
+    assertThat(graphDTO.getNodes().size()).isEqualTo(2);
+    assertThat(graphDTO.getEdges().size()).isEqualTo(2);
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetDependencyGraphWithMonitoredServiceIdentifier_withServicesAtRiskFilter() {
+    Instant endTime = roundDownTo5MinBoundary(clock.instant());
+    MonitoredServiceDTOBuilder monitoredServiceDTOBuilder = builderFactory.monitoredServiceDTOBuilder()
+                                                                .identifier("monitoredServiceIdentifier")
+                                                                .serviceRef(serviceIdentifier)
+                                                                .environmentRef(environmentIdentifier)
+                                                                .name("monitoredServiceName")
+                                                                .tags(tags);
+    MonitoredServiceDTO monitoredServiceOneDTO =
+        createMonitoredServiceDTOWithCustomDependencies(monitoredServiceDTOBuilder, "service_1_local",
+            environmentParams.getServiceIdentifier(), Sets.newHashSet("service_2_local"));
+    MonitoredServiceDTO monitoredServiceTwoDTO = createMonitoredServiceDTOWithCustomDependencies(
+        monitoredServiceDTOBuilder, "service_2_local", "service_2", Sets.newHashSet());
+    MonitoredServiceDTO monitoredServiceThreeDTO = createMonitoredServiceDTOWithCustomDependencies(
+        monitoredServiceDTOBuilder, "service_3_local", "service_3", Sets.newHashSet("service_1_local"));
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceOneDTO);
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceTwoDTO);
+    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceThreeDTO);
+
+    HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msOneHeatMap);
+    msOneHeatMap = builderFactory.heatMapBuilder()
+                       .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+                       .serviceIdentifier(environmentParams.getServiceIdentifier())
+                       .heatMapResolution(FIVE_MIN)
+                       .category(CVMonitoringCategory.PERFORMANCE)
+                       .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msOneHeatMap);
+
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .serviceIdentifier("service_2")
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msTwoHeatMap);
+    msTwoHeatMap = builderFactory.heatMapBuilder()
+                       .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                       .serviceIdentifier("service_2")
+                       .heatMapResolution(FIVE_MIN)
+                       .category(CVMonitoringCategory.PERFORMANCE)
+                       .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
+    hPersistence.save(msTwoHeatMap);
+
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .serviceIdentifier("service_3")
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
+    hPersistence.save(msThreeHeatMap);
+    msThreeHeatMap = builderFactory.heatMapBuilder()
+                         .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                         .serviceIdentifier("service_3")
+                         .heatMapResolution(FIVE_MIN)
+                         .category(CVMonitoringCategory.PERFORMANCE)
+                         .build();
+    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
+    hPersistence.save(msThreeHeatMap);
+
+    ServiceDependencyGraphDTO graphDTO =
+        serviceDependencyGraphService.getDependencyGraph(context.getProjectParams(), null, true);
+    graphDTO.getNodes().sort(Comparator.comparing(ServiceDependencyGraphDTO.ServiceSummaryDetails::getIdentifierRef));
+
+    assertThat(graphDTO).isNotNull();
+    assertThat(graphDTO.getNodes().size()).isEqualTo(2);
+    assertThat(graphDTO.getNodes().get(0).getIdentifierRef()).isEqualTo(monitoredServiceOneDTO.getIdentifier());
+    assertThat(graphDTO.getNodes().get(0).getServiceRef()).isEqualTo(monitoredServiceOneDTO.getServiceRef());
+    assertThat(graphDTO.getNodes().get(0).getEnvironmentRef()).isEqualTo(monitoredServiceOneDTO.getEnvironmentRef());
+    assertThat(graphDTO.getNodes().get(0).getRiskData())
+        .isEqualTo(RiskData.builder().riskStatus(Risk.NEED_ATTENTION).healthScore(25).build());
+    assertThat(graphDTO.getNodes().get(0).getType()).isEqualTo(MonitoredServiceType.APPLICATION);
+    assertThat(graphDTO.getNodes().get(0).getIdentifierRef()).isNotEqualTo("service_3_local");
+    assertThat(graphDTO.getNodes().get(1).getIdentifierRef()).isNotEqualTo("service_3_local");
+    assertThat(graphDTO.getEdges().size()).isEqualTo(1);
+    assertThat(graphDTO.getEdges().contains(new ServiceDependencyGraphDTO.Edge("service_2_local", "service_1_local")))
+        .isEqualTo(true);
+    assertThat(graphDTO.getEdges().contains(new ServiceDependencyGraphDTO.Edge("service_1_local", "service_3_local")))
+        .isEqualTo(false);
+  }
+
   private void setStartTimeEndTimeAndRiskScoreWith5MinBucket(
       HeatMap heatMap, Instant endTime, double firstHalfRiskScore, double secondHalfRiskScore) {
     Instant startTime = endTime.minus(4, ChronoUnit.HOURS);
@@ -197,87 +454,6 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
                            .build());
     }
     heatMap.setHeatMapRisks(heatMapRisks);
-  }
-
-  @Test
-  @Owner(developers = KAPIL)
-  @Category(UnitTests.class)
-  public void testGetDependencyGraph_withServicesAtRiskFilter() {
-    Instant endTime = roundDownTo5MinBoundary(clock.instant());
-    MonitoredServiceDTOBuilder monitoredServiceDTOBuilder = builderFactory.monitoredServiceDTOBuilder()
-                                                                .identifier("monitoredServiceIdentifier")
-                                                                .serviceRef(serviceIdentifier)
-                                                                .environmentRef(environmentIdentifier)
-                                                                .name("monitoredServiceName")
-                                                                .tags(tags);
-    MonitoredServiceDTO monitoredServiceOneDTO =
-        createMonitoredServiceDTOWithCustomDependencies(monitoredServiceDTOBuilder, "service_1_local",
-            environmentParams.getServiceIdentifier(), Sets.newHashSet("service_2_local"));
-    MonitoredServiceDTO monitoredServiceTwoDTO = createMonitoredServiceDTOWithCustomDependencies(
-        monitoredServiceDTOBuilder, "service_2_local", "service_2", Sets.newHashSet());
-    MonitoredServiceDTO monitoredServiceThreeDTO = createMonitoredServiceDTOWithCustomDependencies(
-        monitoredServiceDTOBuilder, "service_3_local", "service_3", Sets.newHashSet("service_1_local"));
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceOneDTO);
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceTwoDTO);
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceThreeDTO);
-
-    HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
-                               .heatMapResolution(FIVE_MIN)
-                               .build();
-    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
-    hPersistence.save(msOneHeatMap);
-    msOneHeatMap = builderFactory.heatMapBuilder()
-                       .serviceIdentifier(environmentParams.getServiceIdentifier())
-                       .heatMapResolution(FIVE_MIN)
-                       .category(CVMonitoringCategory.PERFORMANCE)
-                       .build();
-    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
-    hPersistence.save(msOneHeatMap);
-
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
-    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
-    hPersistence.save(msTwoHeatMap);
-    msTwoHeatMap = builderFactory.heatMapBuilder()
-                       .serviceIdentifier("service_2")
-                       .heatMapResolution(FIVE_MIN)
-                       .category(CVMonitoringCategory.PERFORMANCE)
-                       .build();
-    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
-    hPersistence.save(msTwoHeatMap);
-
-    HeatMap msThreeHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_3").heatMapResolution(FIVE_MIN).build();
-    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
-    hPersistence.save(msThreeHeatMap);
-    msThreeHeatMap = builderFactory.heatMapBuilder()
-                         .serviceIdentifier("service_3")
-                         .heatMapResolution(FIVE_MIN)
-                         .category(CVMonitoringCategory.PERFORMANCE)
-                         .build();
-    setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
-    hPersistence.save(msThreeHeatMap);
-
-    ServiceDependencyGraphDTO graphDTO =
-        serviceDependencyGraphService.getDependencyGraph(context.getProjectParams(), null, null, true);
-    graphDTO.getNodes().sort(Comparator.comparing(ServiceDependencyGraphDTO.ServiceSummaryDetails::getIdentifierRef));
-
-    assertThat(graphDTO).isNotNull();
-    assertThat(graphDTO.getNodes().size()).isEqualTo(2);
-    assertThat(graphDTO.getNodes().get(0).getIdentifierRef()).isEqualTo(monitoredServiceOneDTO.getIdentifier());
-    assertThat(graphDTO.getNodes().get(0).getServiceRef()).isEqualTo(monitoredServiceOneDTO.getServiceRef());
-    assertThat(graphDTO.getNodes().get(0).getEnvironmentRef()).isEqualTo(monitoredServiceOneDTO.getEnvironmentRef());
-    assertThat(graphDTO.getNodes().get(0).getRiskData())
-        .isEqualTo(RiskData.builder().riskStatus(Risk.NEED_ATTENTION).healthScore(25).build());
-    assertThat(graphDTO.getNodes().get(0).getType()).isEqualTo(MonitoredServiceType.APPLICATION);
-    assertThat(graphDTO.getNodes().get(0).getIdentifierRef()).isNotEqualTo("service_3_local");
-    assertThat(graphDTO.getNodes().get(1).getIdentifierRef()).isNotEqualTo("service_3_local");
-    assertThat(graphDTO.getEdges().size()).isEqualTo(1);
-    assertThat(graphDTO.getEdges().contains(new ServiceDependencyGraphDTO.Edge("service_2_local", "service_1_local")))
-        .isEqualTo(true);
-    assertThat(graphDTO.getEdges().contains(new ServiceDependencyGraphDTO.Edge("service_1_local", "service_3_local")))
-        .isEqualTo(false);
   }
 
   private MonitoredServiceDTO createMonitoredServiceDTOWithCustomDependencies(

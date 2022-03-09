@@ -192,7 +192,7 @@ for harnesspywinrm in v0.1-dev v0.2-dev v0.3-dev v0.4-dev; do
   curl -L -o "${HARNESSPYWINRM_MAC_DIR}harness-pywinrm" "${HARNESSPYWINRM_MAC_URL}"
 done
 
-for helmversion in v2.13.1 v3.0.2 v3.1.2; do
+for helmversion in v2.13.1 v3.1.2 v3.8.0; do
   echo "Adding helmversion $helmversion"
   HELM_LINUX_DIR="${IMAGES_DIR}/helm/linux/$helmversion/"
   HELM_MAC_DIR="${IMAGES_DIR}/helm/darwin/$helmversion/"
@@ -210,7 +210,7 @@ for helmversion in v2.13.1 v3.0.2 v3.1.2; do
   curl -L -o "${HELM_MAC_DIR}helm" "${HELM_MAC_URL}"
 done
 
-for chartmuseumversion in v0.8.2 v0.13.0; do
+for chartmuseumversion in v0.8.2 v0.12.0; do
   echo "Adding chartmuseumversion $chartmuseumversion"
   CHARTMUSEUM_LINUX_DIR="${IMAGES_DIR}/chartmuseum/linux/$chartmuseumversion/"
   CHARTMUSEUM_MAC_DIR="${IMAGES_DIR}/chartmuseum/darwin/$chartmuseumversion/"
@@ -268,7 +268,7 @@ for kustomizeVersion in v3.5.4 v4.0.0; do
 
 done
 
-for scmVersion in 3ac4cefa; do
+for scmVersion in e2904e7; do
   echo "Adding scm" $scmVersion
 
   SCM_LINUX_DIR="${IMAGES_DIR}/scm/linux/$scmVersion/"

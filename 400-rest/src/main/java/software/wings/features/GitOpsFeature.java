@@ -78,6 +78,6 @@ public class GitOpsFeature extends AbstractUsageLimitedFeature implements Compli
             .addFilter(SettingAttributeKeys.value_type, Operator.EQ, SettingVariableTypes.GIT)
             .build();
 
-    return settingsService.list(request, null, null).getResponse().size();
+    return settingsService.list(request, null, null, false).getResponse().size();
   }
 }

@@ -11,6 +11,7 @@ import io.harness.morphia.MorphiaRegistrar;
 import io.harness.serializer.kryo.CvNextGenCommonsBeansKryoRegistrar;
 
 import com.google.common.collect.ImmutableSet;
+import io.serializer.registrars.NGCommonsRegistrars;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -20,11 +21,13 @@ public class CvNextGenCommonsRegistrars {
           .add(CvNextGenCommonsBeansKryoRegistrar.class)
           .addAll(ConnectorNextGenRegistrars.kryoRegistrars)
           .addAll(CommonEntitiesRegistrars.kryoRegistrars)
+          .addAll(NGCommonsRegistrars.kryoRegistrars)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
       ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
           .addAll(ConnectorNextGenRegistrars.morphiaRegistrars)
           .addAll(CommonEntitiesRegistrars.morphiaRegistrars)
+          .addAll(NGCommonsRegistrars.morphiaRegistrars)
           .build();
 }

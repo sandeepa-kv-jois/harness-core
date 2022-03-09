@@ -10,7 +10,11 @@ package io.harness.cvng.statemachine.services.impl;
 import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_LIMIT;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
+import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_LOCK;
+import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_LOCK_TIMEOUT;
+import static io.harness.eventsframework.EventsFrameworkConstants.SRM_STATEMACHINE_LOCK_WAIT_TIMEOUT;
 
+import io.harness.cvng.core.jobs.StateMachineEventPublisherService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.statemachine.beans.AnalysisInput;
 import io.harness.cvng.statemachine.beans.AnalysisStatus;
@@ -19,10 +23,13 @@ import io.harness.cvng.statemachine.entities.AnalysisOrchestrator.AnalysisOrches
 import io.harness.cvng.statemachine.entities.AnalysisStateMachine;
 import io.harness.cvng.statemachine.services.api.AnalysisStateMachineService;
 import io.harness.cvng.statemachine.services.api.OrchestrationService;
+import io.harness.lock.AcquiredLock;
+import io.harness.lock.PersistentLocker;
 import io.harness.persistence.HPersistence;
 
 import com.google.common.base.Preconditions;
 import com.google.inject.Inject;
+import java.time.Duration;
 import java.time.Instant;
 import java.time.OffsetDateTime;
 import java.util.ArrayList;
@@ -42,6 +49,8 @@ public class OrchestrationServiceImpl implements OrchestrationService {
   @Inject private AnalysisStateMachineService stateMachineService;
 
   @Inject private VerificationTaskService verificationTaskService;
+  @Inject private StateMachineEventPublisherService stateMachineEventPublisherService;
+  @Inject private PersistentLocker persistentLocker;
 
   @Override
   public void queueAnalysis(String verificationTaskId, Instant startTime, Instant endTime) {
@@ -72,6 +81,8 @@ public class OrchestrationServiceImpl implements OrchestrationService {
             .addToSet(AnalysisOrchestratorKeys.analysisStateMachineQueue, Arrays.asList(stateMachine));
 
     hPersistence.upsert(orchestratorQuery, updateOperations);
+
+    stateMachineEventPublisherService.registerTaskComplete(accountId, verificationTaskId);
   }
 
   private void validateAnalysisInputs(AnalysisInput inputs) {
@@ -83,7 +94,10 @@ public class OrchestrationServiceImpl implements OrchestrationService {
   @Override
   public void orchestrate(AnalysisOrchestrator orchestrator) {
     Preconditions.checkNotNull(orchestrator, "orchestrator cannot be null when trying to orchestrate");
-    try {
+    String lockString = SRM_STATEMACHINE_LOCK + orchestrator.getVerificationTaskId();
+    try (AcquiredLock acquiredLock =
+             persistentLocker.waitToAcquireLock(lockString, Duration.ofSeconds(SRM_STATEMACHINE_LOCK_TIMEOUT),
+                 Duration.ofSeconds(SRM_STATEMACHINE_LOCK_WAIT_TIMEOUT))) {
       orchestrateAtRunningState(orchestrator);
     } catch (Exception e) {
       // TODO: these errors needs to go to execution log so that we can connect it with the right context and show them
@@ -125,7 +139,6 @@ public class OrchestrationServiceImpl implements OrchestrationService {
     if (currentlyExecutingStateMachine == null && isNotEmpty(orchestrator.getAnalysisStateMachineQueue())) {
       currentlyExecutingStateMachine = orchestrator.getAnalysisStateMachineQueue().get(0);
     }
-
     if (currentlyExecutingStateMachine != null) {
       AnalysisStatus stateMachineStatus = null;
 
@@ -220,5 +233,12 @@ public class OrchestrationServiceImpl implements OrchestrationService {
         hPersistence.createUpdateOperations(AnalysisOrchestrator.class).set(AnalysisOrchestratorKeys.status, status);
 
     hPersistence.update(orchestratorQuery, updateOperations);
+  }
+
+  @Override
+  public AnalysisOrchestrator getAnalysisOrchestrator(String verificationTaskId) {
+    return hPersistence.createQuery(AnalysisOrchestrator.class)
+        .filter(AnalysisOrchestratorKeys.verificationTaskId, verificationTaskId)
+        .get();
   }
 }

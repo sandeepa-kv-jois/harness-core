@@ -15,9 +15,9 @@ import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.accesscontrol.NGAccessControlCheck;
 import io.harness.accesscontrol.OrgIdentifier;
 import io.harness.accesscontrol.ProjectIdentifier;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.filter.dto.FilterPropertiesDTO;
@@ -170,6 +170,60 @@ public class ExecutionDetailsResource {
   }
 
   @GET
+  @Path("/v2/{planExecutionId}")
+  @ApiOperation(value = "Gets Execution Detail V2", nickname = "getExecutionDetailV2")
+  @Operation(operationId = "getExecutionDetailV2",
+      summary =
+          "Get the Pipeline Execution details for given PlanExecution Id without full graph unless specified explicitly",
+      responses =
+      {
+        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "default",
+            description =
+                "Return the Pipeline Execution details for given PlanExecution Id without full graph if stageNodeId is null")
+      })
+  public ResponseDTO<PipelineExecutionDetailDTO>
+  getExecutionDetailV2(
+      @NotNull @Parameter(description = PipelineResourceConstants.ACCOUNT_PARAM_MESSAGE, required = true) @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountId,
+      @Parameter(description = PipelineResourceConstants.ORG_PARAM_MESSAGE, required = true) @NotNull @QueryParam(
+          NGCommonEntityConstants.ORG_KEY) @OrgIdentifier String orgId,
+      @NotNull @Parameter(description = PipelineResourceConstants.PROJECT_PARAM_MESSAGE, required = true) @QueryParam(
+          NGCommonEntityConstants.PROJECT_KEY) @ProjectIdentifier String projectId,
+      @Parameter(description = PipelineResourceConstants.STAGE_NODE_ID_PARAM_MESSAGE) @QueryParam(
+          "stageNodeId") String stageNodeId,
+      @Parameter(description = PipelineResourceConstants.GENERATE_FULL_GRAPH_PARAM_MESSAGE) @QueryParam(
+          "renderFullBottomGraph") Boolean renderFullBottomGraph,
+      @Parameter(description = "Plan Execution Id for which we want to get the Execution details",
+          required = true) @PathParam(NGCommonEntityConstants.PLAN_KEY) String planExecutionId) {
+    PipelineExecutionSummaryEntity executionSummaryEntity =
+        pmsExecutionService.getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecutionId, false);
+
+    EntityGitDetails entityGitDetails;
+    if (executionSummaryEntity.getEntityGitDetails() == null) {
+      entityGitDetails =
+          pmsGitSyncHelper.getEntityGitDetailsFromBytes(executionSummaryEntity.getGitSyncBranchContext());
+    } else {
+      entityGitDetails = executionSummaryEntity.getEntityGitDetails();
+    }
+
+    accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
+        Resource.of("PIPELINE", executionSummaryEntity.getPipelineIdentifier()), PipelineRbacPermissions.PIPELINE_VIEW);
+    if (EmptyPredicate.isEmpty(stageNodeId) && (renderFullBottomGraph == null || !renderFullBottomGraph)) {
+      return ResponseDTO.newResponse(PipelineExecutionDetailDTO.builder()
+                                         .pipelineExecutionSummary(PipelineExecutionSummaryDtoMapper.toDto(
+                                             executionSummaryEntity, entityGitDetails))
+                                         .build());
+    }
+
+    return ResponseDTO.newResponse(
+        PipelineExecutionDetailDTO.builder()
+            .pipelineExecutionSummary(PipelineExecutionSummaryDtoMapper.toDto(executionSummaryEntity, entityGitDetails))
+            .executionGraph(ExecutionGraphMapper.toExecutionGraph(
+                pmsExecutionService.getOrchestrationGraph(stageNodeId, planExecutionId)))
+            .build());
+  }
+
+  @GET
   @Path("/{planExecutionId}")
   @ApiOperation(value = "Gets Execution Detail", nickname = "getExecutionDetail")
   @Operation(operationId = "getExecutionDetail",
@@ -204,14 +258,12 @@ public class ExecutionDetailsResource {
     accessControlClient.checkForAccessOrThrow(ResourceScope.of(accountId, orgId, projectId),
         Resource.of("PIPELINE", executionSummaryEntity.getPipelineIdentifier()), PipelineRbacPermissions.PIPELINE_VIEW);
 
-    PipelineExecutionDetailDTO pipelineExecutionDetailDTO =
+    return ResponseDTO.newResponse(
         PipelineExecutionDetailDTO.builder()
             .pipelineExecutionSummary(PipelineExecutionSummaryDtoMapper.toDto(executionSummaryEntity, entityGitDetails))
             .executionGraph(ExecutionGraphMapper.toExecutionGraph(
                 pmsExecutionService.getOrchestrationGraph(stageNodeId, planExecutionId)))
-            .build();
-
-    return ResponseDTO.newResponse(pipelineExecutionDetailDTO);
+            .build());
   }
 
   @GET
@@ -219,7 +271,8 @@ public class ExecutionDetailsResource {
   @Path("/{planExecutionId}/inputset")
   @ApiOperation(value = "Gets  inputsetYaml", nickname = "getInputsetYaml")
   @NGAccessControlCheck(resourceType = "PIPELINE", permission = PipelineRbacPermissions.PIPELINE_VIEW)
-  @Operation(operationId = "getInputsetYaml", summary = "Get the Input Set YAML used for given Plan Execution",
+  @Operation(deprecated = true, operationId = "getInputsetYaml",
+      summary = "Get the Input Set YAML used for given Plan Execution",
       responses =
       {
         @io.swagger.v3.oas.annotations.responses.

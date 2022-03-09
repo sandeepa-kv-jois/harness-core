@@ -968,9 +968,10 @@ public class SecretManagerImpl implements SecretManager, EncryptedSettingAttribu
   }
 
   @Override
-  public List<SecretMetadata> filterSecretIdsByReadPermission(
-      Set<String> secretIds, String accountId, String appIdFromRequest, String envIdFromRequest) {
-    return secretService.filterSecretIdsByReadPermission(secretIds, accountId, appIdFromRequest, envIdFromRequest);
+  public List<SecretMetadata> filterSecretIdsByReadPermission(Set<String> secretIds, String accountId,
+      String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp) {
+    return secretService.filterSecretIdsByReadPermission(
+        secretIds, accountId, appIdFromRequest, envIdFromRequest, forUsageInNewApp);
   }
 
   public boolean hasUpdateAccessToSecrets(@NonNull Set<String> secretIds, @NonNull String accountId) {

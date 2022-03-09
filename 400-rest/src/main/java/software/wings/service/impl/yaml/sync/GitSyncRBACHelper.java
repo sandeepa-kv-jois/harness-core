@@ -179,7 +179,7 @@ public class GitSyncRBACHelper {
             .addFilter(ACCOUNT_ID_KEY, EQ, accountId)
             .addFilter(SettingAttributeKeys.name, IN, fileNames.toArray())
             .build();
-    List<SettingAttribute> settingAttributes = settingsService.list(settingAttributePageRequest, null, null);
+    List<SettingAttribute> settingAttributes = settingsService.list(settingAttributePageRequest, null, null, false);
     if (isEmpty(settingAttributes)) {
       return Collections.emptySet();
     }

@@ -17,6 +17,7 @@ import io.harness.pms.contracts.advisers.AdviserResponse;
 import io.harness.pms.contracts.advisers.AdviserType;
 import io.harness.pms.contracts.advisers.NextStepAdvise;
 import io.harness.pms.contracts.execution.failure.FailureType;
+import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.execution.utils.StatusUtils;
 import io.harness.pms.sdk.core.adviser.Adviser;
 import io.harness.pms.sdk.core.adviser.AdvisingEvent;
@@ -57,6 +58,18 @@ public class OnFailRollbackAdviser implements Adviser {
         log.warn("Ignoring duplicate sweeping output of - " + YAMLFieldNameConstants.USE_ROLLBACK_STRATEGY);
       }
     }
+
+    optionalSweepingOutput = executionSweepingOutputService.resolveOptional(advisingEvent.getAmbiance(),
+        RefObjectUtils.getSweepingOutputRefObject(YAMLFieldNameConstants.STOP_STEPS_SEQUENCE));
+    if (!optionalSweepingOutput.isFound()) {
+      try {
+        executionSweepingOutputService.consume(advisingEvent.getAmbiance(), YAMLFieldNameConstants.STOP_STEPS_SEQUENCE,
+            RollbackTriggeredOutput.builder().rollbackTriggered(true).build(), StepCategory.STAGE.name());
+      } catch (Exception e) {
+        log.warn("Ignoring duplicate sweeping output of - " + YAMLFieldNameConstants.STOP_STEPS_SEQUENCE);
+      }
+    }
+
     return AdviserResponse.newBuilder()
         .setNextStepAdvise(NextStepAdvise.newBuilder().build())
         .setType(AdviseType.NEXT_STEP)

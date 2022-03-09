@@ -210,7 +210,6 @@ import io.kubernetes.client.openapi.models.V1ServiceBuilder;
 import io.kubernetes.client.openapi.models.V1ServicePortBuilder;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatusBuilder;
-import io.kubernetes.client.openapi.models.VersionInfo;
 import io.kubernetes.client.util.Yaml;
 import java.io.IOException;
 import java.net.URL;
@@ -3118,7 +3117,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
 
     InvalidRequestException exception = new InvalidRequestException("Unable to retrieve k8s version. Code: 401");
 
-    doThrow(exception).when(mockKubernetesContainerService).getVersion(kubernetesConfig);
+    doThrow(exception).when(mockKubernetesContainerService).validateCredentials(kubernetesConfig);
     assertThatThrownBy(() -> k8sTaskHelperBase.validate(clusterConfigDTO, emptyList())).isSameAs(exception);
   }
 
@@ -3142,7 +3141,7 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         .when(mockK8sYamlToDelegateDTOMapper)
         .createKubernetesConfigFromClusterConfig(clusterConfigDTO);
 
-    doReturn(new VersionInfo()).when(mockKubernetesContainerService).getVersion(kubernetesConfig);
+    doNothing().when(mockKubernetesContainerService).validateCredentials(kubernetesConfig);
 
     ConnectorValidationResult connectorValidationResult = k8sTaskHelperBase.validate(clusterConfigDTO, emptyList());
 

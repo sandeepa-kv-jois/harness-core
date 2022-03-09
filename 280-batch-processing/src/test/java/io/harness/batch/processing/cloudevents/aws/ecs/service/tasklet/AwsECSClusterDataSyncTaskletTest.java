@@ -62,7 +62,6 @@ import com.amazonaws.services.ecs.model.Resource;
 import com.amazonaws.services.ecs.model.Service;
 import com.amazonaws.services.ecs.model.Task;
 import com.google.common.collect.ImmutableList;
-import java.io.IOException;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
@@ -72,7 +71,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -80,7 +78,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.MockitoAnnotations;
 import org.mockito.Spy;
 import org.mockito.runners.MockitoJUnitRunner;
 import org.springframework.batch.core.JobParameters;
@@ -129,11 +126,6 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
   private static final Instant instant = Instant.now().truncatedTo(ChronoUnit.HOURS);
   private static final long startTime = instant.minus(1, ChronoUnit.HOURS).toEpochMilli();
   private static final long endTime = instant.toEpochMilli();
-
-  @Before
-  public void setup() throws IOException {
-    MockitoAnnotations.initMocks(this);
-  }
 
   private MetricValue getMetricValue(String metricName, String statistic, long startTime, double value) {
     return MetricValue.builder()
@@ -217,7 +209,8 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
     when(parameters.getString(CCMJobConstants.JOB_START_DATE)).thenReturn(String.valueOf(startTime));
     when(parameters.getString(CCMJobConstants.ACCOUNT_ID)).thenReturn(ACCOUNT_ID);
     when(parameters.getString(CCMJobConstants.JOB_END_DATE)).thenReturn(String.valueOf(endTime));
-    when(ceClusterDao.getCECluster(ACCOUNT_ID)).thenReturn(singletonList(getCeCluster()));
+    when(ceClusterDao.getCECluster(ACCOUNT_ID))
+        .thenReturn(ImmutableList.of(getCeCluster(), getCeCluster(), getCeCluster()));
     when(ceCloudAccountDao.getByAWSAccountId(ACCOUNT_ID))
         .thenReturn(Collections.singletonList(CECloudAccount.builder()
                                                   .infraAccountId(AWS_ACCOUNT_ID)
@@ -276,7 +269,8 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
     when(cloudToHarnessMappingService.getHarnessServiceInfo(any()))
         .thenReturn(Optional.of(new HarnessServiceInfo(null, null, null, null, null, null)));
     when(instanceDataDao.fetchInstanceData(anySet())).thenReturn(singletonList(getInstanceData()));
-    awsECSClusterDataSyncTasklet.updateTasks(accountId, ceCluster, singletonList(getTask()), deploymentIdServiceMap);
+    awsECSClusterDataSyncTasklet.updateTasks(accountId, ceCluster, singletonList(getTask()), deploymentIdServiceMap,
+        Collections.EMPTY_MAP, Instant.ofEpochMilli(startTime));
     ArgumentCaptor<InstanceData> captor = ArgumentCaptor.forClass(InstanceData.class);
     then(instanceDataService).should().create(captor.capture());
     InstanceData instanceData = captor.getValue();

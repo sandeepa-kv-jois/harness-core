@@ -14,8 +14,8 @@ import (
 	//"path/filepath"
 	"testing"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/product/ci/ti-service/types"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 )
 

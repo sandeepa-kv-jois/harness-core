@@ -98,6 +98,10 @@ public class GitFetchFilesTask extends AbstractDelegateRunnableTask {
     AppManifestKind appManifestKind = taskParams.getAppManifestKind();
     Map<String, GitFetchFilesResult> filesFromMultipleRepo = new HashMap<>();
     Map<String, GitFetchFilesConfig> gitFetchFilesConfigMap = taskParams.getGitFetchFilesConfigMap();
+
+    executionLogCallback.saveExecutionLog(
+        color(format("%nStarting Git %s Fetch", getFileTypeMessage(appManifestKind)), LogColor.White, LogWeight.Bold));
+
     for (Entry<String, GitFetchFilesConfig> entry : taskParams.getGitFetchFilesConfigMap().entrySet()) {
       executionLogCallback.saveExecutionLog(
           color(format("%nFetching %s files from git for %s", getFileTypeMessage(appManifestKind), entry.getKey()),
@@ -153,7 +157,10 @@ public class GitFetchFilesTask extends AbstractDelegateRunnableTask {
     }
 
     if (taskParams.isFinalState()) {
-      executionLogCallback.saveExecutionLog("\nDone.", INFO, CommandExecutionStatus.SUCCESS);
+      executionLogCallback.saveExecutionLog(
+          color(format("%nGit %s Fetch completed successfully.", getFileTypeMessage(appManifestKind)), LogColor.White,
+              LogWeight.Bold),
+          INFO, CommandExecutionStatus.SUCCESS);
     }
 
     return GitCommandExecutionResponse.builder()

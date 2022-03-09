@@ -7,6 +7,8 @@
 
 package io.harness.ngmigration.service;
 
+import io.harness.beans.MigratedEntityMapping;
+import io.harness.ngmigration.beans.BaseEntityInput;
 import io.harness.ngmigration.beans.MigrationInputDTO;
 import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.ngmigration.client.NGClient;
@@ -25,6 +27,8 @@ import java.util.Map;
 import java.util.Set;
 
 public interface NgMigrationService {
+  MigratedEntityMapping generateMappingEntity(NGYamlFile yamlFile);
+
   DiscoveryNode discover(NGMigrationEntity entity);
 
   DiscoveryNode discover(String accountId, String appId, String entityId);
@@ -37,4 +41,7 @@ public interface NgMigrationService {
 
   List<NGYamlFile> getYamls(MigrationInputDTO inputDTO, Map<CgEntityId, CgEntityNode> entities,
       Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId, Map<CgEntityId, NgEntityDetail> migratedEntities);
+
+  BaseEntityInput generateInput(
+      Map<CgEntityId, CgEntityNode> entities, Map<CgEntityId, Set<CgEntityId>> graph, CgEntityId entityId);
 }

@@ -15,6 +15,7 @@ import static software.wings.beans.SettingAttribute.Builder.aSettingAttribute;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyBoolean;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doReturn;
 
@@ -77,7 +78,7 @@ public class GitSyncRBACHelperTest extends CategoryTest {
     List<GitFileActivity> gitFileActivityList = Arrays.asList(gitFileActivity1, gitFileActivity2, templateFileActivity);
     PageResponse<SettingAttribute> pageResponse =
         aPageResponse().withResponse(Collections.singletonList(settingAttribute1)).withTotal(1).build();
-    doReturn(pageResponse).when(settingService).list(any(), any(), any());
+    doReturn(pageResponse).when(settingService).list(any(), any(), any(), anyBoolean());
     List<GitFileActivity> gitFileActivities =
         gitSyncRBACHelper.populateUserHasPermissionForFileField(gitFileActivityList, ACCOUNT_ID);
     assertThat(gitFileActivities.size()).isEqualTo(3);
@@ -110,7 +111,7 @@ public class GitSyncRBACHelperTest extends CategoryTest {
     List<GitSyncError> gitSyncErrorList = Arrays.asList(gitSyncError1, gitSyncError2, gitSyncError3);
     PageResponse<SettingAttribute> pageResponse =
         aPageResponse().withResponse(Collections.singletonList(settingAttribute1)).withTotal(1).build();
-    doReturn(pageResponse).when(settingService).list(any(), any(), any());
+    doReturn(pageResponse).when(settingService).list(any(), any(), any(), anyBoolean());
     List<GitSyncError> gitSyncErrors =
         gitSyncRBACHelper.populateUserHasPermissionForFileFieldInErrors(gitSyncErrorList, ACCOUNT_ID);
     assertThat(gitSyncErrors.size()).isEqualTo(3);

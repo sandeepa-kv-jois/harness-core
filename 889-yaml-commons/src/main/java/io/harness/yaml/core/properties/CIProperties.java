@@ -7,9 +7,14 @@
 
 package io.harness.yaml.core.properties;
 
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
+
+import io.harness.pms.yaml.ParameterField;
+import io.harness.yaml.YamlSchemaTypes;
 import io.harness.yaml.extended.ci.codebase.CodeBase;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import io.swagger.annotations.ApiModelProperty;
 import lombok.Builder;
 import lombok.Value;
 import org.springframework.data.annotation.TypeAlias;
@@ -19,5 +24,7 @@ import org.springframework.data.annotation.TypeAlias;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @TypeAlias("io.harness.yaml.core.properties.CIProperties")
 public class CIProperties {
-  CodeBase codebase;
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = "io.harness.yaml.extended.ci.codebase.CodeBase")
+  ParameterField<CodeBase> codebase;
 }

@@ -81,6 +81,7 @@ public class HeatMapServiceImplTest extends CvNextGenTestBase {
   private String projectIdentifier;
   private String serviceIdentifier;
   private String envIdentifier;
+  private String monitoredServiceIdentifier;
   private String accountId;
   private String orgIdentifier;
   private CVConfig cvConfig;
@@ -97,6 +98,8 @@ public class HeatMapServiceImplTest extends CvNextGenTestBase {
     orgIdentifier = builderFactory.getContext().getOrgIdentifier();
     serviceIdentifier = builderFactory.getContext().getServiceIdentifier();
     envIdentifier = builderFactory.getContext().getEnvIdentifier();
+    monitoredServiceIdentifier =
+        builderFactory.getContext().getMonitoredServiceParams().getMonitoredServiceIdentifier();
     cvConfig = new AppDynamicsCVConfig();
     clock = Clock.fixed(Instant.parse("2020-04-22T10:02:06Z"), ZoneOffset.UTC);
     MockitoAnnotations.initMocks(this);
@@ -937,6 +940,29 @@ public class HeatMapServiceImplTest extends CvNextGenTestBase {
 
     Map<ServiceEnvKey, RiskData> riskDataMap = heatMapService.getLatestHealthScore(
         builderFactory.getProjectParams(), Arrays.asList(serviceIdentifier), Arrays.asList(envIdentifier));
+    assertThat(riskDataMap.isEmpty()).isEqualTo(true);
+  }
+
+  @Test
+  @Owner(developers = KAPIL)
+  @Category(UnitTests.class)
+  public void testGetLatestHealthScoreWithMonitoredServiceIdentifiers_WithHeatMapHavingNoHeatMapRiskAttached() {
+    Instant endTime = roundDownTo5MinBoundary(clock.instant());
+    Instant startTime = endTime.minus(4, ChronoUnit.HOURS);
+    HeatMap heatMap = builderFactory.heatMapBuilder()
+                          .heatMapResolution(FIVE_MIN)
+                          .heatMapBucketStartTime(startTime)
+                          .heatMapBucketEndTime(endTime)
+                          .heatMapRisks(Arrays.asList(HeatMapRisk.builder()
+                                                          .riskScore(-1)
+                                                          .startTime(endTime.minus(5, ChronoUnit.MINUTES))
+                                                          .endTime(endTime)
+                                                          .build()))
+                          .build();
+    hPersistence.save(heatMap);
+
+    Map<String, RiskData> riskDataMap = heatMapService.getLatestHealthScore(
+        builderFactory.getProjectParams(), Arrays.asList(monitoredServiceIdentifier));
     assertThat(riskDataMap.isEmpty()).isEqualTo(true);
   }
 

@@ -18,6 +18,7 @@ public class ErrorTrackingDataCollectionInfoMapper
   public ErrorTrackingDataCollectionInfo toDataCollectionInfo(
       ErrorTrackingCVConfig cvConfig, VerificationTask.TaskType taskType) {
     ErrorTrackingDataCollectionInfo overOpsDataCollectionInfo = ErrorTrackingDataCollectionInfo.builder()
+                                                                    .accountId(cvConfig.getAccountId())
                                                                     .serviceId(cvConfig.getServiceIdentifier())
                                                                     .environmentId(cvConfig.getEnvIdentifier())
                                                                     .build();

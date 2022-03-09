@@ -139,6 +139,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -190,6 +191,8 @@ public class WatcherServiceImpl implements WatcherService {
 
   private static final boolean multiVersion;
   private static boolean accountVersion;
+
+  private final Map<String, Process> delegateProcessMap = new ConcurrentHashMap<>();
 
   static {
     String deployMode = System.getenv().get("DEPLOY_MODE");
@@ -1178,6 +1181,8 @@ public class WatcherServiceImpl implements WatcherService {
               log.info("Sending new delegate process {} go-ahead message", newDelegateProcess);
               messageService.writeMessageToChannel(DELEGATE, newDelegateProcess, DELEGATE_GO_AHEAD);
               success = true;
+              log.info("Adding new delegate process {} to process map", newDelegateProcess);
+              delegateProcessMap.put(newDelegateProcess, newDelegate.getProcess());
             }
           }
         }
@@ -1242,6 +1247,13 @@ public class WatcherServiceImpl implements WatcherService {
         ProcessControl.ensureKilled(delegateProcess, Duration.ofSeconds(120));
       } catch (Exception e) {
         log.error("Error killing delegate {}", delegateProcess, e);
+        Process delegate = delegateProcessMap.get(delegateProcess);
+        if (delegate != null) {
+          delegate.destroyForcibly();
+          log.error("Delegate process terminated forcefully: {}", !delegate.isAlive());
+        }
+      } finally {
+        delegateProcessMap.remove(delegateProcess);
       }
       messageService.closeData(DELEGATE_DASH + delegateProcess);
       messageService.closeChannel(DELEGATE, delegateProcess);

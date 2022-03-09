@@ -17,12 +17,14 @@ import io.harness.exception.ArtifactServerException;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.InvalidArtifactServerException;
 import io.harness.exception.NestedExceptionUtils;
+import io.harness.exception.NexusRegistryException;
 import io.harness.network.Http;
 
 import java.io.IOException;
 import javax.net.ssl.SSLHandshakeException;
 import lombok.experimental.UtilityClass;
 import lombok.extern.slf4j.Slf4j;
+import retrofit2.Call;
 import retrofit2.Converter;
 import retrofit2.Response;
 import retrofit2.Retrofit;
@@ -38,15 +40,23 @@ public class NexusHelper {
   }
 
   public static String getBaseUrl(NexusRequest nexusRequest) {
-    return nexusRequest.getNexusUrl().endsWith("/") ? nexusRequest.getNexusUrl() : nexusRequest.getNexusUrl() + "/";
+    return getBaseUrl(nexusRequest.getNexusUrl());
+  }
+
+  public static String getBaseUrl(String url) {
+    return url.endsWith("/") ? url : url + "/";
   }
 
   static Retrofit getRetrofit(NexusRequest nexusRequest, Converter.Factory converterFactory) {
     String baseUrl = getBaseUrl(nexusRequest);
+    return getRetrofit(baseUrl, nexusRequest.isCertValidationRequired(), converterFactory);
+  }
+
+  static Retrofit getRetrofit(String baseUrl, boolean isCertValidationRequired, Converter.Factory converterFactory) {
     return new Retrofit.Builder()
         .baseUrl(baseUrl)
         .addConverterFactory(converterFactory)
-        .client(Http.getOkHttpClient(baseUrl, nexusRequest.isCertValidationRequired()))
+        .client(Http.getOkHttpClient(baseUrl, isCertValidationRequired))
         .build();
   }
 
@@ -85,5 +95,52 @@ public class NexusHelper {
       }
     }
     return true;
+  }
+
+  public static boolean isRequestSuccessful(Call request, Response<?> response) {
+    if (response == null) {
+      throw NestedExceptionUtils.hintWithExplanationException("Please check if Nexus registry is running properly.",
+          String.format("Received a 'null' response for API call '%s %s' which is not expected.",
+              request.request().method(), request.request().url()),
+          new NexusRegistryException("'null' response was received!", USER));
+    }
+
+    if (!response.isSuccessful()) {
+      log.error("Request was not successful. Reason: {}", response);
+      int code = response.code();
+      switch (code) {
+        case 404:
+          return false;
+        case 401:
+          throw NestedExceptionUtils.hintWithExplanationException(
+              "Update the connector credentials with correct values", "The connector credentials are incorrect",
+              new NexusRegistryException("Invalid Nexus credentials", USER));
+        case 405:
+          throw NestedExceptionUtils.hintWithExplanationException(
+              "Ensure that the connector URL is correct & the provided credentials have all the required permissions",
+              "Failed to perform action",
+              new NexusRegistryException("Method not allowed: " + response.message(), USER));
+        default:
+          throw NestedExceptionUtils.hintWithExplanationException(
+              "Please retry the operation or check the Delegate logs for more information", "Failed to perform action.",
+              new NexusRegistryException(response.message(), USER));
+      }
+    }
+
+    if (response.body() == null) {
+      throw NestedExceptionUtils.hintWithExplanationException("Please check if Nexus registry is running properly.",
+          String.format("Did not receive a body in the response for API call '%s %s' with response code %s.",
+              request.request().method(), request.request().url(), response.code()),
+          new NexusRegistryException("Response received but message body was empty.", USER));
+    }
+
+    return true;
+  }
+
+  public static boolean isNexusVersion2(NexusRequest nexusConfig) {
+    if (nexusConfig.getVersion() == null || nexusConfig.getVersion().equalsIgnoreCase("2.x")) {
+      return true;
+    }
+    return false;
   }
 }

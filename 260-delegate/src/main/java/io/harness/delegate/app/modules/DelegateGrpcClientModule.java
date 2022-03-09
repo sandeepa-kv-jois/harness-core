@@ -31,7 +31,7 @@ public class DelegateGrpcClientModule extends AbstractManagerGrpcClientModule {
                        .orElseGet(() -> extractAuthority(configuration.getManagerUrl(), "manager")))
         .scheme(extractScheme(configuration.getManagerUrl()))
         .accountId(configuration.getAccountId())
-        .accountSecret(configuration.getAccountSecret())
+        .accountSecret(configuration.getDelegateToken())
         .build();
   }
 

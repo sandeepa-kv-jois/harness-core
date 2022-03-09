@@ -7,6 +7,7 @@
 
 package io.harness.gitsync.core.impl;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.SYNCED;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.SYNCING;
 import static io.harness.gitsync.common.beans.BranchSyncStatus.UNSYNCED;
@@ -108,7 +109,7 @@ public class BranchSyncEventYamlChangeSetHandler implements YamlChangeSetHandler
     } catch (Exception ex) {
       log.error("Error encountered while syncing the branch [{}]", branch, ex);
       String gitConnectivityErrorMessage = GitConnectivityExceptionHelper.getErrorMessage(ex);
-      if (!gitConnectivityErrorMessage.isEmpty()) {
+      if (isNotEmpty(gitConnectivityErrorMessage)) {
         recordConnectivityErrors(accountIdentifier, repoURL, gitConnectivityErrorMessage);
       }
       gitBranchService.updateBranchSyncStatus(yamlChangeSetDTO.getAccountId(), repoURL, branch, SYNCED);

@@ -72,8 +72,13 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
                                       .ambiance(ambiance)
                                       .status(Status.QUEUED)
                                       .mode(ExecutionMode.TASK)
-                                      .planNode(planNode)
                                       .startTs(System.currentTimeMillis())
+                                      .nodeId(planNode.getUuid())
+                                      .name(planNode.getName())
+                                      .stepType(planNode.getStepType())
+                                      .identifier(planNode.getIdentifier())
+                                      .module(planNode.getServiceName())
+                                      .skipGraphType(planNode.getSkipGraphType())
                                       .build();
     nodeExecutionService.save(nodeExecution);
 
@@ -91,6 +96,7 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
     String skipCondition = "<+pipeline.name>==\"name\"";
     PlanNode planNode = PlanNode.builder()
                             .uuid(generateUuid())
+                            .name(generateUuid())
                             .stepType(StepType.newBuilder().setType("DUMMY").setStepCategory(StepCategory.STEP).build())
                             .skipCondition(skipCondition)
                             .serviceName("CD")
@@ -108,8 +114,13 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
                                       .ambiance(ambiance)
                                       .status(Status.QUEUED)
                                       .mode(ExecutionMode.TASK)
-                                      .planNode(planNode)
                                       .startTs(System.currentTimeMillis())
+                                      .nodeId(planNode.getUuid())
+                                      .name(planNode.getName())
+                                      .stepType(planNode.getStepType())
+                                      .identifier(planNode.getIdentifier())
+                                      .module(planNode.getServiceName())
+                                      .skipGraphType(planNode.getSkipGraphType())
                                       .build();
     nodeExecutionService.save(nodeExecution);
 
@@ -147,8 +158,14 @@ public class SkipPreFacilitationCheckerTest extends OrchestrationTestBase {
                                       .ambiance(ambiance)
                                       .status(Status.QUEUED)
                                       .mode(ExecutionMode.TASK)
-                                      .planNode(planNode)
+
                                       .startTs(System.currentTimeMillis())
+                                      .nodeId(planNode.getUuid())
+                                      .name(planNode.getName())
+                                      .stepType(planNode.getStepType())
+                                      .identifier(planNode.getIdentifier())
+                                      .module(planNode.getServiceName())
+                                      .skipGraphType(planNode.getSkipGraphType())
                                       .build();
     nodeExecutionService.save(nodeExecution);
 

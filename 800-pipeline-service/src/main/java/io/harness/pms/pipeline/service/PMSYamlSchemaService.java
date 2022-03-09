@@ -13,7 +13,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.encryption.Scope;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import java.io.IOException;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public interface PMSYamlSchemaService {
@@ -21,7 +20,7 @@ public interface PMSYamlSchemaService {
 
   void validateYamlSchema(String accountId, String orgId, String projectId, String yaml);
 
-  void validateUniqueFqn(String yaml) throws IOException;
+  void validateUniqueFqn(String yaml);
 
   void invalidateAllCache();
 

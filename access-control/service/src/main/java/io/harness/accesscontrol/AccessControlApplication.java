@@ -18,7 +18,7 @@ import static io.harness.AuthorizationServiceHeader.MANAGER;
 import static io.harness.AuthorizationServiceHeader.NG_MANAGER;
 import static io.harness.AuthorizationServiceHeader.NOTIFICATION_SERVICE;
 import static io.harness.AuthorizationServiceHeader.PIPELINE_SERVICE;
-import static io.harness.accesscontrol.AccessControlConfiguration.getResourceClasses;
+import static io.harness.accesscontrol.AccessControlConfiguration.ALL_ACCESS_CONTROL_RESOURCES;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
 
@@ -69,6 +69,7 @@ import io.harness.security.InternalApiAuthFilter;
 import io.harness.security.NextGenAuthenticationFilter;
 import io.harness.security.annotations.InternalApi;
 import io.harness.security.annotations.PublicApi;
+import io.harness.swagger.SwaggerBundleConfigurationFactory;
 import io.harness.token.remote.TokenClient;
 
 import com.codahale.metrics.MetricRegistry;
@@ -142,6 +143,7 @@ public class AccessControlApplication extends Application<AccessControlConfigura
         return getSwaggerConfiguration(appConfig);
       }
     });
+    bootstrap.addCommand(new ScanClasspathMetadataCommand());
     // Enable variable substitution with environment variables
     bootstrap.setConfigurationSourceProvider(new SubstitutingSourceProvider(
         bootstrap.getConfigurationSourceProvider(), new EnvironmentVariableSubstitutor(false)));
@@ -239,7 +241,7 @@ public class AccessControlApplication extends Application<AccessControlConfigura
     } catch (MalformedURLException e) {
       log.error("failed to set baseurl for server, {}/{}", appConfig.getHostname(), appConfig.getBasePathPrefix());
     }
-    Collection<Class<?>> classes = getResourceClasses();
+    Collection<Class<?>> classes = ALL_ACCESS_CONTROL_RESOURCES;
     classes.add(AccessControlSwaggerListener.class);
     Set<String> packages = getUniquePackages(classes);
     return new SwaggerConfiguration().openAPI(oas).prettyPrint(true).resourcePackages(packages).scannerClass(
@@ -256,7 +258,7 @@ public class AccessControlApplication extends Application<AccessControlConfigura
   }
 
   private void registerResources(Environment environment, Injector injector) {
-    for (Class<?> resource : getResourceClasses()) {
+    for (Class<?> resource : ALL_ACCESS_CONTROL_RESOURCES) {
       environment.jersey().register(injector.getInstance(resource));
     }
     environment.jersey().register(injector.getInstance(VersionInfoResource.class));
@@ -350,8 +352,9 @@ public class AccessControlApplication extends Application<AccessControlConfigura
   }
 
   private SwaggerBundleConfiguration getSwaggerConfiguration(AccessControlConfiguration appConfig) {
-    SwaggerBundleConfiguration defaultSwaggerBundleConfiguration = new SwaggerBundleConfiguration();
-    Collection<Class<?>> classes = getResourceClasses();
+    Collection<Class<?>> classes = ALL_ACCESS_CONTROL_RESOURCES;
+    SwaggerBundleConfiguration defaultSwaggerBundleConfiguration =
+        SwaggerBundleConfigurationFactory.buildSwaggerBundleConfiguration(classes);
     classes.add(AccessControlSwaggerListener.class);
     String resourcePackage = String.join(",", getUniquePackages(classes));
     defaultSwaggerBundleConfiguration.setResourcePackage(resourcePackage);

@@ -16,6 +16,9 @@ import io.harness.annotation.HarnessEntity;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.EmbeddedUser;
+import io.harness.mongo.CollationLocale;
+import io.harness.mongo.CollationStrength;
+import io.harness.mongo.index.Collation;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.persistence.AccountAccess;
@@ -24,9 +27,11 @@ import io.harness.persistence.NameAccess;
 
 import software.wings.beans.entityinterface.KeywordsAware;
 import software.wings.beans.entityinterface.TagAware;
+import software.wings.ngmigration.NGMigrationEntity;
 import software.wings.yaml.BaseEntityYaml;
 import software.wings.yaml.gitSync.YamlGitConfig;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.base.MoreObjects;
 import com.google.common.collect.ImmutableList;
 import java.util.ArrayList;
@@ -56,7 +61,7 @@ import org.mongodb.morphia.annotations.Transient;
 @Entity(value = "applications", noClassnameStored = true)
 @HarnessEntity(exportable = true)
 @FieldNameConstants(innerTypeName = "ApplicationKeys")
-public class Application extends Base implements KeywordsAware, NameAccess, TagAware, AccountAccess {
+public class Application extends Base implements KeywordsAware, NameAccess, TagAware, AccountAccess, NGMigrationEntity {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -64,6 +69,8 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
                  .name("yaml")
                  .field(ApplicationKeys.accountId)
                  .field(ApplicationKeys.name)
+                 .collation(
+                     Collation.builder().locale(CollationLocale.ENGLISH).strength(CollationStrength.PRIMARY).build())
                  .build())
         .build();
   }
@@ -114,6 +121,12 @@ public class Application extends Base implements KeywordsAware, NameAccess, TagA
   }
 
   @Getter @Setter private transient List<HarnessTagLink> tagLinks;
+
+  @JsonIgnore
+  @Override
+  public String getMigrationEntityName() {
+    return getName();
+  }
 
   /**
    * Gets name.

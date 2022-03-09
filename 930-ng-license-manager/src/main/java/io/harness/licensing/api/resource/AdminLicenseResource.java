@@ -27,6 +27,7 @@ import io.swagger.v3.oas.annotations.Hidden;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
+import javax.ws.rs.DELETE;
 import javax.ws.rs.GET;
 import javax.ws.rs.POST;
 import javax.ws.rs.PUT;
@@ -85,5 +86,16 @@ public class AdminLicenseResource {
     // TODO change to Admin Auth when it's ready
     ModuleLicenseDTO updated = licenseService.updateModuleLicense(moduleLicenseDTO);
     return ResponseDTO.newResponse(updated);
+  }
+
+  @DELETE
+  @Path("{identifier}")
+  @InternalApi
+  @ApiOperation(value = "Delete Module License", nickname = "deleteModuleLicense", hidden = true)
+  public ResponseDTO<Void> delete(@QueryParam(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @PathParam("identifier") String identifier) {
+    // TODO change to Admin Auth when it's ready
+    licenseService.deleteModuleLicense(identifier);
+    return ResponseDTO.newResponse();
   }
 }

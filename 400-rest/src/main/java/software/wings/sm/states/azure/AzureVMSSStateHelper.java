@@ -19,6 +19,7 @@ import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.Log.Builder.aLog;
 import static software.wings.beans.ServiceVariable.Type.ENCRYPTED_TEXT;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 import static software.wings.sm.InstanceStatusSummary.InstanceStatusSummaryBuilder.anInstanceStatusSummary;
 
 import static java.lang.String.format;
@@ -698,7 +699,7 @@ public class AzureVMSSStateHelper {
   private boolean onlyMetaForArtifactType(ArtifactStream artifactStream) {
     return METADATA_ONLY_ARTIFACT_STREAM_TYPES.stream().anyMatch(
                streamType -> streamType.name().equals(artifactStream.getArtifactStreamType()))
-        && artifactStream.isMetadataOnly();
+        && metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly());
   }
 
   public void validateAppSettings(List<AzureAppServiceApplicationSetting> appSettings) {

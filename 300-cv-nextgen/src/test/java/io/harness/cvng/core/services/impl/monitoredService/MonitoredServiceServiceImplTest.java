@@ -25,7 +25,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
-import static org.mockito.Matchers.eq;
 import static org.mockito.Mockito.when;
 
 import io.harness.CvNextGenTestBase;
@@ -37,7 +36,6 @@ import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.MonitoredServiceDataSourceType;
 import io.harness.cvng.beans.MonitoredServiceType;
 import io.harness.cvng.beans.TimeSeriesMetricType;
-import io.harness.cvng.beans.change.ChangeEventDTO;
 import io.harness.cvng.client.NextGenService;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition.AnalysisDTO;
 import io.harness.cvng.core.beans.HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO;
@@ -975,41 +973,6 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     assertThatThrownBy(() -> monitoredServiceService.list(null, null, null))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("projectParams is marked @NonNull but is null");
-  }
-
-  @Test
-  @Owner(developers = ABHIJITH)
-  @Category(UnitTests.class)
-  public void testGetChangeEvents() throws IllegalAccessException {
-    useChangeSourceServiceMock();
-    MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTO();
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
-    List<ChangeEventDTO> changeEventDTOS = Arrays.asList(builderFactory.getHarnessCDChangeEventDTOBuilder().build());
-    when(changeSourceServiceMock.getChangeEvents(eq(builderFactory.getContext().getServiceEnvironmentParams()),
-             eq(hPersistence.createQuery(MonitoredService.class).get().getChangeSourceIdentifiers()),
-             eq(Instant.ofEpochSecond(100)), eq(Instant.ofEpochSecond(100)), eq(new ArrayList<>())))
-        .thenReturn(changeEventDTOS);
-    List<ChangeEventDTO> result =
-        monitoredServiceService.getChangeEvents(builderFactory.getContext().getProjectParams(),
-            monitoredServiceIdentifier, Instant.ofEpochSecond(100), Instant.ofEpochSecond(100), new ArrayList<>());
-    assertThat(result).isEqualTo(changeEventDTOS);
-  }
-
-  @Test
-  @Owner(developers = ABHIJITH)
-  @Category(UnitTests.class)
-  public void testgetChangeSummary() throws IllegalAccessException {
-    useChangeSourceServiceMock();
-    MonitoredServiceDTO monitoredServiceDTO = createMonitoredServiceDTO();
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
-    ChangeSummaryDTO changeSummaryDTO = ChangeSummaryDTO.builder().build();
-    when(changeSourceServiceMock.getChangeSummary(eq(builderFactory.getContext().getServiceEnvironmentParams()),
-             eq(hPersistence.createQuery(MonitoredService.class).get().getChangeSourceIdentifiers()),
-             eq(Instant.ofEpochSecond(100)), eq(Instant.ofEpochSecond(100))))
-        .thenReturn(changeSummaryDTO);
-    ChangeSummaryDTO result = monitoredServiceService.getChangeSummary(builderFactory.getContext().getProjectParams(),
-        monitoredServiceIdentifier, Instant.ofEpochSecond(100), Instant.ofEpochSecond(100));
-    assertThat(result).isEqualTo(changeSummaryDTO);
   }
 
   @Test

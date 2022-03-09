@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.iterator;
 
 import static io.harness.beans.DelegateTask.Status.ABORTED;
@@ -10,6 +17,8 @@ import static io.harness.exception.WingsException.USER;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.metrics.impl.DelegateMetricsServiceImpl.DELEGATE_TASK_EXPIRED;
 import static io.harness.persistence.HQuery.excludeAuthority;
+
+import static software.wings.service.impl.DelegateSelectionLogsServiceImpl.TASK_VALIDATION_FAILED;
 
 import static java.lang.String.format;
 import static java.lang.System.currentTimeMillis;
@@ -50,6 +59,7 @@ import software.wings.beans.TaskType;
 import software.wings.core.managerConfiguration.ConfigurationController;
 import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.AssignDelegateService;
+import software.wings.service.intfc.DelegateSelectionLogsService;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
@@ -84,6 +94,7 @@ public class FailDelegateTaskIterator implements MongoPersistenceIterator.Handle
   @Inject private DelegateMetricsService delegateMetricsService;
   @Inject private Clock clock;
   @Inject private DelegateCache delegateCache;
+  @Inject private DelegateSelectionLogsService delegateSelectionLogsService;
 
   private static final long VALIDATION_TIMEOUT = TimeUnit.MINUTES.toMillis(2);
 
@@ -280,6 +291,9 @@ public class FailDelegateTaskIterator implements MongoPersistenceIterator.Handle
             }
             String errorMessage = generateValidationError(delegateTask);
             log.info("Failing task {} due to validation error, {}", delegateTask.getUuid(), errorMessage);
+
+            String capabilitiesFailErrorMessage = TASK_VALIDATION_FAILED + generateCapabilitiesMessage(delegateTask);
+            delegateSelectionLogsService.logTaskValidationFailed(delegateTask, capabilitiesFailErrorMessage);
 
             DelegateResponseData response;
             if (delegateTask.getData().isAsync()) {

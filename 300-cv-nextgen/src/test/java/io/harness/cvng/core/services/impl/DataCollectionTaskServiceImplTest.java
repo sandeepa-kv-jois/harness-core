@@ -18,6 +18,7 @@ import static io.harness.cvng.core.entities.DeploymentDataCollectionTask.MAX_RET
 import static io.harness.cvng.core.services.CVNextGenConstants.DATA_COLLECTION_DELAY;
 import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.ABHIJITH;
+import static io.harness.rule.OwnerRule.ARPITJ;
 import static io.harness.rule.OwnerRule.KAMAL;
 import static io.harness.rule.OwnerRule.KANHAIYA;
 import static io.harness.rule.OwnerRule.NEMANJA;
@@ -47,6 +48,7 @@ import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.beans.job.TestVerificationJobDTO;
 import io.harness.cvng.beans.job.VerificationJobDTO;
 import io.harness.cvng.client.VerificationManagerService;
+import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
@@ -724,6 +726,28 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
   }
 
   @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testUpdateRetry() throws IllegalAccessException {
+    DataCollectionTask dataCollectionTask = createAndSave(QUEUED);
+    ProjectParams projectParams = ProjectParams.builder()
+                                      .accountIdentifier(accountId)
+                                      .orgIdentifier(orgIdentifier)
+                                      .projectIdentifier(projectIdentifier)
+                                      .build();
+    Clock clock = Clock.fixed(this.clock.instant().plus(Duration.ofHours(3)), ZoneOffset.UTC);
+    FieldUtils.writeField(dataCollectionTaskService, "clock", clock, true);
+
+    dataCollectionTaskService.updateRetry(projectParams, dataCollectionTask.getUuid());
+    DataCollectionTask newTask = hPersistence.get(DataCollectionTask.class, dataCollectionTask.getUuid());
+
+    assertThat(newTask.getRetryCount()).isEqualTo(0);
+    assertThat(newTask.getValidAfter())
+        .isEqualTo(
+            CVNGTestConstants.FIXED_TIME_FOR_TESTS.instant().plus(3, ChronoUnit.HOURS).plus(300, ChronoUnit.SECONDS));
+  }
+
+  @Test
   @Owner(developers = KAMAL)
   @Category(UnitTests.class)
   public void handleCreateNextTask_forFirstTaskAndMetricsConfig() {
@@ -926,6 +950,30 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
     hPersistence.save(dataCollectionTasks);
     nextTaskDTOs = dataCollectionTaskService.getNextTaskDTOs(accountId, dataCollectionWorkerId);
     assertThat(nextTaskDTOs.size()).isEqualTo(CVNextGenConstants.CVNG_MAX_PARALLEL_THREADS);
+  }
+
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetAllDataCollection() {
+    int numOfTasks = 10;
+    createAndSave(RUNNING);
+    for (int i = 0; i < numOfTasks - 1; i++) {
+      createAndSave(QUEUED);
+    }
+
+    List<DataCollectionTask> dataCollectionTaskList =
+        dataCollectionTaskService.getAllDataCollectionTasks(accountId, verificationTaskId);
+
+    assertThat(dataCollectionTaskList.size()).isEqualTo(numOfTasks);
+    assertThat(dataCollectionTaskList.get(0).getStatus()).isEqualTo(RUNNING);
+    long createdAt = dataCollectionTaskList.get(0).getCreatedAt();
+    for (int i = 1; i < numOfTasks; i++) {
+      assertThat(dataCollectionTaskList.get(i).getStatus()).isEqualTo(QUEUED);
+      long createdAtNext = dataCollectionTaskList.get(i).getCreatedAt();
+      assertThat(createdAtNext).isGreaterThanOrEqualTo(createdAt);
+      createdAt = createdAtNext;
+    }
   }
 
   private AppDynamicsCVConfig getCVConfig() {

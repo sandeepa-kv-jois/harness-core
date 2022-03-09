@@ -339,6 +339,7 @@ public class AppDynamicsDataCollectionDSLTest extends HoverflyCVNextGenTestBase 
                                               .build();
     List<TimeSeriesRecord> timeSeriesRecords =
         (List<TimeSeriesRecord>) dataCollectionDSLService.execute(code, runtimeParameters, callDetails -> {});
+
     assertThat(Sets.newHashSet(timeSeriesRecords))
         .isEqualTo(new Gson().fromJson(readJson("quality-collection-hosts-expectation.json"),
             new TypeToken<Set<TimeSeriesRecord>>() {}.getType()));

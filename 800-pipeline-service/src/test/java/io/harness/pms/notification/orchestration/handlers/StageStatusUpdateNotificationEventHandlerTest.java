@@ -11,8 +11,10 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import static io.harness.rule.OwnerRule.BRIJESH;
 
 import static junit.framework.TestCase.assertEquals;
+import static org.joor.Reflect.on;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.doNothing;
+import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
@@ -33,8 +35,10 @@ import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.steps.StepCategory;
 import io.harness.pms.contracts.steps.StepType;
 import io.harness.pms.notification.NotificationHelper;
+import io.harness.pms.sdk.SdkStepHelper;
 import io.harness.rule.Owner;
 
+import java.util.Collections;
 import java.util.Optional;
 import org.junit.Before;
 import org.junit.Test;
@@ -45,9 +49,11 @@ import org.mockito.ArgumentCaptor;
 public class StageStatusUpdateNotificationEventHandlerTest extends CategoryTest {
   NotificationHelper notificationHelper;
   StageStatusUpdateNotificationEventHandler stageStatusUpdateNotificationEventHandler;
+  SdkStepHelper sdkStepHelper;
 
   @Before
   public void setUp() {
+    sdkStepHelper = mock(SdkStepHelper.class);
     notificationHelper = mock(NotificationHelper.class);
     stageStatusUpdateNotificationEventHandler = spy(new StageStatusUpdateNotificationEventHandler());
     stageStatusUpdateNotificationEventHandler.notificationHelper = notificationHelper;
@@ -57,16 +63,18 @@ public class StageStatusUpdateNotificationEventHandlerTest extends CategoryTest 
   @Owner(developers = BRIJESH)
   @Category(UnitTests.class)
   public void testOnNodeStatusUpdate() {
+    on(stageStatusUpdateNotificationEventHandler).set("sdkStepHelper", sdkStepHelper);
     PlanNode stagePlanNode = PlanNode.builder()
                                  .uuid(generateUuid())
                                  .stepType(StepType.newBuilder().setStepCategory(StepCategory.STAGE).build())
                                  .identifier("dummyIdentifier")
                                  .build();
-    PlanNode stepPlanNode = PlanNode.builder()
-                                .uuid(generateUuid())
-                                .stepType(StepType.newBuilder().setStepCategory(StepCategory.STEP).build())
-                                .identifier("dummyIdentifier")
-                                .build();
+    PlanNode stepPlanNode =
+        PlanNode.builder()
+            .uuid(generateUuid())
+            .stepType(StepType.newBuilder().setStepCategory(StepCategory.STEP).setType("ShellScript").build())
+            .identifier("dummyIdentifier")
+            .build();
     String stageNodeExecutionId = generateUuid();
     Ambiance stageAmbiance =
         Ambiance.newBuilder().addLevels(PmsLevelUtils.buildLevelFromNode(stageNodeExecutionId, stagePlanNode)).build();
@@ -92,6 +100,7 @@ public class StageStatusUpdateNotificationEventHandlerTest extends CategoryTest 
                                 .addLevels(PmsLevelUtils.buildLevelFromNode(generateUuid(), stepPlanNode))
                                 .build();
     nodeExecution = NodeExecution.builder().ambiance(stepAmbiance).planNode(stepPlanNode).status(Status.FAILED).build();
+    doReturn(Collections.singleton("ShellScript")).when(sdkStepHelper).getAllStepVisibleInUI();
     nodeUpdateInfo = NodeUpdateInfo.builder().nodeExecution(nodeExecution).build();
     stageStatusUpdateNotificationEventHandler.onNodeStatusUpdate(nodeUpdateInfo);
     verify(notificationHelper, times(2))

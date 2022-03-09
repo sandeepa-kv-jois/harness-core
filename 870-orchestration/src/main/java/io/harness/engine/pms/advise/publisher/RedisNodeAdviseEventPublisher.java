@@ -41,7 +41,7 @@ public class RedisNodeAdviseEventPublisher implements NodeAdviseEventPublisher {
             .build();
 
     return eventSender.sendEvent(nodeExecution.getAmbiance(), adviseEvent.toByteString(), PmsEventCategory.NODE_ADVISE,
-        nodeExecution.module(), true);
+        nodeExecution.getModule(), true);
   }
 
   private boolean isPreviousAdviserExpired(List<InterruptEffect> interruptHistories) {

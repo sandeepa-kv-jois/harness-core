@@ -7,6 +7,7 @@
 
 package io.harness.cvng.servicelevelobjective.resources;
 
+import static io.harness.rule.OwnerRule.DEEPAK_CHHIKARA;
 import static io.harness.rule.OwnerRule.KAMAL;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,11 +20,15 @@ import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.monitoredService.MonitoredServiceService;
 import io.harness.rule.Owner;
 import io.harness.rule.ResourceTestRule;
+import io.harness.utils.InvalidResourceData;
 
 import com.google.inject.Inject;
 import com.google.inject.Injector;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.regex.Pattern;
 import javax.ws.rs.client.Entity;
 import javax.ws.rs.core.MediaType;
@@ -54,6 +59,77 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
         builderFactory.getContext().getOrgIdentifier(), builderFactory.getContext().getProjectIdentifier());
     monitoredServiceDTO = builderFactory.monitoredServiceDTOBuilder().build();
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceDTO);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testCreate_withThresholdSli() throws IOException {
+    String sloYaml = getYAML("slo/slo-with-threshold-sli.yaml");
+    Response response = RESOURCES.client()
+                            .target("http://localhost:9998/slo/")
+                            .queryParam("accountId", builderFactory.getContext().getAccountId())
+                            .request(MediaType.APPLICATION_JSON_TYPE)
+                            .post(Entity.json(convertToJson(sloYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testCreate_withRatioSli() throws IOException {
+    String sloYaml = getYAML("slo/slo-with-ratio-sli.yaml");
+    Response response = RESOURCES.client()
+                            .target("http://localhost:9998/slo/")
+                            .queryParam("accountId", builderFactory.getContext().getAccountId())
+                            .request(MediaType.APPLICATION_JSON_TYPE)
+                            .post(Entity.json(convertToJson(sloYaml)));
+    assertThat(response.getStatus()).isEqualTo(200);
+  }
+
+  @Test
+  @Owner(developers = DEEPAK_CHHIKARA)
+  @Category(UnitTests.class)
+  public void testCreate_withInvalidSli() throws IOException {
+    String sloYaml = getYAML("slo/slo-with-ratio-sli.yaml");
+    List<InvalidResourceData> invalidResourceDataList = new ArrayList<>();
+    invalidResourceDataList.add(
+        InvalidResourceData.builder().property("name").replacementValue("").expectedResponseCode(400).build());
+    invalidResourceDataList.add(
+        InvalidResourceData.builder().property("identifier").replacementValue("").expectedResponseCode(400).build());
+    invalidResourceDataList.add(InvalidResourceData.builder()
+                                    .path("target")
+                                    .property("type")
+                                    .replacementValue(100)
+                                    .expectedResponseCode(500)
+                                    .build());
+    invalidResourceDataList.add(InvalidResourceData.builder()
+                                    .path("target")
+                                    .property("sloTargetPercentage")
+                                    .replacementValue(100)
+                                    .expectedResponseCode(400)
+                                    .build());
+    invalidResourceDataList.add(InvalidResourceData.builder()
+                                    .path("serviceLevelIndicators")
+                                    .property("sliMissingDataType")
+                                    .replacementValue("")
+                                    .expectedResponseCode(500)
+                                    .build());
+    invalidResourceDataList.add(InvalidResourceData.builder()
+                                    .path("serviceLevelIndicators\\spec\\spec")
+                                    .property("thresholdType")
+                                    .replacementValue("$")
+                                    .expectedResponseCode(500)
+                                    .build());
+    for (InvalidResourceData invalidResourceData : invalidResourceDataList) {
+      String sloJson = replace(sloYaml, invalidResourceData);
+      Response response = RESOURCES.client()
+                              .target("http://localhost:9998/slo/")
+                              .queryParam("accountId", builderFactory.getContext().getAccountId())
+                              .request(MediaType.APPLICATION_JSON_TYPE)
+                              .post(Entity.json(sloJson));
+      assertThat(response.getStatus()).isEqualTo(invalidResourceData.getExpectedResponseCode());
+    }
   }
 
   @Test
@@ -162,13 +238,7 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
   }
 
   private String getYAML(String filePath) throws IOException {
-    String sloYaml = getResource(filePath);
-    sloYaml = sloYaml.replace("$projectIdentifier", builderFactory.getContext().getProjectIdentifier());
-    sloYaml = sloYaml.replace("$orgIdentifier", builderFactory.getContext().getOrgIdentifier());
-    sloYaml = sloYaml.replace("$monitoredServiceRef", monitoredServiceDTO.getIdentifier());
-    sloYaml = sloYaml.replace(
-        "$healthSourceRef", monitoredServiceDTO.getSources().getHealthSources().iterator().next().getIdentifier());
-    return sloYaml;
+    return getYAML(filePath, monitoredServiceDTO.getIdentifier());
   }
 
   private String getYAML(String filePath, String monitoredServiceIdentifier) throws IOException {
@@ -179,5 +249,26 @@ public class ServiceLevelObjectiveResourceTest extends CvNextGenTestBase {
     sloYaml = sloYaml.replace(
         "$healthSourceRef", monitoredServiceDTO.getSources().getHealthSources().iterator().next().getIdentifier());
     return sloYaml;
+  }
+
+  private String replace(String text, InvalidResourceData invalidResourceData) {
+    Yaml yaml = new Yaml();
+    Map<String, Object> map = yaml.load(text);
+    JSONObject jsonObject = new JSONObject(map);
+    JSONObject iteratorObject = jsonObject;
+    if (Objects.nonNull(invalidResourceData.getPath())) {
+      String[] path = invalidResourceData.getPath().split("\\\\");
+      for (String value : path) {
+        JSONObject dataObject = iteratorObject.optJSONObject(value);
+        if (Objects.nonNull(dataObject)) {
+          iteratorObject = iteratorObject.getJSONObject(value);
+        } else {
+          iteratorObject = iteratorObject.getJSONArray(value).getJSONObject(0);
+        }
+      }
+    }
+    iteratorObject.remove(invalidResourceData.getProperty());
+    iteratorObject.put(invalidResourceData.getProperty(), invalidResourceData.getReplacementValue());
+    return jsonObject.toString();
   }
 }

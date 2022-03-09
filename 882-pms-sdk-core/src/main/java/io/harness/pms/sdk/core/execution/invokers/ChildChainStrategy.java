@@ -96,7 +96,6 @@ public class ChildChainStrategy implements ExecuteStrategy {
             StepResponseNotifyData.builder()
                 .nodeUuid(currentLevel.getSetupId())
                 .identifier(currentLevel.getIdentifier())
-                .group(currentLevel.getGroup())
                 .status(SUSPENDED)
                 .description("Ignoring Execution as next child found to be null")
                 .build()));

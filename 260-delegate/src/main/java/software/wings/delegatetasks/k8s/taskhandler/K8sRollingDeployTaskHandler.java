@@ -54,8 +54,6 @@ import io.harness.exception.InvalidArgumentsException;
 import io.harness.k8s.KubernetesContainerService;
 import io.harness.k8s.kubectl.Kubectl;
 import io.harness.k8s.manifest.ManifestHelper;
-import io.harness.k8s.model.HarnessLabelValues;
-import io.harness.k8s.model.HarnessLabels;
 import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.k8s.model.K8sPod;
 import io.harness.k8s.model.KubernetesConfig;
@@ -67,6 +65,8 @@ import io.harness.k8s.model.ReleaseHistory;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -76,13 +76,10 @@ import software.wings.helpers.ext.k8s.response.K8sRollingDeployResponse;
 import software.wings.helpers.ext.k8s.response.K8sTaskExecutionResponse;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.collect.Maps;
 import com.google.inject.Inject;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -102,8 +99,6 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
   @Inject K8sRollingBaseHandler k8sRollingBaseHandler;
 
   private K8sRollingHandlerConfig k8sRollingHandlerConfig = new K8sRollingHandlerConfig();
-  private static final Map.Entry<String, String> HARNESS_TRACK_STABLE_SELECTOR =
-      Maps.immutableEntry(HarnessLabels.track, HarnessLabelValues.trackStable);
 
   @Override
   public K8sTaskExecutionResponse executeTaskInternal(
@@ -129,11 +124,14 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
         return getFailureResponse();
       }
     } else {
+      ExecutionLogCallback executionLogCallback =
+          k8sTaskHelper.getExecutionLogCallback(k8sRollingDeployTaskParameters, FetchFiles);
+      executionLogCallback.saveExecutionLog(
+          color("\nStarting Kubernetes Rolling Deployment", LogColor.White, LogWeight.Bold));
+
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sRollingDeployTaskParameters.getK8sDelegateManifestConfig(),
-          k8sRollingHandlerConfig.getManifestFilesDirectory(),
-          k8sTaskHelper.getExecutionLogCallback(k8sRollingDeployTaskParameters, FetchFiles),
-          steadyStateTimeoutInMillis);
+          k8sRollingHandlerConfig.getManifestFilesDirectory(), executionLogCallback, steadyStateTimeoutInMillis);
 
       if (!success) {
         return getFailureResponse();
@@ -418,15 +416,8 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
           addRevisionNumber(k8sRollingHandlerConfig.getResources(), k8sRollingHandlerConfig.getRelease().getNumber());
         }
 
-        List<KubernetesResource> workloadsFromServer = new ArrayList<>();
-        if (skipAddingTrackSelectorToDeployment && inCanaryWorkflow) {
-          workloadsFromServer = k8sTaskHelperBase.getDeploymentContainingTrackStableSelector(
-              k8sRollingHandlerConfig.getKubernetesConfig(), managedWorkloads, HARNESS_TRACK_STABLE_SELECTOR);
-          k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow, workloadsFromServer);
-        } else {
-          k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow, managedWorkloads);
-        }
-
+        k8sRollingBaseHandler.addLabelsInDeploymentSelectorForCanary(inCanaryWorkflow,
+            skipAddingTrackSelectorToDeployment, managedWorkloads, k8sRollingHandlerConfig.getKubernetesConfig());
         k8sRollingBaseHandler.addLabelsInManagedWorkloadPodSpec(
             inCanaryWorkflow, managedWorkloads, k8sRollingHandlerConfig.getReleaseName());
       }

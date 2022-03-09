@@ -43,6 +43,6 @@ public class RedisFacilitateEventPublisher implements FacilitateEventPublisher {
                                  .build();
 
     return eventSender.sendEvent(
-        ambiance, event.toByteString(), PmsEventCategory.FACILITATOR_EVENT, nodeExecution.module(), true);
+        ambiance, event.toByteString(), PmsEventCategory.FACILITATOR_EVENT, nodeExecution.getModule(), true);
   }
 }

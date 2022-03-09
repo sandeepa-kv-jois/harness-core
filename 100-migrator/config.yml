@@ -25,6 +25,7 @@ server:
         target: STDOUT
         threshold: ERROR
   maxThreads: 1024
+  rootPath: "/api/ng-migration/"
 
 logging:
   level: INFO
@@ -61,7 +62,7 @@ cg:
     storeResponsePayload: false
 
   backgroundScheduler:
-    enabled: true
+    enabled: false
     schedulerName: automation_background_scheduler
     instanceId: automation_background
     tablePrefix: quartz
@@ -76,11 +77,11 @@ cg:
     instanceId: automation_background
     tablePrefix: quartz
     threadCount: 25
-    enabled: true
+    enabled: false
     #mongoUri: mongodb://localhost:27017/service_scheduler
 
   enableIterators: false
-  trialRegistrationAllowed: true
+  trialRegistrationAllowed: false
   eventsFrameworkAvailableInOnPrem: false
   trialRegistrationAllowedForBugathon: false
   blacklistedEmailDomainsAllowed: true
@@ -310,7 +311,7 @@ cg:
     serverSelectionTimeout: 90000
     maxConnectionIdleTime: 600000
     connectionsPerHost: 300
-    indexManagerMode: AUTO
+    indexManagerMode: MANUAL
     traceMode: DISABLED
     mongoSSLConfig:
       mongoSSLEnabled: false
@@ -323,10 +324,10 @@ cg:
     serverSelectionTimeout: 90000
     maxConnectionIdleTime: 600000
     connectionsPerHost: 300
-    indexManagerMode: AUTO
+    indexManagerMode: MANUAL
 
   searchEnabled: false
-  graphQLEnabled: true
+  graphQLEnabled: false
 
   elasticsearch:
     uri: http://localhost:9200
@@ -570,13 +571,13 @@ cg:
 
   workers:
     active:
-      io.harness: true
-      software.wings: true
+      io.harness: false
+      software.wings: false
 
   publishers:
     active:
-      io.harness: true
-      software.wings: true
+      io.harness: false
+      software.wings: false
 
   #Timeout in ms
   pipelineConfig:
@@ -681,4 +682,9 @@ ngClientConfig:
   baseUrl: https://127.0.0.1:7090
 
 pipelineServiceClientConfig:
-  baseUrl: http://127.0.0.1:12001
+  baseUrl: http://127.0.0.1:12001/api/
+
+templateServiceClientConfig:
+  baseUrl: http://localhost:15001/api/
+  connectTimeOutSeconds: 15
+  readTimeOutSeconds: 15

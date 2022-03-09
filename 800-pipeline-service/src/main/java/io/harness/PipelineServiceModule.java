@@ -18,6 +18,7 @@ import static io.harness.outbox.OutboxSDKConstants.DEFAULT_OUTBOX_POLL_CONFIGURA
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.app.PrimaryVersionManagerModule;
+import io.harness.audit.ResourceTypeConstants;
 import io.harness.audit.client.remote.AuditClientModule;
 import io.harness.cache.HarnessCacheManager;
 import io.harness.callback.DelegateCallback;
@@ -49,6 +50,7 @@ import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoPersistence;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.ng.core.event.MessageListener;
+import io.harness.ngtriggers.outbox.TriggerOutboxEventHandler;
 import io.harness.opaclient.OpaClientModule;
 import io.harness.organization.OrganizationClientModule;
 import io.harness.outbox.TransactionOutboxModule;
@@ -76,6 +78,7 @@ import io.harness.pms.ngpipeline.inputset.service.PMSInputSetService;
 import io.harness.pms.ngpipeline.inputset.service.PMSInputSetServiceImpl;
 import io.harness.pms.opa.service.PMSOpaService;
 import io.harness.pms.opa.service.PMSOpaServiceImpl;
+import io.harness.pms.outbox.PMSOutboxEventHandler;
 import io.harness.pms.outbox.PipelineOutboxEventHandler;
 import io.harness.pms.pipeline.mappers.PipelineFilterPropertiesMapper;
 import io.harness.pms.pipeline.service.PMSPipelineService;
@@ -133,6 +136,8 @@ import io.harness.steps.jira.JiraStepHelperService;
 import io.harness.steps.jira.create.JiraCreateStepNode;
 import io.harness.steps.jira.update.JiraUpdateStepNode;
 import io.harness.steps.policy.PolicyStepNode;
+import io.harness.steps.servicenow.create.ServiceNowCreateStepNode;
+import io.harness.steps.servicenow.update.ServiceNowUpdateStepNode;
 import io.harness.steps.shellscript.ShellScriptHelperService;
 import io.harness.steps.shellscript.ShellScriptHelperServiceImpl;
 import io.harness.steps.shellscript.ShellScriptStepNode;
@@ -208,6 +213,8 @@ public class PipelineServiceModule extends AbstractModule {
       add(JiraApprovalStepNode.class);
       add(HarnessApprovalStepNode.class);
       add(PolicyStepNode.class);
+      add(ServiceNowCreateStepNode.class);
+      add(ServiceNowUpdateStepNode.class);
     }
   };
 
@@ -317,7 +324,8 @@ public class PipelineServiceModule extends AbstractModule {
         return configuration.getSegmentConfiguration();
       }
     });
-    bind(OutboxEventHandler.class).to(PipelineOutboxEventHandler.class);
+    registerOutboxEventHandlers();
+    bind(OutboxEventHandler.class).to(PMSOutboxEventHandler.class);
     bind(HPersistence.class).to(MongoPersistence.class);
     bind(PipelineMetadataService.class).to(PipelineMetadataServiceImpl.class);
 
@@ -394,6 +402,14 @@ public class PipelineServiceModule extends AbstractModule {
         configuration.getNgManagerServiceSecret(), PIPELINE_SERVICE.getServiceId(),
         configuration.getEnforcementClientConfiguration()));
     registerEventsFrameworkMessageListeners();
+  }
+
+  private void registerOutboxEventHandlers() {
+    MapBinder<String, OutboxEventHandler> outboxEventHandlerMapBinder =
+        MapBinder.newMapBinder(binder(), String.class, OutboxEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(ResourceTypeConstants.TRIGGER).to(TriggerOutboxEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(ResourceTypeConstants.PIPELINE).to(PipelineOutboxEventHandler.class);
+    outboxEventHandlerMapBinder.addBinding(ResourceTypeConstants.INPUT_SET).to(PipelineOutboxEventHandler.class);
   }
 
   private void registerEventsFrameworkMessageListeners() {

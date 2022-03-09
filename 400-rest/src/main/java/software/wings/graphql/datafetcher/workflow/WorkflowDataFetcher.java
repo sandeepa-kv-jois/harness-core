@@ -84,7 +84,7 @@ public class WorkflowDataFetcher extends AbstractObjectDataFetcher<QLWorkflow, Q
     }
 
     if (workflow == null) {
-      return null;
+      throw new InvalidRequestException(WORKFLOW_DOES_NOT_EXIST_MSG, WingsException.USER);
     }
 
     if (!workflow.getAccountId().equals(accountId)) {

@@ -9,6 +9,7 @@ package io.harness.cvng.core.services.api;
 
 import io.harness.cvng.beans.DataCollectionTaskDTO;
 import io.harness.cvng.beans.DataCollectionTaskDTO.DataCollectionTaskResult;
+import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.entities.CVConfig;
 import io.harness.cvng.core.entities.DataCollectionTask;
 
@@ -28,6 +29,8 @@ public interface DataCollectionTaskService {
 
   void updateTaskStatus(DataCollectionTaskResult dataCollectionTaskResult);
 
+  DataCollectionTask updateRetry(ProjectParams projectParams, String identifier);
+
   List<String> createSeqTasks(List<DataCollectionTask> dataCollectionTasks);
 
   void abortDeploymentDataCollectionTasks(List<String> verificationTaskIds);
@@ -35,6 +38,8 @@ public interface DataCollectionTaskService {
   DataCollectionTask getLastDataCollectionTask(String accountId, String verificationTaskId);
 
   List<DataCollectionTask> getLatestDataCollectionTasks(String accountId, String verificationTaskId, int count);
+
+  List<DataCollectionTask> getAllDataCollectionTasks(String accountId, String verificationTaskId);
 
   void populateMetricPack(CVConfig cvConfig);
 

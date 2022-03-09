@@ -201,7 +201,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     }
     final GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
-        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()));
+        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId());
     return scmClient.createFile(decryptedConnector, gitFileDetails.build());
   }
 
@@ -214,7 +214,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     }
     final GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
-        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()));
+        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     return scmClient.updateFile(decryptedConnector, gitFileDetails.build());
   }
@@ -228,7 +228,7 @@ public class ScmManagerFacilitatorServiceImpl extends AbstractScmClientFacilitat
     }
     final GitFileDetailsBuilder gitFileDetails = getGitFileDetails(infoForPush.getAccountId(), infoForPush.getYaml(),
         infoForPush.getFilePath(), infoForPush.getFolderPath(), infoForPush.getCommitMsg(), infoForPush.getBranch(),
-        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()));
+        SCMType.fromConnectorType(infoForPush.getScmConnector().getConnectorType()), infoForPush.getCommitId());
     gitFileDetails.oldFileSha(infoForPush.getOldFileSha());
     return scmClient.deleteFile(decryptedConnector, gitFileDetails.build());
   }

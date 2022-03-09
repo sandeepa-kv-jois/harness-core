@@ -229,7 +229,8 @@ public class TriggerController {
         throw new InvalidRequestException(
             String.format("GitConnector: %s doesn't belong to this account", gitConnectorId), USER);
       }
-      if (settingsService.getFilteredSettingAttributes(Collections.singletonList(gitConfig), appId, null).isEmpty()) {
+      if (settingsService.getFilteredSettingAttributes(Collections.singletonList(gitConfig), appId, null, false)
+              .isEmpty()) {
         throw new InvalidRequestException(
             String.format("User doesn't have access to use the GitConnector: %s", gitConnectorId), USER);
       }

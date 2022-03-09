@@ -18,6 +18,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.ccm.license.CeLicenseInfo;
 import io.harness.ccm.license.CeLicenseType;
+import io.harness.configuration.DeployVariant;
 import io.harness.event.handler.impl.EventPublishHelper;
 import io.harness.exception.InvalidRequestException;
 import io.harness.licensing.beans.response.CheckExpiryResultDTO;
@@ -511,7 +512,11 @@ public class LicenseServiceImpl implements LicenseService {
         }
       });
     } catch (Exception ex) {
-      throw new InvalidRequestException("Error while updating account license for on-prem", ex);
+      if (DeployVariant.isCommunity(mainConfiguration.getDeployVariant().name())) {
+        log.info("Skip for updating on-prem license with community edition");
+      } else {
+        throw new InvalidRequestException("Error while updating account license for on-prem", ex);
+      }
     }
   }
 

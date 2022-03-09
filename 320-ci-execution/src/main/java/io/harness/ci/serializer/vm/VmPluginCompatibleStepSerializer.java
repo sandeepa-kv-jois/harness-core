@@ -10,19 +10,19 @@ package io.harness.ci.serializer.vm;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
-import io.harness.beans.steps.CIStepInfoUtils;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
-import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.integrationstage.IntegrationStageUtils;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
 import io.harness.delegate.beans.ci.vm.steps.VmPluginStep;
+import io.harness.execution.CIExecutionConfigService;
 import io.harness.ng.core.NGAccess;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.stateutils.buildstate.ConnectorUtils;
 import io.harness.stateutils.buildstate.PluginSettingUtils;
+import io.harness.steps.CIStepInfoUtils;
 import io.harness.utils.TimeoutUtils;
 import io.harness.yaml.core.timeout.Timeout;
 
@@ -32,7 +32,7 @@ import java.util.Map;
 
 @Singleton
 public class VmPluginCompatibleStepSerializer {
-  @Inject private CIExecutionServiceConfig ciExecutionServiceConfig;
+  @Inject private CIExecutionConfigService ciExecutionConfigService;
   @Inject private ConnectorUtils connectorUtils;
 
   public VmPluginStep serialize(Ambiance ambiance, PluginCompatibleStep pluginCompatibleStep, String identifier,
@@ -40,7 +40,8 @@ public class VmPluginCompatibleStepSerializer {
     long timeout = TimeoutUtils.getTimeoutInSeconds(parameterFieldTimeout, pluginCompatibleStep.getDefaultTimeout());
     Map<String, String> envVars =
         PluginSettingUtils.getPluginCompatibleEnvVariables(pluginCompatibleStep, identifier, timeout, Type.VM);
-    String image = CIStepInfoUtils.getPluginCustomStepImage(pluginCompatibleStep, ciExecutionServiceConfig, Type.VM);
+    String image = CIStepInfoUtils.getPluginCustomStepImage(
+        pluginCompatibleStep, ciExecutionConfigService, Type.VM, AmbianceUtils.getAccountId(ambiance));
 
     String connectorRef = PluginSettingUtils.getConnectorRef(pluginCompatibleStep);
     NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
@@ -50,7 +51,7 @@ public class VmPluginCompatibleStepSerializer {
     connectorDetails.setEnvToSecretsMap(connectorSecretEnvMap);
 
     ConnectorDetails imageConnector = null;
-    if (isNotEmpty(ciExecutionServiceConfig.getDefaultInternalImageConnector())) {
+    if (isNotEmpty(ciExecutionConfigService.getCiExecutionServiceConfig().getDefaultInternalImageConnector())) {
       imageConnector = connectorUtils.getDefaultInternalConnector(ngAccess);
     }
     return VmPluginStep.builder()

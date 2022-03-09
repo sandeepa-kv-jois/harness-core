@@ -12,14 +12,11 @@ import static io.harness.data.structure.UUIDGenerator.generateUuid;
 import io.harness.OrchestrationPublisherName;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.engine.OrchestrationEngine;
 import io.harness.engine.executions.node.NodeExecutionService;
-import io.harness.engine.executions.plan.PlanService;
 import io.harness.engine.pms.resume.EngineResumeCallback;
-import io.harness.engine.utils.PmsLevelUtils;
+import io.harness.execution.InitiateNodeHelper;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.logging.AutoLogContext;
-import io.harness.plan.Node;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.ChildrenExecutableResponse.Child;
 import io.harness.pms.contracts.execution.ExecutableResponse;
@@ -40,10 +37,9 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(HarnessTeam.PIPELINE)
 @Slf4j
 public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
-  @Inject private PlanService planService;
   @Inject private NodeExecutionService nodeExecutionService;
-  @Inject private OrchestrationEngine engine;
   @Inject private WaitNotifyEngine waitNotifyEngine;
+  @Inject private InitiateNodeHelper initiateNodeHelper;
   @Inject @Named(OrchestrationPublisherName.PUBLISHER_NAME) private String publisherName;
 
   @Override
@@ -56,9 +52,7 @@ public class SpawnChildrenRequestProcessor implements SdkResponseProcessor {
       for (Child child : request.getChildren().getChildrenList()) {
         String uuid = generateUuid();
         callbackIds.add(uuid);
-        Node node = planService.fetchNode(ambiance.getPlanId(), child.getChildNodeId());
-        Ambiance clonedAmbiance = AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(uuid, node));
-        engine.triggerNode(clonedAmbiance, node, null);
+        initiateNodeHelper.publishEvent(ambiance, child.getChildNodeId(), uuid);
       }
 
       // Attach a Callback to the parent for the child

@@ -11,7 +11,10 @@ import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.IdentifierRef;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryArtifactBuildDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRepoDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryRequestDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
 
 import java.util.List;
 import lombok.NonNull;
@@ -24,4 +27,14 @@ public interface ArtifactoryResourceService {
   List<ArtifactoryArtifactBuildDetailsDTO> getBuildDetails(@NonNull String repositoryName, @NonNull String filePath,
       int maxVersions, @NonNull IdentifierRef connectorRef, @NonNull String orgIdentifier,
       @NonNull String projectIdentifier);
+
+  ArtifactoryResponseDTO getBuildDetails(IdentifierRef artifactoryConnectorRef, String repositoryName,
+      String artifactPath, String repositoryFormat, String artifactRepositoryUrl, String orgIdentifier,
+      String projectIdentifier);
+
+  ArtifactoryBuildDetailsDTO getSuccessfulBuild(IdentifierRef artifactoryConnectorRef, String repositoryName,
+      String artifactPath, String repositoryFormat, String artifactRepositoryUrl,
+      ArtifactoryRequestDTO artifactoryRequestDTO, String orgIdentifier, String projectIdentifier);
+
+  boolean validateArtifactServer(IdentifierRef artifactoryConnectorRef, String orgIdentifier, String projectIdentifier);
 }

@@ -16,11 +16,11 @@ import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.metrics.MetricType;
 import software.wings.service.impl.newrelic.NewRelicMetricAnalysisRecord.NewRelicMetricHostAnalysisValue;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.impl.newrelic.NewRelicMetricValueDefinition;
-import software.wings.sm.StateType;
 
 import java.security.SecureRandom;
 import java.util.HashMap;
@@ -51,7 +51,7 @@ public class NewRelicMetricValueDefinitionTest extends WingsBaseTest {
         metricValues.put(NewRelicMetricValueDefinition.AVERAGE_RESPONSE_TIME, random.nextDouble());
         records.add(NewRelicMetricDataRecord.builder()
                         .stateExecutionId(stateExecutionId)
-                        .stateType(StateType.NEW_RELIC)
+                        .stateType(DelegateStateType.NEW_RELIC)
                         .host("host" + i)
                         .values(metricValues)
                         .timeStamp(j)

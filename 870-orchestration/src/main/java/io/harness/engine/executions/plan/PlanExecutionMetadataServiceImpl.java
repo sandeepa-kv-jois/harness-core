@@ -7,8 +7,6 @@
 
 package io.harness.engine.executions.plan;
 
-import static io.harness.data.structure.EmptyPredicate.isEmpty;
-
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.execution.PlanExecutionMetadata;
@@ -36,16 +34,5 @@ public class PlanExecutionMetadataServiceImpl implements PlanExecutionMetadataSe
   @Override
   public PlanExecutionMetadata save(PlanExecutionMetadata planExecutionMetadata) {
     return planExecutionMetadataRepository.save(planExecutionMetadata);
-  }
-
-  @Override
-  public String getYamlFromPlanExecutionId(String planExecutionId) {
-    Optional<PlanExecutionMetadata> planExecutionMetadata = findByPlanExecutionId(planExecutionId);
-
-    if (!planExecutionMetadata.isPresent() || isEmpty(planExecutionMetadata.get().getYaml())) {
-      return null;
-    }
-
-    return planExecutionMetadata.get().getYaml();
   }
 }

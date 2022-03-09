@@ -53,9 +53,12 @@ public class VmRunTestStepSerializer {
       throw new CIStageExecutionException("language cannot be null");
     }
     List<String> outputVarNames = new ArrayList<>();
-    if (isNotEmpty(runTestsStepInfo.getOutputVariables())) {
-      outputVarNames =
-          runTestsStepInfo.getOutputVariables().stream().map(OutputNGVariable::getName).collect(Collectors.toList());
+    if (isNotEmpty(runTestsStepInfo.getOutputVariables().getValue())) {
+      outputVarNames = runTestsStepInfo.getOutputVariables()
+                           .getValue()
+                           .stream()
+                           .map(OutputNGVariable::getName)
+                           .collect(Collectors.toList());
     }
     String connectorIdentifier = RunTimeInputHandler.resolveStringParameter(
         "connectorRef", "RunTest", identifier, runTestsStepInfo.getConnectorRef(), false);
@@ -105,9 +108,9 @@ public class VmRunTestStepSerializer {
       runTestStepBuilder.connector(connectorDetails);
     }
 
-    if (runTestsStepInfo.getReports() != null) {
-      if (runTestsStepInfo.getReports().getType() == UnitTestReportType.JUNIT) {
-        JUnitTestReport junitTestReport = (JUnitTestReport) runTestsStepInfo.getReports().getSpec();
+    if (runTestsStepInfo.getReports().getValue() != null) {
+      if (runTestsStepInfo.getReports().getValue().getType() == UnitTestReportType.JUNIT) {
+        JUnitTestReport junitTestReport = (JUnitTestReport) runTestsStepInfo.getReports().getValue().getSpec();
         List<String> resolvedReport = junitTestReport.resolve(identifier, stepName);
 
         runTestStepBuilder.unitTestReport(VmJunitTestReport.builder().paths(resolvedReport).build());

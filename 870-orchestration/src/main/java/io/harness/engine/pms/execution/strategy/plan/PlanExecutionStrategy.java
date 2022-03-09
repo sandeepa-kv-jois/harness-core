@@ -46,8 +46,8 @@ import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import java.util.concurrent.ExecutorService;
 import lombok.Getter;
+import lombok.NonNull;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 
 @Slf4j
 @Singleton
@@ -66,7 +66,7 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
   @Getter private final Subject<OrchestrationEndObserver> orchestrationEndSubject = new Subject<>();
 
   @Override
-  public PlanExecution triggerNode(@NotNull Ambiance ambiance, @NotNull Plan plan, PlanExecutionMetadata metadata) {
+  public PlanExecution runNode(@NonNull Ambiance ambiance, @NonNull Plan plan, PlanExecutionMetadata metadata) {
     String accountId = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.accountId);
     String orgIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.orgIdentifier);
     String projectIdentifier = ambiance.getSetupAbstractionsMap().get(SetupAbstractionKeys.projectIdentifier);
@@ -97,7 +97,7 @@ public class PlanExecutionStrategy implements NodeExecutionStrategy<Plan, PlanEx
     } else {
       Ambiance cloned =
           AmbianceUtils.cloneForChild(ambiance, PmsLevelUtils.buildLevelFromNode(generateUuid(), planNode));
-      executorService.submit(() -> orchestrationEngine.triggerNode(cloned, planNode, null));
+      executorService.submit(() -> orchestrationEngine.runNode(cloned, planNode, null));
       return planExecution;
     }
   }

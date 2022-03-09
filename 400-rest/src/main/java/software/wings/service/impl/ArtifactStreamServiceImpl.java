@@ -8,6 +8,7 @@
 package software.wings.service.impl;
 
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.beans.FeatureName.ARTIFACT_STREAM_METADATA_ONLY;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.PageResponse.PageResponseBuilder.aPageResponse;
 import static io.harness.beans.SearchFilter.Operator.EQ;
@@ -39,6 +40,7 @@ import static software.wings.beans.artifact.ArtifactStreamType.SFTP;
 import static software.wings.beans.artifact.ArtifactStreamType.SMB;
 import static software.wings.common.TemplateConstants.LATEST_TAG;
 import static software.wings.security.PermissionAttribute.PermissionType.ACCOUNT_MANAGEMENT;
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
 
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
@@ -465,7 +467,15 @@ public class ArtifactStreamServiceImpl implements ArtifactStreamService, DataPro
     }
 
     setServiceId(artifactStream);
+
+    boolean originalMetadataOnly = artifactStream.isMetadataOnly();
+    if (featureFlagService.isEnabled(ARTIFACT_STREAM_METADATA_ONLY, accountId)) {
+      artifactStream.setMetadataOnly(true);
+    }
     artifactStream.validateRequiredFields();
+    if (featureFlagService.isEnabled(ARTIFACT_STREAM_METADATA_ONLY, accountId)) {
+      artifactStream.setMetadataOnly(originalMetadataOnly);
+    }
 
     validateIfNexus2AndDockerRepositoryType(artifactStream, accountId);
 
@@ -508,7 +518,8 @@ public class ArtifactStreamServiceImpl implements ArtifactStreamService, DataPro
 
     // Set metadata-only field for nexus and azure artifacts.
     setMetadataOnly(artifactStream);
-    if (!artifactStream.isMetadataOnly()) {
+
+    if (!metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly())) {
       throw new InvalidRequestException("Artifact Stream's metadata-only property cannot be set to false", USER);
     }
     handleArtifactoryDockerSupportForPcf(artifactStream);
@@ -701,7 +712,14 @@ public class ArtifactStreamServiceImpl implements ArtifactStreamService, DataPro
     String accountId = getAccountIdForArtifactStream(artifactStream);
     artifactStream.setAccountId(accountId);
 
+    boolean originalMetadataOnly = artifactStream.isMetadataOnly();
+    if (featureFlagService.isEnabled(ARTIFACT_STREAM_METADATA_ONLY, accountId)) {
+      artifactStream.setMetadataOnly(true);
+    }
     artifactStream.validateRequiredFields();
+    if (featureFlagService.isEnabled(ARTIFACT_STREAM_METADATA_ONLY, accountId)) {
+      artifactStream.setMetadataOnly(originalMetadataOnly);
+    }
 
     if (artifactStream.getArtifactStreamType() != null && existingArtifactStream.getArtifactStreamType() != null
         && !artifactStream.getArtifactStreamType().equals(existingArtifactStream.getArtifactStreamType())) {
@@ -716,7 +734,10 @@ public class ArtifactStreamServiceImpl implements ArtifactStreamService, DataPro
     }
 
     setMetadataOnly(artifactStream);
-    if (!artifactStream.isMetadataOnly() && existingArtifactStream.isMetadataOnly()) {
+
+    if (!metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly())
+        && metadataOnlyBehindFlag(
+            featureFlagService, existingArtifactStream.getAccountId(), existingArtifactStream.isMetadataOnly())) {
       throw new InvalidRequestException("Artifact Stream's metadata-only property cannot be changed to false", USER);
     }
 

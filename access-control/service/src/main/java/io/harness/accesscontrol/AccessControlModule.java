@@ -27,13 +27,21 @@ import io.harness.AccessControlClientModule;
 import io.harness.accesscontrol.acl.api.ACLResource;
 import io.harness.accesscontrol.acl.api.ACLResourceImpl;
 import io.harness.accesscontrol.aggregator.AggregatorStackDriverMetricsPublisherImpl;
+import io.harness.accesscontrol.aggregator.api.AggregatorResource;
+import io.harness.accesscontrol.aggregator.api.AggregatorResourceImpl;
 import io.harness.accesscontrol.aggregator.consumers.AccessControlChangeEventFailureHandler;
 import io.harness.accesscontrol.commons.events.EventConsumer;
 import io.harness.accesscontrol.commons.iterators.AccessControlIteratorsConfig;
 import io.harness.accesscontrol.commons.notifications.NotificationConfig;
 import io.harness.accesscontrol.commons.outbox.AccessControlOutboxEventHandler;
 import io.harness.accesscontrol.commons.validation.HarnessActionValidator;
+import io.harness.accesscontrol.health.HealthResource;
+import io.harness.accesscontrol.health.HealthResourceImpl;
+import io.harness.accesscontrol.permissions.api.PermissionResource;
+import io.harness.accesscontrol.permissions.api.PermissionResourceImpl;
 import io.harness.accesscontrol.preference.AccessControlPreferenceModule;
+import io.harness.accesscontrol.preference.api.AccessControlPreferenceResource;
+import io.harness.accesscontrol.preference.api.AccessControlPreferenceResourceImpl;
 import io.harness.accesscontrol.principals.PrincipalType;
 import io.harness.accesscontrol.principals.PrincipalValidator;
 import io.harness.accesscontrol.principals.serviceaccounts.HarnessServiceAccountService;
@@ -53,12 +61,16 @@ import io.harness.accesscontrol.resources.resourcegroups.HarnessResourceGroupSer
 import io.harness.accesscontrol.resources.resourcegroups.events.ResourceGroupEventConsumer;
 import io.harness.accesscontrol.roleassignments.RoleAssignment;
 import io.harness.accesscontrol.roleassignments.api.RoleAssignmentDTO;
+import io.harness.accesscontrol.roleassignments.api.RoleAssignmentResource;
+import io.harness.accesscontrol.roleassignments.api.RoleAssignmentResourceImpl;
 import io.harness.accesscontrol.roleassignments.privileged.PrivilegedRoleAssignmentHandler;
 import io.harness.accesscontrol.roleassignments.privileged.PrivilegedRoleAssignmentService;
 import io.harness.accesscontrol.roleassignments.privileged.PrivilegedRoleAssignmentServiceImpl;
 import io.harness.accesscontrol.roleassignments.privileged.persistence.PrivilegedRoleAssignmentDao;
 import io.harness.accesscontrol.roleassignments.privileged.persistence.PrivilegedRoleAssignmentDaoImpl;
 import io.harness.accesscontrol.roleassignments.validation.RoleAssignmentActionValidator;
+import io.harness.accesscontrol.roles.api.RoleResource;
+import io.harness.accesscontrol.roles.api.RoleResourceImpl;
 import io.harness.accesscontrol.scopes.core.ScopeLevel;
 import io.harness.accesscontrol.scopes.harness.HarnessScopeService;
 import io.harness.accesscontrol.scopes.harness.HarnessScopeServiceImpl;
@@ -319,6 +331,12 @@ public class AccessControlModule extends AbstractModule {
     bind(PrivilegedRoleAssignmentService.class).to(PrivilegedRoleAssignmentServiceImpl.class);
 
     bind(ACLResource.class).to(ACLResourceImpl.class);
+    bind(AggregatorResource.class).to(AggregatorResourceImpl.class);
+    bind(HealthResource.class).to(HealthResourceImpl.class);
+    bind(PermissionResource.class).to(PermissionResourceImpl.class);
+    bind(AccessControlPreferenceResource.class).to(AccessControlPreferenceResourceImpl.class);
+    bind(RoleAssignmentResource.class).to(RoleAssignmentResourceImpl.class);
+    bind(RoleResource.class).to(RoleResourceImpl.class);
 
     if (config.getAggregatorConfiguration().isExportMetricsToStackDriver()) {
       install(new MetricsModule());

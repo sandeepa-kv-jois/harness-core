@@ -7,6 +7,7 @@
 
 package software.wings.sm;
 
+import static io.harness.rule.OwnerRule.ABHIJITH;
 import static io.harness.rule.OwnerRule.PRASHANT;
 
 import static com.google.common.base.CaseFormat.UPPER_CAMEL;
@@ -17,8 +18,14 @@ import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
 import io.harness.rule.Owner;
 
+import software.wings.delegatetasks.DelegateStateType;
+
+import java.util.Arrays;
+import java.util.Set;
+import java.util.stream.Collectors;
 import junitparams.JUnitParamsRunner;
 import junitparams.Parameters;
+import org.apache.commons.collections4.SetUtils;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 import org.junit.runner.RunWith;
@@ -51,5 +58,21 @@ public class StateTypeTest extends CategoryTest {
     StateType stateType = StateType.valueOf(UPPER_CAMEL.to(UPPER_UNDERSCORE, stateTypeName));
     assertThat(stateType).isNotNull();
     assertThat(stateType.newInstance("name")).isNotNull().extracting(State::getName).isEqualTo("name");
+  }
+
+  /**
+   * Checks StateType and DelegateStateTypes are in sync.
+   * DelegateStateType is created so that delegate beans can be moved independently out.
+   */
+  @Test
+  @Owner(developers = ABHIJITH)
+  @Category(UnitTests.class)
+  public void shouldCreateNewInstanceFor() throws Exception {
+    Set<String> stateTypeNames =
+        Arrays.stream(StateType.values()).map(stateType -> stateType.name()).collect(Collectors.toSet());
+    Set<String> delegateStateTypeName =
+        Arrays.stream(DelegateStateType.values()).map(stateType -> stateType.name()).collect(Collectors.toSet());
+    assertThat(SetUtils.difference(stateTypeNames, delegateStateTypeName)).isEmpty();
+    assertThat(SetUtils.difference(delegateStateTypeName, stateTypeNames)).isEmpty();
   }
 }

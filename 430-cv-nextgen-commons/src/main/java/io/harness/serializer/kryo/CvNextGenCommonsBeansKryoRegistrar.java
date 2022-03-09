@@ -16,6 +16,7 @@ import io.harness.cvng.beans.AppdynamicsValidationResponse;
 import io.harness.cvng.beans.CVDataCollectionInfo;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.CustomHealthDataCollectionInfo;
+import io.harness.cvng.beans.CustomHealthDataCollectionInfo.CustomHealthMetricInfo;
 import io.harness.cvng.beans.DataCollectionConnectorBundle;
 import io.harness.cvng.beans.DataCollectionInfo;
 import io.harness.cvng.beans.DataCollectionRequest;
@@ -29,6 +30,7 @@ import io.harness.cvng.beans.ErrorTrackingDataCollectionInfo;
 import io.harness.cvng.beans.K8ActivityDataCollectionInfo;
 import io.harness.cvng.beans.MetricPackDTO;
 import io.harness.cvng.beans.MetricPackDTO.MetricDefinitionDTO;
+import io.harness.cvng.beans.MetricResponseMappingDTO;
 import io.harness.cvng.beans.NewRelicDataCollectionInfo;
 import io.harness.cvng.beans.PrometheusDataCollectionInfo;
 import io.harness.cvng.beans.SplunkDataCollectionInfo;
@@ -53,13 +55,11 @@ import io.harness.cvng.beans.activity.KubernetesActivitySourceDTO;
 import io.harness.cvng.beans.activity.KubernetesActivitySourceDTO.KubernetesActivitySourceConfig;
 import io.harness.cvng.beans.appd.AppDynamicFetchFileStructureRequest;
 import io.harness.cvng.beans.appd.AppDynamicSingleMetricDataRequest;
-import io.harness.cvng.beans.appd.AppDynamicsApplication;
 import io.harness.cvng.beans.appd.AppDynamicsDataCollectionRequest;
 import io.harness.cvng.beans.appd.AppDynamicsFetchAppRequest;
 import io.harness.cvng.beans.appd.AppDynamicsFetchTiersRequest;
 import io.harness.cvng.beans.appd.AppDynamicsFileDefinition;
 import io.harness.cvng.beans.appd.AppDynamicsMetricDataValidationRequest;
-import io.harness.cvng.beans.appd.AppDynamicsTier;
 import io.harness.cvng.beans.customhealth.CustomHealthFetchSampleDataRequest;
 import io.harness.cvng.beans.customhealth.TimestampInfo;
 import io.harness.cvng.beans.datadog.DatadogActiveMetricsRequest;
@@ -121,8 +121,6 @@ public class CvNextGenCommonsBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(SplunkValidationResponse.class, 9017);
     kryo.register(SplunkValidationResponse.SampleLog.class, 9018);
     kryo.register(DataCollectionConnectorBundle.class, 9019);
-    kryo.register(AppDynamicsApplication.class, 9020);
-    kryo.register(AppDynamicsTier.class, 9021);
     kryo.register(TimeSeriesThresholdDTO.class, 9022);
     kryo.register(TimeSeriesThresholdActionType.class, 9023);
     kryo.register(TimeSeriesThresholdCriteria.class, 9024);
@@ -197,5 +195,7 @@ public class CvNextGenCommonsBeansKryoRegistrar implements KryoRegistrar {
     kryo.register(DynatraceSampleDataRequest.class, 9095);
     kryo.register(DynatraceMetricListRequest.class, 9096);
     kryo.register(DynatraceDataCollectionInfo.class, 9097);
+    kryo.register(CustomHealthMetricInfo.class, 9098);
+    kryo.register(MetricResponseMappingDTO.class, 9099);
   }
 }

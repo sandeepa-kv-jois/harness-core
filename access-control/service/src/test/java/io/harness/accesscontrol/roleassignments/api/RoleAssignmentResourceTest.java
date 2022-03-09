@@ -34,9 +34,9 @@ import static org.mockito.Mockito.when;
 import io.harness.accesscontrol.AccessControlPermissions;
 import io.harness.accesscontrol.AccessControlResourceTypes;
 import io.harness.accesscontrol.AccessControlTestBase;
+import io.harness.accesscontrol.acl.api.Resource;
+import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
-import io.harness.accesscontrol.clients.Resource;
-import io.harness.accesscontrol.clients.ResourceScope;
 import io.harness.accesscontrol.common.filter.ManagedFilter;
 import io.harness.accesscontrol.common.validation.ValidationResult;
 import io.harness.accesscontrol.commons.validation.HarnessActionValidator;
@@ -76,11 +76,11 @@ import io.harness.ng.beans.PageResponse;
 import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.outbox.api.OutboxService;
 import io.harness.reflection.ReflectionUtils;
-import io.harness.remote.NGObjectMapperHelper;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import io.serializer.HObjectMapper;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -113,7 +113,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
   private HarnessActionValidator<RoleAssignment> actionValidator;
   private OutboxService outboxService;
   private AccessControlClient accessControlClient;
-  private RoleAssignmentResource roleAssignmentResource;
+  private RoleAssignmentResourceImpl roleAssignmentResource;
   private PageRequest pageRequest;
   private String accountIdentifier;
   private String orgIdentifier;
@@ -141,7 +141,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     outboxService = mock(OutboxService.class);
     accessControlClient = mock(AccessControlClient.class);
     roleAssignmentResource =
-        spy(new RoleAssignmentResource(roleAssignmentService, harnessResourceGroupService, harnessUserGroupService,
+        spy(new RoleAssignmentResourceImpl(roleAssignmentService, harnessResourceGroupService, harnessUserGroupService,
             harnessUserService, harnessServiceAccountService, harnessScopeService, scopeService, roleService,
             resourceGroupService, userGroupService, userService, serviceAccountService, roleAssignmentDTOMapper,
             roleDTOMapper, transactionTemplate, actionValidator, outboxService, accessControlClient));
@@ -306,7 +306,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
 
   private void testGetFilterInternal(RoleAssignmentFilterDTO roleAssignmentFilterDTO) {
     RoleAssignmentFilterDTO roleAssignmentFilterDTOClone =
-        (RoleAssignmentFilterDTO) NGObjectMapperHelper.clone(roleAssignmentFilterDTO);
+        (RoleAssignmentFilterDTO) HObjectMapper.clone(roleAssignmentFilterDTO);
     preViewPrincipalPermissions(true, true, true);
 
     ArgumentCaptor<RoleAssignmentFilter> roleAssignmentFilterArgumentCaptor =
@@ -326,9 +326,9 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
 
   private void testGetAggregatedInternal(RoleAssignmentFilterDTO roleAssignmentFilterDTO) {
     Scope scope = ScopeMapper.fromParams(harnessScopeParams);
-    Scope scopeClone = ScopeMapper.fromParams((HarnessScopeParams) NGObjectMapperHelper.clone(harnessScopeParams));
+    Scope scopeClone = ScopeMapper.fromParams((HarnessScopeParams) HObjectMapper.clone(harnessScopeParams));
     RoleAssignmentFilterDTO roleAssignmentFilterDTOClone =
-        (RoleAssignmentFilterDTO) NGObjectMapperHelper.clone(roleAssignmentFilterDTO);
+        (RoleAssignmentFilterDTO) HObjectMapper.clone(roleAssignmentFilterDTO);
     preViewPrincipalPermissions(true, true, true);
 
     ArgumentCaptor<RoleAssignmentFilter> roleAssignmentFilterArgumentCaptor =
@@ -340,7 +340,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
                                 .scopeIdentifier(scope.toString())
                                 .managedFilter(NO_FILTER)
                                 .build();
-    RoleFilter roleFilterClone = (RoleFilter) NGObjectMapperHelper.clone(roleFilter);
+    RoleFilter roleFilterClone = (RoleFilter) HObjectMapper.clone(roleFilter);
     when(roleService.list(maxPageRequest, roleFilter)).thenReturn(getEmptyPageResponse(maxPageRequest));
     when(resourceGroupService.list(new ArrayList<>(), scope.toString(), NO_FILTER)).thenReturn(new ArrayList<>());
 
@@ -408,7 +408,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
   @Category(UnitTests.class)
   public void testCreate() {
     RoleAssignmentDTO roleAssignmentDTO = getRoleAssignmentDTO();
-    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO);
+    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO);
     preSyncDependencies(roleAssignmentDTO, true, true, true);
     preCheckUpdatePermission(roleAssignmentDTO);
     when(transactionTemplate.execute(any())).thenReturn(ResponseDTO.newResponse());
@@ -423,7 +423,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
   @Category(UnitTests.class)
   public void testCreateSyncDependencies() {
     RoleAssignmentDTO roleAssignmentDTO = getRoleAssignmentDTO();
-    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO);
+    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO);
     preSyncDependencies(roleAssignmentDTO, false, false, false);
     preCheckUpdatePermission(roleAssignmentDTO);
     when(transactionTemplate.execute(any())).thenReturn(ResponseDTO.newResponse());
@@ -438,7 +438,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
   @Category(UnitTests.class)
   public void testCreateInvalidPrincipal() {
     RoleAssignmentDTO roleAssignmentDTO = getRoleAssignmentDTO(PrincipalType.SERVICE);
-    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO);
+    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO);
     preSyncDependencies(roleAssignmentDTO, true, true, true);
     preCheckUpdatePermission(roleAssignmentDTO);
     try {
@@ -571,7 +571,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
   @Category(UnitTests.class)
   public void testUpdate() {
     RoleAssignmentDTO roleAssignmentDTO = getRoleAssignmentDTO();
-    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO);
+    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO);
     preCheckUpdatePermission(roleAssignmentDTO);
     when(transactionTemplate.execute(any())).thenReturn(ResponseDTO.newResponse());
     roleAssignmentResource.update(roleAssignmentDTO.getIdentifier(), harnessScopeParams, roleAssignmentDTO);
@@ -593,7 +593,7 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
   @Category(UnitTests.class)
   public void testUpdateInvalidPrincipal() {
     RoleAssignmentDTO roleAssignmentDTO = getRoleAssignmentDTO(PrincipalType.SERVICE);
-    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO);
+    RoleAssignmentDTO roleAssignmentDTOClone = (RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO);
     preCheckUpdatePermission(roleAssignmentDTO);
     try {
       roleAssignmentResource.update(roleAssignmentDTO.getIdentifier(), harnessScopeParams, roleAssignmentDTO);
@@ -611,8 +611,8 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     List<RoleAssignmentDTO> roleAssignmentDTOs =
         Lists.newArrayList(getRoleAssignmentDTO(), getRoleAssignmentDTO(), getRoleAssignmentDTO());
     List<RoleAssignmentDTO> roleAssignmentDTOsClone = new ArrayList<>();
-    roleAssignmentDTOs.forEach(roleAssignmentDTO
-        -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO)));
+    roleAssignmentDTOs.forEach(
+        roleAssignmentDTO -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
     preSyncDependencies(roleAssignmentDTOs, true, true, true);
     preCheckUpdatePermission(roleAssignmentDTOs);
     when(transactionTemplate.execute(any())).thenReturn(ResponseDTO.newResponse());
@@ -632,8 +632,8 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     List<RoleAssignmentDTO> roleAssignmentDTOs =
         Lists.newArrayList(getRoleAssignmentDTO(), getRoleAssignmentDTO(), getRoleAssignmentDTO());
     List<RoleAssignmentDTO> roleAssignmentDTOsClone = new ArrayList<>();
-    roleAssignmentDTOs.forEach(roleAssignmentDTO
-        -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO)));
+    roleAssignmentDTOs.forEach(
+        roleAssignmentDTO -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
     preSyncDependencies(roleAssignmentDTOs, false, false, false);
     preCheckUpdatePermission(roleAssignmentDTOs);
     when(transactionTemplate.execute(any())).thenReturn(ResponseDTO.newResponse());
@@ -653,8 +653,8 @@ public class RoleAssignmentResourceTest extends AccessControlTestBase {
     List<RoleAssignmentDTO> roleAssignmentDTOs = Lists.newArrayList(getRoleAssignmentDTO(PrincipalType.SERVICE),
         getRoleAssignmentDTO(PrincipalType.SERVICE), getRoleAssignmentDTO(PrincipalType.SERVICE));
     List<RoleAssignmentDTO> roleAssignmentDTOsClone = new ArrayList<>();
-    roleAssignmentDTOs.forEach(roleAssignmentDTO
-        -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) NGObjectMapperHelper.clone(roleAssignmentDTO)));
+    roleAssignmentDTOs.forEach(
+        roleAssignmentDTO -> roleAssignmentDTOsClone.add((RoleAssignmentDTO) HObjectMapper.clone(roleAssignmentDTO)));
     preSyncDependencies(roleAssignmentDTOs, true, true, true);
     preCheckUpdatePermission(roleAssignmentDTOs);
     roleAssignmentResource.create(

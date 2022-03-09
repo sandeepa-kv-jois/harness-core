@@ -18,4 +18,5 @@ import com.fasterxml.jackson.annotation.JsonTypeInfo;
       @JsonSubTypes.Type(value = ResourceSelectorByScope.class, name = "ResourceSelectorByScope")
 })
 @JsonIgnoreProperties(ignoreUnknown = true)
+/*This class cannot be moved since it is missing type alias*/
 public interface ResourceSelector {}

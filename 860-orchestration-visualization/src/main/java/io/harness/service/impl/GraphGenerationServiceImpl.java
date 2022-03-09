@@ -16,7 +16,6 @@ import io.harness.beans.GraphVertex;
 import io.harness.beans.OrchestrationEventLog;
 import io.harness.beans.OrchestrationGraph;
 import io.harness.beans.converter.EphemeralOrchestrationGraphConverter;
-import io.harness.beans.internal.OrchestrationAdjacencyListInternal;
 import io.harness.cache.SpringCacheEntity;
 import io.harness.cache.SpringMongoStore;
 import io.harness.data.structure.EmptyPredicate;
@@ -32,6 +31,8 @@ import io.harness.exception.InvalidRequestException;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.PlanExecution;
 import io.harness.generator.OrchestrationAdjacencyListGenerator;
+import io.harness.lock.AcquiredLock;
+import io.harness.lock.PersistentLocker;
 import io.harness.plan.NodeType;
 import io.harness.pms.contracts.execution.events.OrchestrationEventType;
 import io.harness.pms.execution.utils.StatusUtils;
@@ -40,11 +41,11 @@ import io.harness.pms.plan.execution.service.PmsExecutionSummaryService;
 import io.harness.repositories.orchestrationEventLog.OrchestrationEventLogRepository;
 import io.harness.service.GraphGenerationService;
 import io.harness.skip.service.VertexSkipperService;
-import io.harness.springdata.TransactionHelper;
 
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
+import java.time.Duration;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -57,7 +58,8 @@ import org.springframework.data.mongodb.core.query.Update;
 @Singleton
 @Slf4j
 public class GraphGenerationServiceImpl implements GraphGenerationService {
-  private static final long THRESHOLD_LOG = 20;
+  private static final long THRESHOLD_LOG = 50;
+  private static final String GRAPH_LOCK = "GRAPH_LOCK_";
 
   @Inject private PlanExecutionService planExecutionService;
   @Inject private NodeExecutionService nodeExecutionService;
@@ -68,75 +70,117 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
   @Inject private GraphStatusUpdateHelper graphStatusUpdateHelper;
   @Inject private PlanExecutionStatusUpdateEventHandler planExecutionStatusUpdateEventHandler;
   @Inject private StepDetailsUpdateEventHandler stepDetailsUpdateEventHandler;
-  @Inject private TransactionHelper transactionHelper;
   @Inject private PmsExecutionSummaryService pmsExecutionSummaryService;
+  @Inject private PersistentLocker persistentLocker;
 
   @Override
-  public void updateGraph(String planExecutionId) {
-    transactionHelper.performTransactionWithoutRetry(() -> {
-      long startTs = System.currentTimeMillis();
-      Long lastUpdatedAt = mongoStore.getEntityUpdatedAt(
-          OrchestrationGraph.ALGORITHM_ID, OrchestrationGraph.STRUCTURE_HASH, planExecutionId, null);
-      if (lastUpdatedAt == null) {
-        return null;
+  public boolean updateGraph(String planExecutionId) {
+    String lockName = GRAPH_LOCK + planExecutionId;
+    try (AcquiredLock<?> lock = persistentLocker.tryToAcquireLock(lockName, Duration.ofSeconds(10))) {
+      if (lock == null) {
+        log.debug(String.format(
+            "[PMS_GRAPH_LOCK_TEST] Not able to take lock on graph generation for lockName - %s, returning early.",
+            lockName));
+        return false;
       }
-      List<OrchestrationEventLog> unprocessedEventLogs =
-          orchestrationEventLogRepository.findUnprocessedEvents(planExecutionId, lastUpdatedAt);
-      Update executionSummaryUpdate = new Update();
-      if (!unprocessedEventLogs.isEmpty()) {
-        OrchestrationGraph orchestrationGraph = getCachedOrchestrationGraph(planExecutionId);
-        if (orchestrationGraph == null) {
-          log.warn("[PMS_GRAPH] Graph not yet generated. Passing on to next iteration");
-          return null;
-        }
-        if (unprocessedEventLogs.size() > THRESHOLD_LOG) {
-          log.warn("[PMS_GRAPH] Found [{}] unprocessed event logs", unprocessedEventLogs.size());
-        }
-        Set<String> processedNodeExecutionIds = new HashSet<>();
-        for (OrchestrationEventLog orchestrationEventLog : unprocessedEventLogs) {
-          OrchestrationEventType orchestrationEventType = orchestrationEventLog.getOrchestrationEventType();
-          if (orchestrationEventType == OrchestrationEventType.PLAN_EXECUTION_STATUS_UPDATE) {
-            orchestrationGraph = planExecutionStatusUpdateEventHandler.handleEvent(planExecutionId, orchestrationGraph);
-          } else if (orchestrationEventType == OrchestrationEventType.STEP_DETAILS_UPDATE) {
-            orchestrationGraph = stepDetailsUpdateEventHandler.handleEvent(planExecutionId,
-                orchestrationEventLog.getNodeExecutionId(), orchestrationGraph, executionSummaryUpdate);
-          } else if (orchestrationEventType == OrchestrationEventType.STEP_INPUTS_UPDATE) {
-            orchestrationGraph = stepDetailsUpdateEventHandler.handleStepInputEvent(
-                planExecutionId, orchestrationEventLog.getNodeExecutionId(), orchestrationGraph);
-          } else {
-            String nodeExecutionId = orchestrationEventLog.getNodeExecutionId();
-            if (processedNodeExecutionIds.contains(nodeExecutionId)) {
-              continue;
-            }
-            processedNodeExecutionIds.add(nodeExecutionId);
-            NodeExecution nodeExecution = nodeExecutionService.get(nodeExecutionId);
-            if (OrchestrationUtils.isStageNode(nodeExecution)
-                && nodeExecution.getNodeType() == NodeType.IDENTITY_PLAN_NODE
-                && StatusUtils.isFinalStatus(nodeExecution.getStatus())) {
-              pmsExecutionSummaryService.updateStageOfIdentityType(planExecutionId, executionSummaryUpdate);
-            } else {
-              ExecutionSummaryUpdateUtils.addPipelineUpdateCriteria(
-                  executionSummaryUpdate, planExecutionId, nodeExecution);
-              ExecutionSummaryUpdateUtils.addStageUpdateCriteria(
-                  executionSummaryUpdate, planExecutionId, nodeExecution);
-            }
-            orchestrationGraph = graphStatusUpdateHelper.handleEventV2(
-                planExecutionId, nodeExecution, orchestrationEventType, orchestrationGraph);
+
+      return updateGraphUnderLock(planExecutionId);
+    } catch (Exception exception) {
+      log.error(String.format(
+                    "[GRAPH_ERROR] Exception Occurred while updating graph for planExecutionId: %s", planExecutionId),
+          exception);
+      return false;
+    }
+  }
+
+  @Override
+  public boolean updateGraphWithWaitLock(String planExecutionId) {
+    String lockName = GRAPH_LOCK + planExecutionId;
+    try (AcquiredLock<?> lock =
+             persistentLocker.waitToAcquireLock(lockName, Duration.ofSeconds(10), Duration.ofSeconds(30))) {
+      if (lock == null) {
+        log.debug(String.format(
+            "[PMS_GRAPH_LOCK_TEST] Not able to take lock on graph generation for lockName - %s, returning early.",
+            lockName));
+        return false;
+      }
+
+      return updateGraphUnderLock(planExecutionId);
+    } catch (Exception exception) {
+      log.error(String.format(
+                    "[GRAPH_ERROR] Exception Occurred while updating graph for planExecutionId: %s", planExecutionId),
+          exception);
+      return false;
+    }
+  }
+
+  // This must always be called after acquiring the lock
+  private boolean updateGraphUnderLock(String planExecutionId) {
+    long startTs = System.currentTimeMillis();
+    Long lastUpdatedAt = mongoStore.getEntityUpdatedAt(
+        OrchestrationGraph.ALGORITHM_ID, OrchestrationGraph.STRUCTURE_HASH, planExecutionId, null);
+    if (lastUpdatedAt == null) {
+      return true;
+    }
+
+    List<OrchestrationEventLog> unprocessedEventLogs =
+        orchestrationEventLogRepository.findUnprocessedEvents(planExecutionId, lastUpdatedAt);
+    if (unprocessedEventLogs.isEmpty()) {
+      return true;
+    }
+
+    OrchestrationGraph orchestrationGraph = getCachedOrchestrationGraph(planExecutionId);
+    if (orchestrationGraph == null) {
+      log.warn("[PMS_GRAPH] Graph not yet generated. Passing on to next iteration");
+      return true;
+    }
+
+    if (unprocessedEventLogs.size() > THRESHOLD_LOG) {
+      log.warn("[PMS_GRAPH] Found [{}] unprocessed event logs", unprocessedEventLogs.size());
+    }
+
+    Update executionSummaryUpdate = new Update();
+    Set<String> processedNodeExecutionIds = new HashSet<>();
+    for (OrchestrationEventLog orchestrationEventLog : unprocessedEventLogs) {
+      String nodeExecutionId = orchestrationEventLog.getNodeExecutionId();
+      OrchestrationEventType orchestrationEventType = orchestrationEventLog.getOrchestrationEventType();
+      switch (orchestrationEventType) {
+        case PLAN_EXECUTION_STATUS_UPDATE:
+          orchestrationGraph = planExecutionStatusUpdateEventHandler.handleEvent(planExecutionId, orchestrationGraph);
+          break;
+        case STEP_DETAILS_UPDATE:
+          orchestrationGraph = stepDetailsUpdateEventHandler.handleEvent(
+              planExecutionId, nodeExecutionId, orchestrationGraph, executionSummaryUpdate);
+          break;
+        case STEP_INPUTS_UPDATE:
+          orchestrationGraph =
+              stepDetailsUpdateEventHandler.handleStepInputEvent(planExecutionId, nodeExecutionId, orchestrationGraph);
+          break;
+        default:
+          if (processedNodeExecutionIds.contains(nodeExecutionId)) {
+            continue;
           }
-          lastUpdatedAt = orchestrationEventLog.getCreatedAt();
-        }
-        orchestrationGraph.setLastUpdatedAt(lastUpdatedAt);
-
-        long finalLastUpdatedAt = lastUpdatedAt;
-        OrchestrationGraph finalOrchestrationGraph = orchestrationGraph;
-
-        cachePartialOrchestrationGraph(finalOrchestrationGraph, finalLastUpdatedAt);
-        pmsExecutionSummaryService.update(planExecutionId, executionSummaryUpdate);
-        log.info("[PMS_GRAPH] Processing of [{}] orchestration event logs completed in [{}ms]",
-            unprocessedEventLogs.size(), System.currentTimeMillis() - startTs);
+          processedNodeExecutionIds.add(nodeExecutionId);
+          NodeExecution nodeExecution = nodeExecutionService.get(nodeExecutionId);
+          if (OrchestrationUtils.isStageNode(nodeExecution)
+              && nodeExecution.getNodeType() == NodeType.IDENTITY_PLAN_NODE
+              && StatusUtils.isFinalStatus(nodeExecution.getStatus())) {
+            pmsExecutionSummaryService.updateStageOfIdentityType(planExecutionId, executionSummaryUpdate);
+          } else {
+            ExecutionSummaryUpdateUtils.addPipelineUpdateCriteria(
+                executionSummaryUpdate, planExecutionId, nodeExecution);
+            ExecutionSummaryUpdateUtils.addStageUpdateCriteria(executionSummaryUpdate, planExecutionId, nodeExecution);
+          }
+          orchestrationGraph = graphStatusUpdateHelper.handleEventV2(
+              planExecutionId, nodeExecution, orchestrationEventType, orchestrationGraph);
       }
-      return null;
-    });
+      lastUpdatedAt = orchestrationEventLog.getCreatedAt();
+    }
+    cachePartialOrchestrationGraph(orchestrationGraph.withLastUpdatedAt(lastUpdatedAt), lastUpdatedAt);
+    pmsExecutionSummaryService.update(planExecutionId, executionSummaryUpdate);
+    log.info("[PMS_GRAPH] Processing of [{}] orchestration event logs completed in [{}ms]", unprocessedEventLogs.size(),
+        System.currentTimeMillis() - startTs);
+    return true;
   }
 
   @Override
@@ -151,56 +195,6 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
 
   private void cachePartialOrchestrationGraph(OrchestrationGraph orchestrationGraph, long entityUpdatedAt) {
     mongoStore.upsert(orchestrationGraph, SpringCacheEntity.TTL, entityUpdatedAt);
-  }
-
-  @Override
-  @Deprecated
-  public OrchestrationGraphDTO generateOrchestrationGraph(String planExecutionId) {
-    PlanExecution planExecution = planExecutionService.get(planExecutionId);
-    List<NodeExecution> nodeExecutions = nodeExecutionService.fetchNodeExecutionsWithoutOldRetries(planExecutionId);
-    if (isEmpty(nodeExecutions)) {
-      throw new InvalidRequestException("No nodes found for planExecutionId [" + planExecutionId + "]");
-    }
-
-    String rootNodeId = obtainStartingNodeExId(nodeExecutions);
-
-    OrchestrationGraph orchestrationGraph = getCachedOrchestrationGraph(planExecutionId);
-    if (orchestrationGraph != null) {
-      OrchestrationAdjacencyListInternal adjacencyList = orchestrationGraph.getAdjacencyList();
-      List<NodeExecution> newNodeExecutions =
-          nodeExecutions.stream()
-              .filter(node -> !adjacencyList.getGraphVertexMap().containsKey(node.getUuid()))
-              .collect(Collectors.toList());
-      if (!newNodeExecutions.isEmpty()) {
-        orchestrationAdjacencyListGenerator.populateAdjacencyList(adjacencyList, newNodeExecutions);
-        cacheOrchestrationGraph(orchestrationGraph);
-      }
-      EphemeralOrchestrationGraph ephemeralOrchestrationGraph =
-          EphemeralOrchestrationGraphConverter.convertFrom(orchestrationGraph);
-
-      vertexSkipperService.removeSkippedVertices(ephemeralOrchestrationGraph);
-      return OrchestrationGraphDTOConverter.convertFrom(ephemeralOrchestrationGraph);
-    }
-
-    OrchestrationGraph graph =
-        OrchestrationGraph.builder()
-            .cacheKey(planExecutionId)
-            .cacheContextOrder(System.currentTimeMillis())
-            .cacheParams(null)
-            .planExecutionId(planExecution.getUuid())
-            .startTs(planExecution.getStartTs())
-            .endTs(planExecution.getEndTs())
-            .status(planExecution.getStatus())
-            .rootNodeIds(Lists.newArrayList(rootNodeId))
-            .adjacencyList(orchestrationAdjacencyListGenerator.generateAdjacencyList(rootNodeId, nodeExecutions, false))
-            .build();
-
-    cacheOrchestrationGraph(graph);
-
-    EphemeralOrchestrationGraph ephemeralOrchestrationGraph = EphemeralOrchestrationGraphConverter.convertFrom(graph);
-
-    vertexSkipperService.removeSkippedVertices(ephemeralOrchestrationGraph);
-    return OrchestrationGraphDTOConverter.convertFrom(ephemeralOrchestrationGraph);
   }
 
   @Override
@@ -228,22 +222,9 @@ public class GraphGenerationServiceImpl implements GraphGenerationService {
     return generatePartialGraph(startingNodeId, orchestrationGraph);
   }
 
-  @Override
-  public OrchestrationGraphDTO generatePartialOrchestrationGraphFromIdentifier(
-      String identifier, String planExecutionId) {
-    OrchestrationGraph orchestrationGraph = getCachedOrchestrationGraph(planExecutionId);
-    if (orchestrationGraph == null) {
-      orchestrationGraph = buildOrchestrationGraph(planExecutionId);
-    }
-    String startingId =
-        obtainStartingIdFromIdentifier(orchestrationGraph.getAdjacencyList().getGraphVertexMap(), identifier);
-    if (startingId == null) {
-      return null;
-    }
-    return generatePartialGraph(startingId, orchestrationGraph);
-  }
-
   public OrchestrationGraph buildOrchestrationGraph(String planExecutionId) {
+    log.warn(String.format(
+        "[GRAPH_ERROR]: Trying to build orchestration graph from scratch for planExecutionId [%s]", planExecutionId));
     PlanExecution planExecution = planExecutionService.get(planExecutionId);
     List<NodeExecution> nodeExecutions = nodeExecutionService.fetchNodeExecutionsWithoutOldRetries(planExecutionId);
     if (isEmpty(nodeExecutions)) {

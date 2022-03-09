@@ -230,7 +230,7 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
     AnalysisStateExecutor analysisStateExecutor = stateTypeAnalysisStateExecutorMap.get(currentState.getType());
     if (currentState.getStatus() == AnalysisStatus.FAILED || currentState.getStatus() == AnalysisStatus.TIMEOUT) {
       analysisStateMachine.setStatus(AnalysisStatus.RUNNING);
-      analysisStateExecutor.handleRerun(currentState);
+      analysisStateExecutor.handleRetry(currentState);
     } else {
       throw new AnalysisStateMachineException(
           "Attempting to retry state machine after failure when current status is not failed");

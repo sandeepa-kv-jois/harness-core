@@ -32,6 +32,7 @@ import io.harness.ng.core.EntityDetail;
 import io.harness.ng.core.entitydetail.EntityDetailProtoToRestMapper;
 import io.harness.ng.core.entitydetail.EntityDetailRestToProtoMapper;
 import io.harness.ng.core.event.EntityToEntityProtoHelper;
+import io.harness.utils.FilePathUtils;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -68,6 +69,7 @@ public class GitChangeSetMapper {
 
   private ChangeSetWithYamlStatusDTO mapToChangeSet(GitFileChangeDTO fileContent, String accountId,
       ChangeType changeType, List<YamlGitConfigDTO> yamlGitConfigDTOs, String changesetId, String branchName) {
+    fileContent.setPath(FilePathUtils.updatePathWithForwardSlash(fileContent.getPath()));
     ChangeSet.Builder builder = ChangeSet.newBuilder()
                                     .setAccountId(accountId)
                                     .setChangeType(ChangeTypeMapper.toProto(changeType))

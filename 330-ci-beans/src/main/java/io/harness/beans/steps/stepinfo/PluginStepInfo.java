@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CI;
 import static io.harness.beans.SwaggerConstants.BOOLEAN_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.INTEGER_CLASSPATH;
 import static io.harness.beans.SwaggerConstants.STRING_CLASSPATH;
+import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.runtime;
 import static io.harness.yaml.schema.beans.SupportedPossibleFieldTypes.string;
 
 import io.harness.annotation.RecasterAlias;
@@ -78,10 +79,13 @@ public class PluginStepInfo implements CIStepInfo, WithConnectorRef {
   @Getter(onMethod_ = { @ApiModelProperty(hidden = true) })
   @ApiModelProperty(hidden = true)
   private boolean harnessManagedImage;
-  private UnitTestReport reports;
+  @YamlSchemaTypes(value = {runtime})
+  @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.reports.UnitTestReport")
+  private ParameterField<UnitTestReport> reports;
 
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = BOOLEAN_CLASSPATH) private ParameterField<Boolean> privileged;
   @YamlSchemaTypes({string}) @ApiModelProperty(dataType = INTEGER_CLASSPATH) private ParameterField<Integer> runAsUser;
+  @YamlSchemaTypes({runtime})
   @ApiModelProperty(dataType = "io.harness.beans.yaml.extended.ImagePullPolicy")
   private ParameterField<ImagePullPolicy> imagePullPolicy;
 
@@ -90,8 +94,8 @@ public class PluginStepInfo implements CIStepInfo, WithConnectorRef {
       "entrypoint", "envVariables", "harnessInternalImage", "privileged", "runAsUser", "imagePullPolicy"})
   public PluginStepInfo(String identifier, String name, Integer retry, ParameterField<Map<String, JsonNode>> settings,
       ParameterField<String> image, ParameterField<String> connectorRef, ContainerResource resources,
-      UnitTestReport reports, List<String> entrypoint, Map<String, String> envVariables, boolean harnessManagedImage,
-      ParameterField<Boolean> privileged, ParameterField<Integer> runAsUser,
+      ParameterField<UnitTestReport> reports, List<String> entrypoint, Map<String, String> envVariables,
+      boolean harnessManagedImage, ParameterField<Boolean> privileged, ParameterField<Integer> runAsUser,
       ParameterField<ImagePullPolicy> imagePullPolicy) {
     this.identifier = identifier;
     this.name = name;

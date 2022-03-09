@@ -49,12 +49,10 @@ import io.harness.beans.quantity.unit.MemoryQuantityUnit;
 import io.harness.beans.serializer.RunTimeInputHandler;
 import io.harness.beans.stages.IntegrationStageConfig;
 import io.harness.beans.steps.CIStepInfo;
-import io.harness.beans.steps.CIStepInfoUtils;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
 import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.sweepingoutputs.StageInfraDetails.Type;
-import io.harness.ci.config.CIExecutionServiceConfig;
 import io.harness.ci.utils.QuantityUtils;
 import io.harness.delegate.beans.ci.pod.CIContainerType;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
@@ -62,6 +60,7 @@ import io.harness.delegate.beans.ci.pod.EnvVariableEnum;
 import io.harness.delegate.beans.ci.pod.PVCParams;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.ngexception.CIStageExecutionException;
+import io.harness.execution.CIExecutionConfigService;
 import io.harness.ff.CIFeatureFlagService;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
 import io.harness.plancreator.stages.stage.StageElementConfig;
@@ -70,6 +69,7 @@ import io.harness.plancreator.steps.StepElementConfig;
 import io.harness.pms.yaml.YamlUtils;
 import io.harness.stateutils.buildstate.PluginSettingUtils;
 import io.harness.stateutils.buildstate.providers.StepContainerUtils;
+import io.harness.steps.CIStepInfoUtils;
 import io.harness.util.ExceptionUtility;
 import io.harness.util.PortFinder;
 import io.harness.utils.TimeoutUtils;
@@ -105,7 +105,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
   static final String SOURCE = "123456789bcdfghjklmnpqrstvwxyz";
   static final Integer RANDOM_LENGTH = 8;
   private static final SecureRandom random = new SecureRandom();
-  @Inject private CIExecutionServiceConfig ciExecutionServiceConfig;
+  @Inject private CIExecutionConfigService ciExecutionConfigService;
   @Inject private CIFeatureFlagService featureFlagService;
 
   @Override
@@ -154,8 +154,8 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
     Set<Integer> usedPorts = new HashSet<>();
     PortFinder portFinder = PortFinder.builder().startingPort(PORT_STARTING_RANGE).usedPorts(usedPorts).build();
     String workDirPath = STEP_WORK_DIR;
-    List<ContainerDefinitionInfo> serviceContainerDefinitionInfos =
-        CIServiceBuilder.createServicesContainerDefinition(stageElementConfig, portFinder, ciExecutionServiceConfig);
+    List<ContainerDefinitionInfo> serviceContainerDefinitionInfos = CIServiceBuilder.createServicesContainerDefinition(
+        stageElementConfig, portFinder, ciExecutionConfigService.getCiExecutionServiceConfig());
     List<ContainerDefinitionInfo> stepContainerDefinitionInfos =
         createStepsContainerDefinition(steps, stageElementConfig, ciExecutionArgs, portFinder, accountId);
 
@@ -200,7 +200,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
                             .claimName(claimName)
                             .volumeName(volumeName)
                             .isPresent(!isFirstPod)
-                            .sizeMib(ciExecutionServiceConfig.getPvcDefaultStorageSize())
+                            .sizeMib(ciExecutionConfigService.getCiExecutionServiceConfig().getPvcDefaultStorageSize())
                             .storageClass(PVC_DEFAULT_STORAGE_CLASS)
                             .build());
     }
@@ -335,7 +335,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
         .containerImageDetails(
             ContainerImageDetails.builder()
                 .imageDetails(IntegrationStageUtils.getImageInfo(
-                    CIStepInfoUtils.getPluginCustomStepImage(stepInfo, ciExecutionServiceConfig, Type.K8)))
+                    CIStepInfoUtils.getPluginCustomStepImage(stepInfo, ciExecutionConfigService, Type.K8, accountId)))
                 .build())
         .isHarnessManagedImage(true)
         .containerResourceParams(getStepContainerResource(stepInfo.getResources(), stepType, identifier, accountId))
@@ -588,7 +588,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
 
   private Integer getContainerMemoryLimit(
       ContainerResource resource, String stepType, String stepId, String accountID) {
-    Integer memoryLimit = ciExecutionServiceConfig.getDefaultMemoryLimit();
+    Integer memoryLimit = ciExecutionConfigService.getCiExecutionServiceConfig().getDefaultMemoryLimit();
 
     if (featureFlagService.isEnabled(FeatureName.CI_INCREASE_DEFAULT_RESOURCES, accountID)) {
       log.info("Increase default resources FF is enabled for accountID: {}", accountID);
@@ -606,7 +606,7 @@ public class K8InitializeStepInfoBuilder implements InitializeStepInfoBuilder {
   }
 
   private Integer getContainerCpuLimit(ContainerResource resource, String stepType, String stepId, String accountID) {
-    Integer cpuLimit = ciExecutionServiceConfig.getDefaultCPULimit();
+    Integer cpuLimit = ciExecutionConfigService.getCiExecutionServiceConfig().getDefaultCPULimit();
 
     if (featureFlagService.isEnabled(FeatureName.CI_INCREASE_DEFAULT_RESOURCES, accountID)) {
       log.info("Increase default resources FF is enabled for accountID: {}", accountID);

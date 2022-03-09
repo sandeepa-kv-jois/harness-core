@@ -50,12 +50,13 @@ public class CIServiceBuilder {
       StageElementConfig stageElementConfig, PortFinder portFinder, CIExecutionServiceConfig ciExecutionServiceConfig) {
     List<ContainerDefinitionInfo> containerDefinitionInfos = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (integrationStage.getServiceDependencies() == null
+        || isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return containerDefinitionInfos;
     }
 
     int serviceIdx = 0;
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }
@@ -166,11 +167,11 @@ public class CIServiceBuilder {
     List<String> serviceIdList = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return serviceIdList;
     }
 
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }
@@ -186,11 +187,11 @@ public class CIServiceBuilder {
     List<Integer> grpcPortList = new ArrayList<>();
     IntegrationStageConfig integrationStage = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
 
-    if (isEmpty(integrationStage.getServiceDependencies())) {
+    if (isEmpty(integrationStage.getServiceDependencies().getValue())) {
       return grpcPortList;
     }
 
-    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies()) {
+    for (DependencyElement dependencyElement : integrationStage.getServiceDependencies().getValue()) {
       if (dependencyElement == null) {
         continue;
       }

@@ -23,4 +23,9 @@ public interface NGAccountSettingService {
 
   AccountSettingResponseDTO get(
       String accountIdentifier, String orgIdentifier, String projectIdentifier, AccountSettingType type);
+
+  void setUpDefaultAccountSettings(String accountIdentifier);
+
+  boolean getIsBuiltInSMDisabled(
+      String accountIdentifier, String orgIdentifier, String projectIdentifier, AccountSettingType type);
 }

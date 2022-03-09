@@ -12,9 +12,9 @@ import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ACTION
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.CREATE_ACTION;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.DELETE_ACTION;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ENTITY_TYPE;
-import static io.harness.resourcegroup.framework.beans.ResourceGroupConstants.ACCOUNT;
-import static io.harness.resourcegroup.framework.beans.ResourceGroupConstants.ORGANIZATION;
-import static io.harness.resourcegroup.framework.beans.ResourceGroupConstants.PROJECT;
+import static io.harness.resourcegroup.framework.v1.beans.ResourceGroupConstants.ACCOUNT;
+import static io.harness.resourcegroup.framework.v1.beans.ResourceGroupConstants.ORGANIZATION;
+import static io.harness.resourcegroup.framework.v1.beans.ResourceGroupConstants.PROJECT;
 
 import static java.util.Collections.singleton;
 
@@ -24,15 +24,15 @@ import io.harness.eventsframework.api.Consumer;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
 import io.harness.eventsframework.consumer.Message;
 import io.harness.ng.beans.PageRequest;
-import io.harness.resourcegroup.framework.service.Resource;
-import io.harness.resourcegroup.framework.service.ResourceGroupService;
-import io.harness.resourcegroup.framework.service.ResourceInfo;
+import io.harness.resourcegroup.framework.v1.service.Resource;
+import io.harness.resourcegroup.framework.v1.service.ResourceGroupService;
+import io.harness.resourcegroup.framework.v1.service.ResourceInfo;
 import io.harness.resourcegroup.model.StaticResourceSelector;
-import io.harness.resourcegroup.remote.dto.ManagedFilter;
-import io.harness.resourcegroup.remote.dto.ResourceGroupDTO;
-import io.harness.resourcegroup.remote.dto.ResourceGroupFilterDTO;
-import io.harness.resourcegroup.remote.dto.ResourceSelectorFilter;
-import io.harness.resourcegroupclient.ResourceGroupResponse;
+import io.harness.resourcegroup.v1.remote.dto.ManagedFilter;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupDTO;
+import io.harness.resourcegroup.v1.remote.dto.ResourceGroupFilterDTO;
+import io.harness.resourcegroup.v1.remote.dto.ResourceSelectorFilter;
+import io.harness.resourcegroupclient.remote.v1.ResourceGroupResponse;
 import io.harness.security.SecurityContextBuilder;
 import io.harness.security.dto.ServicePrincipal;
 

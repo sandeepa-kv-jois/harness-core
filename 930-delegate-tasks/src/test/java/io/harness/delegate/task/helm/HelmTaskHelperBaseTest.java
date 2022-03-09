@@ -959,6 +959,45 @@ public class HelmTaskHelperBaseTest extends CategoryTest {
     verify(processExecutor).execute();
   }
 
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testHelmAddRepoAlreadyExists() {
+    String errorMessage = "Error: repository name (vault) already exists, please specify a different name";
+
+    doReturn(new ProcessResult(1, new ProcessOutput(errorMessage.getBytes())))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(),
+            eq("v3/helm repo add vault https://helm-server --username admin --password secret-text"), anyString(),
+            anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
+    doReturn(new ProcessResult(0, null))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(),
+            eq("v3/helm repo add vault https://helm-server --username admin --password secret-text --force-update"),
+            anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
+    assertThatCode(()
+                       -> helmTaskHelperBase.addRepo("vault", "vault", "https://helm-server", "admin",
+                           "secret-text".toCharArray(), "/home", V3, 9000L, false))
+        .doesNotThrowAnyException();
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testHelmAddRepoFailureAlreadyExistsV2() {
+    String errorMessage = "Error: repository name (vault) already exists, please specify a different name";
+
+    doReturn(new ProcessResult(1, new ProcessOutput(errorMessage.getBytes())))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(),
+            eq("v2/helm repo add vault https://helm-server --username admin --password secret-text --home /home/helm"),
+            anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
+    assertThatThrownBy(()
+                           -> helmTaskHelperBase.addRepo("vault", "vault", "https://helm-server", "admin",
+                               "secret-text".toCharArray(), "/home", V2, 9000L, false))
+        .isInstanceOf(HelmClientException.class);
+  }
+
   private String getHelmCollectionResult() {
     return "NAME\tCHART VERSION\tAPP VERSION\tDESCRIPTION\n"
         + "repoName/chartName\t1.0.2\t0\tDeploys harness delegate\n"

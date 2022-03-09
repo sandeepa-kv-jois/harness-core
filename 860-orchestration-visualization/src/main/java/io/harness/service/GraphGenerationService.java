@@ -18,16 +18,14 @@ public interface GraphGenerationService {
 
   void cacheOrchestrationGraph(OrchestrationGraph adjacencyListInternal);
 
-  @Deprecated OrchestrationGraphDTO generateOrchestrationGraph(String planExecutionId);
-
   OrchestrationGraphDTO generateOrchestrationGraphV2(String planExecutionId);
 
   OrchestrationGraphDTO generatePartialOrchestrationGraphFromSetupNodeId(
       String startingSetupNodeId, String planExecutionId);
 
-  OrchestrationGraphDTO generatePartialOrchestrationGraphFromIdentifier(String identifier, String planExecutionId);
-
   OrchestrationGraph buildOrchestrationGraph(String planExecutionId);
 
-  void updateGraph(String planExecutionId);
+  boolean updateGraph(String planExecutionId);
+
+  boolean updateGraphWithWaitLock(String planExecutionId);
 }

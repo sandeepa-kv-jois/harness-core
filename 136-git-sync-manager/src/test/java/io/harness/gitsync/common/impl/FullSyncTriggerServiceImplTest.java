@@ -21,7 +21,6 @@ import io.harness.category.element.UnitTests;
 import io.harness.eventsframework.api.Producer;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.GitSyncTestBase;
-import io.harness.gitsync.UserPrincipal;
 import io.harness.gitsync.common.dtos.TriggerFullSyncResponseDTO;
 import io.harness.gitsync.common.helper.UserProfileHelper;
 import io.harness.gitsync.common.service.GitBranchService;
@@ -30,6 +29,7 @@ import io.harness.gitsync.core.fullsync.entity.GitFullSyncJob;
 import io.harness.gitsync.core.fullsync.service.FullSyncJobService;
 import io.harness.gitsync.fullsync.dtos.GitFullSyncConfigDTO;
 import io.harness.rule.Owner;
+import io.harness.security.UserPrincipal;
 
 import com.google.inject.Inject;
 import com.google.protobuf.StringValue;

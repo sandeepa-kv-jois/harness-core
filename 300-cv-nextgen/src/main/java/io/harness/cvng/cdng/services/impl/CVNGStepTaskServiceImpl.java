@@ -18,6 +18,8 @@ import io.harness.cvng.analysis.services.api.DeploymentTimeSeriesAnalysisService
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.beans.activity.ActivityStatusDTO;
 import io.harness.cvng.beans.activity.ActivityVerificationStatus;
+import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
+import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.cdng.entities.CVNGStepTask;
 import io.harness.cvng.cdng.entities.CVNGStepTask.CVNGStepTaskKeys;
 import io.harness.cvng.cdng.entities.CVNGStepTask.Status;
@@ -28,6 +30,7 @@ import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceD
 import io.harness.cvng.core.beans.params.PageParams;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentLogAnalysisFilter;
 import io.harness.cvng.core.beans.params.filterParams.DeploymentTimeSeriesAnalysisFilter;
+import io.harness.cvng.core.services.api.CVNGLogService;
 import io.harness.cvng.core.utils.monitoredService.CVConfigToHealthSourceTransformer;
 import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
 import io.harness.cvng.verificationjob.services.api.VerificationJobInstanceService;
@@ -52,6 +55,7 @@ public class CVNGStepTaskServiceImpl implements CVNGStepTaskService {
   @Inject private DeploymentLogAnalysisService deploymentLogAnalysisService;
   @Inject private VerificationJobInstanceService verificationJobInstanceService;
   @Inject private Map<DataSourceType, CVConfigToHealthSourceTransformer> dataSourceTypeToHealthSourceTransformerMap;
+  @Inject private CVNGLogService cvngLogService;
 
   @Override
   public void create(CVNGStepTask cvngStepTask) {
@@ -186,6 +190,13 @@ public class CVNGStepTaskServiceImpl implements CVNGStepTaskService {
   @Override
   public List<VerificationJobInstance.ProgressLog> getExecutionLogs(String accountId, String callBackId) {
     return verificationJobInstanceService.getProgressLogs(getByCallBackId(callBackId).getVerificationJobInstanceId());
+  }
+
+  @Override
+  public PageResponse<CVNGLogDTO> getCVNGLogs(String accountId, String callBackId, CVNGLogType logType,
+      List<String> healthSourceIdentifiers, boolean errorLogsOnly, PageParams pageParams) {
+    return cvngLogService.getCVNGLogs(accountId, getByCallBackId(callBackId).getVerificationJobInstanceId(), logType,
+        healthSourceIdentifiers, errorLogsOnly, pageParams);
   }
 
   private String getServiceNameFromStep(CVNGStepTask step) {

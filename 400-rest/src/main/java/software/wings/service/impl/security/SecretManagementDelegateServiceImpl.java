@@ -105,9 +105,11 @@ public class SecretManagementDelegateServiceImpl implements SecretManagementDele
               .execute();
       log.info("[VaultSSH]: Signing response: {}", response);
       if (response.isSuccessful() && response.body().getSignedSSHVaultResult() != null) {
-        log.info(
-            "[VaultSSH]: Signed public key is : {}", response.body().getSignedSSHVaultResult().getSignedPublicKey());
-        hostConnectionAttributes.setSignedPublicKey(response.body().getSignedSSHVaultResult().getSignedPublicKey());
+        String signedPublicKey = response.body().getSignedSSHVaultResult().getSignedPublicKey();
+        log.info("[VaultSSH]: Signed public key is : {}", signedPublicKey);
+        if (isNotEmpty(signedPublicKey)) {
+          hostConnectionAttributes.setSignedPublicKey(signedPublicKey.trim());
+        }
       } else {
         log.info("[VaultSSH]: Error signing public key for request:{}", signedSSHVaultRequest);
         logAndThrowVaultError(sshVaultConfig, response, "sign public key with SSH secret engine");
@@ -213,7 +215,6 @@ public class SecretManagementDelegateServiceImpl implements SecretManagementDele
         }
       } catch (Exception e) {
         failedAttempts++;
-        log.warn("renewal failed. trial num: {}", failedAttempts, e);
         if (failedAttempts == NUM_OF_RETRIES) {
           String message = "renewal failed after " + NUM_OF_RETRIES + " retries";
           throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR, message, e, USER);
@@ -342,7 +343,6 @@ public class SecretManagementDelegateServiceImpl implements SecretManagementDele
           "Failed to %s for Vault: %s And Namespace: %s due to the following error from vault: \"%s\".", operation,
           baseVaultConfig.getName(), baseVaultConfig.getNamespace(), response.message() + response.body());
     }
-    log.error(errorMsg);
     throw new SecretManagementDelegateException(VAULT_OPERATION_ERROR, errorMsg, USER);
   }
 

@@ -18,11 +18,11 @@ import io.harness.pms.contracts.execution.Status;
 import java.io.ObjectStreamClass;
 import java.util.List;
 import lombok.Builder;
-import lombok.Data;
+import lombok.Value;
 import lombok.experimental.Wither;
 
 @OwnedBy(CDC)
-@Data
+@Value
 @Builder
 public class OrchestrationGraph implements Distributable, Nominal {
   public static final long STRUCTURE_HASH = ObjectStreamClass.lookup(OrchestrationGraph.class).getSerialVersionUID();
@@ -32,7 +32,7 @@ public class OrchestrationGraph implements Distributable, Nominal {
   long cacheContextOrder;
   String cacheKey;
   List<String> cacheParams;
-  @Builder.Default long lastUpdatedAt = System.currentTimeMillis();
+  @Wither @Builder.Default long lastUpdatedAt = System.currentTimeMillis();
 
   String planExecutionId;
   Long startTs;

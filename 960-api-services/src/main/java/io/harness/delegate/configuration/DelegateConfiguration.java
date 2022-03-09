@@ -13,6 +13,7 @@ import io.harness.annotations.dev.OwnedBy;
 
 import lombok.Builder;
 import lombok.Data;
+import org.apache.commons.lang3.StringUtils;
 
 @Data
 @Builder
@@ -20,6 +21,7 @@ import lombok.Data;
 public class DelegateConfiguration {
   private String accountId;
   private String accountSecret;
+  private String delegateToken;
   private String managerUrl;
   private String verificationServiceUrl;
   private String cvNextGenUrl;
@@ -55,4 +57,14 @@ public class DelegateConfiguration {
   private String logStreamingServiceBaseUrl;
   private boolean clientToolsDownloadDisabled;
   private boolean installClientToolsInBackground;
+  private boolean dynamicHandlingOfRequestEnabled;
+
+  // TODO: This method will get removed once we rolled out new delegate.
+  public String getDelegateToken() {
+    if (StringUtils.isEmpty(delegateToken)) {
+      // Return account secret only if delegate token is not available.
+      return accountSecret;
+    }
+    return delegateToken;
+  }
 }

@@ -154,12 +154,12 @@ public class GetFilesInFolderForkTask extends RecursiveTask<List<FileChange>> {
     return allFiles;
   }
 
-  private FindFilesInBranchRequest.Builder prepareRequestBuilder(String folderPath) {
+  private FindFilesInBranchRequest.Builder prepareRequestBuilder(String path) {
     return FindFilesInBranchRequest.newBuilder()
         .setRef(ref)
         .setSlug(slug)
         .setProvider(provider)
-        .setPath(folderPath)
+        .setPath(path)
         .setPagination(PageRequest.newBuilder().setPage(getInitialPageNum()).build());
   }
 

@@ -22,4 +22,5 @@ public interface AccountSettingCustomRepository {
       String accountId, String orgIdentifier, String projectIdentifier, AccountSettingType type);
 
   AccountSettings updateAccountSetting(AccountSettings accountSettings, String accountIdentifier);
+  void insertAll(List<AccountSettings> accountSettingsList);
 }

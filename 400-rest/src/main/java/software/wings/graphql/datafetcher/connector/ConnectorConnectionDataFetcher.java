@@ -65,7 +65,7 @@ public class ConnectorConnectionDataFetcher
     int limit = pageQueryParameters.getLimit();
 
     List<SettingAttribute> filteredSettingAttributes =
-        settingsService.getFilteredSettingAttributes(settingAttributes, null, null);
+        settingsService.getFilteredSettingAttributes(settingAttributes, null, null, false);
 
     QLConnectorsConnectionBuilder connectorsConnectionBuilder = QLConnectorsConnection.builder();
 

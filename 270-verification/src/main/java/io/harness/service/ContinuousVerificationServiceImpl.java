@@ -337,8 +337,9 @@ public class ContinuousVerificationServiceImpl implements ContinuousVerification
         .filter(cvConfiguration
             -> cvConfiguration.isEnabled24x7() && getMetricAnalysisStates().contains(cvConfiguration.getStateType()))
         .forEach(cvConfiguration -> {
-          try (VerificationLogContext ignored = new VerificationLogContext(cvConfiguration.getAccountId(),
-                   cvConfiguration.getUuid(), null, cvConfiguration.getStateType(), OVERRIDE_ERROR)) {
+          try (VerificationLogContext ignored =
+                   new VerificationLogContext(cvConfiguration.getAccountId(), cvConfiguration.getUuid(), null,
+                       cvConfiguration.getStateType().getDelegateStateType(), OVERRIDE_ERROR)) {
             try {
               log.info("Executing APM data analysis Job for accountId {} and configId {}", accountId,
                   cvConfiguration.getUuid());
@@ -936,8 +937,9 @@ public class ContinuousVerificationServiceImpl implements ContinuousVerification
             -> cvConfiguration.isEnabled24x7() && getLogAnalysisStates().contains(cvConfiguration.getStateType())
                 && cvConfiguration.getStateType() != StateType.SPLUNKV2)
         .forEach(cvConfiguration -> {
-          try (VerificationLogContext ignored = new VerificationLogContext(cvConfiguration.getAccountId(),
-                   cvConfiguration.getUuid(), null, cvConfiguration.getStateType(), OVERRIDE_ERROR)) {
+          try (VerificationLogContext ignored =
+                   new VerificationLogContext(cvConfiguration.getAccountId(), cvConfiguration.getUuid(), null,
+                       cvConfiguration.getStateType().getDelegateStateType(), OVERRIDE_ERROR)) {
             long currentMinute = TimeUnit.MILLISECONDS.toMinutes(Timestamp.currentMinuteBoundary());
             log.info(
                 "triggering logs L1 Clustering for account {} and cvConfigId {}", accountId, cvConfiguration.getUuid());
@@ -1165,8 +1167,9 @@ public class ContinuousVerificationServiceImpl implements ContinuousVerification
             -> cvConfiguration.isEnabled24x7() && getLogAnalysisStates().contains(cvConfiguration.getStateType())
                 && cvConfiguration.getStateType() != StateType.SPLUNKV2)
         .forEach(cvConfiguration -> {
-          try (VerificationLogContext ignored = new VerificationLogContext(cvConfiguration.getAccountId(),
-                   cvConfiguration.getUuid(), null, cvConfiguration.getStateType(), OVERRIDE_ERROR)) {
+          try (VerificationLogContext ignored =
+                   new VerificationLogContext(cvConfiguration.getAccountId(), cvConfiguration.getUuid(), null,
+                       cvConfiguration.getStateType().getDelegateStateType(), OVERRIDE_ERROR)) {
             log.info(
                 "triggering logs L2 Clustering for account {} and cvConfigId {}", accountId, cvConfiguration.getUuid());
             try {
@@ -1758,8 +1761,9 @@ public class ContinuousVerificationServiceImpl implements ContinuousVerification
               "triggering logs Data Analysis for account {} and cvConfigId {}", accountId, cvConfiguration.getUuid());
           LogsCVConfiguration logsCVConfiguration = (LogsCVConfiguration) cvConfiguration;
 
-          try (VerificationLogContext ignored = new VerificationLogContext(logsCVConfiguration.getAccountId(),
-                   logsCVConfiguration.getUuid(), null, logsCVConfiguration.getStateType(), OVERRIDE_ERROR)) {
+          try (VerificationLogContext ignored =
+                   new VerificationLogContext(logsCVConfiguration.getAccountId(), logsCVConfiguration.getUuid(), null,
+                       logsCVConfiguration.getStateType().getDelegateStateType(), OVERRIDE_ERROR)) {
             try {
               if (logsCVConfiguration.isWorkflowConfig()) {
                 AnalysisContext context =

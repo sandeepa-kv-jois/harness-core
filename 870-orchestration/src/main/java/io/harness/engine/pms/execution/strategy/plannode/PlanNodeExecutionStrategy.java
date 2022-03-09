@@ -114,6 +114,8 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
                                       .identifier(node.getIdentifier())
                                       .stepType(node.getStepType())
                                       .nodeId(node.getUuid())
+                                      .stageFqn(node.getStageFqn())
+                                      .group(node.getGroup())
                                       .build();
     return nodeExecutionService.save(nodeExecution);
   }
@@ -137,14 +139,14 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
     String nodeId = AmbianceUtils.obtainCurrentSetupId(ambiance);
     try (AutoLogContext ignore = AmbianceUtils.autoLogContext(ambiance)) {
       PlanNode planNode = planService.fetchNode(ambiance.getPlanId(), nodeId);
+      resolveParameters(ambiance, planNode.getStepParameters(), planNode.isSkipUnresolvedExpressionsCheck());
+
       ExecutionCheck check = performPreFacilitationChecks(ambiance, planNode);
       if (!check.isProceed()) {
         log.info("Not Proceeding with  Execution. Reason : {}", check.getReason());
         return;
       }
       log.info("Proceeding with  Execution. Reason : {}", check.getReason());
-
-      resolveParameters(ambiance, planNode.getStepParameters(), planNode.isSkipUnresolvedExpressionsCheck());
 
       if (facilitationHelper.customFacilitatorPresent(planNode)) {
         facilitateEventPublisher.publishEvent(ambiance, planNode);
@@ -273,7 +275,6 @@ public class PlanNodeExecutionStrategy extends AbstractNodeExecutionStrategy<Pla
                                                 .stepOutcomeRefs(outcomeService.fetchOutcomeRefs(nodeExecutionId))
                                                 .failureInfo(nodeExecution.getFailureInfo())
                                                 .identifier(level.getIdentifier())
-                                                .group(level.getGroup())
                                                 .status(nodeExecution.getStatus())
                                                 .adviserResponse(nodeExecution.getAdviserResponse())
                                                 .build();

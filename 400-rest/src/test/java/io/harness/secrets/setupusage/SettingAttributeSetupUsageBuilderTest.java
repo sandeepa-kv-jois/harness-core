@@ -113,7 +113,7 @@ public class SettingAttributeSetupUsageBuilderTest extends WingsBaseTest {
   public void testBuildSecretSetupUsage() {
     PageResponse<SettingAttribute> settingAttributePageResponse = mock(PageResponse.class);
     when(settingAttributePageResponse.getResponse()).thenReturn(Collections.singletonList(settingAttribute));
-    when(settingsService.list(any(), eq(null), eq(null))).thenReturn(settingAttributePageResponse);
+    when(settingsService.list(any(), eq(null), eq(null), eq(false))).thenReturn(settingAttributePageResponse);
     Map<String, Set<EncryptedDataParent>> parentByParentIds = new HashMap<>();
     parentByParentIds.put(settingAttribute.getUuid(), getEncryptedDataParents());
 

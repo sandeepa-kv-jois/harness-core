@@ -14,8 +14,10 @@ import static io.harness.beans.serializer.RunTimeInputHandler.resolveJsonNodeMap
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveListParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveMapParameter;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
+import static io.harness.common.CIExecutionConstants.AWS_ROLE_ARN;
 import static io.harness.common.CIExecutionConstants.PLUGIN_ACCESS_KEY;
 import static io.harness.common.CIExecutionConstants.PLUGIN_ARTIFACT_FILE_VALUE;
+import static io.harness.common.CIExecutionConstants.PLUGIN_ASSUME_ROLE;
 import static io.harness.common.CIExecutionConstants.PLUGIN_JSON_KEY;
 import static io.harness.common.CIExecutionConstants.PLUGIN_PASSW;
 import static io.harness.common.CIExecutionConstants.PLUGIN_SECRET_KEY;
@@ -132,11 +134,16 @@ public class PluginSettingUtils {
     Map<EnvVariableEnum, String> map = new HashMap<>();
     switch (stepInfo.getNonYamlInfo().getStepInfoType()) {
       case ECR:
+        map.put(EnvVariableEnum.AWS_ACCESS_KEY, PLUGIN_ACCESS_KEY);
+        map.put(EnvVariableEnum.AWS_SECRET_KEY, PLUGIN_SECRET_KEY);
+        map.put(EnvVariableEnum.AWS_CROSS_ACCOUNT_ROLE_ARN, AWS_ROLE_ARN);
+        return map;
       case RESTORE_CACHE_S3:
       case SAVE_CACHE_S3:
       case UPLOAD_S3:
         map.put(EnvVariableEnum.AWS_ACCESS_KEY, PLUGIN_ACCESS_KEY);
         map.put(EnvVariableEnum.AWS_SECRET_KEY, PLUGIN_SECRET_KEY);
+        map.put(EnvVariableEnum.AWS_CROSS_ACCOUNT_ROLE_ARN, PLUGIN_ASSUME_ROLE);
         return map;
       case GCR:
       case RESTORE_CACHE_GCS:

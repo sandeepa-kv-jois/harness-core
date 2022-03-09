@@ -101,6 +101,10 @@ public interface WorkflowService extends OwnedByApplication, SettingsServiceMani
   Workflow updateLinkedWorkflow(@Valid Workflow workflow, Workflow existingWorkflow, boolean fromYaml);
 
   @ValidationGroups(Update.class)
+  Workflow updateWorkflow(
+      Workflow workflow, OrchestrationWorkflow orchestrationWorkflow, boolean envChanged, boolean migration);
+
+  @ValidationGroups(Update.class)
   Workflow updateWorkflow(@Valid Workflow workflow, OrchestrationWorkflow orchestrationWorkflow, boolean migration);
 
   @ValidationGroups(Update.class)

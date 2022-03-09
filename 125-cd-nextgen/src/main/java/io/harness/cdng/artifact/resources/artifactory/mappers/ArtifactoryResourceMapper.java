@@ -10,6 +10,10 @@ package io.harness.cdng.artifact.resources.artifactory.mappers;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryArtifactBuildDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryBuildDetailsDTO;
+import io.harness.cdng.artifact.resources.artifactory.dtos.ArtifactoryResponseDTO;
+import io.harness.delegate.task.artifacts.artifactory.ArtifactoryArtifactDelegateResponse;
+import io.harness.delegate.task.artifacts.response.ArtifactBuildDetailsNG;
 
 import software.wings.helpers.ext.jenkins.BuildDetails;
 
@@ -29,5 +33,25 @@ public class ArtifactoryResourceMapper {
                    .artifactPath(b.getArtifactPath())
                    .build())
         .collect(Collectors.toList());
+  }
+
+  public ArtifactoryResponseDTO toArtifactoryResponse(
+      List<ArtifactoryArtifactDelegateResponse> artifactoryArtifactDelegateResponseList) {
+    List<ArtifactoryBuildDetailsDTO> detailsDTOList =
+        artifactoryArtifactDelegateResponseList.stream()
+            .map(response -> toArtifactoryBuildDetailsDTO(response.getBuildDetails(), response.getArtifactPath()))
+            .collect(Collectors.toList());
+    return ArtifactoryResponseDTO.builder().buildDetailsList(detailsDTOList).build();
+  }
+
+  public ArtifactoryBuildDetailsDTO toArtifactoryBuildDetailsDTO(
+      ArtifactBuildDetailsNG artifactBuildDetailsNG, String imagePath) {
+    return ArtifactoryBuildDetailsDTO.builder()
+        .tag(artifactBuildDetailsNG.getNumber())
+        .buildUrl(artifactBuildDetailsNG.getBuildUrl())
+        .labels(artifactBuildDetailsNG.getLabelsMap())
+        .metadata(artifactBuildDetailsNG.getMetadata())
+        .imagePath(imagePath)
+        .build();
   }
 }

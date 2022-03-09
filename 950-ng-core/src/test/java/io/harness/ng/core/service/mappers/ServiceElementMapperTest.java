@@ -72,6 +72,9 @@ public class ServiceElementMapperTest extends CategoryTest {
                                .name("Service")
                                .deleted(false)
                                .tags(tags)
+                               .yaml("service:\n  name: \"Service\"\n  identifier: \"IDENTIFIER\"\n  "
+                                   + "orgIdentifier: \"ORG_ID\"\n  projectIdentifier: \"PROJECT_ID\"\n  tags:\n    "
+                                   + "k1: \"v1\"\n    k2: \"v2\"\n")
                                .build();
   }
 

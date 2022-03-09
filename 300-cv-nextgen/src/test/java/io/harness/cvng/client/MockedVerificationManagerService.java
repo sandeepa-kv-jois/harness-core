@@ -35,9 +35,6 @@ public class MockedVerificationManagerService implements VerificationManagerServ
   public void deletePerpetualTask(String accountId, String perpetualTaskId) {}
 
   @Override
-  public void deletePerpetualTasks(String accountId, List<String> perpetualTaskIds) {}
-
-  @Override
   public String getDataCollectionResponse(
       String accountId, String orgIdentifier, String projectIdentifier, DataCollectionRequest request) {
     return generateUuid();

@@ -27,9 +27,9 @@ import lombok.NonNull;
 
 @OwnedBy(HarnessTeam.PIPELINE)
 public interface NodeExecutionStrategy<P extends Node, N extends PmsNodeExecution, M extends PmsNodeExecutionMetadata> {
-  N triggerNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata);
+  N runNode(@NonNull Ambiance ambiance, @NonNull P node, M metadata);
 
-  default N triggerNextNode(@NonNull Ambiance ambiance, @NonNull P node, N prevExecution, M metadata) {
+  default N runNextNode(@NonNull Ambiance ambiance, @NonNull P node, N prevExecution, M metadata) {
     throw new UnsupportedOperationException("Trigger Next Node Node not supported for plan");
   }
 

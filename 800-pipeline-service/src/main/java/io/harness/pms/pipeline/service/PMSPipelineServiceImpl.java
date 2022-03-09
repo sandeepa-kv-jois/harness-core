@@ -21,6 +21,7 @@ import io.harness.NGResourceFilterConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
 import io.harness.data.structure.EmptyPredicate;
+import io.harness.engine.GovernanceService;
 import io.harness.eventsframework.api.EventsFrameworkDownException;
 import io.harness.eventsframework.schemas.entity.EntityDetailProtoDTO;
 import io.harness.eventsframework.schemas.entity.IdentifierRefProtoDTO;
@@ -37,9 +38,12 @@ import io.harness.gitsync.scm.EntityObjectIdUtils;
 import io.harness.gitsync.utils.GitEntityFilePath;
 import io.harness.gitsync.utils.GitSyncSdkUtils;
 import io.harness.grpc.utils.StringValueUtils;
+import io.harness.ng.core.template.TemplateMergeResponseDTO;
+import io.harness.opaclient.model.OpaConstants;
 import io.harness.pms.PmsFeatureFlagService;
 import io.harness.pms.contracts.governance.ExpansionRequestMetadata;
 import io.harness.pms.contracts.governance.ExpansionResponseBatch;
+import io.harness.pms.contracts.governance.GovernanceMetadata;
 import io.harness.pms.contracts.steps.StepInfo;
 import io.harness.pms.gitsync.PmsGitSyncBranchContextGuard;
 import io.harness.pms.gitsync.PmsGitSyncHelper;
@@ -47,10 +51,12 @@ import io.harness.pms.governance.ExpansionRequest;
 import io.harness.pms.governance.ExpansionRequestsExtractor;
 import io.harness.pms.governance.ExpansionsMerger;
 import io.harness.pms.governance.JsonExpander;
+import io.harness.pms.instrumentaion.PipelineInstrumentationConstants;
 import io.harness.pms.pipeline.CommonStepInfo;
 import io.harness.pms.pipeline.ExecutionSummaryInfo;
 import io.harness.pms.pipeline.PipelineEntity;
 import io.harness.pms.pipeline.PipelineEntity.PipelineEntityKeys;
+import io.harness.pms.pipeline.PipelineEntityUtils;
 import io.harness.pms.pipeline.PipelineFilterPropertiesDto;
 import io.harness.pms.pipeline.PipelineMetadata;
 import io.harness.pms.pipeline.StepCategory;
@@ -101,6 +107,9 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   @Inject private PmsGitSyncHelper gitSyncHelper;
   @Inject private PmsFeatureFlagService pmsFeatureFlagService;
   @Inject private PipelineMetadataService pipelineMetadataService;
+  @Inject private PMSYamlSchemaService pmsYamlSchemaService;
+  @Inject private PMSPipelineTemplateHelper pipelineTemplateHelper;
+  @Inject private GovernanceService governanceService;
   public static String PIPELINE_SAVE = "pipeline_save";
   public static String PIPELINE_SAVE_ACTION_TYPE = "action";
   public static String CREATING_PIPELINE = "creating new pipeline";
@@ -368,6 +377,30 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
   }
 
   @Override
+  public GovernanceMetadata validatePipelineYamlAndSetTemplateRefIfAny(
+      PipelineEntity pipelineEntity, boolean checkAgainstOPAPolicies) {
+    String accountId = pipelineEntity.getAccountId();
+    String orgIdentifier = pipelineEntity.getOrgIdentifier();
+    String projectIdentifier = pipelineEntity.getProjectIdentifier();
+    // Apply all the templateRefs(if any) then check for schema validation.
+    TemplateMergeResponseDTO templateMergeResponseDTO =
+        pipelineTemplateHelper.resolveTemplateRefsInPipeline(pipelineEntity);
+    String resolveTemplateRefsInPipeline = templateMergeResponseDTO.getMergedPipelineYaml();
+    pmsYamlSchemaService.validateYamlSchema(accountId, orgIdentifier, projectIdentifier, resolveTemplateRefsInPipeline);
+    // validate unique fqn in resolveTemplateRefsInPipeline
+    pmsYamlSchemaService.validateUniqueFqn(resolveTemplateRefsInPipeline);
+    pipelineEntity.setTemplateReference(
+        EmptyPredicate.isNotEmpty(templateMergeResponseDTO.getTemplateReferenceSummaries()));
+    if (checkAgainstOPAPolicies) {
+      String expandedPipelineJSON =
+          fetchExpandedPipelineJSONFromYaml(accountId, orgIdentifier, projectIdentifier, resolveTemplateRefsInPipeline);
+      return governanceService.evaluateGovernancePolicies(expandedPipelineJSON, accountId, orgIdentifier,
+          projectIdentifier, OpaConstants.OPA_EVALUATION_ACTION_PIPELINE_SAVE, "");
+    }
+    return GovernanceMetadata.newBuilder().setDeny(false).build();
+  }
+
+  @Override
   public PipelineEntity findFirstPipeline(Criteria criteria) {
     return pmsPipelineRepository.findFirstPipeline(criteria);
   }
@@ -512,6 +545,8 @@ public class PMSPipelineServiceImpl implements PMSPipelineService {
     properties.put(ORG_ID, entity.getOrgIdentifier());
     properties.put(PROJECT_ID, entity.getProjectIdentifier());
     properties.put(PIPELINE_SAVE_ACTION_TYPE, actionType);
+    properties.put(PipelineInstrumentationConstants.MODULE_NAME,
+        PipelineEntityUtils.getModuleNameFromPipelineEntity(entity, "cd"));
     telemetryReporter.sendTrackEvent(
         PIPELINE_SAVE, properties, Collections.singletonMap(AMPLITUDE, true), io.harness.telemetry.Category.GLOBAL);
   }

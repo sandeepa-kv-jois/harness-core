@@ -18,6 +18,7 @@ public final class PerpetualTaskType {
   public static final String ARTIFACT_COLLECTION = "ARTIFACT_COLLECTION";
   public static final String PCF_INSTANCE_SYNC = "PCF_INSTANCE_SYNC";
   public static final String AWS_SSH_INSTANCE_SYNC = "AWS_SSH_INSTANCE_SYNC";
+  public static final String PDC_INSTANCE_SYNC = "PDC_INSTANCE_SYNC";
   public static final String AWS_AMI_INSTANCE_SYNC = "AWS_AMI_INSTANCE_SYNC";
   public static final String AWS_CODE_DEPLOY_INSTANCE_SYNC = "AWS_CODE_DEPLOY_INSTANCE_SYNC";
   public static final String SPOT_INST_AMI_INSTANCE_SYNC = "SPOT_INST_AMI_INSTANCE_SYNC";

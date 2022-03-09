@@ -61,7 +61,11 @@ public class CodebasePlanCreatorTest extends CategoryTest {
     build.setSpec(BranchBuildSpec.builder().branch(ParameterField.createValueField("main")).build());
     build.setType(BuildType.BRANCH);
 
-    codeBase = CodeBase.builder().connectorRef("connectorRef").build(ParameterField.createValueField(build)).build();
+    codeBase = CodeBase.builder()
+                   .repoName(ParameterField.createValueField("main"))
+                   .connectorRef(ParameterField.createValueField("connectorRef"))
+                   .build(ParameterField.createValueField(build))
+                   .build();
   }
   @After
   public void tearDown() throws Exception {}

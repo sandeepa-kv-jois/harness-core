@@ -54,7 +54,7 @@ public class NextStepAdviser implements Adviser {
     // would be marked as skipped, rather than NotStarted
     OptionalSweepingOutput optionalSweepingOutput =
         executionSweepingOutputService.resolveOptional(advisingEvent.getAmbiance(),
-            RefObjectUtils.getSweepingOutputRefObject(YAMLFieldNameConstants.DEPLOYMENT_ROLLED_BACK));
+            RefObjectUtils.getSweepingOutputRefObject(YAMLFieldNameConstants.STOP_STEPS_SEQUENCE));
     return !optionalSweepingOutput.isFound();
   }
 }

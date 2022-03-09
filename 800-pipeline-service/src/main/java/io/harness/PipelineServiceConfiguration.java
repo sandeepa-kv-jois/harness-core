@@ -15,6 +15,7 @@ import static java.util.stream.Collectors.toSet;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.CacheConfig;
+import io.harness.debezium.DebeziumConfig;
 import io.harness.enforcement.client.EnforcementClientConfiguration;
 import io.harness.eventsframework.EventsFrameworkConfiguration;
 import io.harness.gitsync.GitSdkConfiguration;
@@ -120,6 +121,7 @@ public class PipelineServiceConfiguration extends Configuration {
   @JsonProperty("pipelineSdkRedisEventsConfig") private PipelineSdkRedisEventsConfig pipelineSdkRedisEventsConfig;
   @JsonProperty("orchestrationRedisEventsConfig") private OrchestrationRedisEventsConfig orchestrationRedisEventsConfig;
   @JsonProperty("allowedParallelStages") private int allowedParallelStages;
+  @JsonProperty("debeziumConfig") private DebeziumConfig debeziumConfig;
 
   private String managerServiceSecret;
   private String managerTarget;

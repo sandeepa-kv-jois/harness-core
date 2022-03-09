@@ -7,6 +7,9 @@
 
 package io.harness.generator.artifactstream;
 
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
+
+import io.harness.ff.FeatureFlagService;
 import io.harness.generator.OwnerManager;
 import io.harness.generator.Randomizer;
 import io.harness.generator.SettingGenerator;
@@ -25,6 +28,7 @@ import com.google.inject.Singleton;
 public abstract class NexusArtifactStreamsGenerator implements ArtifactStreamsGenerator {
   @Inject protected SettingGenerator settingGenerator;
   @Inject private ArtifactStreamGeneratorHelper artifactStreamGeneratorHelper;
+  @Inject FeatureFlagService featureFlagService;
 
   @Override
   public ArtifactStream ensureArtifactStream(Randomizer.Seed seed, OwnerManager.Owners owners, boolean atConnector) {
@@ -86,7 +90,8 @@ public abstract class NexusArtifactStreamsGenerator implements ArtifactStreamsGe
     Preconditions.checkNotNull(nexusArtifactStream.getSettingId());
     builder.sourceName(artifactStream.getSourceName());
     builder.settingId(artifactStream.getSettingId());
-    builder.metadataOnly(artifactStream.isMetadataOnly());
+    builder.metadataOnly(
+        metadataOnlyBehindFlag(featureFlagService, artifactStream.getAccountId(), artifactStream.isMetadataOnly()));
 
     return artifactStreamGeneratorHelper.saveArtifactStream(builder.build(), owners);
   }

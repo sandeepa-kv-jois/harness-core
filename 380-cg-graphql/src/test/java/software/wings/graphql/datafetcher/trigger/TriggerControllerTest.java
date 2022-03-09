@@ -847,7 +847,7 @@ public class TriggerControllerTest extends CategoryTest {
         .thenReturn(Trigger.builder().appId(APP_ID).workflowType(WorkflowType.PIPELINE).build());
     when(appService.getAccountIdByAppId(APP_ID)).thenReturn(ACCOUNT_ID);
     when(settingsService.get("connectorId")).thenReturn(aSettingAttribute().withAccountId(ACCOUNT_ID).build());
-    when(settingsService.getFilteredSettingAttributes(any(), any(), any()))
+    when(settingsService.getFilteredSettingAttributes(any(), any(), any(), anyBoolean()))
         .thenReturn(Collections.singletonList(aSettingAttribute().build()));
 
     assertThatThrownBy(() -> triggerController.prepareTrigger(qlCreateOrUpdateTriggerInput, ACCOUNT_ID))

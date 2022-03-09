@@ -93,4 +93,12 @@ public class DebeziumConfig {
    * except those in the local and admin databases. Must not be used with collection.exclude.list.
    */
   @JsonProperty("collection.include.list") private String collectionIncludeList;
+
+  /**
+   *
+   Specifies the maximum number of documents that should be read in one go from each collection while taking a snapshot.
+   The connector will read the collection contents in multiple batches of this size. Defaults to 0, which indicates that
+   the server chooses an appropriate fetch size.
+   */
+  @JsonProperty("snapshot.fetch.size") private String snapshotFetchSize;
 }

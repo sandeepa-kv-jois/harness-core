@@ -8,8 +8,8 @@ package state
 import (
 	"context"
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	"github.com/harness/harness-core/commons/go/lib/logs"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 

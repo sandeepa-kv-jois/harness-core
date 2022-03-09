@@ -10,13 +10,17 @@ package software.wings.service.impl.yaml.handler.artifactstream;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 
+import static software.wings.service.impl.artifact.ArtifactServiceImpl.metadataOnlyBehindFlag;
+
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.ff.FeatureFlagService;
 
 import software.wings.beans.artifact.ArtifactoryArtifactStream;
 import software.wings.beans.artifact.ArtifactoryArtifactStream.Yaml;
 import software.wings.beans.yaml.ChangeContext;
 import software.wings.utils.RepositoryType;
 
+import com.google.inject.Inject;
 import com.google.inject.Singleton;
 
 /**
@@ -25,6 +29,7 @@ import com.google.inject.Singleton;
 @OwnedBy(CDC)
 @Singleton
 public class ArtifactoryArtifactStreamYamlHandler extends ArtifactStreamYamlHandler<Yaml, ArtifactoryArtifactStream> {
+  @Inject private FeatureFlagService featureFlagService;
   @Override
   public Yaml toYaml(ArtifactoryArtifactStream bean, String appId) {
     Yaml yaml = Yaml.builder().build();
@@ -40,7 +45,7 @@ public class ArtifactoryArtifactStreamYamlHandler extends ArtifactStreamYamlHand
     yaml.setRepositoryType(bean.getRepositoryType());
     yaml.setUseDockerFormat(bean.isUseDockerFormat());
     if (!bean.getRepositoryType().equals(RepositoryType.docker.name())) {
-      yaml.setMetadataOnly(bean.isMetadataOnly());
+      yaml.setMetadataOnly(metadataOnlyBehindFlag(featureFlagService, bean.getAccountId(), bean.isMetadataOnly()));
     } else {
       yaml.setMetadataOnly(true);
     }
