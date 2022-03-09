@@ -48,6 +48,9 @@ import io.harness.k8s.model.K8sDelegateTaskParams;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.nio.file.Paths;
@@ -82,11 +85,13 @@ public class K8sApplyRequestHandler extends K8sRequestHandler {
         Paths.get(k8sDelegateTaskParams.getWorkingDirectory(), MANIFEST_FILES_DIR).toString());
     long timeoutInMillis = getTimeoutMillisFromMinutes(k8sDeployRequest.getTimeoutIntervalInMin());
 
+    LogCallback executionLogCallback = k8sTaskHelperBase.getLogCallback(
+        logStreamingTaskClient, FetchFiles, k8sApplyRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+    executionLogCallback.saveExecutionLog(color("\nStarting Kubernetes Apply", LogColor.White, LogWeight.Bold));
+
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sApplyRequest.getManifestDelegateConfig(),
-        k8sApplyHandlerConfig.getManifestFilesDirectory(),
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
-            k8sApplyRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress),
-        timeoutInMillis, k8sApplyRequest.getAccountId());
+        k8sApplyHandlerConfig.getManifestFilesDirectory(), executionLogCallback, timeoutInMillis,
+        k8sApplyRequest.getAccountId());
 
     init(k8sApplyRequest, k8sDelegateTaskParams,
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));

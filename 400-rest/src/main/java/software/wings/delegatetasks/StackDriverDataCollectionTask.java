@@ -39,7 +39,6 @@ import software.wings.service.impl.stackdriver.StackdriverDataFetchParameters;
 import software.wings.service.intfc.analysis.ClusterLevel;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.stackdriver.StackDriverDelegateService;
-import software.wings.sm.StateType;
 
 import com.google.api.services.monitoring.v3.Monitoring;
 import com.google.api.services.monitoring.v3.model.ListTimeSeriesResponse;
@@ -88,13 +87,13 @@ public class StackDriverDataCollectionTask extends AbstractDelegateDataCollectio
     log.info("metric collection - dataCollectionInfo: {}", dataCollectionInfo);
     return DataCollectionTaskResult.builder()
         .status(DataCollectionTaskStatus.SUCCESS)
-        .stateType(StateType.STACK_DRIVER)
+        .stateType(DelegateStateType.STACK_DRIVER)
         .build();
   }
 
   @Override
-  protected StateType getStateType() {
-    return StateType.STACK_DRIVER;
+  protected DelegateStateType getStateType() {
+    return DelegateStateType.STACK_DRIVER;
   }
 
   @Override
@@ -339,7 +338,7 @@ public class StackDriverDataCollectionTask extends AbstractDelegateDataCollectio
           long timeStamp = stackDriverDelegateService.getTimeStamp(point.getInterval().getEndTime());
           NewRelicMetricDataRecord newRelicMetricDataRecord =
               NewRelicMetricDataRecord.builder()
-                  .stateType(StateType.STACK_DRIVER)
+                  .stateType(DelegateStateType.STACK_DRIVER)
                   .appId(appId)
                   .name(dataFetchParameters.getNameSpace())
                   .workflowId(dataCollectionInfo.getWorkflowId())

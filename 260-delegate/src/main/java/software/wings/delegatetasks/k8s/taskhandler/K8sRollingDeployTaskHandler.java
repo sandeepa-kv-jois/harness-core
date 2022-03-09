@@ -65,6 +65,8 @@ import io.harness.k8s.model.ReleaseHistory;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
 import software.wings.beans.command.ExecutionLogCallback;
 import software.wings.delegatetasks.k8s.K8sTaskHelper;
 import software.wings.helpers.ext.container.ContainerDeploymentDelegateHelper;
@@ -122,11 +124,14 @@ public class K8sRollingDeployTaskHandler extends K8sTaskHandler {
         return getFailureResponse();
       }
     } else {
+      ExecutionLogCallback executionLogCallback =
+          k8sTaskHelper.getExecutionLogCallback(k8sRollingDeployTaskParameters, FetchFiles);
+      executionLogCallback.saveExecutionLog(
+          color("\nStarting Kubernetes Rolling Deployment", LogColor.White, LogWeight.Bold));
+
       success = k8sTaskHelper.fetchManifestFilesAndWriteToDirectory(
           k8sRollingDeployTaskParameters.getK8sDelegateManifestConfig(),
-          k8sRollingHandlerConfig.getManifestFilesDirectory(),
-          k8sTaskHelper.getExecutionLogCallback(k8sRollingDeployTaskParameters, FetchFiles),
-          steadyStateTimeoutInMillis);
+          k8sRollingHandlerConfig.getManifestFilesDirectory(), executionLogCallback, steadyStateTimeoutInMillis);
 
       if (!success) {
         return getFailureResponse();

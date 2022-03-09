@@ -26,6 +26,7 @@ import io.harness.serializer.JsonUtils;
 
 import software.wings.beans.AccountType;
 import software.wings.beans.Application;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.analysis.AnalysisContext;
 import software.wings.service.impl.instana.InstanaApplicationParams;
 import software.wings.service.impl.instana.InstanaDataCollectionInfo;
@@ -35,7 +36,6 @@ import software.wings.service.intfc.AccountService;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.MetricDataAnalysisService;
 import software.wings.service.intfc.verification.CVActivityLogService;
-import software.wings.sm.StateType;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
 import com.google.common.collect.Lists;
@@ -105,7 +105,7 @@ public class InstanaStateTest extends APMStateVerificationTestBase {
     hosts.put("host1", "default");
     InstanaDataCollectionInfo instanaDataCollectionInfo =
         (InstanaDataCollectionInfo) instanaState.createDataCollectionInfo(executionContext, hosts);
-    assertThat(StateType.INSTANA).isEqualTo(instanaDataCollectionInfo.getStateType());
+    assertThat(DelegateStateType.INSTANA).isEqualTo(instanaDataCollectionInfo.getStateType());
     assertThat(instanaDataCollectionInfo.getInstanaConfig()).isNull();
     assertThat(instanaDataCollectionInfo.getStateExecutionId())
         .isEqualTo(executionContext.getStateExecutionInstanceId());
@@ -260,7 +260,7 @@ public class InstanaStateTest extends APMStateVerificationTestBase {
     hosts.put("host1", "default");
     InstanaDataCollectionInfo instanaDataCollectionInfo =
         (InstanaDataCollectionInfo) spyState.createDataCollectionInfo(executionContext, hosts);
-    assertThat(instanaDataCollectionInfo.getStateType()).isEqualTo(StateType.INSTANA);
+    assertThat(instanaDataCollectionInfo.getStateType()).isEqualTo(DelegateStateType.INSTANA);
     assertThat(instanaDataCollectionInfo.getInstanaConfig()).isNull();
     assertThat(instanaDataCollectionInfo.getConnectorId()).isEqualTo(analysisServerConfigId);
   }
@@ -277,7 +277,7 @@ public class InstanaStateTest extends APMStateVerificationTestBase {
     hosts.put("host1", "default");
     InstanaDataCollectionInfo instanaDataCollectionInfo =
         (InstanaDataCollectionInfo) instanaState.createDataCollectionInfo(executionContext, hosts);
-    assertThat(instanaDataCollectionInfo.getStateType()).isEqualTo(StateType.INSTANA);
+    assertThat(instanaDataCollectionInfo.getStateType()).isEqualTo(DelegateStateType.INSTANA);
     assertThat(instanaDataCollectionInfo.getQuery())
         .isEqualTo("entity.kubernetes.pod.name:${host.hostName} AND entity.kubernetes.cluster.name:harness");
   }
@@ -298,7 +298,7 @@ public class InstanaStateTest extends APMStateVerificationTestBase {
     hosts.put("host1", "default");
     InstanaDataCollectionInfo instanaDataCollectionInfo =
         (InstanaDataCollectionInfo) instanaState.createDataCollectionInfo(executionContext, hosts);
-    assertThat(instanaDataCollectionInfo.getStateType()).isEqualTo(StateType.INSTANA);
+    assertThat(instanaDataCollectionInfo.getStateType()).isEqualTo(DelegateStateType.INSTANA);
     assertThat(instanaDataCollectionInfo.getTagFilters())
         .isEqualTo(Arrays.asList(InstanaTagFilter.builder()
                                      .name("service.name")

@@ -15,7 +15,7 @@ import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
 import io.harness.cvng.CVConstants;
-import io.harness.cvng.analysis.beans.TimeSeriesAnomalies;
+import io.harness.cvng.analysis.beans.TimeSeriesAnomaliesDTO;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.ng.DbAliases;
@@ -95,17 +95,17 @@ public final class TimeSeriesAnomalousPatterns implements PersistentEntity, Uuid
   }
 
   public static List<TimeSeriesAnomalies> convertFromMap(
-      Map<String, Map<String, List<TimeSeriesAnomalies>>> txnMetricAnomMap) {
+      Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> txnMetricAnomMap) {
     if (isNotEmpty(txnMetricAnomMap)) {
       List<TimeSeriesAnomalies> anomalyList = new ArrayList<>();
       txnMetricAnomMap.forEach((txn, metricAnomMap) -> {
         if (isNotEmpty(metricAnomMap)) {
-          metricAnomMap.forEach((metric, anomalies) -> {
+          metricAnomMap.forEach((metricIdentifier, anomalies) -> {
             if (isNotEmpty(anomalies)) {
               anomalies.forEach(anomaly -> {
                 anomaly.setTransactionName(txn);
-                anomaly.setMetricName(metric);
-                anomalyList.add(anomaly);
+                anomaly.setMetricIdentifier(metricIdentifier);
+                anomalyList.add(anomaly.toTimeSeriesAnomalies());
               });
             }
           });
@@ -116,15 +116,15 @@ public final class TimeSeriesAnomalousPatterns implements PersistentEntity, Uuid
     return null;
   }
 
-  public Map<String, Map<String, List<TimeSeriesAnomalies>>> convertToMap() {
+  public Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> convertToMap() {
     if (anomalies == null) {
       return new HashMap<>();
     }
 
-    Map<String, Map<String, List<TimeSeriesAnomalies>>> txnMetricAnomMap = new HashMap<>();
+    Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> txnMetricAnomMap = new HashMap<>();
     anomalies.forEach(anomaly -> {
       String txn = anomaly.getTransactionName();
-      String metric = anomaly.getMetricName();
+      String metric = anomaly.getMetricIdentifier();
       if (!txnMetricAnomMap.containsKey(txn)) {
         txnMetricAnomMap.put(txn, new HashMap<>());
       }
@@ -133,9 +133,28 @@ public final class TimeSeriesAnomalousPatterns implements PersistentEntity, Uuid
         txnMetricAnomMap.get(txn).put(metric, new ArrayList<>());
       }
 
-      txnMetricAnomMap.get(txn).get(metric).add(anomaly);
+      txnMetricAnomMap.get(txn).get(metric).add(TimeSeriesAnomaliesDTO.toTimeSeriesAnomaliesDTO(anomaly));
     });
 
     return txnMetricAnomMap;
+  }
+
+  @Data
+  @Builder
+  @FieldNameConstants(innerTypeName = "TimeSeriesAnomaliesKeys")
+  @JsonIgnoreProperties(ignoreUnknown = true)
+  public static class TimeSeriesAnomalies {
+    private String transactionName;
+    @Deprecated private String metricName;
+    private String metricIdentifier;
+    private List<Double> testData;
+    private List<Long> anomalousTimestamps;
+
+    public String getMetricIdentifier() {
+      if (isEmpty(metricIdentifier)) {
+        return metricName;
+      }
+      return metricIdentifier;
+    }
   }
 }

@@ -23,6 +23,8 @@ public interface StepSpecTypeConstants {
   String RESOURCE_CONSTRAINT = "ResourceConstraint";
   String FLAG_CONFIGURATION = "FlagConfiguration";
   String SERVICENOW_APPROVAL = "ServiceNowApproval";
+  String SERVICENOW_CREATE = "ServiceNowCreate";
+  String SERVICENOW_UPDATE = "ServiceNowUpdate";
   String APPROVAL_STAGE = "Approval";
   String DEPLOYMENT_STAGE = "Deployment";
   String CI_STAGE = "CI";

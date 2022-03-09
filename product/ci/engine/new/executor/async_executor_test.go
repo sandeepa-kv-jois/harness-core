@@ -12,10 +12,10 @@ import (
 	"testing"
 
 	"github.com/golang/mock/gomock"
-	"github.com/pkg/errors"
 	"github.com/harness/harness-core/commons/go/lib/logs"
 	mexecutor "github.com/harness/harness-core/product/ci/engine/new/executor/mocks"
 	pb "github.com/harness/harness-core/product/ci/engine/proto"
+	"github.com/pkg/errors"
 	"go.uber.org/zap"
 )
 

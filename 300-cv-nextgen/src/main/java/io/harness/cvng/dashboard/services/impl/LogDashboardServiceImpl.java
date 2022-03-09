@@ -80,12 +80,6 @@ public class LogDashboardServiceImpl implements LogDashboardService {
   public PageResponse<AnalyzedLogDataDTO> getAllLogsData(MonitoredServiceParams monitoredServiceParams,
       TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter,
       PageParams pageParams) {
-    if (monitoredServiceParams.getMonitoredServiceIdentifier() == null) {
-      // Remove this once UI start sending monitoredServiceIdentifier
-      monitoredServiceParams.setMonitoredServiceIdentifier(
-          monitoredServiceService.getMonitoredServiceDTO(monitoredServiceParams.getServiceEnvironmentParams())
-              .getIdentifier());
-    }
     List<CVConfig> configs = getCVConfigs(monitoredServiceParams, liveMonitoringLogAnalysisFilter);
     List<String> cvConfigIds = configs.stream().map(CVConfig::getUuid).collect(Collectors.toList());
     List<LogAnalysisTag> tags = liveMonitoringLogAnalysisFilter.filterByClusterTypes()
@@ -101,12 +95,6 @@ public class LogDashboardServiceImpl implements LogDashboardService {
   public List<LiveMonitoringLogAnalysisClusterDTO> getLogAnalysisClusters(MonitoredServiceParams monitoredServiceParams,
       TimeRangeParams timeRangeParams, LiveMonitoringLogAnalysisFilter liveMonitoringLogAnalysisFilter) {
     List<LiveMonitoringLogAnalysisClusterDTO> liveMonitoringLogAnalysisClusterDTOS = new ArrayList<>();
-    if (monitoredServiceParams.getMonitoredServiceIdentifier() == null) {
-      // Remove this once UI start sending monitoredServiceIdentifier
-      monitoredServiceParams.setMonitoredServiceIdentifier(
-          monitoredServiceService.getMonitoredServiceDTO(monitoredServiceParams.getServiceEnvironmentParams())
-              .getIdentifier());
-    }
     List<String> cvConfigIds = getCVConfigs(monitoredServiceParams, liveMonitoringLogAnalysisFilter)
                                    .stream()
                                    .map(CVConfig::getUuid)

@@ -315,8 +315,7 @@ public class AssignDelegateServiceImpl implements AssignDelegateService, Delegat
       Delegate delegate, Map<String, String> taskSetupAbstractions, String taskId) {
     DelegateProfile delegateProfile = persistence.get(DelegateProfile.class, delegate.getDelegateProfileId());
     if (delegateProfile == null) {
-      log.warn(
-          "Delegate profile {} not found. Considering this delegate profile matched", delegate.getDelegateProfileId());
+      // ng delegates dont have delegateProfile, so no need of logging a warning.
       return true;
     }
 

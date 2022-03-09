@@ -89,8 +89,8 @@ public class LogMLAnalysisGenerator implements Runnable {
 
   @Override
   public void run() {
-    try (VerificationLogContext ignored = new VerificationLogContext(
-             accountId, null, context.getStateExecutionId(), context.getStateType(), OVERRIDE_ERROR)) {
+    try (VerificationLogContext ignored = new VerificationLogContext(accountId, null, context.getStateExecutionId(),
+             context.getStateType().getDelegateStateType(), OVERRIDE_ERROR)) {
       if (analysisType != null && analysisType == MLAnalysisType.FEEDBACK_ANALYSIS) {
         generateFeedbackAnalysis();
       } else {

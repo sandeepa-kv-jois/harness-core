@@ -28,6 +28,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.IOUtils;
+import org.mongodb.morphia.query.FindOptions;
 
 @OwnedBy(PL)
 @Slf4j
@@ -37,6 +38,7 @@ class ElasticsearchBulkMigrationHelper {
   @Inject private ElasticsearchIndexManager elasticsearchIndexManager;
   private static final int NUMBER_OF_BULK_SYNC_THREADS = 5;
   private static final int BULK_SYNC_TASK_QUEUE_SIZE = 200;
+  private static final int BULK_SYNC_ITERATOR_BATCH_SIZE = 100;
   private static final String BULK_THREAD_SUFFIX = "-bulk-migration-%d";
   private static final String BASE_CONFIGURATION_PATH = "/elasticsearch/framework/BaseViewSchema.json";
   private static final String ENTITY_CONFIGURATION_PATH_BASE = "/elasticsearch/entities/";
@@ -71,7 +73,8 @@ class ElasticsearchBulkMigrationHelper {
 
     Class<T> sourceEntityClass = searchEntity.getSourceEntityClass();
 
-    try (HIterator<T> iterator = new HIterator<>(wingsPersistence.createQuery(sourceEntityClass).fetch())) {
+    try (HIterator<T> iterator = new HIterator<>(wingsPersistence.createQuery(sourceEntityClass)
+                                                     .fetch(new FindOptions().batchSize(getIteratorBatchSize())))) {
       while (iterator.hasNext()) {
         final T object = iterator.next();
         SearchEntityBulkMigrationTask<T> searchEntityBulkMigrationTask =
@@ -146,5 +149,9 @@ class ElasticsearchBulkMigrationHelper {
     }
 
     return hasMigrationSucceeded;
+  }
+
+  private int getIteratorBatchSize() {
+    return BULK_SYNC_ITERATOR_BATCH_SIZE;
   }
 }

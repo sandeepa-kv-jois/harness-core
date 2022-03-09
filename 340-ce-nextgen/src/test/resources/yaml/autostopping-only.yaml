@@ -20,8 +20,10 @@ rules:
       - deletecollection
   - apiGroups:
       - networking.k8s.io
+      - admissionregistration.k8s.io
     resources:
       - ingresses
+      - validatingwebhookconfigurations
     verbs:
       - get
       - list
@@ -165,11 +167,6 @@ metadata:
   namespace: harness-autostopping
 data:
   envoy.yaml: >
-    admin:
-      profile_path: /tmp/envoy.prof
-      access_log_path: /tmp/envoy_admin.log
-      address:
-        socket_address: { address: 0.0.0.0, port_value: 9901 }
     node:
       cluster: test-cluster
       id: test-id
@@ -259,7 +256,7 @@ spec:
         command:
         - envoy
         image: envoyproxy/envoy:v1.18-latest
-        imagePullPolicy: Always
+        imagePullPolicy: IfNotPresent
         name: envoy
         ports:
         - containerPort: 10000
@@ -316,8 +313,11 @@ spec:
     spec:
       containers:
       - name: autostopping-controller
-        image: harness/autostopping-controller:latest
-        imagePullPolicy: Always
+        image: harness/autostopping-controller:1.0.0
+        imagePullPolicy: IfNotPresent
+        volumeMounts:
+        - mountPath: /tmp/k8s-webhook-server/serving-certs
+          name: serving-certs
         env:
         - name: HARNESS_API
           value: "VALUE_REPLACED_BY_UNIT_TEST_hHost/gateway/lw/api"
@@ -331,6 +331,12 @@ spec:
         - containerPort: 8093
           protocol: TCP
           name: progress
+        - containerPort: 9443
+          protocol: TCP
+          name: webhook
+      volumes:
+      - emptyDir: {}
+        name: serving-certs
       serviceAccountName: harness-autostopping-sa
 
 ---
@@ -350,6 +356,10 @@ spec:
     protocol: TCP
     targetPort: 8093
     name: progress
+  - port: 9443
+    protocol: TCP
+    targetPort: 9443
+    name: webhook
   selector:
     app: autostopping-controller
 

@@ -16,6 +16,7 @@ import static io.harness.k8s.manifest.ManifestHelper.values_filename;
 import static io.harness.logging.CommandExecutionStatus.FAILURE;
 import static io.harness.logging.CommandExecutionStatus.SUCCESS;
 import static io.harness.rule.OwnerRule.ABOSII;
+import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.ADWAIT;
 import static io.harness.rule.OwnerRule.ANSHUL;
 import static io.harness.rule.OwnerRule.BOJANA;
@@ -209,6 +210,7 @@ import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -1043,6 +1045,34 @@ public class AbstractK8SStateTest extends WingsBaseTest {
   }
 
   @Test
+  @Owner(developers = ACHYUTH)
+  @Category(UnitTests.class)
+  public void testGetRenderedValuesFilesWithStepOverride() {
+    when(openShiftManagerService.isOpenShiftManifestConfig(context)).thenReturn(false);
+
+    Map<K8sValuesLocation, ApplicationManifest> appManifestMap = new HashMap<>();
+    K8sStateExecutionData k8sStateExecutionData = (K8sStateExecutionData) context.getStateExecutionData();
+    k8sStateExecutionData.setValuesFiles(new HashMap<>());
+    k8sStateExecutionData.getValuesFiles().put(K8sValuesLocation.Environment, singletonList("envValues"));
+    k8sStateExecutionData.getValuesFiles().put(
+        K8sValuesLocation.ServiceOverride, singletonList("serviceOverrideValues"));
+    k8sStateExecutionData.getValuesFiles().put(K8sValuesLocation.Service, singletonList("serviceValues"));
+    k8sStateExecutionData.getValuesFiles().put(K8sValuesLocation.EnvironmentGlobal, singletonList("envGlobalValues"));
+    k8sStateExecutionData.getValuesFiles().put(
+        K8sValuesLocation.Step, Arrays.asList("stepValues1", "stepValues2", "stepValues3"));
+
+    List<String> valuesFiles = abstractK8SState.fetchRenderedValuesFiles(appManifestMap, context);
+    assertThat(valuesFiles).hasSize(7);
+    assertThat(valuesFiles.get(0)).isEqualTo("serviceValues");
+    assertThat(valuesFiles.get(1)).isEqualTo("serviceOverrideValues");
+    assertThat(valuesFiles.get(2)).isEqualTo("envGlobalValues");
+    assertThat(valuesFiles.get(3)).isEqualTo("envValues");
+    assertThat(valuesFiles.get(4)).isEqualTo("stepValues1");
+    assertThat(valuesFiles.get(5)).isEqualTo("stepValues2");
+    assertThat(valuesFiles.get(6)).isEqualTo("stepValues3");
+  }
+
+  @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
   public void testGetRenderedValuesFilesWithMultipleFiles() {
@@ -1535,6 +1565,44 @@ public class AbstractK8SStateTest extends WingsBaseTest {
       assertThatExceptionOfType(InvalidRequestException.class);
       assertThat(ex.getCause()).isInstanceOf(UnsupportedOperationException.class);
     }
+  }
+
+  @Test
+  @Owner(developers = ACHYUTH)
+  @Category(UnitTests.class)
+  public void testExecuteWrapperWithManifestStepOverride() {
+    K8sApplyState k8sApplyState = mock(K8sApplyState.class);
+    GitFileConfig remoteOverride = GitFileConfig.builder()
+                                       .branch("master")
+                                       .connectorId("git-connector")
+                                       .filePathList(Arrays.asList("folder/v1.yaml", "folder/v2.yaml"))
+                                       .build();
+    k8sApplyState.setRemoteStepOverride(remoteOverride);
+
+    K8sStateExecutionData k8sStateExecutionData = (K8sStateExecutionData) context.getStateExecutionData();
+    k8sStateExecutionData.setValuesFiles(new HashMap<>());
+
+    ArgumentCaptor<Map> argumentCaptor = ArgumentCaptor.forClass(Map.class);
+
+    when(openShiftManagerService.isOpenShiftManifestConfig(context)).thenReturn(false);
+    when(applicationManifestUtils.isKustomizeSource(context)).thenReturn(false);
+    when(abstractK8SState.getStepRemoteOverrideGitConfig()).thenReturn(remoteOverride);
+    doReturn(Activity.builder().uuid(ACTIVITY_ID).build())
+        .when(abstractK8SState)
+        .createK8sActivity(eq(context), any(), any(), any(), any());
+
+    doReturn(ExecutionResponse.builder()
+                 .stateExecutionData(K8sStateExecutionData.builder().currentTaskType(TaskType.GIT_COMMAND).build())
+                 .build())
+        .when(abstractK8SState)
+        .executeGitTask(eq(context), argumentCaptor.capture(), any(), any());
+
+    ExecutionResponse executionResponse =
+        abstractK8SState.executeWrapperWithManifest(k8sApplyState, context, 10 * 60 * 1000L);
+    assertThat(((K8sStateExecutionData) executionResponse.getStateExecutionData()).getCurrentTaskType())
+        .isEqualTo(TaskType.GIT_COMMAND);
+    assertThat(argumentCaptor.getValue().get(K8sValuesLocation.Step))
+        .extracting(appManifest -> ((ApplicationManifest) appManifest).getGitFileConfig().equals(remoteOverride));
   }
 
   @Test

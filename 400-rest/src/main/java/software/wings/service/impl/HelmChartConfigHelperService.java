@@ -130,7 +130,8 @@ public class HelmChartConfigHelperService {
     helmChartConfigParamsBuilder.useLatestChartMuseumVersion(
         featureFlagService.isEnabled(FeatureName.USE_LATEST_CHARTMUSEUM_VERSION, context.getAccountId()));
 
-    if (HelmVersion.V3.equals(getHelmVersionFromService(context))) {
+    if (HelmVersion.V3.equals(getHelmVersionFromService(context))
+        || HelmVersion.V380.equals(getHelmVersionFromService(context))) {
       helmChartConfigParamsBuilder.useRepoFlags(
           featureFlagService.isEnabled(FeatureName.USE_HELM_REPO_FLAGS, context.getAccountId()));
     }

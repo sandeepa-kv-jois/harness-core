@@ -38,6 +38,7 @@ import software.wings.beans.CountsByStatuses;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.SettingAttribute.SettingAttributeKeys;
 import software.wings.beans.WorkflowExecution;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.dl.WingsPersistence;
 import software.wings.service.impl.analysis.AnalysisComparisonStrategy;
 import software.wings.service.impl.analysis.AnalysisContext;
@@ -184,7 +185,7 @@ public class DataDogIntegrationTest extends VerificationIntegrationBase {
     record.setTimeStamp(System.currentTimeMillis());
     record.setDataCollectionMinute(0);
     record.setLevel(ClusterLevel.HF);
-    record.setStateType(StateType.DATA_DOG);
+    record.setStateType(DelegateStateType.DATA_DOG);
 
     NewRelicMetricDataRecord record1 = new NewRelicMetricDataRecord();
     record1.setName("Dummy txn1");
@@ -199,7 +200,7 @@ public class DataDogIntegrationTest extends VerificationIntegrationBase {
     record1.getValues().put("Hits", 20.0);
     record1.getValues().put("Request Duration", 2.0);
     record1.setHost("host1");
-    record1.setStateType(StateType.DATA_DOG);
+    record1.setStateType(DelegateStateType.DATA_DOG);
 
     timeSeriesAnalysisService.saveMetricData(
         accountId, appId, prevStateExecutionId, delegateTaskId, Lists.newArrayList(record, record1));
@@ -232,7 +233,7 @@ public class DataDogIntegrationTest extends VerificationIntegrationBase {
     record.setTimeStamp(System.currentTimeMillis());
     record.setDataCollectionMinute(0);
     record.setLevel(ClusterLevel.H0);
-    record.setStateType(StateType.DATA_DOG);
+    record.setStateType(DelegateStateType.DATA_DOG);
 
     record1 = new NewRelicMetricDataRecord();
     record1.setName("Dummy txn1");
@@ -248,7 +249,7 @@ public class DataDogIntegrationTest extends VerificationIntegrationBase {
     record1.getValues().put("Request Duration", 2.0);
     record1.setTag("Servlet");
     record1.setHost("host1");
-    record1.setStateType(StateType.DATA_DOG);
+    record1.setStateType(DelegateStateType.DATA_DOG);
 
     timeSeriesAnalysisService.saveMetricData(
         accountId, appId, stateExecutionId, delegateTaskId, Lists.newArrayList(record, record1));

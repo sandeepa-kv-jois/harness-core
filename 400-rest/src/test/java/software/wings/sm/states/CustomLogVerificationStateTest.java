@@ -46,6 +46,7 @@ import software.wings.api.HostElement;
 import software.wings.beans.APMVerificationConfig;
 import software.wings.beans.Application;
 import software.wings.beans.SettingAttribute;
+import software.wings.delegatetasks.cv.beans.CustomLogResponseMapper;
 import software.wings.service.impl.analysis.CustomLogDataCollectionInfo;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.DelegateService;
@@ -55,7 +56,6 @@ import software.wings.sm.ExecutionContextImpl;
 import software.wings.sm.StateExecutionInstance;
 import software.wings.sm.WorkflowStandardParams;
 import software.wings.sm.states.CustomLogVerificationState.LogCollectionInfo;
-import software.wings.sm.states.CustomLogVerificationState.ResponseMapper;
 import software.wings.verification.VerificationStateAnalysisExecutionData;
 
 import com.fasterxml.jackson.core.type.TypeReference;
@@ -165,10 +165,11 @@ public class CustomLogVerificationStateTest extends WingsBaseTest {
     List<LogCollectionInfo> collectionInfos = yamlUtils.read(yamlStr, new TypeReference<List<LogCollectionInfo>>() {});
     state.setLogCollectionInfos(collectionInfos);
 
-    Map<String, Map<String, ResponseMapper>> logDefinitions = constructLogDefinitions(context, collectionInfos);
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinitions =
+        constructLogDefinitions(context, collectionInfos);
     assertThat(logDefinitions).isNotNull();
     assertThat(logDefinitions.containsKey("customLogVerificationQuery")).isTrue();
-    Map<String, ResponseMapper> mapping = logDefinitions.get("customLogVerificationQuery");
+    Map<String, CustomLogResponseMapper> mapping = logDefinitions.get("customLogVerificationQuery");
     assertThat("hits.hits[*]._source.kubernetes.pod.name").isEqualTo(mapping.get("host").getJsonPath().get(0));
     assertThat("hits.hits[*]._source.@timestamp").isEqualTo(mapping.get("timestamp").getJsonPath().get(0));
     assertThat(mapping.get("timestamp").getTimestampFormat()).isEqualTo("hh:mm a");
@@ -189,7 +190,7 @@ public class CustomLogVerificationStateTest extends WingsBaseTest {
     ExecutionContextImpl executionContext = mock(ExecutionContextImpl.class);
     when(executionContext.renderExpression(anyString()))
         .thenAnswer(invocation -> invocation.getArgumentAt(0, String.class));
-    Map<String, Map<String, ResponseMapper>> logDefinitions =
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinitions =
         constructLogDefinitions(executionContext, collectionInfos);
     assertThat(logDefinitions).isNotNull();
     assertThat(logDefinitions.size()).isEqualTo(1);
@@ -221,7 +222,7 @@ public class CustomLogVerificationStateTest extends WingsBaseTest {
     when(executionContext.renderExpression(anyString()))
         .thenAnswer(invocation -> invocation.getArgumentAt(0, String.class));
     when(executionContext.renderExpression("body${workflow.variable.bodyDetails}")).thenReturn("renderedBodyDetails");
-    Map<String, Map<String, ResponseMapper>> logDefinitions =
+    Map<String, Map<String, CustomLogResponseMapper>> logDefinitions =
         constructLogDefinitions(executionContext, collectionInfos);
     assertThat(logDefinitions).isNotNull();
     assertThat(logDefinitions.size()).isEqualTo(1);

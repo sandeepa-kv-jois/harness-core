@@ -149,6 +149,9 @@ import io.harness.steps.barriers.event.BarrierPositionHelperEventHandler;
 import io.harness.steps.barriers.service.BarrierServiceImpl;
 import io.harness.steps.resourcerestraint.ResourceRestraintInitializer;
 import io.harness.steps.resourcerestraint.service.ResourceRestraintPersistenceMonitor;
+import io.harness.telemetry.TelemetryReporter;
+import io.harness.telemetry.filter.APIAuthTelemetryFilter;
+import io.harness.telemetry.filter.APIAuthTelemetryResponseFilter;
 import io.harness.threading.ExecutorModule;
 import io.harness.threading.ThreadPool;
 import io.harness.timeout.TimeoutEngine;
@@ -336,6 +339,7 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     registerJerseyProviders(environment, injector);
     registerManagedBeans(environment, injector);
     registerAuthFilters(appConfig, environment, injector);
+    registerAPIAuthTelemetryFilters(appConfig, environment, injector);
     registerHealthCheck(environment, injector);
     registerObservers(injector);
     registerRequestContextFilter(environment);
@@ -544,6 +548,25 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
     serviceToSecretMapping.put(AuthorizationServiceHeader.DEFAULT.getServiceId(), config.getNgManagerServiceSecret());
     environment.jersey().register(new NextGenAuthenticationFilter(predicate, null, serviceToSecretMapping,
         injector.getInstance(Key.get(TokenClient.class, Names.named("PRIVILEGED")))));
+  }
+
+  /**------------------API auth telemetry -----------------------------------------------*/
+  private void registerAPIAuthTelemetryFilters(
+      PipelineServiceConfiguration configuration, Environment environment, Injector injector) {
+    if (configuration.getSegmentConfiguration() != null && configuration.getSegmentConfiguration().isEnabled()) {
+      registerAPIAuthTelemetryFilter(environment, injector);
+      registerAPIAuthTelemetryResponseFilter(environment, injector);
+    }
+  }
+
+  private void registerAPIAuthTelemetryFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryFilter(telemetryReporter));
+  }
+
+  private void registerAPIAuthTelemetryResponseFilter(Environment environment, Injector injector) {
+    TelemetryReporter telemetryReporter = injector.getInstance(TelemetryReporter.class);
+    environment.jersey().register(new APIAuthTelemetryResponseFilter(telemetryReporter));
   }
 
   /**------------------Health Check -----------------------------------------------*/

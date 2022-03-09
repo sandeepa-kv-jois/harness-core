@@ -91,6 +91,7 @@ import io.harness.product.ci.scm.proto.UpdateFileResponse;
 import io.harness.product.ci.scm.proto.WebhookResponse;
 import io.harness.service.ScmServiceClient;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.ArrayList;
@@ -768,7 +769,8 @@ public class ScmServiceClientImpl implements ScmServiceClient {
                                                      .build());
   }
 
-  private Optional<UpdateFileResponse> runUpdateFileOpsPreChecks(
+  @VisibleForTesting
+  protected Optional<UpdateFileResponse> runUpdateFileOpsPreChecks(
       ScmConnector scmConnector, SCMGrpc.SCMBlockingStub scmBlockingStub, GitFileDetails gitFileDetails) {
     // Check if current file commit is same as latest commit on file on remote
     if (ConnectorType.BITBUCKET.equals(scmConnector.getConnectorType())) {

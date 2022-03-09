@@ -103,6 +103,24 @@ interrupts {"name": "state_type_monitoring_createdAt_idx", "background": true} {
 interrupts {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
 kmsTransitionEvent2 {"name": "earliestGet_1", "background": true, "expireAfterSeconds": 86400} {"earliestGet": 1}
 kmsTransitionEvent2 {"name": "next4", "background": true} {"topic": 1, "earliestGet": 1}
+migratedEntityMapping {"name": "accountId_1", "background": true} {"accountId": 1}
+migratedEntityMapping {"name": "accountIdentifier_1", "background": true} {"accountIdentifier": 1}
+migratedEntityMapping {"name": "appId_1", "background": true} {"appId": 1}
+migratedEntityMapping {"name": "cgEntityId_1", "background": true} {"cgEntityId": 1}
+migratedEntityMapping {"name": "entityType_1", "background": true} {"entityType": 1}
+migratedEntityMapping {"name": "fullyQualifiedIdentifier_1", "background": true} {"fullyQualifiedIdentifier": 1}
+migratedEntityMapping {"name": "identifier_1", "background": true} {"identifier": 1}
+migratedEntityMapping {"name": "orgIdentifier_1", "background": true} {"orgIdentifier": 1}
+migratedEntityMapping {"name": "projectIdentifier_1", "background": true} {"projectIdentifier": 1}
+migratedEntityMapping {"name": "scope_1", "background": true} {"scope": 1}
+newRelicMetricRecords {"name": "accountId_1", "background": true} {"accountId": 1}
+newRelicMetricRecords {"name": "appId_1", "background": true} {"appId": 1}
+newRelicMetricRecords {"name": "createdAt_1", "background": true} {"createdAt": 1}
+newRelicMetricRecords {"name": "cvConfigId_1", "background": true} {"cvConfigId": 1}
+newRelicMetricRecords {"name": "serviceGuardIndex", "background": true} {"cvConfigId": 1, "dataCollectionMinute": -1}
+newRelicMetricRecords {"name": "stateExIdx", "background": true} {"stateExecutionId": 1, "groupName": 1, "dataCollectionMinute": -1}
+newRelicMetricRecords {"name": "validUntil_1", "background": true, "expireAfterSeconds": 0} {"validUntil": 1}
+newRelicMetricRecords {"name": "workflowExIdx", "background": true} {"workflowExecutionId": 1, "groupName": 1, "dataCollectionMinute": -1}
 nodeExecutions {"name": "createdAt_1", "background": true} {"createdAt": 1}
 nodeExecutions {"name": "parentId_status_idx", "background": true} {"parentId": 1, "status": 1, "oldRetry": 1}
 nodeExecutions {"name": "planExecutionId_identifier_idx", "background": true} {"ambiance.planExecutionId": 1, "identifier": 1}

@@ -16,6 +16,7 @@ import io.harness.rest.RestResponse;
 import io.harness.security.annotations.LearningEngineAuth;
 
 import software.wings.common.VerificationConstants;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.security.annotations.AuthRule;
 import software.wings.security.annotations.Scope;
 import software.wings.service.impl.analysis.CVCertifiedDetailsForWorkflowState;
@@ -75,7 +76,7 @@ public class ContinuousVerificationResource {
       @QueryParam("accountId") final String accountId, @QueryParam("serverConfigId") String serverConfigId,
       APMSetupTestNodeData fetchConfig) {
     return new RestResponse<>(
-        cvManagerService.getDataForNode(accountId, serverConfigId, fetchConfig, StateType.APM_VERIFICATION));
+        cvManagerService.getDataForNode(accountId, serverConfigId, fetchConfig, DelegateStateType.APM_VERIFICATION));
   }
 
   @POST

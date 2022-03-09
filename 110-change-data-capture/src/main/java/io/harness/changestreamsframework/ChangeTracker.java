@@ -85,6 +85,7 @@ public class ChangeTracker {
     }
     return new MongoClientURI(mongoClientUrl,
         MongoClientOptions.builder(MongoModule.getDefaultMongoClientOptions(mongoConfig))
+            .serverSelectionTimeout(mainConfiguration.getHarnessMongo().getServerSelectionTimeout())
             .readPreference(readPreference));
   }
 

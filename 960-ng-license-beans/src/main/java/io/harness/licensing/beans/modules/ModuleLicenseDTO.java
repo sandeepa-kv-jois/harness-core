@@ -56,4 +56,5 @@ public abstract class ModuleLicenseDTO {
   long expiryTime;
   Long createdAt;
   Long lastModifiedAt;
+  Boolean trialExtended;
 }

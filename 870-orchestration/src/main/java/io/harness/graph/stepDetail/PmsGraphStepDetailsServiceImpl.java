@@ -77,6 +77,11 @@ public class PmsGraphStepDetailsServiceImpl implements PmsGraphStepDetailsServic
   }
 
   @Override
+  public NodeExecutionsInfo getNodeExecutionsInfo(String nodeExecutionId) {
+    return nodeExecutionsInfoRepository.findByNodeExecutionId(nodeExecutionId).orElse(null);
+  }
+
+  @Override
   public Map<String, PmsStepDetails> getStepDetails(String planExecutionId, String nodeExecutionId) {
     Optional<NodeExecutionsInfo> nodeExecutionsInfo =
         nodeExecutionsInfoRepository.findByNodeExecutionId(nodeExecutionId);

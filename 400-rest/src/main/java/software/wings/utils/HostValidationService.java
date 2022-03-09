@@ -10,6 +10,7 @@ package software.wings.utils;
 import io.harness.security.encryption.EncryptedDataDetail;
 
 import software.wings.beans.ExecutionCredential;
+import software.wings.beans.HostReachabilityInfo;
 import software.wings.beans.HostValidationResponse;
 import software.wings.beans.SSHVaultConfig;
 import software.wings.beans.SettingAttribute;
@@ -23,4 +24,6 @@ public interface HostValidationService {
   List<HostValidationResponse> validateHost(List<String> hostNames, SettingAttribute connectionSetting,
       List<EncryptedDataDetail> encryptionDetails, ExecutionCredential executionCredential,
       SSHVaultConfig sshVaultConfig);
+
+  List<HostReachabilityInfo> validateReachability(List<String> hostNames, SettingAttribute connectionSetting);
 }

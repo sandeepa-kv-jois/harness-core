@@ -952,6 +952,30 @@ public class DataCollectionTaskServiceImplTest extends CvNextGenTestBase {
     assertThat(nextTaskDTOs.size()).isEqualTo(CVNextGenConstants.CVNG_MAX_PARALLEL_THREADS);
   }
 
+  @Test
+  @Owner(developers = ARPITJ)
+  @Category(UnitTests.class)
+  public void testGetAllDataCollection() {
+    int numOfTasks = 10;
+    createAndSave(RUNNING);
+    for (int i = 0; i < numOfTasks - 1; i++) {
+      createAndSave(QUEUED);
+    }
+
+    List<DataCollectionTask> dataCollectionTaskList =
+        dataCollectionTaskService.getAllDataCollectionTasks(accountId, verificationTaskId);
+
+    assertThat(dataCollectionTaskList.size()).isEqualTo(numOfTasks);
+    assertThat(dataCollectionTaskList.get(0).getStatus()).isEqualTo(RUNNING);
+    long createdAt = dataCollectionTaskList.get(0).getCreatedAt();
+    for (int i = 1; i < numOfTasks; i++) {
+      assertThat(dataCollectionTaskList.get(i).getStatus()).isEqualTo(QUEUED);
+      long createdAtNext = dataCollectionTaskList.get(i).getCreatedAt();
+      assertThat(createdAtNext).isGreaterThanOrEqualTo(createdAt);
+      createdAt = createdAtNext;
+    }
+  }
+
   private AppDynamicsCVConfig getCVConfig() {
     AppDynamicsCVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setProjectIdentifier(projectIdentifier);

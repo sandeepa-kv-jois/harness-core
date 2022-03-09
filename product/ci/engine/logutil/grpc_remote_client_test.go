@@ -10,10 +10,10 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/golang/mock/gomock"
-	"github.com/stretchr/testify/assert"
 	grpcclient "github.com/harness/harness-core/product/ci/engine/grpc/client"
 	mclient "github.com/harness/harness-core/product/ci/engine/grpc/client/mocks"
 	"github.com/harness/harness-core/product/log-service/stream"
+	"github.com/stretchr/testify/assert"
 	"go.uber.org/zap"
 	"testing"
 )

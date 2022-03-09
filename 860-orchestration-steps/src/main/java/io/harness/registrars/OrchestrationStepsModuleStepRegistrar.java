@@ -25,6 +25,8 @@ import io.harness.steps.jira.create.JiraCreateStep;
 import io.harness.steps.jira.update.JiraUpdateStep;
 import io.harness.steps.policy.step.PolicyStep;
 import io.harness.steps.resourcerestraint.ResourceRestraintStep;
+import io.harness.steps.servicenow.create.ServiceNowCreateStep;
+import io.harness.steps.servicenow.update.ServiceNowUpdateStep;
 import io.harness.steps.shellscript.ShellScriptStep;
 
 import java.util.HashMap;
@@ -50,11 +52,12 @@ public class OrchestrationStepsModuleStepRegistrar {
     engineSteps.put(HttpStep.STEP_TYPE, HttpStep.class);
     engineSteps.put(ShellScriptStep.STEP_TYPE, ShellScriptStep.class);
     engineSteps.put(ServiceNowApprovalStep.STEP_TYPE, ServiceNowApprovalStep.class);
+    engineSteps.put(ServiceNowCreateStep.STEP_TYPE, ServiceNowCreateStep.class);
+    engineSteps.put(ServiceNowUpdateStep.STEP_TYPE, ServiceNowUpdateStep.class);
 
     // Feature Flag
     engineSteps.put(FlagConfigurationStep.STEP_TYPE, FlagConfigurationStep.class);
     engineSteps.put(FeatureFlagStageStep.STEP_TYPE, FeatureFlagStageStep.class);
-    engineSteps.put(ServiceNowApprovalStep.STEP_TYPE, ServiceNowApprovalStep.class);
 
     engineSteps.put(PolicyStep.STEP_TYPE, PolicyStep.class);
 

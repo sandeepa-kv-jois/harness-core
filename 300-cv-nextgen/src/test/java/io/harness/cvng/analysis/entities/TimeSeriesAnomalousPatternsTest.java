@@ -13,7 +13,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CategoryTest;
 import io.harness.category.element.UnitTests;
-import io.harness.cvng.analysis.beans.TimeSeriesAnomalies;
+import io.harness.cvng.analysis.beans.TimeSeriesAnomaliesDTO;
+import io.harness.cvng.analysis.entities.TimeSeriesAnomalousPatterns.TimeSeriesAnomalies;
 import io.harness.rule.Owner;
 
 import java.util.ArrayList;
@@ -23,6 +24,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
@@ -38,7 +40,7 @@ public class TimeSeriesAnomalousPatternsTest extends CategoryTest {
     Set<String> txnMetricsPresent = new HashSet<>();
 
     anomalies.forEach(anomaly -> {
-      txnMetricsPresent.add(anomaly.getTransactionName() + "," + anomaly.getMetricName());
+      txnMetricsPresent.add(anomaly.getTransactionName() + "," + anomaly.getMetricIdentifier());
       assertThat(anomaly.getTestData().containsAll(Arrays.asList(0.1, 0.2, 0.3, 0.4))).isTrue();
       assertThat(anomaly.getAnomalousTimestamps().containsAll(Arrays.asList(12345l, 12346l, 12347l))).isTrue();
     });
@@ -62,7 +64,7 @@ public class TimeSeriesAnomalousPatternsTest extends CategoryTest {
   public void convertToMap_null() {
     TimeSeriesAnomalousPatterns anomalousPatterns = TimeSeriesAnomalousPatterns.builder().anomalies(null).build();
 
-    Map<String, Map<String, List<TimeSeriesAnomalies>>> anomMap = anomalousPatterns.convertToMap();
+    Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> anomMap = anomalousPatterns.convertToMap();
     assertThat(anomMap.size()).isEqualTo(0);
   }
 
@@ -70,57 +72,59 @@ public class TimeSeriesAnomalousPatternsTest extends CategoryTest {
   @Owner(developers = PRAVEEN)
   @Category(UnitTests.class)
   public void convertToMap() {
+    List<TimeSeriesAnomalies> timeSeriesAnomaliesList =
+        buildAnomList().stream().map(TimeSeriesAnomaliesDTO::toTimeSeriesAnomalies).collect(Collectors.toList());
     TimeSeriesAnomalousPatterns anomalousPatterns =
-        TimeSeriesAnomalousPatterns.builder().anomalies(buildAnomList()).build();
+        TimeSeriesAnomalousPatterns.builder().anomalies(timeSeriesAnomaliesList).build();
 
-    Map<String, Map<String, List<TimeSeriesAnomalies>>> anomMap = anomalousPatterns.convertToMap();
+    Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> anomMap = anomalousPatterns.convertToMap();
     assertThat(anomMap.size()).isEqualTo(3);
     assertThat(anomMap.containsKey("txn1")).isTrue();
     assertThat(anomMap.containsKey("txn2")).isTrue();
     assertThat(anomMap.containsKey("txn3")).isTrue();
 
     for (String txn : anomMap.keySet()) {
-      Map<String, List<TimeSeriesAnomalies>> metricSumsMap = anomMap.get(txn);
+      Map<String, List<TimeSeriesAnomaliesDTO>> metricSumsMap = anomMap.get(txn);
       assertThat(metricSumsMap.size()).isEqualTo(3);
       assertThat(metricSumsMap.containsKey("metric1")).isTrue();
       assertThat(metricSumsMap.containsKey("metric2")).isTrue();
       assertThat(metricSumsMap.containsKey("metric3")).isTrue();
-      List<TimeSeriesAnomalies> anom = metricSumsMap.get("metric1");
+      List<TimeSeriesAnomaliesDTO> anom = metricSumsMap.get("metric1");
       assertThat(anom.size()).isEqualTo(1);
     }
   }
 
-  private List<TimeSeriesAnomalies> buildAnomList() {
+  private List<TimeSeriesAnomaliesDTO> buildAnomList() {
     List<String> transactions = Arrays.asList("txn1", "txn2", "txn3");
     List<String> metricList = Arrays.asList("metric1", "metric2", "metric3");
-    List<TimeSeriesAnomalies> anomList = new ArrayList<>();
+    List<TimeSeriesAnomaliesDTO> anomList = new ArrayList<>();
     transactions.forEach(txn -> {
       metricList.forEach(metric -> {
-        TimeSeriesAnomalies anomalies = TimeSeriesAnomalies.builder()
-                                            .transactionName(txn)
-                                            .metricName(metric)
-                                            .testData(Arrays.asList(0.1, 0.2, 0.3, 0.4))
-                                            .anomalousTimestamps(Arrays.asList(12345l, 12346l, 12347l))
-                                            .build();
+        TimeSeriesAnomaliesDTO anomalies = TimeSeriesAnomaliesDTO.builder()
+                                               .transactionName(txn)
+                                               .metricIdentifier(metric)
+                                               .testData(Arrays.asList(0.1, 0.2, 0.3, 0.4))
+                                               .anomalousTimestamps(Arrays.asList(12345l, 12346l, 12347l))
+                                               .build();
         anomList.add(anomalies);
       });
     });
     return anomList;
   }
 
-  private Map<String, Map<String, List<TimeSeriesAnomalies>>> buildAnomMap() {
+  private Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> buildAnomMap() {
     List<String> transactions = Arrays.asList("txn1", "txn2", "txn3");
     List<String> metricList = Arrays.asList("metric1", "metric2", "metric3");
-    Map<String, Map<String, List<TimeSeriesAnomalies>>> anomMap = new HashMap<>();
+    Map<String, Map<String, List<TimeSeriesAnomaliesDTO>>> anomMap = new HashMap<>();
 
     transactions.forEach(txn -> {
       anomMap.put(txn, new HashMap<>());
       metricList.forEach(metric -> {
-        Map<String, List<TimeSeriesAnomalies>> metricMap = anomMap.get(txn);
+        Map<String, List<TimeSeriesAnomaliesDTO>> metricMap = anomMap.get(txn);
         metricMap.put(metric,
-            Arrays.asList(TimeSeriesAnomalies.builder()
+            Arrays.asList(TimeSeriesAnomaliesDTO.builder()
                               .transactionName(txn)
-                              .metricName(metric)
+                              .metricIdentifier(metric)
                               .testData(Arrays.asList(0.1, 0.2, 0.3, 0.4))
                               .anomalousTimestamps(Arrays.asList(12345l, 12346l, 12347l))
                               .build()));

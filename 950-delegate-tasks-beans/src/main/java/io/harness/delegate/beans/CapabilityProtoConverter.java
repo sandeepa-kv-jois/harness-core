@@ -93,10 +93,16 @@ public class CapabilityProtoConverter {
         return builder.setGitInstallationParameters(GitInstallationParameters.getDefaultInstance()).build();
       case HELM_INSTALL:
         HelmInstallationCapability helmInstallationCapability = (HelmInstallationCapability) executionCapability;
+
+        HelmInstallationParameters.HelmVersion helmVersion = HelmInstallationParameters.HelmVersion.V2;
+        if (helmInstallationCapability.getVersion().equals(HelmVersion.V3)) {
+          helmVersion = HelmInstallationParameters.HelmVersion.V3;
+        } else if (helmInstallationCapability.getVersion().equals(HelmVersion.V380)) {
+          helmVersion = HelmInstallationParameters.HelmVersion.V380;
+        }
+
         return builder
-            .setHelmInstallationParameters(HelmInstallationParameters.newBuilder().setHelmVersion(
-                helmInstallationCapability.getVersion() == HelmVersion.V3 ? HelmInstallationParameters.HelmVersion.V3
-                                                                          : HelmInstallationParameters.HelmVersion.V2))
+            .setHelmInstallationParameters(HelmInstallationParameters.newBuilder().setHelmVersion(helmVersion))
             .build();
       case HTTP:
         HttpConnectionExecutionCapability httpConnectionExecutionCapability =

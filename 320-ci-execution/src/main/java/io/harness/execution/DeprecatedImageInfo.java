@@ -12,6 +12,7 @@ import lombok.Data;
 
 @Data
 @Builder
+@Deprecated
 public class DeprecatedImageInfo {
   String tag;
   String version;

@@ -28,6 +28,7 @@ import io.harness.serializer.JsonUtils;
 import software.wings.beans.AwsConfig;
 import software.wings.common.VerificationConstants;
 import software.wings.delegatetasks.DelegateLogService;
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.service.impl.AwsHelperService;
 import software.wings.service.impl.ThirdPartyApiCallLog;
 import software.wings.service.impl.ThirdPartyApiCallLog.FieldType;
@@ -39,7 +40,6 @@ import software.wings.service.impl.aws.client.CloseableAmazonWebServiceClient;
 import software.wings.service.impl.newrelic.NewRelicMetricDataRecord;
 import software.wings.service.intfc.cloudwatch.CloudWatchDelegateService;
 import software.wings.service.intfc.security.EncryptionService;
-import software.wings.sm.StateType;
 
 import com.amazonaws.services.cloudwatch.AmazonCloudWatchClient;
 import com.amazonaws.services.cloudwatch.model.Datapoint;
@@ -275,7 +275,7 @@ public class CloudWatchDelegateServiceImpl implements CloudWatchDelegateService 
     datapoints.forEach(datapoint -> {
       NewRelicMetricDataRecord newRelicMetricDataRecord =
           NewRelicMetricDataRecord.builder()
-              .stateType(StateType.CLOUD_WATCH)
+              .stateType(DelegateStateType.CLOUD_WATCH)
               .appId(appId)
               .name(metricName)
               .workflowId(dataCollectionInfo.getWorkflowId())

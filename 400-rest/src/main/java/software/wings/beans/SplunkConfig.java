@@ -7,7 +7,7 @@
 
 package software.wings.beans;
 
-import io.harness.cvng.beans.Connector;
+import io.harness.delegate.beans.connector.cv.Connector;
 import io.harness.delegate.beans.executioncapability.ExecutionCapability;
 import io.harness.delegate.beans.executioncapability.ExecutionCapabilityDemander;
 import io.harness.delegate.task.mixin.HttpConnectionExecutionCapabilityGenerator;

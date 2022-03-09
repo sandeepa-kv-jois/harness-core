@@ -34,16 +34,24 @@ import org.zeroturnaround.exec.ProcessResult;
 public class KubernetesCliRuntimeExceptionHandler implements ExceptionHandler {
   private static final String CLIENT_TOOLS_DIRECTORY_NAME = "client-tools";
   private static final String STEADY_STATE_FAILURE_DEADLINE_ERROR = "exceeded its progress deadline";
+  private static final String STEADY_STATE_FAILURE_MISSING_OBJECT_ERROR = "object has been deleted";
+  private static final String IMMUTABLE_FIELD_MESSAGE = "field is immutable";
+  private static final String NOT_FOUND_MESSAGE = "(NotFound)";
+  private static final String UNSUPPORTED_VALUE_MESSAGE = "Unsupported value";
+  private static final String FORBIDDEN_MESSAGE = "(Forbidden)";
+  private static final String REQUIRED_FIELD_MISSING_MESSAGE = "missing required field";
+  private static final String UNRESOLVED_VALUE = "<no value>";
+  private static final String UNKNOWN_FIELD_MESSAGE = "unknown field";
+
   private static final String KUBECTL_APPLY_CONSOLE_ERROR = "Apply manifest failed with error:\n%s";
   private static final String KUBECTL_DRY_RUN_CONSOLE_ERROR = "Dry run manifest failed with error:\n%s";
   private static final String KUBECTL_STEADY_STATE_CONSOLE_ERROR = "Steady state check failed with error:\n%s";
   private static final String KUBECTL_SCALE_CONSOLE_ERROR = "Failed to scale resource(s) with error:\n%s";
-  private static final String UNRESOLVED_VALUE = "<no value>";
 
   private static final String INVALID_RESOURCE_REGEX = "((\\S+) \"([^\"]*)\" is invalid:)";
   private static final String RESOURCE_NOT_FOUND_REGEX = ".* \"(.*?)\" not found.*";
   private static final String INVALID_TYPE_VALUE_REGEX = ".* ValidationError\\((.*?)\\).*invalid type.*";
-  private static final String UNKNOWN_FIELD_REGEX = ".* ValidationError\\((.*?)\\).*unknown field \"(.*?)\".*";
+  private static final String UNKNOWN_FIELD_REGEX = "(ValidationError\\((.*?)\\): unknown field \"(.*?)\")";
 
   private static final Pattern INVALID_RESOURCES_PATTERN = Pattern.compile(INVALID_RESOURCE_REGEX, Pattern.MULTILINE);
   private static final Pattern RESOURCE_NOT_FOUND_ERROR_PATTERN =
@@ -89,10 +97,31 @@ public class KubernetesCliRuntimeExceptionHandler implements ExceptionHandler {
 
     if (cliErrorMessage.matches(KubernetesExceptionMessages.CHARACTER_LIMIT_ERROR)
         || cliErrorMessage.matches(KubernetesExceptionMessages.INVALID_CHARACTERS_ERROR)) {
-      List<String> invalidResourceNames = getAllResourceNames(cliErrorMessage, INVALID_RESOURCES_PATTERN);
+      List<String> invalidResourceNames = getAllResourceNames(cliErrorMessage, INVALID_RESOURCES_PATTERN, "/");
       String explanation =
           format(KubernetesExceptionExplanation.K8S_CHARACTER_ERROR, String.join("\n", invalidResourceNames));
       return getExplanationExceptionWithCommand(KubernetesExceptionHints.K8S_CHARACTER_ERROR, explanation,
+          getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
+    }
+
+    if (cliErrorMessage.contains(IMMUTABLE_FIELD_MESSAGE)) {
+      return getExplanationExceptionWithCommand(KubernetesExceptionHints.IMMUTABLE_FIELD,
+          KubernetesExceptionExplanation.IMMUTABLE_FIELD,
+          getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
+    }
+    if (cliErrorMessage.contains(NOT_FOUND_MESSAGE)) {
+      return getExplanationExceptionWithCommand(KubernetesExceptionHints.MISSING_RESOURCE,
+          KubernetesExceptionExplanation.MISSING_RESOURCE,
+          getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
+    }
+    if (cliErrorMessage.contains(UNSUPPORTED_VALUE_MESSAGE)) {
+      return getExplanationExceptionWithCommand(KubernetesExceptionHints.UNSUPPORTED_VALUE,
+          KubernetesExceptionExplanation.UNSUPPORTED_VALUE,
+          getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
+    }
+    if (cliErrorMessage.contains(FORBIDDEN_MESSAGE)) {
+      return getExplanationExceptionWithCommand(KubernetesExceptionHints.K8S_API_FORBIDDEN_EXCEPTION,
+          KubernetesExceptionExplanation.FORBIDDEN_MESSAGE,
           getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
     }
     return getExplanationException(KubernetesExceptionHints.APPLY_MANIFEST_FAILED,
@@ -125,14 +154,15 @@ public class KubernetesCliRuntimeExceptionHandler implements ExceptionHandler {
           format(KubernetesExceptionExplanation.VALIDATION_FAILED_INVALID_TYPE, invalidFieldName),
           getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
     }
-    if (cliErrorMessage.matches(UNKNOWN_FIELD_REGEX)) {
-      List<String> extractedValues = extractValuesFromFirstMatch(cliErrorMessage, UNKNOWN_FIELD_ERROR_PATTERN, 2);
-      String unknownField = "";
-      if (extractedValues.size() == 2) {
-        unknownField = String.join(":", extractedValues);
-      }
+    if (cliErrorMessage.contains(UNKNOWN_FIELD_MESSAGE)) {
+      String unknownFields = String.join("\n", getAllResourceNames(cliErrorMessage, UNKNOWN_FIELD_ERROR_PATTERN, ":"));
       return getExplanationExceptionWithCommand(KubernetesExceptionHints.VALIDATION_FAILED_UNKNOWN_FIELD,
-          format(KubernetesExceptionExplanation.VALIDATION_FAILED_UNKNOWN_FIELD, unknownField),
+          format(KubernetesExceptionExplanation.VALIDATION_FAILED_UNKNOWN_FIELD, unknownFields),
+          getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
+    }
+    if (cliErrorMessage.contains(REQUIRED_FIELD_MISSING_MESSAGE)) {
+      return getExplanationExceptionWithCommand(KubernetesExceptionHints.MISSING_REQUIRED_FIELD,
+          KubernetesExceptionExplanation.MISSING_REQUIRED_FIELD,
           getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
     }
     return getExplanationException(KubernetesExceptionHints.DRY_RUN_MANIFEST_FAILED,
@@ -143,9 +173,16 @@ public class KubernetesCliRuntimeExceptionHandler implements ExceptionHandler {
     String cliErrorMessage = kubernetesTaskException.getProcessResponse().getErrorMessage();
     String consolidatedError = format(KUBECTL_STEADY_STATE_CONSOLE_ERROR, cliErrorMessage);
 
+    if (cliErrorMessage.contains(STEADY_STATE_FAILURE_MISSING_OBJECT_ERROR)) {
+      return getExplanationExceptionWithCommand(KubernetesExceptionHints.MISSING_OBJECT_ERROR,
+          KubernetesExceptionExplanation.MISSING_OBJECT_ERROR,
+          getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
+    }
+
     if (cliErrorMessage.contains(STEADY_STATE_FAILURE_DEADLINE_ERROR)) {
-      return getExplanationExceptionWithCommand(KubernetesExceptionHints.WAIT_FOR_STEADY_STATE_FAILED,
-          KubernetesExceptionExplanation.WAIT_FOR_STEADY_STATE_FAILED,
+      String hint = KubernetesExceptionHints.WAIT_FOR_STEADY_STATE_FAILED
+          + KubernetesExceptionHints.DEPLOYMENT_PROGRESS_DEADLINE_DOC_REFERENCE;
+      return getExplanationExceptionWithCommand(hint, KubernetesExceptionExplanation.WAIT_FOR_STEADY_STATE_FAILED,
           getExecutedCommandWithOutputWithExitCode(kubernetesTaskException), consolidatedError);
     }
 
@@ -177,11 +214,11 @@ public class KubernetesCliRuntimeExceptionHandler implements ExceptionHandler {
     return Collections.emptyList();
   }
 
-  private List<String> getAllResourceNames(String errorMessage, Pattern pattern) {
+  private List<String> getAllResourceNames(String errorMessage, Pattern pattern, String delimiter) {
     Matcher matcher = pattern.matcher(errorMessage);
     List<String> values = new ArrayList<>();
     while (matcher.find()) {
-      values.add(matcher.group(2) + "/" + matcher.group(3));
+      values.add(matcher.group(2) + delimiter + matcher.group(3));
     }
     return values;
   }

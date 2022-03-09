@@ -16,9 +16,9 @@ import io.harness.cvng.beans.TimeSeriesThresholdType;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.Builder;
 import lombok.Builder.Default;
-import lombok.Value;
+import lombok.Data;
 
-@Value
+@Data
 @Builder
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public class TimeSeriesMetricDefinition {

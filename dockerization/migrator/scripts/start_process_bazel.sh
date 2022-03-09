@@ -29,7 +29,7 @@ if [[ -f /mongo/client.pem ]]; then
 fi
 
 if [[ -z "$CAPSULE_JAR" ]]; then
-   export CAPSULE_JAR=/opt/harness/migrator-capsule.jar
+   export CAPSULE_JAR=migrator-capsule.jar
 fi
 
 if [[ -z "$NEWRELIC_ENV" ]]; then

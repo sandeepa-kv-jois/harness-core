@@ -134,8 +134,6 @@ BAZEL_MODULES="\
   //945-license-usage-sdk:module \
   //945-ng-audit-client:module \
   //947-scim-core:module \
-  //948-access-control-admin-client:module \
-  //948-access-control-sdk:module \
   //950-command-library-common:module \
   //959-common-entities:module \
   //950-delegate-tasks-beans/src/main/proto:all \
@@ -197,6 +195,8 @@ BAZEL_MODULES="\
   //access-control/libraries/80-aggregator:module \
   //access-control/libraries/90-core:module \
   //access-control/contracts:module \
+  //clients/access-control/admin-client:module \
+  //clients/access-control/sdk:module \
   //product/ci/engine/proto:all \
   //product/ci/scm/proto:all \
 "
@@ -341,8 +341,6 @@ build_bazel_module 940-resource-group-beans
 build_bazel_module 940-secret-manager-client
 build_bazel_module 945-ng-audit-client
 build_bazel_module 947-scim-core
-build_bazel_module 948-access-control-admin-client
-build_bazel_module 948-access-control-sdk
 build_bazel_module 950-command-library-common
 build_bazel_module 959-common-entities
 build_bazel_module 950-delegate-tasks-beans

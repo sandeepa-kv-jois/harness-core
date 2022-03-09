@@ -269,7 +269,8 @@ public class AwsECSClusterDataSyncTaskletTest extends CategoryTest {
     when(cloudToHarnessMappingService.getHarnessServiceInfo(any()))
         .thenReturn(Optional.of(new HarnessServiceInfo(null, null, null, null, null, null)));
     when(instanceDataDao.fetchInstanceData(anySet())).thenReturn(singletonList(getInstanceData()));
-    awsECSClusterDataSyncTasklet.updateTasks(accountId, ceCluster, singletonList(getTask()), deploymentIdServiceMap);
+    awsECSClusterDataSyncTasklet.updateTasks(accountId, ceCluster, singletonList(getTask()), deploymentIdServiceMap,
+        Collections.EMPTY_MAP, Instant.ofEpochMilli(startTime));
     ArgumentCaptor<InstanceData> captor = ArgumentCaptor.forClass(InstanceData.class);
     then(instanceDataService).should().create(captor.capture());
     InstanceData instanceData = captor.getValue();

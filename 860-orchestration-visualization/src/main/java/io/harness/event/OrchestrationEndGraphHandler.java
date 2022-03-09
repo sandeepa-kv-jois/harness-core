@@ -14,8 +14,10 @@ import io.harness.beans.OrchestrationGraph;
 import io.harness.engine.executions.plan.PlanExecutionService;
 import io.harness.engine.observers.OrchestrationEndObserver;
 import io.harness.execution.PlanExecution;
+import io.harness.logging.AutoLogContext;
 import io.harness.observer.AsyncInformObserver;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.repositories.orchestrationEventLog.OrchestrationEventLogRepository;
 import io.harness.service.GraphGenerationService;
 
@@ -46,21 +48,26 @@ public class OrchestrationEndGraphHandler implements AsyncInformObserver, Orches
 
   @Override
   public void onEnd(Ambiance ambiance) {
-    try {
+    try (AutoLogContext autoLogContext = AmbianceUtils.autoLogContext(ambiance)) {
       PlanExecution planExecution = planExecutionService.get(ambiance.getPlanExecutionId());
-      // One last time try to update the graph to process any unprocessed logs
-      graphGenerationService.updateGraphWithWaitLock(planExecution.getUuid());
-      orchestrationEventLogRepository.deleteLogsForGivenPlanExecutionId(ambiance.getPlanExecutionId());
+      try {
+        // One last time try to update the graph to process any unprocessed logs
+        graphGenerationService.updateGraphWithWaitLock(planExecution.getUuid());
+        // We are not deleting logs pro-actively if exception occurred, they will be helpful in debugging.
+        orchestrationEventLogRepository.deleteLogsForGivenPlanExecutionId(ambiance.getPlanExecutionId());
+      } catch (Exception ex) {
+        log.error(
+            "[GRAPH_ERROR] Exception occurred while updating graph through logs. Regenerating the graph from nodeExecutions");
+        graphGenerationService.buildOrchestrationGraph(ambiance.getPlanExecutionId());
+      }
 
-      log.info("Ending Execution for planExecutionId [{}] with status [{}].", planExecution.getUuid(),
-          planExecution.getStatus());
-
+      // Todo: Check if this is required
       OrchestrationGraph orchestrationGraph =
           graphGenerationService.getCachedOrchestrationGraph(ambiance.getPlanExecutionId());
       orchestrationGraph = orchestrationGraph.withStatus(planExecution.getStatus()).withEndTs(planExecution.getEndTs());
       graphGenerationService.cacheOrchestrationGraph(orchestrationGraph);
     } catch (Exception e) {
-      log.error("Cannot update Orchestration graph for ORCHESTRATION_END");
+      log.error("[GRAPH_ERROR] Cannot update Orchestration graph for ORCHESTRATION_END", e);
       throw e;
     }
   }

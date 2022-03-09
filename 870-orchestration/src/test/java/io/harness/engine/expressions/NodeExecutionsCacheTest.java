@@ -21,6 +21,7 @@ import io.harness.engine.executions.plan.PlanService;
 import io.harness.execution.NodeExecution;
 import io.harness.execution.NodeExecution.NodeExecutionKeys;
 import io.harness.pms.contracts.ambiance.Ambiance;
+import io.harness.pms.contracts.execution.Status;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.Sets;
@@ -51,11 +52,11 @@ public class NodeExecutionsCacheTest extends CategoryTest {
   // Have fieldsIncluded to be parentId and fieldExcluded to be Id, so that it uses mongoIndex and no documents are
   // queried in Mongo.
   public void testFindAllChildrenUsingRequiredProjection() {
-    doReturn(Collections.singletonList(NodeExecution.builder().identifier("test").build()))
+    doReturn(Collections.singletonList(NodeExecution.builder().identifier("test").status(Status.ABORTED).build()))
         .when(nodeExecutionService)
-        .findAllChildren("PLAN_EXECUTION_ID", "PARENT_ID", false,
+        .findAllChildrenWithStatusIn("PLAN_EXECUTION_ID", "PARENT_ID", null, false, true,
             Sets.newHashSet(NodeExecutionKeys.parentId, NodeExecutionKeys.status), Collections.emptySet());
-    List<NodeExecution> allChildren = nodeExecutionsCache.findAllChildren("PARENT_ID");
+    List<Status> allChildren = nodeExecutionsCache.findAllTerminalChildrenStatusOnly("PARENT_ID");
     assertThat(allChildren.size()).isEqualTo(1);
   }
 }

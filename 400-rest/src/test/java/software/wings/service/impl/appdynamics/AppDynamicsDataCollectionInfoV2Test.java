@@ -18,7 +18,7 @@ import io.harness.rule.Owner;
 
 import software.wings.WingsBaseTest;
 import software.wings.beans.AppDynamicsConfig;
-import software.wings.sm.StateType;
+import software.wings.delegatetasks.DelegateStateType;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -67,7 +67,7 @@ public class AppDynamicsDataCollectionInfoV2Test extends WingsBaseTest {
   @Owner(developers = SOWMYA)
   @Category(UnitTests.class)
   public void testGetStateType() {
-    assertThat(appDynamicsDataCollectionInfoV2.getStateType()).isEqualByComparingTo(StateType.APP_DYNAMICS);
+    assertThat(appDynamicsDataCollectionInfoV2.getStateType()).isEqualByComparingTo(DelegateStateType.APP_DYNAMICS);
   }
 
   @Test

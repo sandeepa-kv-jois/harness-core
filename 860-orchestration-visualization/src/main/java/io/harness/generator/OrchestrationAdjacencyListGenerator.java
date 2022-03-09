@@ -22,6 +22,7 @@ import io.harness.beans.GraphVertex;
 import io.harness.beans.converter.GraphVertexConverter;
 import io.harness.beans.internal.EdgeListInternal;
 import io.harness.beans.internal.OrchestrationAdjacencyListInternal;
+import io.harness.beans.stepDetail.NodeExecutionsInfo;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.engine.pms.data.PmsOutcomeService;
 import io.harness.exception.InvalidRequestException;
@@ -29,7 +30,6 @@ import io.harness.execution.NodeExecution;
 import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
 import io.harness.pms.contracts.execution.ExecutionMode;
 import io.harness.pms.data.PmsOutcome;
-import io.harness.pms.data.stepdetails.PmsStepDetails;
 import io.harness.pms.sdk.core.resolver.outcome.mapper.PmsOutcomeMapper;
 
 import com.google.inject.Inject;
@@ -61,15 +61,6 @@ public class OrchestrationAdjacencyListGenerator {
     return generateList(startingNodeExId, nodeExecutions, isOutcomePresent);
   }
 
-  public void populateAdjacencyList(
-      OrchestrationAdjacencyListInternal adjacencyListInternal, List<NodeExecution> nodeExecutions) {
-    nodeExecutions.sort(Comparator.comparing(NodeExecution::getCreatedAt));
-
-    for (NodeExecution nodeExecution : nodeExecutions) {
-      addVertex(adjacencyListInternal, nodeExecution);
-    }
-  }
-
   public void addVertex(OrchestrationAdjacencyListInternal adjacencyListInternal, NodeExecution nodeExecution) {
     Map<String, GraphVertex> graphVertexMap = adjacencyListInternal.getGraphVertexMap();
     Map<String, EdgeListInternal> adjacencyList = adjacencyListInternal.getAdjacencyMap();
@@ -85,9 +76,11 @@ public class OrchestrationAdjacencyListGenerator {
       prevIds.add(nodeExecution.getPreviousId());
     } else if (isIdPresent(nodeExecution.getParentId())) {
       parentId = nodeExecution.getParentId();
-      EdgeListInternal parentEdgeList = adjacencyList.get(parentId);
-      if (graphVertexMap.get(parentId) != null
-          && isChainNonInitialVertex(graphVertexMap.get(parentId).getMode(), parentEdgeList)) {
+      EdgeListInternal parentEdgeList = Objects.requireNonNull(adjacencyList.get(parentId),
+          String.format("[GRAPH_ERROR] ParentId: [%s] not present in the adjacency list. Please debug", parentId));
+      GraphVertex parentGraphVertex = Objects.requireNonNull(graphVertexMap.get(parentId),
+          String.format("[GRAPH_ERROR] ParentId: [%s] not present in the graph vertex map. Please debug", parentId));
+      if (isChainNonInitialVertex(parentGraphVertex.getMode(), parentEdgeList)) {
         appendToChainEnd(adjacencyList, parentEdgeList.getEdges().get(0), currentUuid, prevIds);
       } else {
         parentEdgeList.getEdges().add(currentUuid);
@@ -245,9 +238,7 @@ public class OrchestrationAdjacencyListGenerator {
         } else {
           outcomes = new LinkedHashMap<>();
         }
-        Map<String, PmsStepDetails> stepDetails =
-            pmsGraphStepDetailsService.getStepDetails(nodeExecution.getAmbiance().getPlanExecutionId(), currentNodeId);
-
+        NodeExecutionsInfo stepDetails = pmsGraphStepDetailsService.getNodeExecutionsInfo(currentNodeId);
         GraphVertex graphVertex = graphVertexConverter.convertFrom(nodeExecution, outcomes, stepDetails);
 
         if (graphVertexMap.containsKey(graphVertex.getUuid())) {

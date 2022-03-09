@@ -52,6 +52,9 @@ import io.harness.k8s.model.KubernetesResource;
 import io.harness.k8s.model.KubernetesResourceId;
 import io.harness.logging.LogCallback;
 
+import software.wings.beans.LogColor;
+import software.wings.beans.LogWeight;
+
 import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import java.io.IOException;
@@ -121,11 +124,12 @@ public class K8sDeleteRequestHandler extends K8sRequestHandler {
       ILogStreamingTaskClient logStreamingTaskClient, CommandUnitsProgress commandUnitsProgress) throws Exception {
     long steadyStateTimeoutInMillis = getTimeoutMillisFromMinutes(k8sDeleteRequest.getTimeoutIntervalInMin());
 
+    LogCallback logCallback = k8sTaskHelperBase.getLogCallback(
+        logStreamingTaskClient, FetchFiles, k8sDeleteRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress);
+    logCallback.saveExecutionLog(color("\nStarting Kubernetes Delete", LogColor.White, LogWeight.Bold));
+
     k8sTaskHelperBase.fetchManifestFilesAndWriteToDirectory(k8sDeleteRequest.getManifestDelegateConfig(),
-        manifestFilesDirectory,
-        k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, FetchFiles,
-            k8sDeleteRequest.isShouldOpenFetchFilesLogStream(), commandUnitsProgress),
-        steadyStateTimeoutInMillis, k8sDeleteRequest.getAccountId());
+        manifestFilesDirectory, logCallback, steadyStateTimeoutInMillis, k8sDeleteRequest.getAccountId());
 
     initUsingFilePaths(k8sDeleteRequest, k8sDelegateTaskParams,
         k8sTaskHelperBase.getLogCallback(logStreamingTaskClient, Init, true, commandUnitsProgress));

@@ -31,42 +31,22 @@ gcp-project-id: "ce-qa-274307"
 harness-mongo:
   uri: mongodb://localhost:27017/harness
   connectTimeout: 30000
-  serverSelectionTimeout: 90000
+  serverSelectionTimeout: 86400000
   maxConnectionIdleTime: 600000
   connectionsPerHost: 300
   indexManagerMode: MANUAL
 
 events-mongo:
   uri: mongodb://localhost:27017/events
-  connectTimeout: 30000
-  serverSelectionTimeout: 90000
-  maxConnectionIdleTime: 600000
-  connectionsPerHost: 300
-  indexManagerMode: MANUAL
 
 cdc-mongo:
   uri: mongodb://localhost:27017/change-data-capture
-  connectTimeout: 30000
-  serverSelectionTimeout: 90000
-  maxConnectionIdleTime: 600000
-  connectionsPerHost: 300
-  indexManagerMode: MANUAL
 
 pms-harness:
   uri: mongodb://localhost:27017/pms-harness
-  connectTimeout: 30000
-  serverSelectionTimeout: 90000
-  maxConnectionIdleTime: 600000
-  connectionsPerHost: 300
-  indexManagerMode: MANUAL
 
 ng-harness:
   uri: mongodb://localhost:27017/ng-harness
-  connectTimeout: 30000
-  serverSelectionTimeout: 90000
-  maxConnectionIdleTime: 600000
-  connectionsPerHost: 300
-  indexManagerMode: MANUAL
 
 timescaledb:
   timescaledbUrl: "jdbc:postgresql://34.83.25.129:5432/harnessdev"

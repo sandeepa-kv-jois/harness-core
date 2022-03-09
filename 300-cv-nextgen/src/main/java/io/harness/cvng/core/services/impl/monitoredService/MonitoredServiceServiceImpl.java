@@ -419,6 +419,15 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .build();
   }
 
+  private MonitoredServiceResponse getApplicationMonitoredServiceResponse(
+      ServiceEnvironmentParams serviceEnvironmentParams) {
+    MonitoredService monitoredService = getApplicationMonitoredService(serviceEnvironmentParams);
+    if (monitoredService == null) {
+      return null;
+    }
+    return get(serviceEnvironmentParams, monitoredService.getIdentifier());
+  }
+
   @Override
   public MonitoredServiceResponse get(ServiceEnvironmentParams serviceEnvironmentParams) {
     MonitoredService monitoredService = getMonitoredService(serviceEnvironmentParams);
@@ -519,8 +528,9 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
   }
 
   @Override
-  public MonitoredServiceDTO getMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams) {
-    MonitoredServiceResponse monitoredServiceResponse = get(serviceEnvironmentParams);
+  public MonitoredServiceDTO getApplicationMonitoredServiceDTO(ServiceEnvironmentParams serviceEnvironmentParams) {
+    MonitoredServiceResponse monitoredServiceResponse =
+        getApplicationMonitoredServiceResponse(serviceEnvironmentParams);
     if (monitoredServiceResponse == null) {
       return null;
     } else {
@@ -536,7 +546,18 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .filter(MonitoredServiceKeys.identifier, identifier)
         .get();
   }
-
+  @Override
+  public MonitoredService getApplicationMonitoredService(ServiceEnvironmentParams serviceEnvironmentParams) {
+    return hPersistence.createQuery(MonitoredService.class)
+        .filter(MonitoredServiceKeys.accountId, serviceEnvironmentParams.getAccountIdentifier())
+        .filter(MonitoredServiceKeys.orgIdentifier, serviceEnvironmentParams.getOrgIdentifier())
+        .filter(MonitoredServiceKeys.projectIdentifier, serviceEnvironmentParams.getProjectIdentifier())
+        .filter(MonitoredServiceKeys.serviceIdentifier, serviceEnvironmentParams.getServiceIdentifier())
+        .field(MonitoredServiceKeys.environmentIdentifierList)
+        .hasThisOne(serviceEnvironmentParams.getEnvironmentIdentifier())
+        .filter(MonitoredServiceKeys.type, MonitoredServiceType.APPLICATION)
+        .get();
+  }
   @Deprecated
   private MonitoredService getMonitoredService(ServiceEnvironmentParams serviceEnvironmentParams) {
     return hPersistence.createQuery(MonitoredService.class)
@@ -544,7 +565,8 @@ public class MonitoredServiceServiceImpl implements MonitoredServiceService {
         .filter(MonitoredServiceKeys.orgIdentifier, serviceEnvironmentParams.getOrgIdentifier())
         .filter(MonitoredServiceKeys.projectIdentifier, serviceEnvironmentParams.getProjectIdentifier())
         .filter(MonitoredServiceKeys.serviceIdentifier, serviceEnvironmentParams.getServiceIdentifier())
-        .filter(MonitoredServiceKeys.environmentIdentifier, serviceEnvironmentParams.getEnvironmentIdentifier())
+        .field(MonitoredServiceKeys.environmentIdentifierList)
+        .hasThisOne(serviceEnvironmentParams.getEnvironmentIdentifier())
         .get();
   }
 

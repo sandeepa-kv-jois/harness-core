@@ -31,7 +31,13 @@ echo "JIRA Key is : $KEY "
 jira_response=`curl -X GET -H "Content-Type: application/json" https://harness.atlassian.net/rest/api/2/issue/${KEY}?fields=issuetype,customfield_10687,customfield_10709,customfield_10748,customfield_10763,customfield_10785 --user $JIRA_USERNAME:$JIRA_PASSWORD`
 
 issuetype=`echo "${jira_response}" | jq ".fields.issuetype.name" | tr -d '"'`
-if [[ $KEY == BT-* ]]
+# No longer require what changed or phase injected in fields
+# BT-950
+what_changed="n/a"
+phase_injected="n/a"
+## End Change for BT-950
+
+if [[ $KEY == BT-* || $KEY == SPG-* ]]
 then
   bug_resolution="n/a"
   what_changed="n/a"

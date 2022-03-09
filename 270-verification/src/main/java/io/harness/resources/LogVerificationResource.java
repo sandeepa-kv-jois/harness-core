@@ -174,7 +174,7 @@ public class LogVerificationResource {
     final LogsCVConfiguration logsCVConfiguration = wingsPersistence.get(LogsCVConfiguration.class, cvConfigId);
     Preconditions.checkNotNull(logsCVConfiguration);
     try (VerificationLogContext ignored = new VerificationLogContext(logsCVConfiguration.getAccountId(), cvConfigId,
-             null, logsCVConfiguration.getStateType(), OVERRIDE_ERROR)) {
+             null, logsCVConfiguration.getStateType().getDelegateStateType(), OVERRIDE_ERROR)) {
       return new RestResponse<>(analysisService.save24X7LogAnalysisRecords(
           appId, cvConfigId, analysisMinute, mlAnalysisResponse, Optional.of(taskId), Optional.of(isFeedbackAnalysis)));
     }

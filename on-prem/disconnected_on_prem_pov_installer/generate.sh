@@ -192,7 +192,7 @@ for harnesspywinrm in v0.1-dev v0.2-dev v0.3-dev v0.4-dev; do
   curl -L -o "${HARNESSPYWINRM_MAC_DIR}harness-pywinrm" "${HARNESSPYWINRM_MAC_URL}"
 done
 
-for helmversion in v2.13.1 v3.0.2 v3.1.2; do
+for helmversion in v2.13.1 v3.1.2 v3.8.0; do
   echo "Adding helmversion $helmversion"
   HELM_LINUX_DIR="${IMAGES_DIR}/helm/linux/$helmversion/"
   HELM_MAC_DIR="${IMAGES_DIR}/helm/darwin/$helmversion/"
@@ -268,7 +268,7 @@ for kustomizeVersion in v3.5.4 v4.0.0; do
 
 done
 
-for scmVersion in 04ad961e; do
+for scmVersion in e2904e7; do
   echo "Adding scm" $scmVersion
 
   SCM_LINUX_DIR="${IMAGES_DIR}/scm/linux/$scmVersion/"

@@ -17,6 +17,7 @@ import io.harness.beans.EnvironmentType;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
+import io.harness.mongo.index.SortCompoundMongoIndex;
 import io.harness.persistence.AccountAccess;
 
 import software.wings.beans.Base;
@@ -126,6 +127,14 @@ public class Instance extends Base implements AccountAccess, ApplicationAccess {
                  .field(InstanceKeys.appId)
                  .field(InstanceKeys.isDeleted)
                  .field(InstanceKeys.envId)
+                 .build())
+        .add(SortCompoundMongoIndex.builder()
+                 .name("accountId_computeProviderId_instanceInfoNamespace_instanceInfoPodName_createdAt")
+                 .field(InstanceKeys.accountId)
+                 .field(InstanceKeys.computeProviderId)
+                 .field(InstanceKeys.instanceInfoNamespace)
+                 .field(InstanceKeys.instanceInfoPodName)
+                 .descSortField(InstanceKeys.createdAt)
                  .build())
         .build();
   }

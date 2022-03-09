@@ -65,7 +65,7 @@ spec:
         resources:
           limits:
             cpu: "1.0"
-            memory: "8Gi"
+            memory: "4Gi"
         livenessProbe:
           httpGet:
             path: /api/health

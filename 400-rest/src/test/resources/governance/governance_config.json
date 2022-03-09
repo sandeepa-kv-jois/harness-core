@@ -28,6 +28,10 @@
           "envSelection": {
             "filterType": "CUSTOM",
             "environments": ["env1", "env2"]
+          },
+          "serviceSelection": {
+            "filterType": "CUSTOM",
+            "services": ["service1", "service2"]
           }
         },
         {

@@ -13,10 +13,10 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.managerclient.VerificationServiceClient;
 
+import software.wings.delegatetasks.DelegateStateType;
 import software.wings.delegatetasks.LogAnalysisStoreService;
 import software.wings.service.impl.analysis.LogElement;
 import software.wings.service.intfc.analysis.ClusterLevel;
-import software.wings.sm.StateType;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
@@ -30,13 +30,15 @@ public class LogAnalysisStoreServiceImpl implements LogAnalysisStoreService {
   @Inject private VerificationServiceClient verificationServiceClient;
 
   @Override
-  public boolean save(StateType stateType, String accountId, String appId, String cvConfigId, String stateExecutionId,
-      String workflowId, String workflowExecutionId, String serviceId, String delegateTaskId, List<LogElement> logs) {
+  public boolean save(DelegateStateType stateType, String accountId, String appId, String cvConfigId,
+      String stateExecutionId, String workflowId, String workflowExecutionId, String serviceId, String delegateTaskId,
+      List<LogElement> logs) {
     try {
       switch (stateType) {
         case SPLUNKV2:
-          return execute(verificationServiceClient.saveLogs(accountId, appId, cvConfigId, stateExecutionId, workflowId,
-                             workflowExecutionId, serviceId, ClusterLevel.L2, delegateTaskId, StateType.SPLUNKV2, logs))
+          return execute(
+              verificationServiceClient.saveLogs(accountId, appId, cvConfigId, stateExecutionId, workflowId,
+                  workflowExecutionId, serviceId, ClusterLevel.L2, delegateTaskId, DelegateStateType.SPLUNKV2, logs))
               .getResource();
         case SUMO:
         case ELK:
