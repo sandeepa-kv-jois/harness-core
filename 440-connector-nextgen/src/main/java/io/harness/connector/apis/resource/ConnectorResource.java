@@ -547,7 +547,9 @@ public class ConnectorResource {
       })
   public ResponseDTO<FieldValues>
   getAllAllowedFieldValues(@Parameter(description = "Connector type") @NotNull @QueryParam(
-      NGCommonEntityConstants.CONNECTOR_TYPE) ConnectorType connectorType) {
+                               NGCommonEntityConstants.CONNECTOR_TYPE) ConnectorType connectorType,
+      @Parameter(description = ACCOUNT_PARAM_MESSAGE, required = true) @NotBlank @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier) {
     return ResponseDTO.newResponse(ConnectorAllowedFieldValues.TYPE_TO_FIELDS.get(connectorType));
   }
 }
