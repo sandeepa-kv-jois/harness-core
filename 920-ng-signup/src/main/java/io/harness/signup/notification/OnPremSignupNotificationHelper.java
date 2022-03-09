@@ -10,6 +10,7 @@ package io.harness.signup.notification;
 import io.harness.Team;
 import io.harness.ng.core.user.UserInfo;
 import io.harness.notification.channeldetails.EmailChannel;
+import io.harness.notification.channeldetails.EmailChannel.EmailChannelBuilder;
 import io.harness.notification.notificationclient.NotificationClient;
 
 import com.google.common.collect.ImmutableMap;
@@ -27,13 +28,13 @@ public class OnPremSignupNotificationHelper implements SignupNotificationHelper 
 
   @Override
   public void sendSignupNotification(UserInfo userInfo, EmailType emailType, String defaultTemplateId, String url) {
-    EmailChannel.EmailChannelBuilder builder = EmailChannel.builder()
-                                                   .accountId(userInfo.getDefaultAccountId())
-                                                   .team(Team.GTM)
-                                                   .recipients(Lists.newArrayList(userInfo.getEmail()))
-                                                   .templateId(defaultTemplateId)
-                                                   .templateData(ImmutableMap.of("url", url))
-                                                   .userGroups(Collections.emptyList());
+    EmailChannelBuilder builder = EmailChannel.builder()
+                                      .accountId(userInfo.getDefaultAccountId())
+                                      .team(Team.GTM)
+                                      .recipients(Lists.newArrayList(userInfo.getEmail()))
+                                      .templateId(defaultTemplateId)
+                                      .templateData(ImmutableMap.of("url", url))
+                                      .userGroups(Collections.emptyList());
     notificationClient.sendNotificationAsync(builder.build());
   }
 }
