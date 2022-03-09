@@ -16,6 +16,7 @@ import static io.harness.k8s.model.HelmVersion.V2;
 import static io.harness.k8s.model.HelmVersion.V3;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ACASIAN;
+import static io.harness.rule.OwnerRule.ACHYUTH;
 import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.RAGHVENDRA;
 import static io.harness.rule.OwnerRule.ROHITKARELIA;
@@ -62,6 +63,7 @@ import io.harness.chartmuseum.ChartMuseumServer;
 import io.harness.delegate.beans.DelegateFileManagerBase;
 import io.harness.delegate.beans.FileBucket;
 import io.harness.delegate.task.helm.HelmChartInfo;
+import io.harness.delegate.task.helm.HelmCommandFlag;
 import io.harness.delegate.task.helm.HelmTaskHelperBase;
 import io.harness.exception.HelmClientException;
 import io.harness.exception.InvalidArgumentsException;
@@ -213,6 +215,44 @@ public class HelmTaskHelperTest extends WingsBaseTest {
     assertThat(captor.getAllValues().get(2))
         .isEqualTo(
             "add helm repo. Executed commandv3/helm repo add vault https://helm-server --username admin --password *******");
+  }
+
+  @Test
+  @Owner(developers = ACHYUTH)
+  @Category(UnitTests.class)
+  public void testfetchChartFromHttpServerWithFFUseRepoFlagsAndDeleteTempDir() {
+    ArgumentCaptor<String> captor = ArgumentCaptor.forClass(String.class);
+
+    doReturn(new ProcessResult(0, new ProcessOutput(new byte[1])))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), eq(HelmCliCommandType.REPO_ADD));
+    helmTaskHelperBase.addRepo(
+        "vault", "vault", "https://helm-server", "admin", "secret-text".toCharArray(), "/home", V3, 9000L, true, true);
+
+    verify(helmTaskHelperBase, times(1))
+        .executeCommand(
+            anyMap(), captor.capture(), captor.capture(), captor.capture(), eq(9000L), eq(HelmCliCommandType.REPO_ADD));
+
+    assertThat(captor.getAllValues().get(0))
+        .contains(
+            "v3/helm repo add vault https://helm-server --username admin --password secret-text --repository-config");
+    assertThat(captor.getAllValues().get(1)).isEqualTo("/home");
+    assertThat(captor.getAllValues().get(2))
+        .contains(
+            "add helm repo. Executed commandv3/helm repo add vault https://helm-server --username admin --password ******* --repository-config");
+
+    doReturn(new ProcessResult(0, new ProcessOutput(null)))
+        .when(helmTaskHelperBase)
+        .executeCommand(anyMap(), anyString(), anyString(), anyString(), anyLong(), eq(HelmCliCommandType.FETCH));
+
+    assertThatCode(()
+                       -> helmTaskHelperBase.fetchChartFromRepo("repo", "repo display", "chart", "1.0.0", "/dir", V3,
+                           HelmCommandFlag.builder().build(), 90000, true, false, true))
+        .doesNotThrowAnyException();
+
+    verify(helmTaskHelperBase, times(1))
+        .executeCommand(
+            anyMap(), captor.capture(), captor.capture(), captor.capture(), anyLong(), eq(HelmCliCommandType.FETCH));
   }
 
   @Test
