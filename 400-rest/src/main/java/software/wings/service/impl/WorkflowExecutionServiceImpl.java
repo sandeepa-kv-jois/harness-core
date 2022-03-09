@@ -495,6 +495,7 @@ public class WorkflowExecutionServiceImpl implements WorkflowExecutionService {
   public PageResponse<WorkflowExecution> listExecutions(PageRequest<WorkflowExecution> pageRequest,
       boolean includeGraph, boolean runningOnly, boolean withBreakdownAndSummary, boolean includeStatus,
       boolean withFailureDetails) {
+    pageRequest.addFieldsExcluded(WorkflowExecutionKeys.stateMachine);
     PageResponse<WorkflowExecution> res = wingsPersistence.query(WorkflowExecution.class, pageRequest);
     return (PageResponse<WorkflowExecution>) processExecutions(
         res, includeGraph, runningOnly, withBreakdownAndSummary, includeStatus, withFailureDetails);
