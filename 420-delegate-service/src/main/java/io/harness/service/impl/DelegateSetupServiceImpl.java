@@ -78,6 +78,7 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
   @Inject private DelegateConnectionDao delegateConnectionDao;
   @Inject private FilterService filterService;
   private static final Duration HEARTBEAT_EXPIRY_TIME = ofMinutes(5);
+  private static final long MAX_GRPC_HB_TIMEOUT = TimeUnit.MINUTES.toMillis(15);
 
   @Override
   public long getDelegateGroupCount(
@@ -396,6 +397,9 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
     String delegateGroupIdentifier = delegateGroup != null ? delegateGroup.getIdentifier() : null;
     Set<String> groupCustomSelectors = delegateGroup != null ? delegateGroup.getTags() : null;
 
+    // pick any delegateId to check whether grpc is active or not
+    String delegateId = groupDelegates.isEmpty() ? null : groupDelegates.get(0).getUuid();
+
     long lastHeartBeat = groupDelegates.stream().mapToLong(Delegate::getLastHeartBeat).max().orElse(0);
     AtomicInteger countOfDelegatesConnected = new AtomicInteger();
     List<DelegateGroupListing.DelegateInner> delegateInstanceDetails =
@@ -433,8 +437,16 @@ public class DelegateSetupServiceImpl implements DelegateSetupService {
         .lastHeartBeat(lastHeartBeat)
         .delegateInstanceDetails(delegateInstanceDetails)
         .connectivityStatus(connectivityStatus)
+        .isGrpcActive(delegateId == null || isGrpcActive(accountId, delegateId))
         .activelyConnected(!connectivityStatus.equals(GROUP_STATUS_DISCONNECTED))
         .build();
+  }
+
+  private boolean isGrpcActive(String accountId, String delegateId) {
+    return delegateConnectionDao.list(accountId, delegateId)
+        .stream()
+        .anyMatch(delegateConnection
+            -> delegateConnection.getLastGrpcHeartbeat() > System.currentTimeMillis() - MAX_GRPC_HB_TIMEOUT);
   }
 
   @Override

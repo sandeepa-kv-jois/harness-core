@@ -85,6 +85,7 @@ public class DelegateConnectionDao {
                                                        .project(DelegateConnectionKeys.delegateId, true)
                                                        .project(DelegateConnectionKeys.version, true)
                                                        .project(DelegateConnectionKeys.lastHeartbeat, true)
+                                                       .project(DelegateConnectionKeys.lastGrpcHeartbeat, true)
                                                        .asList();
 
     return delegateConnections.stream().collect(Collectors.groupingBy(delegateConnection
@@ -94,6 +95,7 @@ public class DelegateConnectionDao {
                    .uuid(delegateConnection.getUuid())
                    .lastHeartbeat(delegateConnection.getLastHeartbeat())
                    .version(delegateConnection.getVersion())
+                   .lastGrpcHeartbeat(delegateConnection.getLastGrpcHeartbeat())
                    .build(),
             toList())));
   }

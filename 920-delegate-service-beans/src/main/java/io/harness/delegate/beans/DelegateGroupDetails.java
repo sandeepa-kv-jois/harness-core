@@ -38,5 +38,6 @@ public class DelegateGroupDetails {
   private long lastHeartBeat;
   private String connectivityStatus;
   private boolean activelyConnected;
+  private boolean isGrpcActive;
   private List<DelegateGroupListing.DelegateInner> delegateInstanceDetails;
 }

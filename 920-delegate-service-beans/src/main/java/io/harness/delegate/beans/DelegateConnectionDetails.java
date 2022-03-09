@@ -25,4 +25,5 @@ public class DelegateConnectionDetails {
   private String uuid;
   private String version;
   private long lastHeartbeat;
+  private long lastGrpcHeartbeat;
 }
