@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import static org.mockito.MockitoAnnotations.initMocks;
 
 import io.harness.CategoryTest;
+import io.harness.TelemetryConstants;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.account.services.AccountService;
 import io.harness.annotations.dev.OwnedBy;
@@ -35,6 +36,7 @@ import io.harness.exception.SignupException;
 import io.harness.exception.WingsException;
 import io.harness.licensing.services.LicenseService;
 import io.harness.ng.core.dto.AccountDTO;
+import io.harness.ng.core.dto.GatewayAccountRequestDTO;
 import io.harness.ng.core.user.UserInfo;
 import io.harness.ng.core.user.UserRequestDTO;
 import io.harness.repositories.SignupVerificationTokenRepository;
@@ -57,6 +59,9 @@ import io.harness.version.VersionInfoManager;
 import com.google.inject.name.Named;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutorService;
 import org.junit.Before;
@@ -88,6 +93,7 @@ public class SignupServiceImplTest extends CategoryTest {
   private static final String INVALID_EMAIL = "test";
   private static final String PASSWORD = "admin12345";
   private static final String ACCOUNT_ID = "account1";
+  private static final String ACCOUNT_NAME = "accountName1";
   private static final String VERIFY_URL = "register/verify";
   private static final String NEXT_GEN_PORATL = "http://localhost:8181/";
 
@@ -118,6 +124,9 @@ public class SignupServiceImplTest extends CategoryTest {
 
     verify(reCaptchaVerifier, times(1)).verifyInvisibleCaptcha(anyString());
     verify(telemetryReporter, times(1)).sendIdentifyEvent(eq(EMAIL), any(), any());
+    verify(telemetryReporter, times(1))
+        .sendIdentifyEvent(eq(TelemetryConstants.SEGMENT_DUMMY_ACCOUNT_PREFIX + ACCOUNT_ID), any(), any());
+    verify(telemetryReporter, times(1)).sendGroupEvent(eq(ACCOUNT_ID), eq(EMAIL), any(), any());
     verify(executorService, times(1));
     assertThat(returnedUser.getEmail()).isEqualTo(newUser.getEmail());
   }
@@ -147,9 +156,11 @@ public class SignupServiceImplTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testCompleteSignupInvite() throws IOException {
     Call<RestResponse<UserInfo>> completeSignupInviteCall = mock(Call.class);
+    List<GatewayAccountRequestDTO> accounts = new ArrayList<>();
+    accounts.add(GatewayAccountRequestDTO.builder().accountName(ACCOUNT_NAME).build());
     when(completeSignupInviteCall.execute())
-        .thenReturn(Response.success(
-            new RestResponse<>(UserInfo.builder().email(EMAIL).defaultAccountId(ACCOUNT_ID).intent("CI").build())));
+        .thenReturn(Response.success(new RestResponse<>(
+            UserInfo.builder().email(EMAIL).defaultAccountId(ACCOUNT_ID).accounts(accounts).intent("CI").build())));
     when(userClient.completeSignupInvite(any())).thenReturn(completeSignupInviteCall);
 
     SignupVerificationToken verificationToken =
@@ -159,6 +170,9 @@ public class SignupServiceImplTest extends CategoryTest {
     UserInfo userInfo = signupServiceImpl.completeSignupInvite("token");
 
     verify(telemetryReporter, times(1)).sendIdentifyEvent(eq(EMAIL), any(), any());
+    verify(telemetryReporter, times(1))
+        .sendIdentifyEvent(eq(TelemetryConstants.SEGMENT_DUMMY_ACCOUNT_PREFIX + ACCOUNT_ID), any(), any());
+    verify(telemetryReporter, times(1)).sendGroupEvent(eq(ACCOUNT_ID), eq(EMAIL), any(), any());
     verify(executorService, times(1));
     assertThat(userInfo.getIntent()).isEqualTo("CI");
     assertThat(userInfo.getEmail()).isEqualTo(EMAIL);
@@ -197,6 +211,9 @@ public class SignupServiceImplTest extends CategoryTest {
     UserInfo returnedUser = signupServiceImpl.oAuthSignup(oAuthSignupDTO);
 
     verify(telemetryReporter, times(1)).sendIdentifyEvent(eq(EMAIL), any(), any());
+    verify(telemetryReporter, times(1))
+        .sendIdentifyEvent(eq(TelemetryConstants.SEGMENT_DUMMY_ACCOUNT_PREFIX + ACCOUNT_ID), any(), any());
+    verify(telemetryReporter, times(1)).sendGroupEvent(eq(ACCOUNT_ID), eq(EMAIL), any(), any());
     verify(executorService, times(1));
     assertThat(returnedUser.getEmail()).isEqualTo(newUser.getEmail());
   }

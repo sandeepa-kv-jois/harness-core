@@ -14,6 +14,7 @@ import static io.harness.remote.client.RestClientUtils.getResponse;
 import static java.lang.String.format;
 
 import io.harness.ModuleType;
+import io.harness.TelemetryConstants;
 import io.harness.account.services.AccountService;
 import io.harness.beans.EmbeddedUser;
 import io.harness.ccm.license.CeLicenseInfoDTO;
@@ -416,8 +417,14 @@ public class DefaultLicenseServiceImpl implements LicenseService {
     telemetryReporter.sendTrackEvent(eventName, properties,
         ImmutableMap.<Destination, Boolean>builder().put(Destination.MARKETO, true).build(), Category.SIGN_UP);
 
+    telemetryReporter.sendTrackEvent(eventName, TelemetryConstants.SEGMENT_DUMMY_ACCOUNT_PREFIX + accountIdentifier,
+        accountIdentifier, properties,
+        ImmutableMap.<Destination, Boolean>builder().put(Destination.AMPLITUDE, true).build(), Category.SIGN_UP);
+
     HashMap<String, Object> groupProperties = new HashMap<>();
     String moduleType = moduleLicense.getModuleType().name();
+    groupProperties.put("group_id", accountIdentifier);
+    groupProperties.put("group_type", "Account");
 
     if (moduleLicense.getEdition() != null) {
       groupProperties.put(format("%s%s", moduleType, "LicenseEdition"), moduleLicense.getEdition());

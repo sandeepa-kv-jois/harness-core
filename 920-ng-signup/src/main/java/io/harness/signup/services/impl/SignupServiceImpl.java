@@ -19,6 +19,7 @@ import static java.lang.Boolean.FALSE;
 import static org.mindrot.jbcrypt.BCrypt.hashpw;
 
 import io.harness.ModuleType;
+import io.harness.TelemetryConstants;
 import io.harness.accesscontrol.acl.api.Resource;
 import io.harness.accesscontrol.acl.api.ResourceScope;
 import io.harness.accesscontrol.clients.AccessControlClient;
@@ -142,8 +143,8 @@ public class SignupServiceImpl implements SignupService {
 
     AccountDTO account = createAccount(dto);
     UserInfo user = createUser(dto, account);
-    sendSucceedTelemetryEvent(
-        dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), user, SignupType.SIGNUP_FORM_FLOW);
+    sendSucceedTelemetryEvent(dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), user,
+        SignupType.SIGNUP_FORM_FLOW, account.getName());
     executorService.submit(() -> {
       SignupVerificationToken verificationToken = generateNewToken(user.getEmail());
       try {
@@ -284,9 +285,9 @@ public class SignupServiceImpl implements SignupService {
     try {
       userInfo = getResponse(userClient.completeSignupInvite(verificationToken.getEmail()));
       verificationTokenRepository.delete(verificationToken);
-
       sendSucceedTelemetryEvent(userInfo.getEmail(), userInfo.getUtmInfo(), userInfo.getDefaultAccountId(), userInfo,
-          SignupType.SIGNUP_FORM_FLOW);
+          SignupType.SIGNUP_FORM_FLOW, userInfo.getAccounts().get(0).getAccountName());
+
       UserInfo finalUserInfo = userInfo;
       executorService.submit(() -> {
         try {
@@ -421,7 +422,7 @@ public class SignupServiceImpl implements SignupService {
     UserInfo oAuthUser = createOAuthUser(dto, account);
 
     sendSucceedTelemetryEvent(
-        dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), oAuthUser, SignupType.OAUTH_FLOW);
+        dto.getEmail(), dto.getUtmInfo(), account.getIdentifier(), oAuthUser, SignupType.OAUTH_FLOW, account.getName());
 
     executorService.submit(() -> {
       try {
@@ -543,9 +544,9 @@ public class SignupServiceImpl implements SignupService {
   }
 
   private void sendSucceedTelemetryEvent(
-      String email, UtmInfo utmInfo, String accountId, UserInfo userInfo, String source) {
+      String email, UtmInfo utmInfo, String accountId, UserInfo userInfo, String source, String accountName) {
     HashMap<String, Object> properties = new HashMap<>();
-    properties.put("email", userInfo.getEmail());
+    properties.put("email", email);
     properties.put("name", userInfo.getName());
     properties.put("id", userInfo.getUuid());
     properties.put("startTime", String.valueOf(Instant.now().toEpochMilli()));
@@ -553,9 +554,22 @@ public class SignupServiceImpl implements SignupService {
     properties.put("source", source);
 
     addUtmInfoToProperties(utmInfo, properties);
-    telemetryReporter.sendIdentifyEvent(userInfo.getEmail(), properties,
-        ImmutableMap.<Destination, Boolean>builder().put(Destination.MARKETO, true).build());
+    telemetryReporter.sendIdentifyEvent(
+        email, properties, ImmutableMap.<Destination, Boolean>builder().put(Destination.MARKETO, true).build());
     telemetryReporter.flush();
+
+    HashMap<String, Object> groupProperties = new HashMap<>();
+    groupProperties.put("group_id", accountId);
+    groupProperties.put("group_type", "Account");
+    groupProperties.put("group_name", accountName);
+    groupProperties.put("userID", email);
+
+    telemetryReporter.sendGroupEvent(
+        accountId, email, groupProperties, ImmutableMap.<Destination, Boolean>builder().build());
+
+    groupProperties.remove("userID");
+    telemetryReporter.sendIdentifyEvent(TelemetryConstants.SEGMENT_DUMMY_ACCOUNT_PREFIX + accountId, groupProperties,
+        ImmutableMap.<Destination, Boolean>builder().put(Destination.AMPLITUDE, true).build());
 
     // Wait 20 seconds, to ensure identify is sent before track
     ScheduledExecutorService tempExecutor = Executors.newSingleThreadScheduledExecutor();
