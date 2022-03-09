@@ -13,8 +13,10 @@ import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @OwnedBy(CDC)
+@Schema(name = "DockerRegistryProviderType", description = "This entity contains the details of the Docker Registry")
 public enum DockerRegistryProviderType {
   @JsonProperty(DockerConstants.DOCKER_HUB) DOCKER_HUB(DockerConstants.DOCKER_HUB),
   @JsonProperty(DockerConstants.HARBOR) HARBOR(DockerConstants.HARBOR),

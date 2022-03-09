@@ -20,6 +20,7 @@ import io.harness.utils.IdentifierRefHelper;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.v3.oas.annotations.media.Schema;
 import java.lang.reflect.Field;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -33,6 +34,7 @@ import lombok.Setter;
 @NoArgsConstructor
 @EqualsAndHashCode
 @JsonIgnoreProperties(ignoreUnknown = true)
+@Schema(name = "SecretRefData", description = "This entity contains the details of the Secret Referenced")
 public class SecretRefData {
   private String identifier;
   private Scope scope;

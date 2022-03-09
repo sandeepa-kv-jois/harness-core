@@ -13,8 +13,10 @@ import io.harness.annotations.dev.OwnedBy;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonValue;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @OwnedBy(CDC)
+@Schema(name = "NexusAuthType", description = "This entity contains the details of Nexus Authentication Type")
 public enum NexusAuthType {
   @JsonProperty(NexusConstants.USERNAME_PASSWORD) USER_PASSWORD(NexusConstants.USERNAME_PASSWORD),
   @JsonProperty(NexusConstants.ANONYMOUS) ANONYMOUS(NexusConstants.ANONYMOUS);
