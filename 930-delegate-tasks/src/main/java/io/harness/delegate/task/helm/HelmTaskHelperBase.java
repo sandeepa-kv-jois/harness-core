@@ -404,15 +404,17 @@ public class HelmTaskHelperBase {
       dir = Paths.get(RESOURCE_DIR_BASE, repoName, "cache").toAbsolutePath().normalize().toString();
     }
 
-    executeFetchChartFromRepoUseRepoFlag(chartName, chartDirectory, repoDisplayName, helmFetchCommand, timeoutInMillis,
-        repoName, dir, chartVersion, checkIncorrectChartVersion);
-
-    if (deleteRepoCacheDir) {
-      try {
-        FileUtils.forceDelete(new File(dir));
-      } catch (IOException ie) {
-        log.error("Deletion of charts folder failed due to : {}",
-            ExceptionMessageSanitizer.sanitizeException(ie).getMessage());
+    try {
+      executeFetchChartFromRepoUseRepoFlag(chartName, chartDirectory, repoDisplayName, helmFetchCommand,
+          timeoutInMillis, repoName, dir, chartVersion, checkIncorrectChartVersion);
+    } finally {
+      if (deleteRepoCacheDir) {
+        try {
+          FileUtils.forceDelete(new File(dir));
+        } catch (IOException ie) {
+          log.error("Deletion of charts folder failed due to : {}",
+              ExceptionMessageSanitizer.sanitizeException(ie).getMessage());
+        }
       }
     }
   }
