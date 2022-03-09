@@ -36,6 +36,11 @@ public class ExecutionLogRecord extends CVNGLogRecord {
   }
 
   @Override
+  public boolean isErrorLog() {
+    return ExecutionLogDTO.LogLevel.ERROR.equals(logLevel);
+  }
+
+  @Override
   public void recordsMetrics(MetricService metricService, Map<String, String> tags) {
     // recordsMetrics is not required for ExecutionLogs
   }

@@ -21,6 +21,7 @@ import lombok.Setter;
 public abstract class CVNGLogRecord implements CreatedAtAware {
   private long createdAt;
   public abstract CVNGLogDTO toCVNGLogDTO();
+  public abstract boolean isErrorLog();
 
   public static class CVNGLogRecordComparator implements Comparator<CVNGLogRecord> {
     @Override

@@ -20,7 +20,6 @@ import static io.harness.persistence.HQuery.excludeAuthority;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cvng.beans.CVMonitoringCategory;
-import io.harness.cvng.beans.cvnglog.ApiCallLogDTO;
 import io.harness.cvng.beans.cvnglog.CVNGLogDTO;
 import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.beans.cvnglog.TraceableType;
@@ -156,25 +155,16 @@ public class CVNGLogServiceImpl implements CVNGLogService {
   public PageResponse<CVNGLogDTO> getCVNGLogs(String accountId, String verificationJobInstanceId, CVNGLogType logType,
       List<String> healthSourceIdentifiers, boolean errorLogsOnly, PageParams pageParams) {
     List<CVNGLog> cvngLogs = getCVNGLogs(accountId, verificationJobInstanceId, logType, healthSourceIdentifiers);
-
     List<CVNGLogDTO> cvngLogDTOs = new ArrayList<>();
-    cvngLogs.forEach(log -> {
-      Collections.sort(log.getLogRecords(), new CVNGLogRecordComparator());
-      cvngLogDTOs.addAll(log.toCVNGLogDTOs());
+    cvngLogs.forEach(cvngLog -> {
+      Collections.sort(cvngLog.getLogRecords(), new CVNGLogRecordComparator());
+      List<CVNGLogRecord> cvngLogRecords = cvngLog.getLogRecords()
+                                               .stream()
+                                               .filter(cvngLogRecord -> !errorLogsOnly || cvngLogRecord.isErrorLog())
+                                               .collect(Collectors.toList());
+      cvngLog.setLogRecords(cvngLogRecords);
+      cvngLogDTOs.addAll(cvngLog.toCVNGLogDTOs());
     });
-
-    if (errorLogsOnly) {
-      final List<ApiCallLogDTO> apiCallLogDTOS = new ArrayList<>();
-      cvngLogDTOs.forEach(cvngLogDTO -> apiCallLogDTOS.add((ApiCallLogDTO) cvngLogDTO));
-
-      List<ApiCallLogDTO> apiCallLogDTOsFiltered =
-          apiCallLogDTOS.stream()
-              .filter(apiCallLogDTO
-                  -> Integer.parseInt(apiCallLogDTO.getResponses().get(0).getValue()) >= ERROR_RESPONSE_CODE)
-              .collect(Collectors.toList());
-      cvngLogDTOs.clear();
-      cvngLogDTOs.addAll(apiCallLogDTOsFiltered);
-    }
 
     return PageUtils.offsetAndLimit(cvngLogDTOs, pageParams.getPage(), pageParams.getSize());
   }

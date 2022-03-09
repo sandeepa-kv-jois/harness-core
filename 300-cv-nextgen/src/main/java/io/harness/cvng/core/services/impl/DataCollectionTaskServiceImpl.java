@@ -179,6 +179,8 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
     }
     DataCollectionTask dataCollectionTask = getDataCollectionTask(result.getDataCollectionTaskId());
     recordMetricsOnUpdateStatus(dataCollectionTask);
+    executionLogService.getLogger(dataCollectionTask)
+        .log(dataCollectionTask.getLogLevel(), "Data collection task status: " + dataCollectionTask.getStatus());
     if (result.getStatus() == DataCollectionExecutionStatus.SUCCESS) {
       // TODO: make this an atomic operation
       if (dataCollectionTask.shouldCreateNextTask()) {
@@ -204,8 +206,6 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
     } else {
       retry(dataCollectionTask);
     }
-    executionLogService.getLogger(dataCollectionTask)
-        .log(dataCollectionTask.getLogLevel(), "Data collection task status: " + dataCollectionTask.getStatus());
   }
 
   private void recordMetricsOnUpdateStatus(DataCollectionTask dataCollectionTask) {
@@ -286,6 +286,7 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
                               .filter(DataCollectionTaskKeys.uuid, task.getNextTaskId())
                               .filter(DataCollectionTaskKeys.status, DataCollectionExecutionStatus.WAITING),
           updateOperations);
+      executionLogService.getLogger(task).log(task.getLogLevel(), "Data collection task status: " + task.getStatus());
     }
   }
 
@@ -309,6 +310,8 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
       log.error("Task is in the past. Enqueuing next task with new data collection startTime. {}, {}, {}",
           dataCollectionTask.getUuid(), dataCollectionTask.getException(), dataCollectionTask.getStacktrace());
     }
+    executionLogService.getLogger(dataCollectionTask)
+        .log(dataCollectionTask.getLogLevel(), "Data collection task status: " + dataCollectionTask.getStatus());
   }
 
   @Override
