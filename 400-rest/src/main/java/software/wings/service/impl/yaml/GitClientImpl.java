@@ -708,6 +708,11 @@ public class GitClientImpl implements GitClient {
             FileUtils.copyFile(sourceDir, Paths.get(destinationDirectory, filePath).toFile());
           } else {
             FileUtils.copyDirectory(sourceDir, destinationDir);
+            // if source directory is repo root we don't want to have .git copied to destination directory
+            File gitFile = new File(Paths.get(destinationDirectory, ".git").toString());
+            if (gitFile.exists()) {
+              FileUtils.deleteQuietly(gitFile);
+            }
           }
         }
 

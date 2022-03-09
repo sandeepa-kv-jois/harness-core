@@ -42,8 +42,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 import org.zeroturnaround.exec.InvalidExitValueException;
 import org.zeroturnaround.exec.ProcessExecutor;
 import org.zeroturnaround.exec.ProcessResult;
@@ -279,6 +283,28 @@ public class FileIo {
     }
 
     return fileList;
+  }
+
+  public static List<Path> getFilesUnderPathMatchesFirstLine(String path, Predicate<String> predicate)
+      throws IOException {
+    List<Path> filePaths = new ArrayList<>();
+    try (Stream<Path> paths = Files.walk(Paths.get(path))) {
+      for (Path filePath : paths.filter(Files::isRegularFile).collect(Collectors.toList())) {
+        LineIterator lineIterator = FileUtils.lineIterator(filePath.toFile(), StandardCharsets.UTF_8.name());
+        while (lineIterator.hasNext()) {
+          String line = lineIterator.nextLine();
+          if (isNotEmpty(line)) {
+            if (predicate.test(line)) {
+              filePaths.add(Paths.get(getRelativePath(filePath, path)));
+            }
+
+            break;
+          }
+        }
+      }
+    }
+
+    return filePaths;
   }
 
   private static void addFiles(List<FileData> fileList, Path path, String basePath) {

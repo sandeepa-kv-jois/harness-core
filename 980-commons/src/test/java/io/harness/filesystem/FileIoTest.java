@@ -16,6 +16,7 @@ import static io.harness.filesystem.FileIo.getHomeDir;
 import static io.harness.filesystem.FileIo.releaseLock;
 import static io.harness.filesystem.FileIo.waitForDirectoryToBeAccessibleOutOfProcess;
 import static io.harness.filesystem.FileIo.writeFile;
+import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.GEORGE;
 import static io.harness.rule.OwnerRule.PUNEET;
 import static io.harness.rule.OwnerRule.SATYAM;
@@ -33,6 +34,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -174,5 +176,26 @@ public class FileIoTest extends CategoryTest {
       }
     });
     assertThat(failed.get()).isFalse();
+  }
+
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testGetFilesUnderPathMatchesFirstLine() throws IOException {
+    String randomPath = Files.createTempDirectory("testGetFilesUnderPathMatchesFirstLine").toString();
+    try {
+      String file1 = "\n\ntest-file-1";
+      String file2 = "\nsecretcode\ntest-file-2";
+      String file3 = "secretcode\ntest-file-2";
+      File directory = new File(randomPath);
+      writeFile(new File(directory, "file1").getAbsolutePath(), file1.getBytes(StandardCharsets.UTF_8));
+      writeFile(new File(directory, "file2").getAbsolutePath(), file2.getBytes(StandardCharsets.UTF_8));
+      writeFile(new File(directory, "file3").getAbsolutePath(), file3.getBytes(StandardCharsets.UTF_8));
+
+      assertThat(FileIo.getFilesUnderPathMatchesFirstLine(randomPath, line -> line.contains("secretcode")).stream())
+          .containsExactlyInAnyOrder(Paths.get("file2"), Paths.get("file3"));
+    } finally {
+      deleteDirectoryAndItsContentIfExists(randomPath);
+    }
   }
 }

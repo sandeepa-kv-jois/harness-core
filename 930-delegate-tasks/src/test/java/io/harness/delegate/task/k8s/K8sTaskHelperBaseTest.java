@@ -22,6 +22,7 @@ import static io.harness.delegate.k8s.K8sTestHelper.DEPLOYMENT_CONFIG;
 import static io.harness.filesystem.FileIo.deleteDirectoryAndItsContentIfExists;
 import static io.harness.helm.HelmConstants.HELM_RELEASE_LABEL;
 import static io.harness.helm.HelmSubCommandType.TEMPLATE;
+import static io.harness.k8s.K8sConstants.SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT;
 import static io.harness.k8s.KubernetesConvention.ReleaseHistoryKeyName;
 import static io.harness.k8s.manifest.ManifestHelper.processYaml;
 import static io.harness.k8s.manifest.ManifestHelper.values_filename;
@@ -211,12 +212,16 @@ import io.kubernetes.client.openapi.models.V1ServicePortBuilder;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatus;
 import io.kubernetes.client.openapi.models.V1TokenReviewStatusBuilder;
 import io.kubernetes.client.util.Yaml;
+import java.io.File;
 import java.io.IOException;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -244,6 +249,8 @@ import me.snowdrop.istio.api.networking.v1alpha3.VirtualService;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceBuilder;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpec;
 import me.snowdrop.istio.api.networking.v1alpha3.VirtualServiceSpecBuilder;
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.filefilter.TrueFileFilter;
 import org.jetbrains.annotations.NotNull;
 import org.json.JSONArray;
 import org.junit.Before;
@@ -3300,6 +3307,43 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
         generateInputWorkloadTestResource(), Maps.immutableEntry("harness.io/track", "stable"));
   }
 
+  @Test
+  @Owner(developers = ABOSII)
+  @Category(UnitTests.class)
+  public void testDeleteSkippedManifestFiles() throws Exception {
+    String manifestDir = Files.createTempDirectory("testDeleteSkippedManifestFiles").toString();
+    try {
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "test1.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(Paths.get(manifestDir, "test2").toString(), null);
+      prepareTestRandomByteManifestFile(Paths.get(manifestDir, "test3").toString(), null);
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "test5.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "sub/test1.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(
+          Paths.get(manifestDir, "sub/path/test2.yaml").toString(), SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT);
+      prepareTestRandomByteManifestFile(Paths.get(manifestDir, "sub/path/test3").toString(), null);
+      Collection<File> filesBefore =
+          FileUtils.listFiles(new File(manifestDir), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+      assertThat(filesBefore.stream().map(File::getPath).map(path -> path.substring(manifestDir.length())))
+          .containsExactlyInAnyOrder("/test1.yaml", "/test2", "/test3", "/test5.yaml", "/sub/test1.yaml",
+              "/sub/path/test2.yaml", "/sub/path/test3");
+
+      k8sTaskHelperBase.deleteSkippedManifestFiles(manifestDir, executionLogCallback);
+      Collection<File> filesAfter =
+          FileUtils.listFiles(new File(manifestDir), TrueFileFilter.INSTANCE, TrueFileFilter.INSTANCE);
+      assertThat(filesAfter.stream().map(File::getPath).map(path -> path.substring(manifestDir.length())))
+          .containsExactlyInAnyOrder("/test2", "/test3", "/sub/path/test3");
+    } finally {
+      FileUtils.deleteQuietly(new File(manifestDir));
+    }
+
+    assertThat(new File(manifestDir).exists())
+        .withFailMessage("Temporary directory is not deleted after test, please check")
+        .isFalse();
+  }
+
   @NotNull
   private List<V1Deployment> getV1DeploymentTestData() {
     V1Deployment v1Deployment1 = new V1Deployment()
@@ -3357,5 +3401,20 @@ public class K8sTaskHelperBaseTest extends CategoryTest {
     resources.add(KubernetesResourceId.builder().name("d3").kind("Service").namespace("ns3").build());
     resources.add(KubernetesResourceId.builder().name("d4").kind("Deployment").namespace("ns4").build());
     return resources;
+  }
+
+  private void prepareTestRandomByteManifestFile(String filePath, String header) throws IOException {
+    Random random = new Random();
+    byte[] randomBytes = new byte[2048];
+    random.nextBytes(randomBytes);
+
+    StringBuilder fileContent = new StringBuilder();
+    if (header != null) {
+      fileContent.append(header);
+      fileContent.append("\n");
+    }
+    fileContent.append(new String(randomBytes));
+
+    FileUtils.writeStringToFile(new File(filePath), fileContent.toString(), StandardCharsets.UTF_8);
   }
 }

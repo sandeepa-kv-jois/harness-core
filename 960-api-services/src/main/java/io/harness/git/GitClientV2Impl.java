@@ -1032,6 +1032,11 @@ public class GitClientV2Impl implements GitClientV2 {
               FileUtils.copyFile(sourceDir, Paths.get(request.getDestinationDirectory(), filePath).toFile());
             } else {
               FileUtils.copyDirectory(sourceDir, destinationDir);
+              // if source directory is repo root we don't want to have .git copied to destination directory
+              File gitFile = new File(Paths.get(request.getDestinationDirectory(), ".git").toString());
+              if (gitFile.exists()) {
+                FileUtils.deleteQuietly(gitFile);
+              }
             }
           } catch (FileNotFoundException e) {
             throw JGitRuntimeException.builder()

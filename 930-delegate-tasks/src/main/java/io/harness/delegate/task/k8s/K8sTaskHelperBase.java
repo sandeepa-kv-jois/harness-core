@@ -14,6 +14,7 @@ import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.GIT;
 import static io.harness.delegate.beans.storeconfig.StoreDelegateConfigType.HTTP_HELM;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.filesystem.FileIo.getFilesUnderPath;
+import static io.harness.filesystem.FileIo.getFilesUnderPathMatchesFirstLine;
 import static io.harness.helm.HelmConstants.HELM_PATH_PLACEHOLDER;
 import static io.harness.helm.HelmConstants.HELM_RELEASE_LABEL;
 import static io.harness.k8s.K8sConstants.KUBERNETES_CHANGE_CAUSE_ANNOTATION;
@@ -1647,37 +1648,23 @@ public class K8sTaskHelperBase {
 
   public void deleteSkippedManifestFiles(String manifestFilesDirectory, LogCallback executionLogCallback)
       throws Exception {
-    List<FileData> files;
+    List<Path> skippedFilesList;
     Path directory = Paths.get(manifestFilesDirectory);
 
     try {
-      files = getFilesUnderPath(directory.toString());
+      skippedFilesList = getFilesUnderPathMatchesFirstLine(
+          directory.toString(), line -> line.contains(SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT));
     } catch (Exception ex) {
       log.info(ExceptionUtils.getMessage(ex));
       throw new WingsException("Failed to get files. Error: " + ExceptionUtils.getMessage(ex));
     }
 
-    List<String> skippedFilesList = new ArrayList<>();
-
-    for (FileData fileData : files) {
-      try {
-        String fileContent = new String(fileData.getFileBytes(), UTF_8);
-
-        if (isNotBlank(fileContent)
-            && fileContent.split("\\r?\\n")[0].contains(SKIP_FILE_FOR_DEPLOY_PLACEHOLDER_TEXT)) {
-          skippedFilesList.add(fileData.getFilePath());
-        }
-      } catch (Exception ex) {
-        log.info("Could not convert to string for file" + fileData.getFilePath(), ex);
-      }
-    }
-
     if (isNotEmpty(skippedFilesList)) {
       executionLogCallback.saveExecutionLog("Following manifest files are skipped for applying");
-      for (String file : skippedFilesList) {
-        executionLogCallback.saveExecutionLog(color(file, Yellow, Bold));
+      for (Path path : skippedFilesList) {
+        executionLogCallback.saveExecutionLog(color(path.toString(), Yellow, Bold));
 
-        String filePath = Paths.get(manifestFilesDirectory, file).toString();
+        String filePath = Paths.get(manifestFilesDirectory, path.toString()).toString();
         FileIo.deleteFileIfExists(filePath);
       }
 
