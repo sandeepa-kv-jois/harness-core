@@ -3,7 +3,6 @@ package io.harness.delegate.events;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.audit.ResourceTypeConstants;
-import io.harness.delegate.beans.DelegateParams;
 import io.harness.delegate.beans.DelegateSetupDetails;
 import io.harness.ng.core.Resource;
 
