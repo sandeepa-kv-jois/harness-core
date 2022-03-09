@@ -59,7 +59,7 @@ public interface YamlService<Y extends BaseYaml, B extends Base> {
 
   YamlOperationResponse deleteYAMLByPaths(String accountId, List<String> filePaths);
 
-  YamlOperationResponse deleteYAMLByPathsV2(String accountId, List<EntityInformation> filePathsWithSubtype);
+  YamlOperationResponse deleteYAMLByPathsV2(String accountId, List<EntityInformation> entityInformations);
 
   FileOperationStatus upsertYAMLFile(String accountId, String yamlFilePath, String yamlContent);
 }
