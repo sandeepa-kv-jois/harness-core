@@ -2464,7 +2464,7 @@ public class DelegateServiceImpl implements DelegateService {
   }
 
   Delegate upsertDelegateOperation(Delegate existingDelegate, Delegate delegate) {
-    return upsertDelegateOperation(existingDelegate, delegate,null);
+    return upsertDelegateOperation(existingDelegate, delegate, null);
   }
 
   @VisibleForTesting
