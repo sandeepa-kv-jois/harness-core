@@ -297,6 +297,7 @@ entityVersions {"name": "createdAt_1", "background": true} {"createdAt": 1}
 entityVersions {"name": "unique_locate", "unique": true} {"entityType": 1, "entityUuid": 1, "version": 1}
 entityYamlRecord {"name": "index_1", "background": true} {"accountId": 1, "entityId": 1, "entityType": 1, "createdAt": -1}
 entityYamlRecord {"name": "index_2", "background": true} {"accountId": 1, "entityType": 1, "createdAt": -1}
+environmentGroupNG {"name": "unique_accountId_organizationIdentifier_projectIdentifier_envGroupIdentifier", "unique": true} {"accountId": 1, "orgIdentifier": 1, "projectIdentifier": 1, "identifier": 1}
 environments {"name": "accountIdCreatedAt", "background": true} {"accountId": 1, "createdAt": -1}
 environments {"name": "accountId_1", "background": true} {"accountId": 1}
 environments {"name": "accountId_name", "background": true} {"accountId": 1, "name": 1}
