@@ -16,13 +16,14 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.exception.InvalidRequestException;
 import io.harness.gitsync.interceptor.GitSyncConstants;
 
+import java.util.regex.Pattern;
 import lombok.experimental.UtilityClass;
 
 @OwnedBy(HarnessTeam.PL)
 @UtilityClass
 public class GitSyncSdkUtils {
   public GitEntityFilePath getRootFolderAndFilePath(String completeFilePath) {
-    String[] pathSplited = emptyIfNull(completeFilePath).split(GitSyncConstants.FOLDER_PATH);
+    String[] pathSplited = Pattern.compile("([.])(harness/)").split(completeFilePath);
     if (pathSplited.length != 2) {
       throw new InvalidRequestException(String.format(
           "The path %s doesn't contain the .harness folder, thus this file won't be processed", completeFilePath));

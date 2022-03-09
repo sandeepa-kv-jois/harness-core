@@ -43,6 +43,7 @@ import io.harness.manage.GlobalContextManager;
 import io.harness.manage.GlobalContextManager.GlobalContextGuard;
 import io.harness.ng.core.ValidationError;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
@@ -53,6 +54,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.function.Supplier;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import javax.validation.ConstraintViolation;
 import javax.validation.ConstraintViolationException;
@@ -199,9 +202,10 @@ public class GitToHarnessSdkProcessorImpl implements GitToHarnessSdkProcessor {
     return false;
   }
 
-  private GitSyncBranchContext createGitEntityInfo(
+  @VisibleForTesting
+  protected GitSyncBranchContext createGitEntityInfo(
       String branch, String filePath, String yamlGitConfigId, String lastObjectId, String commitId) {
-    String[] pathSplited = emptyIfNull(filePath).split(GitSyncConstants.FOLDER_PATH);
+    String[] pathSplited = Pattern.compile("([.])(harness/)").split(filePath);
     if (pathSplited.length != 2) {
       throw new InvalidRequestException(String.format(
           "The path %s doesn't contain the .harness folder, thus this file won't be processed", filePath));
