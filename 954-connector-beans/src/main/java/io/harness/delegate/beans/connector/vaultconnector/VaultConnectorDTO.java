@@ -114,8 +114,8 @@ public class VaultConnectorDTO extends ConnectorConfigDTO implements DelegateSel
     } catch (MalformedURLException malformedURLException) {
       throw new InvalidRequestException("Please check the Vault url and try again.", INVALID_REQUEST, USER);
     }
-    if (isBlank(vaultUrl)){
-      throw new InvalidRequestException( String.format("Invalid value for Vault URL"), INVALID_REQUEST, USER);
+    if (isBlank(vaultUrl)) {
+      throw new InvalidRequestException(String.format("Invalid value for Vault URL"), INVALID_REQUEST, USER);
     }
     if (secretEngineVersion <= 0) {
       throw new InvalidRequestException(
