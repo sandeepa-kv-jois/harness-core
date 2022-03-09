@@ -16,7 +16,6 @@ import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
 import io.harness.beans.gitsync.GitWebhookDetails;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
-import io.harness.impl.jgit.JgitGitServiceImpl;
 import io.harness.impl.scm.SCMServiceGitClientImpl;
 import io.harness.product.ci.scm.proto.CompareCommitsResponse;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
@@ -53,7 +52,6 @@ import lombok.extern.slf4j.Slf4j;
 @OwnedBy(DX)
 public class ScmOrchestratorServiceImpl implements ScmOrchestratorService {
   private SCMServiceGitClientImpl scmServiceGitClient;
-  private JgitGitServiceImpl jgitGitService;
 
   @Override
   public CreateFileResponse createFile(ScmConnector scmConnector, GitFileDetails gitFileDetails) {

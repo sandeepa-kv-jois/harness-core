@@ -14,6 +14,7 @@ import io.harness.ccm.budget.dao.BudgetDao;
 import io.harness.ccm.budget.utils.BudgetUtils;
 import io.harness.ccm.commons.entities.billing.Budget;
 import io.harness.ccm.commons.entities.budget.BudgetData;
+import io.harness.ccm.graphql.core.budget.BudgetCostService;
 import io.harness.ccm.graphql.core.budget.BudgetService;
 import io.harness.ccm.graphql.dto.budget.BudgetSummary;
 import io.harness.ccm.graphql.utils.GraphQLUtils;
@@ -38,6 +39,7 @@ public class BudgetsQuery {
   @Inject private GraphQLUtils graphQLUtils;
   @Inject private BudgetDao budgetDao;
   @Inject private BudgetService budgetService;
+  @Inject private BudgetCostService budgetCostService;
 
   @GraphQLQuery(name = "budgetSummary", description = "Budget card for perspectives")
   public BudgetSummary budgetSummaryForPerspective(@GraphQLArgument(name = "perspectiveId") String perspectiveId,
@@ -61,7 +63,7 @@ public class BudgetsQuery {
       }
 
       if (budget != null) {
-        return buildBudgetSummary(budget);
+        return buildBudgetSummary(budget, true);
       }
 
     } catch (Exception e) {
@@ -83,7 +85,7 @@ public class BudgetsQuery {
       budgets = budgets.stream().filter(BudgetUtils::isPerspectiveBudget).collect(Collectors.toList());
     }
     budgets.sort(Comparator.comparing(Budget::getLastUpdatedAt).reversed());
-    budgets.forEach(budget -> budgetSummaryList.add(buildBudgetSummary(budget)));
+    budgets.forEach(budget -> budgetSummaryList.add(buildBudgetSummary(budget, false)));
 
     return budgetSummaryList;
   }
@@ -112,7 +114,7 @@ public class BudgetsQuery {
                 .collect(Collectors.toList());
       }
 
-      perspectiveBudgets.forEach(budget -> budgetSummaryList.add(buildBudgetSummary(budget)));
+      perspectiveBudgets.forEach(budget -> budgetSummaryList.add(buildBudgetSummary(budget, false)));
 
     } catch (Exception e) {
       log.info("Exception while fetching budget summary cards for given perspective: ", e);
@@ -120,14 +122,18 @@ public class BudgetsQuery {
     return budgetSummaryList;
   }
 
-  private BudgetSummary buildBudgetSummary(Budget budget) {
+  private BudgetSummary buildBudgetSummary(Budget budget, boolean fetchLatestSpend) {
+    Double actualCost = budget.getActualCost();
+    if (fetchLatestSpend) {
+      actualCost = budgetCostService.getActualCost(budget);
+    }
     return BudgetSummary.builder()
         .id(budget.getUuid())
         .name(budget.getName())
         .perspectiveId(BudgetUtils.getPerspectiveIdForBudget(budget))
         .perspectiveName(BudgetUtils.getPerspectiveNameForBudget(budget))
         .budgetAmount(budget.getBudgetAmount())
-        .actualCost(budget.getActualCost())
+        .actualCost(actualCost)
         .forecastCost(budget.getForecastCost())
         .timeLeft(BudgetUtils.getTimeLeftForBudget(budget))
         .timeUnit(BudgetUtils.DEFAULT_TIME_UNIT)

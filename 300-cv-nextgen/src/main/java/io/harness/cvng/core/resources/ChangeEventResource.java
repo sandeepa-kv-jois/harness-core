@@ -216,15 +216,11 @@ public class ChangeEventResource {
   getMonitoredServiceChangeTimeline(@NotNull @QueryParam("accountId") String accountId,
       @NotNull @QueryParam("orgIdentifier") String orgIdentifier,
       @NotNull @QueryParam("projectIdentifier") String projectIdentifier,
-      @QueryParam("environmentIdentifier") String environmentIdentifier,
-      @QueryParam("serviceIdentifier") String serviceIdentifier,
       @QueryParam("monitoredServiceIdentifier") String monitoredServiceIdentifier,
       @QueryParam("changeSourceTypes") List<ChangeSourceType> changeSourceTypes,
       @QueryParam("searchText") String searchText, @NotNull @QueryParam("duration") DurationDTO durationDTO,
       @NotNull @QueryParam("endTime") Long endTime) {
     MonitoredServiceParams monitoredServiceParams = MonitoredServiceParams.builder()
-                                                        .serviceIdentifier(serviceIdentifier)
-                                                        .environmentIdentifier(environmentIdentifier)
                                                         .accountIdentifier(accountId)
                                                         .orgIdentifier(orgIdentifier)
                                                         .projectIdentifier(projectIdentifier)

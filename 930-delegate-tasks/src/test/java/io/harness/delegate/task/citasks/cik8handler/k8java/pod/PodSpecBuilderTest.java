@@ -13,8 +13,10 @@ import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBui
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPod;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithImageCred;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithPVC;
+import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithTaint;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicExpectedPodWithVolumeMount;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInput;
+import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputTaint;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputWithImageCred;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputWithPVC;
 import static io.harness.delegate.task.citasks.cik8handler.k8java.pod.PodSpecBuilderTestHelper.basicInputWithVolumeMount;
@@ -70,6 +72,22 @@ public class PodSpecBuilderTest extends CategoryTest {
     CIK8ContainerParams containerParams = basicContainerParamsWithoutImageCred();
 
     V1Pod expectedPod = basicExpectedPod();
+    V1ContainerBuilder containerBuilder = basicContainerBuilder();
+
+    when(containerSpecBuilder.createSpec(containerParams))
+        .thenReturn(ContainerSpecBuilderResponse.builder().containerBuilder(containerBuilder).build());
+    V1PodBuilder responsePodBuilder = cik8PodSpecBuilder.createSpec((PodParams) podParams);
+    assertEquals(responsePodBuilder.build(), expectedPod);
+  }
+
+  @Test
+  @Owner(developers = SHUBHAM)
+  @Category(UnitTests.class)
+  public void createBasicSpecWithTaint() {
+    CIK8PodParams<CIK8ContainerParams> podParams = basicInputTaint();
+    CIK8ContainerParams containerParams = basicContainerParamsWithoutImageCred();
+
+    V1Pod expectedPod = basicExpectedPodWithTaint();
     V1ContainerBuilder containerBuilder = basicContainerBuilder();
 
     when(containerSpecBuilder.createSpec(containerParams))

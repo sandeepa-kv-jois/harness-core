@@ -218,6 +218,7 @@ import software.wings.beans.HelmChartConfig;
 import software.wings.beans.HelmCommandFlagConfig;
 import software.wings.beans.HelmCommandFlagConstants.HelmSubCommand;
 import software.wings.beans.HostConnectionAttributes;
+import software.wings.beans.HostReachabilityInfo;
 import software.wings.beans.HostValidationResponse;
 import software.wings.beans.HostValidationTaskParameters;
 import software.wings.beans.InfraMappingSweepingOutput;
@@ -665,6 +666,7 @@ import software.wings.service.impl.aws.model.response.AwsCloudWatchMetricDataRes
 import software.wings.service.impl.aws.model.response.AwsCloudWatchStatisticsResponse;
 import software.wings.service.impl.aws.model.response.AwsLambdaDetailsMetricsResponse;
 import software.wings.service.impl.aws.model.response.AwsLambdaDetailsResponse;
+import software.wings.service.impl.aws.model.response.HostReachabilityResponse;
 import software.wings.service.impl.azure.manager.AzureTaskExecutionRequest;
 import software.wings.service.impl.azure.manager.AzureVMSSAllPhaseRollbackData;
 import software.wings.service.impl.azure.manager.AzureVMSSCommandRequest;
@@ -1001,6 +1003,8 @@ public class ManagerKryoRegistrar implements KryoRegistrar {
     kryo.register(HostConnectionAttributes.ConnectionType.class, 5071);
     kryo.register(HostConnectionAttributes.class, 5070);
     kryo.register(HostValidationResponse.class, 5167);
+    kryo.register(HostReachabilityInfo.class, 5172);
+    kryo.register(HostReachabilityResponse.class, 5187);
     kryo.register(Host.class, 5067);
     kryo.register(EcsContainerInfo.class, 5166);
     kryo.register(KubernetesContainerInfo.class, 5165);

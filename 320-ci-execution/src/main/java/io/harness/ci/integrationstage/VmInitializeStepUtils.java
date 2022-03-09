@@ -20,6 +20,7 @@ import static java.lang.String.format;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.FeatureName;
+import io.harness.beans.dependencies.DependencyElement;
 import io.harness.beans.environment.BuildJobEnvInfo;
 import io.harness.beans.environment.VmBuildJobInfo;
 import io.harness.beans.executionargs.CIExecutionArgs;
@@ -86,7 +87,12 @@ public class VmInitializeStepUtils {
     }
     IntegrationStageConfig integrationStageConfig = IntegrationStageUtils.getIntegrationStageConfig(stageElementConfig);
     validateStageConfig(integrationStageConfig, accountId);
-    ValidationUtils.validateVmInfraDependencies(integrationStageConfig.getServiceDependencies());
+    List<DependencyElement> serviceDependencies = null;
+    if (integrationStageConfig.getServiceDependencies() != null
+        && integrationStageConfig.getServiceDependencies().getValue() != null) {
+      serviceDependencies = integrationStageConfig.getServiceDependencies().getValue();
+      ValidationUtils.validateVmInfraDependencies(serviceDependencies);
+    }
 
     Map<String, String> volumeToMountPath = getVolumeToMountPath(integrationStageConfig.getSharedPaths());
     return VmBuildJobInfo.builder()
@@ -95,7 +101,7 @@ public class VmInitializeStepUtils {
         .connectorRefs(connectorIdentifiers)
         .stageVars(stageElementConfig.getVariables())
         .volToMountPath(volumeToMountPath)
-        .serviceDependencies(integrationStageConfig.getServiceDependencies())
+        .serviceDependencies(serviceDependencies)
         .build();
   }
 

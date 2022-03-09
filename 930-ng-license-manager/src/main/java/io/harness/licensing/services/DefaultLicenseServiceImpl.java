@@ -7,6 +7,7 @@
 
 package io.harness.licensing.services;
 
+import static io.harness.licensing.LicenseModule.LICENSE_CACHE_NAMESPACE;
 import static io.harness.licensing.interfaces.ModuleLicenseImpl.TRIAL_DURATION;
 import static io.harness.remote.client.RestClientUtils.getResponse;
 
@@ -15,7 +16,6 @@ import static java.lang.String.format;
 import io.harness.ModuleType;
 import io.harness.account.services.AccountService;
 import io.harness.beans.EmbeddedUser;
-import io.harness.cache.HarnessCacheManager;
 import io.harness.ccm.license.CeLicenseInfoDTO;
 import io.harness.ccm.license.remote.CeLicenseClient;
 import io.harness.exception.InvalidRequestException;
@@ -48,6 +48,7 @@ import io.harness.telemetry.TelemetryReporter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
+import com.google.inject.name.Named;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Collection;
@@ -58,10 +59,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 import javax.cache.Cache;
-import javax.cache.configuration.Factory;
-import javax.cache.expiry.AccessedExpiryPolicy;
-import javax.cache.expiry.Duration;
-import javax.cache.expiry.ExpiryPolicy;
 import javax.ws.rs.NotFoundException;
 import lombok.extern.slf4j.Slf4j;
 
@@ -74,8 +71,7 @@ public class DefaultLicenseServiceImpl implements LicenseService {
   private final TelemetryReporter telemetryReporter;
   private final CeLicenseClient ceLicenseClient;
   private final LicenseComplianceResolver licenseComplianceResolver;
-  private final HarnessCacheManager cacheManager;
-  private Cache<String, List> cache;
+  private final Cache<String, List> cache;
 
   static final String FAILED_OPERATION = "START_TRIAL_ATTEMPT_FAILED";
   static final String SUCCEED_START_FREE_OPERATION = "FREE_PLAN";
@@ -89,7 +85,7 @@ public class DefaultLicenseServiceImpl implements LicenseService {
   public DefaultLicenseServiceImpl(ModuleLicenseRepository moduleLicenseRepository,
       LicenseObjectConverter licenseObjectConverter, ModuleLicenseInterface licenseInterface,
       AccountService accountService, TelemetryReporter telemetryReporter, CeLicenseClient ceLicenseClient,
-      LicenseComplianceResolver licenseComplianceResolver, HarnessCacheManager cacheManager) {
+      LicenseComplianceResolver licenseComplianceResolver, @Named(LICENSE_CACHE_NAMESPACE) Cache<String, List> cache) {
     this.moduleLicenseRepository = moduleLicenseRepository;
     this.licenseObjectConverter = licenseObjectConverter;
     this.licenseInterface = licenseInterface;
@@ -97,10 +93,7 @@ public class DefaultLicenseServiceImpl implements LicenseService {
     this.telemetryReporter = telemetryReporter;
     this.ceLicenseClient = ceLicenseClient;
     this.licenseComplianceResolver = licenseComplianceResolver;
-    this.cacheManager = cacheManager;
-
-    Factory<ExpiryPolicy> expiryPolicyFactory = AccessedExpiryPolicy.factoryOf(Duration.THIRTY_MINUTES);
-    cache = cacheManager.getCache("NGLicense", String.class, List.class, expiryPolicyFactory);
+    this.cache = cache;
   }
 
   @Override

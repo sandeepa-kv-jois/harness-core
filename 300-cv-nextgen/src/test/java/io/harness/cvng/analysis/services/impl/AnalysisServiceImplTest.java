@@ -18,13 +18,13 @@ import io.harness.category.element.UnitTests;
 import io.harness.cvng.analysis.beans.LogAnalysisDTO;
 import io.harness.cvng.analysis.beans.ServiceGuardTimeSeriesAnalysisDTO;
 import io.harness.cvng.analysis.beans.ServiceGuardTxnMetricAnalysisDataDTO;
-import io.harness.cvng.analysis.beans.TimeSeriesAnomalies;
+import io.harness.cvng.analysis.beans.ServiceGuardTxnMetricAnalysisDataDTO.MetricSumDTO;
+import io.harness.cvng.analysis.beans.TimeSeriesAnomaliesDTO;
 import io.harness.cvng.analysis.entities.LearningEngineTask;
 import io.harness.cvng.analysis.entities.LearningEngineTask.LearningEngineTaskType;
 import io.harness.cvng.analysis.entities.LogAnalysisCluster;
 import io.harness.cvng.analysis.entities.LogAnalysisResult;
 import io.harness.cvng.analysis.entities.ServiceGuardLogAnalysisTask;
-import io.harness.cvng.analysis.entities.TimeSeriesCumulativeSums;
 import io.harness.cvng.analysis.entities.TimeSeriesLearningEngineTask;
 import io.harness.cvng.analysis.services.api.AnalysisService;
 import io.harness.cvng.analysis.services.api.LearningEngineTaskService;
@@ -229,11 +229,11 @@ public class AnalysisServiceImplTest extends CvNextGenTestBase {
       ServiceGuardTxnMetricAnalysisDataDTO txnMetricData =
           ServiceGuardTxnMetricAnalysisDataDTO.builder()
               .isKeyTransaction(false)
-              .cumulativeSums(TimeSeriesCumulativeSums.MetricSum.builder().risk(0.5).data(0.9).build())
+              .cumulativeSums(MetricSumDTO.builder().risk(0.5).data(0.9).build())
               .shortTermHistory(Arrays.asList(0.1, 0.2, 0.3, 0.4))
-              .anomalousPatterns(Arrays.asList(TimeSeriesAnomalies.builder()
+              .anomalousPatterns(Arrays.asList(TimeSeriesAnomaliesDTO.builder()
                                                    .transactionName(txn)
-                                                   .metricName(metric)
+                                                   .metricIdentifier(metric)
                                                    .testData(Arrays.asList(0.1, 0.2, 0.3, 0.4))
                                                    .anomalousTimestamps(Arrays.asList(12345l, 12346l, 12347l))
                                                    .build()))

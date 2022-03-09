@@ -70,7 +70,7 @@ public class CVNGStepFilterJsonCreator extends GenericStepPMSFilterJsonCreator {
     if (!(NGExpressionUtils.isRuntimeOrExpressionField(serviceIdentifier)
             || NGExpressionUtils.isRuntimeOrExpressionField(envIdentifier))) {
       MonitoredServiceDTO monitoredServiceDTO =
-          monitoredServiceService.getMonitoredServiceDTO(serviceEnvironmentParams);
+          monitoredServiceService.getApplicationMonitoredServiceDTO(serviceEnvironmentParams);
       Preconditions.checkNotNull(monitoredServiceDTO, "MonitoredService does not exist for service %s and env %s",
           serviceIdentifier, envIdentifier);
       Preconditions.checkState(!monitoredServiceDTO.getSources().getHealthSources().isEmpty(),

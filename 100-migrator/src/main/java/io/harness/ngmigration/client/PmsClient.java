@@ -22,7 +22,7 @@ import retrofit2.http.Query;
 
 @OwnedBy(HarnessTeam.CDC)
 public interface PmsClient {
-  @POST("api/pipelines/v2")
+  @POST("pipelines/v2")
   Call<ResponseDTO<PipelineSaveResponse>> createPipeline(@Header("Authorization") String auth,
       @Query(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
       @Query(NGCommonEntityConstants.ORG_KEY) String orgId,

@@ -63,7 +63,7 @@ public class IntegrationStageStepParametersPMS implements SpecParameters, StepPa
     return IntegrationStageStepParametersPMS.builder()
         .buildStatusUpdateParameter(buildStatusUpdateParameter)
         .infrastructure(infrastructure)
-        .dependencies(integrationStageConfig.getServiceDependencies())
+        .dependencies(integrationStageConfig.getServiceDependencies().getValue())
         .childNodeID(childNodeID)
         .sharedPaths(integrationStageConfig.getSharedPaths())
         .enableCloneRepo(integrationStageConfig.getCloneCodebase())

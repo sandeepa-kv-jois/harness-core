@@ -20,6 +20,7 @@ import lombok.EqualsAndHashCode;
 @Builder
 @EqualsAndHashCode(callSuper = true)
 public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<ErrorTrackingConnectorDTO> {
+  private String accountId;
   private String serviceId;
   private String environmentId;
   private String versionId;
@@ -48,6 +49,7 @@ public class ErrorTrackingDataCollectionInfo extends LogDataCollectionInfo<Error
   public Map<String, String> collectionHeaders(ErrorTrackingConnectorDTO overOpsConnectorDTO) {
     Map<String, String> headers = new HashMap<>();
     headers.put("X-API-Key", new String(overOpsConnectorDTO.getApiKeyRef().getDecryptedValue()));
+    headers.put("accountId", accountId);
     return headers;
   }
 

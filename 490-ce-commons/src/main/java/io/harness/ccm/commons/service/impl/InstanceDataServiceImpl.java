@@ -16,6 +16,8 @@ import io.harness.ccm.commons.service.intf.InstanceDataService;
 
 import com.google.inject.Inject;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @OwnedBy(CE)
 public class InstanceDataServiceImpl implements InstanceDataService {
@@ -29,6 +31,14 @@ public class InstanceDataServiceImpl implements InstanceDataService {
   @Override
   public List<InstanceData> fetchInstanceDataForGivenInstances(List<String> instanceIds) {
     return instanceDataDao.fetchInstanceDataForGivenInstances(instanceIds);
+  }
+
+  @Override
+  public Map<String, Map<String, String>> fetchLabelsForGivenInstances(List<String> instanceIds) {
+    return instanceDataDao.fetchInstanceDataForGivenInstances(instanceIds)
+        .stream()
+        .filter(instanceData -> instanceData.getLabels() != null)
+        .collect(Collectors.toMap(InstanceData::getInstanceId, InstanceData::getLabels));
   }
 
   @Override

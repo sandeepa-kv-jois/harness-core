@@ -10,6 +10,7 @@ package io.harness.morphia;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.beans.MigratedEntityMapping;
 import io.harness.beans.SweepingOutput;
 import io.harness.beans.terraform.TerraformPlanParam;
 
@@ -36,6 +37,7 @@ public class CgOrchestrationBeansMorphiaRegistrar implements MorphiaRegistrar {
     set.add(SweepingOutput.class);
     set.add(NGMigrationEntity.class);
     set.add(ThirdPartyApiCallLog.class);
+    set.add(MigratedEntityMapping.class);
     set.add(Log.class);
     set.add(CVActivityLog.class);
   }

@@ -43,5 +43,6 @@ public class ErrorTrackingDataCollectionInfoMapperTest extends CvNextGenTestBase
     assertThat(overOpsDataCollectionInfo.getEnvironmentId()).isEqualTo(cvConfig.getEnvIdentifier());
     assertThat(overOpsDataCollectionInfo.getVerificationType()).isEqualTo(VerificationType.LOG);
     assertThat(overOpsDataCollectionInfo.getDataCollectionDsl()).isEqualTo(cvConfig.getDataCollectionDsl());
+    assertThat(overOpsDataCollectionInfo.getAccountId()).isEqualTo(cvConfig.getAccountId());
   }
 }

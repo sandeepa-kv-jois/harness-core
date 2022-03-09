@@ -38,6 +38,7 @@ public class MigratorConfig extends Configuration implements AssetsBundleConfigu
   private MainConfiguration cg;
   @JsonProperty("ngClientConfig") private ServiceHttpClientConfig ngClientConfig;
   @JsonProperty("pipelineServiceClientConfig") private ServiceHttpClientConfig pipelineServiceClientConfig;
+  @JsonProperty("templateServiceClientConfig") private ServiceHttpClientConfig templateServiceClientConfig;
 
   @Override
   public AssetsConfiguration getAssetsConfiguration() {
