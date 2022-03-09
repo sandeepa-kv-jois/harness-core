@@ -65,7 +65,6 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
-import com.google.protobuf.StringValue;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Optional;
@@ -349,9 +348,7 @@ public class HarnessToGitHelperServiceImpl implements HarnessToGitHelperService 
     String lastCommitIdForFile = request.getCommitId() == null ? "" : request.getCommitId();
     if (isEmpty(lastCommitIdForFile) && request.getChangeType() != ChangeType.ADD) {
       // If its saveToNewBranch use-case, then we choose base branch for existing entity commit
-      String branch = request.getBaseBranch().equals(StringValue.getDefaultInstance())
-          ? request.getBranch()
-          : request.getBaseBranch().getValue();
+      String branch = request.getIsNewBranch() ? request.getBaseBranch().getValue() : request.getBranch();
       GitSyncEntityDTO gitSyncEntityDTO =
           gitEntityService.get(entityDetailDTO.getEntityRef(), entityDetailDTO.getType(), branch);
       lastCommitIdForFile = gitSyncEntityDTO.getLastCommitId();
