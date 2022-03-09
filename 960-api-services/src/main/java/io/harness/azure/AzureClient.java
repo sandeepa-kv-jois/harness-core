@@ -38,6 +38,7 @@ import com.microsoft.rest.LogLevel;
 import com.microsoft.rest.ServiceResponseBuilder;
 import com.microsoft.rest.serializer.JacksonAdapter;
 import java.io.IOException;
+import java.security.InvalidKeyException;
 import java.util.concurrent.TimeUnit;
 import lombok.extern.slf4j.Slf4j;
 import okhttp3.OkHttpClient;
@@ -93,7 +94,7 @@ public class AzureClient {
     }
   }
 
-  private AzureEnvironment getAzureEnvironment(AzureEnvironmentType azureEnvironmentType) {
+  protected AzureEnvironment getAzureEnvironment(AzureEnvironmentType azureEnvironmentType) {
     if (azureEnvironmentType == null) {
       return AzureEnvironment.AZURE;
     }
@@ -115,6 +116,18 @@ public class AzureClient {
     while (e1.getCause() != null) {
       e1 = e1.getCause();
       if (e1 instanceof AuthenticationException) {
+        throw new InvalidCredentialsException("Invalid Azure credentials." + e1.getMessage(), USER);
+      }
+    }
+  }
+
+  protected void handleInvalidCertException(Exception e) {
+    log.error("HandleInvalidCertException: Exception:" + e);
+
+    Throwable e1 = e;
+    while (e1.getCause() != null) {
+      e1 = e1.getCause();
+      if (e1 instanceof InvalidKeyException) {
         throw new InvalidCredentialsException("Invalid Azure credentials." + e1.getMessage(), USER);
       }
     }

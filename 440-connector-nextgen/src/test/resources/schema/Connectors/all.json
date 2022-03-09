@@ -806,6 +806,78 @@
       ],
       "$schema": "http://json-schema.org/draft-07/schema#"
     },
+    "AzureConnector": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/ConnectorConfigDTO"
+        },
+        {
+          "type": "object",
+          "required": [
+            "azureEnvironmentType",
+            "credential"
+          ],
+          "properties": {
+            "azureEnvironmentType": {
+              "type": "string",
+              "enum": [
+                "AZURE",
+                "AZURE_US_GOVERNMENT"
+              ]
+            },
+            "credential": {
+              "$ref": "#/definitions/AzureCredential"
+            },
+            "delegateSelectors": {
+              "type": "array",
+              "uniqueItems": true,
+              "items": {
+                "type": "string"
+              }
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "AzureCredential": {
+      "type": "object",
+      "required": [
+        "type"
+      ],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": [
+            "InheritFromDelegate",
+            "ManualConfig"
+          ]
+        }
+      },
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "ManualConfig"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/AzureManualDetails"
+              }
+            }
+          }
+        }
+      ]
+    },
+    "AzureCredentialSpec": {
+      "type": "object",
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
     "AzureKeyVaultConnectorDTO": {
       "allOf": [
         {
@@ -852,6 +924,42 @@
             },
             "vaultName": {
               "type": "string"
+            }
+          }
+        }
+      ],
+      "$schema": "http://json-schema.org/draft-07/schema#"
+    },
+    "AzureManualDetails": {
+      "allOf": [
+        {
+          "$ref": "#/definitions/AzureCredentialSpec"
+        },
+        {
+          "type": "object",
+          "required": [
+            "clientId",
+            "secretRef",
+            "tenantId",
+            "type"
+          ],
+          "properties": {
+            "clientId": {
+              "type": "string"
+            },
+            "secretRef": {
+              "type": "string"
+            },
+            "tenantId": {
+              "type": "string"
+            },
+            "type": {
+              "type": "string",
+              "readOnly": true,
+              "enum": [
+                "SecretKey",
+                "KeyCert"
+              ]
             }
           }
         }
@@ -1330,6 +1438,7 @@
             "AwsSecretManager",
             "Gcp",
             "Aws",
+            "Azure",
             "Artifactory",
             "Jira",
             "Nexus",
@@ -1430,6 +1539,22 @@
             "properties": {
               "spec": {
                 "$ref": "#/definitions/AwsSecretManagerDTO"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "type": {
+                "const": "Azure"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "spec": {
+                "$ref": "#/definitions/AzureConnector"
               }
             }
           }

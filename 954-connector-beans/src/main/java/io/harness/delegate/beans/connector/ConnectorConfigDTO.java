@@ -16,6 +16,7 @@ import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConne
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awskmsconnector.AwsKmsConnectorDTO;
 import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerDTO;
+import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azurekeyvaultconnector.AzureKeyVaultConnectorDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
 import io.harness.delegate.beans.connector.ceazure.CEAzureConnectorDTO;
@@ -72,6 +73,7 @@ import java.util.List;
       @JsonSubTypes.Type(value = AzureKeyVaultConnectorDTO.class, name = "AzureKeyVault"),
       @JsonSubTypes.Type(value = GcpConnectorDTO.class, name = "Gcp"),
       @JsonSubTypes.Type(value = AwsConnectorDTO.class, name = "Aws"),
+      @JsonSubTypes.Type(value = AzureConnectorDTO.class, name = "Azure"),
       @JsonSubTypes.Type(value = CEAwsConnectorDTO.class, name = "CEAws"),
       @JsonSubTypes.Type(value = ArtifactoryConnectorDTO.class, name = "Artifactory"),
       @JsonSubTypes.Type(value = JiraConnectorDTO.class, name = "Jira"),

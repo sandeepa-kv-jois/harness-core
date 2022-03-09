@@ -250,4 +250,6 @@ Tejas Tiwari tejas.tiwari@harness.io
 Dev Mittal devki.mittal@harness.io
 Lalit Kumar lalit.kumar@harness.io
 Naman Goenka naman.goenka@harness.io
+Aleksa Buha aleksa.buha@harness.io
+alebuh aleksa.buha@harness.io
 Satyam Goel satyam.goel@harness.io

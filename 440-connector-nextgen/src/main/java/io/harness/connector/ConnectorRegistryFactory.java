@@ -15,6 +15,7 @@ import io.harness.connector.heartbeat.AwsKmsConnectorValidationParamsProvider;
 import io.harness.connector.heartbeat.AwsSecretManagerValidationParamsProvider;
 import io.harness.connector.heartbeat.AwsValidationParamsProvider;
 import io.harness.connector.heartbeat.AzureKeyVaultConnectorValidationParamsProvider;
+import io.harness.connector.heartbeat.AzureValidationParamsProvider;
 import io.harness.connector.heartbeat.CEK8sConnectorValidationParamsProvider;
 import io.harness.connector.heartbeat.CVConnectorParamsProvider;
 import io.harness.connector.heartbeat.ConnectorValidationParamsProvider;
@@ -39,6 +40,8 @@ import io.harness.connector.mappers.awscodecommit.AwsCodeCommitDTOToEntity;
 import io.harness.connector.mappers.awscodecommit.AwsCodeCommitEntityToDTO;
 import io.harness.connector.mappers.awsmapper.AwsDTOToEntity;
 import io.harness.connector.mappers.awsmapper.AwsEntityToDTO;
+import io.harness.connector.mappers.azuremapper.AzureDTOToEntity;
+import io.harness.connector.mappers.azuremapper.AzureEntityToDTO;
 import io.harness.connector.mappers.bitbucketconnectormapper.BitbucketDTOToEntity;
 import io.harness.connector.mappers.bitbucketconnectormapper.BitbucketEntityToDTO;
 import io.harness.connector.mappers.ceawsmapper.CEAwsDTOToEntity;
@@ -104,6 +107,7 @@ import io.harness.connector.task.NotSupportedValidationHandler;
 import io.harness.connector.task.git.GitValidationHandler;
 import io.harness.connector.validator.ArtifactoryConnectionValidator;
 import io.harness.connector.validator.AwsConnectorValidator;
+import io.harness.connector.validator.AzureConnectorValidator;
 import io.harness.connector.validator.CEAwsConnectorValidator;
 import io.harness.connector.validator.CEAzureConnectorValidator;
 import io.harness.connector.validator.CEGcpConnectorValidator;
@@ -209,6 +213,10 @@ public class ConnectorRegistryFactory {
     registrar.put(ConnectorType.AWS,
         new ConnectorRegistrar(ConnectorCategory.CLOUD_PROVIDER, AwsConnectorValidator.class,
             AwsValidationParamsProvider.class, AwsDTOToEntity.class, AwsEntityToDTO.class,
+            NotSupportedValidationHandler.class));
+    registrar.put(ConnectorType.AZURE,
+        new ConnectorRegistrar(ConnectorCategory.CLOUD_PROVIDER, AzureConnectorValidator.class,
+            AzureValidationParamsProvider.class, AzureDTOToEntity.class, AzureEntityToDTO.class,
             NotSupportedValidationHandler.class));
     registrar.put(ConnectorType.CE_AWS,
         new ConnectorRegistrar(ConnectorCategory.CLOUD_COST, CEAwsConnectorValidator.class,

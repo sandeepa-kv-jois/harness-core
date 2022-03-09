@@ -1,0 +1,27 @@
+{
+  "connector": {
+    "name": "name",
+    "identifier": "identifier",
+    "description": "description",
+    "orgIdentifier": "orgIdentifier",
+    "projectIdentifier": "projectIdentifier",
+    "tags": {
+      "company": "Harness",
+      "env": "dev"
+    },
+    "type": "Azure",
+    "spec": {
+      "delegateSelectors": null,
+      "azureEnvironmentType": "AZURE",
+      "credential": {
+        "type": "ManualConfig",
+        "spec": {
+          "type": "SecretKey",
+          "clientId": "clientId",
+          "tenantId": "tenantId",
+          "secretRef" : "account.secretRef"
+        }
+      }
+    }
+  }
+}

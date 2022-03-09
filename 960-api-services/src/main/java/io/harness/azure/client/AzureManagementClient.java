@@ -7,6 +7,7 @@
 
 package io.harness.azure.client;
 
+import io.harness.azure.AzureEnvironmentType;
 import io.harness.azure.context.ARMDeploymentSteadyStateContext;
 import io.harness.azure.context.AzureClientContext;
 import io.harness.azure.model.AzureARMRGTemplateExportOptions;
@@ -178,4 +179,26 @@ public interface AzureManagementClient {
   PagedList<DeploymentOperationInner> getDeploymentOperations(ARMDeploymentSteadyStateContext context);
 
   String getARMDeploymentOutputs(ARMDeploymentSteadyStateContext context);
+
+  /**
+   * Validate azure connection with a provided clientId, tenantId, secret and environment type. Will throw exception if
+   * connection can't be made
+   * @param clientId
+   * @param tenantId
+   * @param secret
+   * @param azureEnvironmentType
+   */
+  void validateAzureConnection(
+      String clientId, String tenantId, String secret, AzureEnvironmentType azureEnvironmentType);
+
+  /**
+   * Validate azure connection with a provided clientId, tenantId, certificate and environment type. Will throw
+   * exception if connection can't be made
+   * @param clientId
+   * @param tenantId
+   * @param cert
+   * @param azureEnvironmentType
+   */
+  void validateAzureConnectionWithCert(
+      String clientId, String tenantId, byte[] cert, AzureEnvironmentType azureEnvironmentType);
 }

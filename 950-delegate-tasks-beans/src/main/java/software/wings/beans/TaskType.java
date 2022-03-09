@@ -340,7 +340,8 @@ public enum TaskType {
   SCM_GIT_WEBHOOK_TASK(TaskGroup.GIT, "SCM Git Webhook Task"),
   SERVICENOW_CONNECTIVITY_TASK_NG(TaskGroup.SERVICENOW_NG, "ServiceNow connectivity test Task"),
   SERVICENOW_TASK_NG(TaskGroup.SERVICENOW_NG, "ServiceNow Task"),
-  RANCHER_RESOLVE_CLUSTERS(TaskGroup.K8S, "Rancher Resolve Clusters");
+  RANCHER_RESOLVE_CLUSTERS(TaskGroup.K8S, "Rancher Resolve Clusters"),
+  NG_AZURE_TASK(TaskGroup.AZURE_RESOURCE);
 
   private final TaskGroup taskGroup;
   private final String displayName;
