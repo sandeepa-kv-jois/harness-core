@@ -541,10 +541,15 @@ public class GitToHarnessProcessorServiceImpl implements GitToHarnessProcessorSe
 
   private Set<String> getFilePathsWithoutError(List<GitToHarnessProcessingResponse> gitToHarnessProcessingResponses) {
     List<FileProcessingResponseDTO> fileResponses = new ArrayList<>();
-    gitToHarnessProcessingResponses.stream()
-        .map(GitToHarnessProcessingResponse::getProcessingResponse)
-        .map(GitToHarnessProcessingResponseDTO::getFileResponses)
-        .forEach(fileProcessingResponseDTO -> fileResponses.addAll(fileProcessingResponseDTO));
+    for (GitToHarnessProcessingResponse gitToHarnessProcessingResponse : emptyIfNull(gitToHarnessProcessingResponses)) {
+      GitToHarnessProcessingResponseDTO processingResponse = gitToHarnessProcessingResponse.getProcessingResponse();
+      if (processingResponse != null) {
+        if (processingResponse.getFileResponses() != null) {
+          List<FileProcessingResponseDTO> fileResponseList = emptyIfNull(processingResponse.getFileResponses());
+          fileResponses.addAll(fileResponseList);
+        }
+      }
+    }
     return fileResponses.stream()
         .filter(fileResponse -> fileResponse.getFileProcessingStatus() == FileProcessingStatus.SUCCESS)
         .map(FileProcessingResponseDTO::getFilePath)

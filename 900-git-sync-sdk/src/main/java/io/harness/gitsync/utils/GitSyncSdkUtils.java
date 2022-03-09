@@ -7,8 +7,6 @@
 
 package io.harness.gitsync.utils;
 
-import static io.harness.data.structure.HarnessStringUtils.emptyIfNull;
-
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
 import io.harness.annotations.dev.HarnessTeam;
