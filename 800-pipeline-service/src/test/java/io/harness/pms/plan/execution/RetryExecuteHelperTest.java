@@ -29,6 +29,7 @@ import io.harness.engine.executions.retry.RetryLatestExecutionResponseDto;
 import io.harness.engine.executions.retry.RetryStageInfo;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.execution.StagesExecutionMetadata;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.plan.Node;
 import io.harness.plan.NodeType;
@@ -919,7 +920,11 @@ public class RetryExecuteHelperTest extends CategoryTest {
                  .build())
         .when(executionService)
         .getPipelineExecutionSummaryEntity(accountId, orgId, projectId, planExecId, false);
-    doReturn(Optional.of(PlanExecutionMetadata.builder().yaml(originalYaml).build()))
+    doReturn(
+        Optional.of(PlanExecutionMetadata.builder()
+                        .yaml(originalYaml)
+                        .stagesExecutionMetadata(StagesExecutionMetadata.builder().isStagesExecution(false).build())
+                        .build()))
         .when(planExecutionMetadataService)
         .findByPlanExecutionId(planExecId);
 

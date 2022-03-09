@@ -21,6 +21,7 @@ import io.harness.engine.executions.retry.RetryLatestExecutionResponseDto;
 import io.harness.engine.executions.retry.RetryStageInfo;
 import io.harness.exception.InvalidRequestException;
 import io.harness.execution.PlanExecutionMetadata;
+import io.harness.execution.StagesExecutionMetadata;
 import io.harness.plan.IdentityPlanNode;
 import io.harness.plan.Node;
 import io.harness.plan.Plan;
@@ -147,9 +148,12 @@ public class RetryExecutionHelper {
     }
     PlanExecutionMetadata planExecutionMetadata = byPlanExecutionId.get();
     String executedPipeline = planExecutionMetadata.getYaml();
-    String stageFilteredUpdatedPipeline = InputSetMergeHelper.removeNonRequiredStages(
-        updatedPipeline, planExecutionMetadata.getStagesExecutionMetadata().getStageIdentifiers());
-    return getRetryStages(stageFilteredUpdatedPipeline, executedPipeline, planExecutionId);
+    StagesExecutionMetadata stagesExecutionMetadata = planExecutionMetadata.getStagesExecutionMetadata();
+    if (stagesExecutionMetadata.isStagesExecution()) {
+      updatedPipeline =
+          InputSetMergeHelper.removeNonRequiredStages(updatedPipeline, stagesExecutionMetadata.getStageIdentifiers());
+    }
+    return getRetryStages(updatedPipeline, executedPipeline, planExecutionId);
   }
 
   public boolean validateRetry(String updatedYaml, String executedYaml) {
