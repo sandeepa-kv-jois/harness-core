@@ -1,0 +1,15 @@
+debeziumConfig:
+  isEnabled: true
+  offset.storage.file.filename: redis://127.0.0.1:6379
+  name: pipeline
+  key.converter.schemas.enable: false
+  value.converter.schemas.enable: false
+  offset.flush.interval.ms: 5000
+  mongodb.hosts: rs0/localhost:27017
+  mongodb.name: pms-harness_db
+  mongodb.user:
+  mongodb.password:
+  mongodb.ssl.enabled: false
+  connector.class: io.debezium.connector.mongodb.MongoDbConnector
+  database.include.list: pms-harness
+  collection.include.list: pms-harness.planExecutionsSummary

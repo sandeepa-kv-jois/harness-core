@@ -23,10 +23,8 @@ public class DebeziumController implements Runnable {
   protected final ExecutorService executorService =
       Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("debezium-engine").build());
   private Properties props;
-  ChangeHandler changeConsumer;
 
-  public DebeziumController(Properties props, ChangeHandler changeConsumer) {
-    this.changeConsumer = changeConsumer;
+  public DebeziumController(Properties props) {
     this.props = props;
   }
 

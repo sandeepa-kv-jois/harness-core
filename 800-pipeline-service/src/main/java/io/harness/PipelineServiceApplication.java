@@ -25,7 +25,6 @@ import io.harness.cache.CacheModule;
 import io.harness.configuration.DeployVariant;
 import io.harness.consumers.GraphUpdateRedisConsumer;
 import io.harness.controller.PrimaryVersionChangeScheduler;
-import io.harness.debezium.DebeziumEngineStarter;
 import io.harness.delay.DelayEventListener;
 import io.harness.engine.events.NodeExecutionStatusUpdateEventHandler;
 import io.harness.engine.executions.node.NodeExecutionService;
@@ -56,7 +55,6 @@ import io.harness.govern.ProviderModule;
 import io.harness.governance.DefaultConnectorRefExpansionHandler;
 import io.harness.graph.stepDetail.PmsGraphStepDetailsServiceImpl;
 import io.harness.graph.stepDetail.service.PmsGraphStepDetailsService;
-import io.harness.handlers.PipelineExecutionSummaryHandler;
 import io.harness.health.HealthMonitor;
 import io.harness.health.HealthService;
 import io.harness.maintenance.MaintenanceController;
@@ -316,10 +314,6 @@ public class PipelineServiceApplication extends Application<PipelineServiceConfi
           return null;
         }
       });
-    }
-    if (appConfig.getDebeziumConfig() != null && appConfig.getDebeziumConfig().isEnabled()) {
-      new DebeziumEngineStarter().startDebeziumEngine(
-          appConfig.getDebeziumConfig(), new PipelineExecutionSummaryHandler());
     }
 
     // Pipeline Service Modules

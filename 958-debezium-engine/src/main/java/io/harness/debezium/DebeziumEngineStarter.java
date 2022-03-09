@@ -20,11 +20,11 @@ public class DebeziumEngineStarter {
     this.debeziumConfiguration = new DebeziumConfiguration();
   }
 
-  public void startDebeziumEngine(DebeziumConfig debeziumConfig, ChangeHandler changeConsumer) {
+  public void startDebeziumEngine(DebeziumConfig debeziumConfig) {
     ExecutorService debeziumExecutorService =
         Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("debezium-controller").build());
     DebeziumController debeziumController =
-        new DebeziumController(debeziumConfiguration.getDebeziumProperties(debeziumConfig), changeConsumer);
+        new DebeziumController(debeziumConfiguration.getDebeziumProperties(debeziumConfig));
     debeziumExecutorService.submit(debeziumController);
   }
 }

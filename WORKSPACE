@@ -5142,15 +5142,6 @@ maven_install(
                 "org.slf4j:slf4j-log4j12",
             ],
         ),
-        maven.artifact(
-            group = "redis.clients",
-            artifact = "jedis",
-            version = "3.4.0",
-            exclusions = [
-                "log4j:log4j",
-                "org.slf4j:slf4j-log4j12",
-            ],
-        ),
         maven_test_artifact("com.github.tomakehurst:wiremock-jre8-standalone:2.27.2"),
         maven_test_artifact("com.icegreen:greenmail:1.5.0"),
         maven_test_artifact("com.squareup.okhttp3:mockwebserver:3.6.0"),
