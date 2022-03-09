@@ -724,7 +724,7 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
                                                  .build();
 
       ServiceInstanceDashboard serviceInstanceDashboard =
-          dashboardService.getServiceInstanceDashboard(ACCOUNT_1_ID, APP_1_ID, SERVICE_1_ID, envId);
+          dashboardService.getServiceInstanceDashboard(ACCOUNT_1_ID, APP_1_ID, SERVICE_1_ID, null);
       assertThat(serviceInstanceDashboard).isNotNull();
       assertThat(serviceInstanceDashboard.getCurrentActiveInstancesList()).hasSize(1);
       assertThat(serviceInstanceDashboard.getCurrentActiveInstancesList().get(0).getInstanceCount()).isEqualTo(1);
@@ -847,7 +847,7 @@ public class DashboardStatisticsServiceImplTest extends WingsBaseTest {
         .thenReturn(asList(ARTIFACT_STREAM_ID));
     DashboardStatisticsServiceImpl dashboardStatisticsService = (DashboardStatisticsServiceImpl) dashboardService;
     List<DeploymentHistory> deploymentHistories =
-        dashboardStatisticsService.getDeploymentHistory(ACCOUNT_ID, APP_1_ID, SERVICE_ID);
+        dashboardStatisticsService.getDeploymentHistory(ACCOUNT_ID, APP_1_ID, SERVICE_ID, null);
     assertThat(deploymentHistories).hasSize(3);
     DeploymentHistory deploymentHistory1 = deploymentHistories.get(0);
     assertThat(deploymentHistory1.getManifest().getName()).isEqualTo(CHART_NAME);
