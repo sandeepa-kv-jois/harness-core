@@ -1,5 +1,5 @@
 debeziumConfig:
-  isEnabled: true
+  isEnabled: false
   offset.storage.file.filename: redis://127.0.0.1:6379
   name: pipeline
   key.converter.schemas.enable: false
