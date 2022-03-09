@@ -174,7 +174,7 @@ public class DashboardStatisticsResource {
   @ExceptionMetered
   @AuthRule(permissionType = PermissionType.SERVICE, action = Action.READ)
   public RestResponse<ServiceInstanceDashboard> getServiceInstanceDashboard(@QueryParam("accountId") String accountId,
-      @QueryParam("appId") String appId, @QueryParam("serviceId") String serviceId, @QueryParam("envId") String envId) {
+      @QueryParam("appId") String appId, @QueryParam("serviceId") String serviceId) {
     return new RestResponse<>(dashboardStatsService.getServiceInstanceDashboard(accountId, appId, serviceId, null));
   }
 
