@@ -14,6 +14,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import io.harness.CvNextGenTestBase;
 import io.harness.category.element.UnitTests;
+import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.beans.CVMonitoringCategory;
 import io.harness.cvng.beans.DataSourceType;
 import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
@@ -48,78 +49,39 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
   String metricName = "metric_1";
   String metricValueJSONPath = "json.path.to.metricValue";
   String identifier = "1234_identifier";
-  String accountId = "1234_accountId";
-  String orgIdentifier = "1234_orgIdentifier";
-  String projectIdentifier = "1234_projectIdentifier";
-  String environmentRef = "1234_envRef";
-  String serviceRef = "1234_serviceRef";
+  String accountId;
+  String orgIdentifier;
+  String projectIdentifier;
+  String environmentRef;
+  String serviceRef;
   String name = "customhealthsource";
+  BuilderFactory builderFactory;
   String monitoredServiceIdentifier = generateUuid();
   MetricResponseMapping responseMapping;
   @Inject MetricPackService metricPackService;
 
   @Before
   public void setup() {
+    builderFactory = BuilderFactory.getDefault();
+    accountId = builderFactory.getContext().getAccountId();
+    orgIdentifier = builderFactory.getContext().getOrgIdentifier();
+    projectIdentifier = builderFactory.getContext().getProjectIdentifier();
+    environmentRef = builderFactory.getContext().getEnvIdentifier();
+    serviceRef = builderFactory.getContext().getServiceIdentifier();
+
     responseMapping = MetricResponseMapping.builder().metricValueJsonPath(metricValueJSONPath).build();
-
-    CustomHealthMetricDefinition metricDefinition =
-        CustomHealthMetricDefinition.builder()
-            .groupName(groupName)
-            .metricName(metricName)
-            .queryType(HealthSourceQueryType.HOST_BASED)
-            .metricResponseMapping(responseMapping)
-            .requestDefinition(CustomHealthRequestDefinition.builder().method(CustomHealthMethod.GET).build())
-            .identifier(identifier)
-            .analysis(
-                HealthSourceMetricDefinition.AnalysisDTO.builder()
-                    .deploymentVerification(HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
-                                                .enabled(true)
-                                                .build())
-                    .liveMonitoring(
-                        HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder().enabled(false).build())
-                    .build())
-            .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(false).build())
-            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
-            .build();
-
-    customHealthSourceSpecs = new ArrayList<>();
-    customHealthSourceSpecs.add(metricDefinition);
-    customHealthSourceSpec = CustomHealthSourceMetricSpec.builder().metricDefinitions(customHealthSourceSpecs).build();
+    customHealthSourceSpec = builderFactory.customHealthMetricSourceSpecBuilder(metricValueJSONPath, groupName,
+        metricName, identifier, HealthSourceQueryType.HOST_BASED, CVMonitoringCategory.PERFORMANCE, true, false, false);
+    customHealthSourceSpecs = customHealthSourceSpec.getMetricDefinitions();
   }
 
   @Test
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testGetCVConfigUpdateResult_forCreate() {
-    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition3 =
-        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
-            .metricName("metric_3")
-            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
-            .metricResponseMapping(responseMapping)
-            .requestDefinition(CustomHealthRequestDefinition.builder().method(CustomHealthMethod.POST).build())
-            .build();
-
-    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
-        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
-            .metricName(metricName)
-            .metricResponseMapping(responseMapping)
-            .metricResponseMapping(responseMapping)
-            .requestDefinition(CustomHealthRequestDefinition.builder().method(CustomHealthMethod.GET).build())
-            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(true).build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(false).build())
-            .build();
-
     CustomHealthMetricCVConfig existingCVConfig =
-        CustomHealthMetricCVConfig.builder()
-            .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
-              { add(metricDefinition3); }
-            })
-            .groupName("group")
-            .queryType(HealthSourceQueryType.HOST_BASED)
-            .build();
+        builderFactory.customHealthMetricCVConfigBuilder("metric_3", true, false, true, responseMapping, "group",
+            HealthSourceQueryType.HOST_BASED, CustomHealthMethod.GET, CVMonitoringCategory.PERFORMANCE, null);
 
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);
@@ -134,22 +96,18 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
     HashSet<MetricPack.MetricDefinition> hashSet = new HashSet<>();
     hashSet.add(metricDefinition1);
 
-    addedConfigs.add(
-        CustomHealthMetricCVConfig.builder()
-            .groupName(groupName)
-            .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
-              { add(metricDefinition); }
-            })
-            .queryType(HealthSourceQueryType.HOST_BASED)
-            .metricPack(MetricPack.builder()
-                            .category(CVMonitoringCategory.PERFORMANCE)
-                            .dataSourceType(DataSourceType.CUSTOM_HEALTH_METRIC)
-                            .accountId(accountId)
-                            .projectIdentifier(projectIdentifier)
-                            .identifier("Performance")
-                            .metrics(hashSet)
-                            .build())
-            .build());
+    CustomHealthMetricCVConfig metricCVConfig =
+        builderFactory.customHealthMetricCVConfigBuilder(metricName, true, false, false, responseMapping, groupName,
+            HealthSourceQueryType.HOST_BASED, CustomHealthMethod.GET, CVMonitoringCategory.PERFORMANCE, null);
+    metricCVConfig.setMetricPack(MetricPack.builder()
+                                     .category(CVMonitoringCategory.PERFORMANCE)
+                                     .dataSourceType(DataSourceType.CUSTOM_HEALTH_METRIC)
+                                     .accountId(accountId)
+                                     .projectIdentifier(projectIdentifier)
+                                     .identifier("Performance")
+                                     .metrics(hashSet)
+                                     .build());
+    addedConfigs.add(metricCVConfig);
 
     assertThat(((CustomHealthMetricCVConfig) result.getAdded().get(0)).getMetricDefinitions())
         .isEqualTo(addedConfigs.get(0).getMetricDefinitions());
@@ -171,14 +129,8 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
             .build();
 
     CustomHealthMetricCVConfig existingCVConfig =
-        CustomHealthMetricCVConfig.builder()
-            .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
-              { add(metricDefinition2); }
-            })
-            .groupName(groupName)
-            .queryType(HealthSourceQueryType.SERVICE_BASED)
-            .category(CVMonitoringCategory.ERRORS)
-            .build();
+        builderFactory.customHealthMetricCVConfigBuilder("metric_2", false, true, true, responseMapping, groupName,
+            HealthSourceQueryType.SERVICE_BASED, CustomHealthMethod.GET, CVMonitoringCategory.ERRORS, null);
 
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);
@@ -188,15 +140,8 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
         existingCVConfigs, metricPackService);
 
     List<CustomHealthMetricCVConfig> deletedConfigs = new ArrayList<>();
-    deletedConfigs.add(
-        CustomHealthMetricCVConfig.builder()
-            .groupName(groupName)
-            .category(CVMonitoringCategory.ERRORS)
-            .queryType(HealthSourceQueryType.SERVICE_BASED)
-            .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
-              { add(metricDefinition2); }
-            })
-            .build());
+    deletedConfigs.add(builderFactory.customHealthMetricCVConfigBuilder("metric_2", false, true, true, responseMapping,
+        groupName, HealthSourceQueryType.SERVICE_BASED, CustomHealthMethod.GET, CVMonitoringCategory.ERRORS, null));
 
     assertThat(result.getDeleted()).isEqualTo(deletedConfigs);
   }
@@ -205,45 +150,14 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
   @Owner(developers = ANJAN)
   @Category(UnitTests.class)
   public void testGetCVConfigUpdateResult_forUpdate() {
-    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
-        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
-            .requestDefinition(CustomHealthRequestDefinition.builder().method(CustomHealthMethod.GET).build())
-            .metricName(metricName)
-            .metricResponseMapping(responseMapping)
-            .identifier("9876_identifier")
-            .sli(AnalysisInfo.SLI.builder().enabled(true).build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
-            .build();
-
-    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition updatedMetricDefinition =
-        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
-            .requestDefinition(CustomHealthRequestDefinition.builder()
-                                   .method(CustomHealthMethod.POST)
-                                   .requestBody("post body")
-                                   .build())
-            .metricName(metricName)
-            .metricResponseMapping(responseMapping)
-            .identifier("9876_identifier")
-            .sli(AnalysisInfo.SLI.builder().enabled(false).build())
-            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(false).build())
-            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(true).build())
-            .build();
-
     CustomHealthMetricDefinition customHealthMetricDefinition = customHealthSourceSpec.getMetricDefinitions().get(0);
     customHealthMetricDefinition.setQueryType(HealthSourceQueryType.SERVICE_BASED);
     customHealthMetricDefinition.getRequestDefinition().setRequestBody("post body");
     customHealthMetricDefinition.getRequestDefinition().setMethod(CustomHealthMethod.POST);
 
     CustomHealthMetricCVConfig existingCVConfig =
-        CustomHealthMetricCVConfig.builder()
-            .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
-              { add(metricDefinition); }
-            })
-            .groupName(groupName)
-            .queryType(HealthSourceQueryType.SERVICE_BASED)
-            .category(CVMonitoringCategory.PERFORMANCE)
-            .build();
+        builderFactory.customHealthMetricCVConfigBuilder(metricName, false, true, true, responseMapping, groupName,
+            HealthSourceQueryType.SERVICE_BASED, CustomHealthMethod.GET, CVMonitoringCategory.PERFORMANCE, null);
 
     List<CVConfig> existingCVConfigs = new ArrayList<>();
     existingCVConfigs.add(existingCVConfig);
@@ -254,14 +168,8 @@ public class CustomHealthSourceMetricSpecTest extends CvNextGenTestBase {
 
     List<CustomHealthMetricCVConfig> updatedConfigs = new ArrayList<>();
     updatedConfigs.add(
-        CustomHealthMetricCVConfig.builder()
-            .groupName(groupName)
-            .category(CVMonitoringCategory.PERFORMANCE)
-            .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
-              { add(updatedMetricDefinition); }
-            })
-            .queryType(HealthSourceQueryType.SERVICE_BASED)
-            .build());
+        builderFactory.customHealthMetricCVConfigBuilder(metricName, false, true, false, responseMapping, groupName,
+            HealthSourceQueryType.SERVICE_BASED, CustomHealthMethod.POST, CVMonitoringCategory.PERFORMANCE, "{}"));
 
     assertThat(((CustomHealthMetricCVConfig) result.getUpdated().get(0)).getMetricDefinitions())
         .isEqualTo(updatedConfigs.get(0).getMetricDefinitions());

@@ -30,6 +30,7 @@ import io.harness.cvng.beans.change.KubernetesChangeEventMetadata;
 import io.harness.cvng.beans.change.KubernetesChangeEventMetadata.Action;
 import io.harness.cvng.beans.change.KubernetesChangeEventMetadata.KubernetesResourceType;
 import io.harness.cvng.beans.change.PagerDutyEventMetaData;
+import io.harness.cvng.beans.customhealth.TimestampInfo;
 import io.harness.cvng.beans.job.Sensitivity;
 import io.harness.cvng.cdng.beans.CVNGStepInfo;
 import io.harness.cvng.cdng.beans.CVNGStepInfo.CVNGStepInfoBuilder;
@@ -37,6 +38,12 @@ import io.harness.cvng.cdng.beans.TestVerificationJobSpec;
 import io.harness.cvng.cdng.entities.CVNGStepTask;
 import io.harness.cvng.cdng.entities.CVNGStepTask.CVNGStepTaskBuilder;
 import io.harness.cvng.cdng.entities.CVNGStepTask.Status;
+import io.harness.cvng.core.beans.CustomHealthLogDefinition;
+import io.harness.cvng.core.beans.CustomHealthMetricDefinition;
+import io.harness.cvng.core.beans.CustomHealthRequestDefinition;
+import io.harness.cvng.core.beans.HealthSourceMetricDefinition;
+import io.harness.cvng.core.beans.HealthSourceQueryType;
+import io.harness.cvng.core.beans.RiskProfile;
 import io.harness.cvng.core.beans.monitoredService.ChangeSourceDTO;
 import io.harness.cvng.core.beans.monitoredService.ChangeSourceDTO.ChangeSourceDTOBuilder;
 import io.harness.cvng.core.beans.monitoredService.HealthSource;
@@ -49,13 +56,19 @@ import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.HarnessCDCur
 import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.KubernetesChangeSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.changeSourceSpec.PagerDutyChangeSourceSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.AppDynamicsHealthSourceSpec;
+import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceLogSpec;
+import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.CustomHealthSourceMetricSpec;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceSpec;
+import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.MetricResponseMapping;
 import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
+import io.harness.cvng.core.entities.AnalysisInfo;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig;
 import io.harness.cvng.core.entities.AppDynamicsCVConfig.AppDynamicsCVConfigBuilder;
 import io.harness.cvng.core.entities.CVConfig;
+import io.harness.cvng.core.entities.CustomHealthLogCVConfig;
+import io.harness.cvng.core.entities.CustomHealthMetricCVConfig;
 import io.harness.cvng.core.entities.DatadogLogCVConfig;
 import io.harness.cvng.core.entities.DatadogLogCVConfig.DatadogLogCVConfigBuilder;
 import io.harness.cvng.core.entities.DatadogMetricCVConfig;
@@ -120,6 +133,7 @@ import io.harness.cvng.verificationjob.entities.TestVerificationJob;
 import io.harness.cvng.verificationjob.entities.VerificationJob;
 import io.harness.cvng.verificationjob.entities.VerificationJobInstance;
 import io.harness.cvng.verificationjob.entities.VerificationJobInstance.VerificationJobInstanceBuilder;
+import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthMethod;
 import io.harness.eventsframework.schemas.deployment.ArtifactDetails;
 import io.harness.eventsframework.schemas.deployment.DeploymentEventDTO;
 import io.harness.eventsframework.schemas.deployment.ExecutionDetails;
@@ -453,6 +467,97 @@ public class BuilderFactory {
         .connectorIdentifier("Splunk Connector")
         .category(CVMonitoringCategory.ERRORS)
         .productName(generateUuid());
+  }
+
+  public CustomHealthSourceMetricSpec customHealthMetricSourceSpecBuilder(String metricValueJSONPath, String groupName,
+      String metricName, String identifier, HealthSourceQueryType queryType, CVMonitoringCategory monitoringCategory,
+      boolean isDeploymentEnabled, boolean isLiveMonitoringEnabled, boolean isSliEnabled) {
+    MetricResponseMapping responseMapping =
+        MetricResponseMapping.builder().metricValueJsonPath(metricValueJSONPath).build();
+
+    CustomHealthMetricDefinition metricDefinition =
+        CustomHealthMetricDefinition.builder()
+            .groupName(groupName)
+            .metricName(metricName)
+            .queryType(queryType)
+            .metricResponseMapping(responseMapping)
+            .requestDefinition(CustomHealthRequestDefinition.builder().method(CustomHealthMethod.GET).build())
+            .identifier(identifier)
+            .analysis(
+                HealthSourceMetricDefinition.AnalysisDTO.builder()
+                    .deploymentVerification(HealthSourceMetricDefinition.AnalysisDTO.DeploymentVerificationDTO.builder()
+                                                .enabled(isDeploymentEnabled)
+                                                .build())
+                    .liveMonitoring(HealthSourceMetricDefinition.AnalysisDTO.LiveMonitoringDTO.builder()
+                                        .enabled(isLiveMonitoringEnabled)
+                                        .build())
+                    .build())
+            .sli(HealthSourceMetricDefinition.SLIDTO.builder().enabled(isSliEnabled).build())
+            .riskProfile(RiskProfile.builder().category(CVMonitoringCategory.PERFORMANCE).build())
+            .build();
+
+    List<CustomHealthMetricDefinition> customHealthSourceSpecs = new ArrayList<>();
+    customHealthSourceSpecs.add(metricDefinition);
+    return CustomHealthSourceMetricSpec.builder().metricDefinitions(customHealthSourceSpecs).build();
+  }
+
+  public CustomHealthMetricCVConfig customHealthMetricCVConfigBuilder(String metricName, boolean isDeploymentEnabled,
+      boolean isLiveMonitoringEnabled, boolean isSliEnabled, MetricResponseMapping responseMapping, String group,
+      HealthSourceQueryType queryType, CustomHealthMethod method, CVMonitoringCategory category, String requestBody) {
+    CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition metricDefinition =
+        CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition.builder()
+            .metricName(metricName)
+            .sli(AnalysisInfo.SLI.builder().enabled(isSliEnabled).build())
+            .deploymentVerification(AnalysisInfo.DeploymentVerification.builder().enabled(isDeploymentEnabled).build())
+            .liveMonitoring(AnalysisInfo.LiveMonitoring.builder().enabled(isLiveMonitoringEnabled).build())
+            .metricResponseMapping(responseMapping)
+            .requestDefinition(CustomHealthRequestDefinition.builder().method(method).requestBody(requestBody).build())
+            .build();
+
+    return CustomHealthMetricCVConfig.builder()
+        .metricDefinitions(new ArrayList<CustomHealthMetricCVConfig.CustomHealthCVConfigMetricDefinition>() {
+          { add(metricDefinition); }
+        })
+        .groupName(group)
+        .queryType(queryType)
+        .category(category)
+        .build();
+  }
+
+  public CustomHealthSourceLogSpec customHealthLogSourceSpecBuilder(
+      String queryName, String queryValueJSONPath, String urlPath, String timestampValueJSONPath) {
+    List<CustomHealthLogDefinition> customHealthLogDefinitions = new ArrayList<>();
+    CustomHealthLogDefinition customHealthSpecLogDefinition =
+        CustomHealthLogDefinition.builder()
+            .logMessageJsonPath(queryValueJSONPath)
+            .queryName(queryName)
+            .requestDefinition(CustomHealthRequestDefinition.builder()
+                                   .method(CustomHealthMethod.GET)
+                                   .startTimeInfo(TimestampInfo.builder().build())
+                                   .endTimeInfo(TimestampInfo.builder().build())
+                                   .urlPath(urlPath)
+                                   .build())
+            .timestampJsonPath(timestampValueJSONPath)
+            .build();
+    customHealthLogDefinitions.add(customHealthSpecLogDefinition);
+    return CustomHealthSourceLogSpec.builder().logDefinitions(customHealthLogDefinitions).build();
+  }
+
+  public CustomHealthLogCVConfig customHealthLogCVConfigBuilder(String logMessageJsonPath, String timestampJsonPath,
+      String query, String queryName, String urlPath, String requestBody, CustomHealthMethod method) {
+    return CustomHealthLogCVConfig.builder()
+        .logMessageJsonPath(logMessageJsonPath)
+        .timestampJsonPath(timestampJsonPath)
+        .query(query)
+        .queryName(queryName)
+        .requestDefinition(CustomHealthRequestDefinition.builder()
+                               .method(method)
+                               .urlPath(urlPath)
+                               .requestBody(requestBody)
+                               .endTimeInfo(TimestampInfo.builder().build())
+                               .startTimeInfo(TimestampInfo.builder().build())
+                               .build())
+        .build();
   }
 
   public HarnessCDChangeSourceBuilder getHarnessCDChangeSourceBuilder() {
