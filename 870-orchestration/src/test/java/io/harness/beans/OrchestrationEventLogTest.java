@@ -11,7 +11,7 @@ import static io.harness.rule.OwnerRule.ALEXEI;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import io.harness.OrchestrationVisualizationTestBase;
+import io.harness.OrchestrationTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
@@ -24,7 +24,7 @@ import org.junit.Test;
 import org.junit.experimental.categories.Category;
 
 @OwnedBy(HarnessTeam.PIPELINE)
-public class OrchestrationEventLogTest extends OrchestrationVisualizationTestBase {
+public class OrchestrationEventLogTest extends OrchestrationTestBase {
   @Test
   @Owner(developers = ALEXEI)
   @Category(UnitTests.class)

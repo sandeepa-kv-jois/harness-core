@@ -60,6 +60,7 @@ import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.AppDynamicsHe
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.AppDynamicsHealthSourceSpec.AppDMetricDefinitions;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceDTO;
 import io.harness.cvng.core.beans.monitoredService.healthSouceSpec.HealthSourceSpec;
+import io.harness.cvng.core.beans.params.MonitoredServiceParams;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.core.beans.params.ServiceEnvironmentParams;
 import io.harness.cvng.core.entities.AnalysisInfo.SLI;
@@ -184,13 +185,7 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
                         .orgIdentifier(orgIdentifier)
                         .projectIdentifier(projectIdentifier)
                         .build();
-    environmentParams = ServiceEnvironmentParams.builder()
-                            .accountIdentifier(accountId)
-                            .orgIdentifier(orgIdentifier)
-                            .projectIdentifier(projectIdentifier)
-                            .serviceIdentifier(serviceIdentifier)
-                            .environmentIdentifier(environmentIdentifier)
-                            .build();
+    environmentParams = builderFactory.getContext().getServiceEnvironmentParams();
 
     FieldUtils.writeField(monitoredServiceService, "nextGenService", nextGenService, true);
     FieldUtils.writeField(monitoredServiceService, "setupUsageEventService", setupUsageEventService, true);
@@ -1292,25 +1287,27 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceTwoDTO);
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msOneHeatMap);
     msOneHeatMap = builderFactory.heatMapBuilder()
-                       .serviceIdentifier(environmentParams.getServiceIdentifier())
+                       .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msOneHeatMap);
 
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.65, 0.55);
     hPersistence.save(msTwoHeatMap);
     msTwoHeatMap = builderFactory.heatMapBuilder()
-                       .serviceIdentifier("service_2")
+                       .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
@@ -1355,29 +1352,37 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceFiveDTO);
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceIdentifier)
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.15, 0.15);
     hPersistence.save(msOneHeatMap);
 
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.85);
     hPersistence.save(msTwoHeatMap);
 
-    HeatMap msThreeHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_3").heatMapResolution(FIVE_MIN).build();
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.50);
     hPersistence.save(msThreeHeatMap);
 
-    HeatMap msFourHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_4").heatMapResolution(FIVE_MIN).build();
+    HeatMap msFourHeatMap = builderFactory.heatMapBuilder()
+                                .monitoredServiceIdentifier(monitoredServiceFourDTO.getIdentifier())
+                                .heatMapResolution(FIVE_MIN)
+                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msFourHeatMap, endTime, -2.0, -2.0);
     hPersistence.save(msFourHeatMap);
 
-    HeatMap msFiveHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_5").heatMapResolution(FIVE_MIN).build();
+    HeatMap msFiveHeatMap = builderFactory.heatMapBuilder()
+                                .monitoredServiceIdentifier(monitoredServiceFiveDTO.getIdentifier())
+                                .heatMapResolution(FIVE_MIN)
+                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msFiveHeatMap, endTime, -0.5, -0.5);
     hPersistence.save(msFiveHeatMap);
 
@@ -1427,24 +1432,30 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     });
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.15, 0.15);
     hPersistence.save(msOneHeatMap);
 
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.85);
     hPersistence.save(msTwoHeatMap);
 
-    HeatMap msThreeHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_3").heatMapResolution(FIVE_MIN).build();
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.50);
     hPersistence.save(msThreeHeatMap);
 
-    MonitoredServiceListItemDTO monitoredServiceListItemDTO =
-        monitoredServiceService.getMonitoredServiceDetails(environmentParams);
+    MonitoredServiceListItemDTO monitoredServiceListItemDTO = monitoredServiceService.getMonitoredServiceDetails(
+        MonitoredServiceParams.builderWithProjectParams(builderFactory.getProjectParams())
+            .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+            .build());
     assertThat(monitoredServiceListItemDTO.getIdentifier()).isEqualTo("service_1_local");
     assertThat(monitoredServiceListItemDTO.getName()).isEqualTo("service_1_local");
     assertThat(monitoredServiceListItemDTO.getServiceRef()).isEqualTo(environmentParams.getServiceIdentifier());
@@ -1486,19 +1497,23 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     });
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.15, 0.15);
     hPersistence.save(msOneHeatMap);
 
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.85);
     hPersistence.save(msTwoHeatMap);
 
-    HeatMap msThreeHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_3").heatMapResolution(FIVE_MIN).build();
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.50);
     hPersistence.save(msThreeHeatMap);
     SLOHealthIndicator sloHealthIndicator = SLOHealthIndicator.builder()
@@ -1574,37 +1589,15 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
   @Owner(developers = KAPIL)
   @Category(UnitTests.class)
   public void testGetMonitoredServiceFromDependencyGraph_withWrongServiceIdentifier() {
-    MonitoredServiceDTO monitoredServiceOneDTO = createMonitoredServiceDTOWithCustomDependencies(
-        "service_1_local", environmentParams.getServiceIdentifier(), Sets.newHashSet());
-    MonitoredServiceDTO monitoredServiceTwoDTO =
-        createMonitoredServiceDTOWithCustomDependencies("service_2_local", "service_2", Sets.newHashSet());
-    MonitoredServiceDTO monitoredServiceThreeDTO =
-        createMonitoredServiceDTOWithCustomDependencies("service_3_local", "service_3", Sets.newHashSet());
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceOneDTO);
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceTwoDTO);
-    monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceThreeDTO);
-    when(nextGenService.listService(any(), any(), any(), any())).thenReturn(new ArrayList<ServiceResponse>() {
-      { add(ServiceResponse.builder().service(ServiceResponseDTO.builder().name("serviceName").build()).build()); }
-    });
-    when(nextGenService.listEnvironment(any(), any(), any(), any())).thenReturn(new ArrayList<EnvironmentResponse>() {
-      {
-        add(EnvironmentResponse.builder()
-                .environment(EnvironmentResponseDTO.builder().name("environmentName").build())
-                .build());
-      }
-    });
-    ServiceEnvironmentParams serviceEnvironmentParams =
-        ServiceEnvironmentParams.builder()
-            .accountIdentifier(environmentParams.getAccountIdentifier())
-            .orgIdentifier(environmentParams.getOrgIdentifier())
-            .projectIdentifier(environmentParams.getProjectIdentifier())
-            .serviceIdentifier("service_4")
-            .environmentIdentifier(environmentParams.getEnvironmentIdentifier())
-            .build();
-    assertThatThrownBy(() -> monitoredServiceService.getMonitoredServiceDetails(serviceEnvironmentParams))
+    MonitoredServiceParams monitoredServiceParams = MonitoredServiceParams.builder()
+                                                        .accountIdentifier(environmentParams.getAccountIdentifier())
+                                                        .orgIdentifier(environmentParams.getOrgIdentifier())
+                                                        .projectIdentifier(environmentParams.getProjectIdentifier())
+                                                        .monitoredServiceIdentifier("monitoredService")
+                                                        .build();
+    assertThatThrownBy(() -> monitoredServiceService.getMonitoredServiceDetails(monitoredServiceParams))
         .isInstanceOf(NullPointerException.class)
-        .hasMessage(String.format("Monitored service with service identifier %s does not exists",
-            serviceEnvironmentParams.getServiceIdentifier()));
+        .hasMessage(String.format("Monitored service does not exists"));
   }
 
   @Test
@@ -1617,7 +1610,10 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
         "service_2_local", "service_2", Sets.newHashSet("service_1_local"));
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceOneDTO);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceTwoDTO);
-    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(environmentParams);
+    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(
+        MonitoredServiceParams.builderWithProjectParams(builderFactory.getProjectParams())
+            .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+            .build());
     assertThat(healthScoreDTO.getCurrentHealthScore().getRiskStatus()).isEqualTo(Risk.NO_DATA);
     assertThat(healthScoreDTO.getDependentHealthScore().getRiskStatus()).isEqualTo(Risk.NO_DATA);
   }
@@ -1640,25 +1636,34 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceThreeDTO);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceFourDTO);
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.15, 0.15);
     hPersistence.save(msOneHeatMap);
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.70, 0.70);
     hPersistence.save(msTwoHeatMap);
-    HeatMap msThreeHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_3").heatMapResolution(FIVE_MIN).build();
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.30, 0.30);
     hPersistence.save(msThreeHeatMap);
-    HeatMap msFourHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_4").heatMapResolution(FIVE_MIN).build();
+    HeatMap msFourHeatMap = builderFactory.heatMapBuilder()
+                                .monitoredServiceIdentifier(monitoredServiceFourDTO.getIdentifier())
+                                .heatMapResolution(FIVE_MIN)
+                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msFourHeatMap, endTime, -0.5, -0.5);
     hPersistence.save(msFourHeatMap);
 
-    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(environmentParams);
+    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(
+        MonitoredServiceParams.builderWithProjectParams(builderFactory.getProjectParams())
+            .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+            .build());
     assertThat(healthScoreDTO.getCurrentHealthScore().getRiskStatus()).isEqualTo(Risk.HEALTHY);
     assertThat(healthScoreDTO.getDependentHealthScore().getRiskStatus()).isEqualTo(Risk.NEED_ATTENTION);
   }
@@ -1678,21 +1683,28 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceTwoDTO);
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceThreeDTO);
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.15, 0.15);
     hPersistence.save(msOneHeatMap);
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, -2.0, -2.0);
     hPersistence.save(msTwoHeatMap);
-    HeatMap msThreeHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_3").heatMapResolution(FIVE_MIN).build();
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, -0.5, -0.5);
     hPersistence.save(msThreeHeatMap);
 
-    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(environmentParams);
+    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(
+        MonitoredServiceParams.builderWithProjectParams(builderFactory.getProjectParams())
+            .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+            .build());
     assertThat(healthScoreDTO.getCurrentHealthScore().getRiskStatus()).isEqualTo(Risk.HEALTHY);
     assertThat(healthScoreDTO.getDependentHealthScore().getRiskStatus()).isEqualTo(Risk.NO_ANALYSIS);
   }
@@ -1707,14 +1719,17 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceOneDTO);
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .category(CVMonitoringCategory.PERFORMANCE)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msOneHeatMap);
 
-    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(environmentParams);
+    HealthScoreDTO healthScoreDTO = monitoredServiceService.getCurrentAndDependentServicesScore(
+        MonitoredServiceParams.builderWithProjectParams(builderFactory.getProjectParams())
+            .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
+            .build());
     assertThat(healthScoreDTO.getCurrentHealthScore().getRiskStatus()).isEqualTo(Risk.NEED_ATTENTION);
     assertThat(healthScoreDTO.getDependentHealthScore()).isNull();
   }
@@ -1827,37 +1842,41 @@ public class MonitoredServiceServiceImplTest extends CvNextGenTestBase {
     monitoredServiceService.create(builderFactory.getContext().getAccountId(), monitoredServiceThreeDTO);
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
+                               .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msOneHeatMap);
     msOneHeatMap = builderFactory.heatMapBuilder()
-                       .serviceIdentifier(environmentParams.getServiceIdentifier())
+                       .monitoredServiceIdentifier(monitoredServiceIdentifier)
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msOneHeatMap);
 
-    HeatMap msTwoHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_2").heatMapResolution(FIVE_MIN).build();
+    HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
+                               .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
+                               .heatMapResolution(FIVE_MIN)
+                               .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msTwoHeatMap);
     msTwoHeatMap = builderFactory.heatMapBuilder()
-                       .serviceIdentifier("service_2")
+                       .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msTwoHeatMap);
 
-    HeatMap msThreeHeatMap =
-        builderFactory.heatMapBuilder().serviceIdentifier("service_3").heatMapResolution(FIVE_MIN).build();
+    HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
+                                 .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
+                                 .heatMapResolution(FIVE_MIN)
+                                 .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.65, 0.55);
     hPersistence.save(msThreeHeatMap);
     msThreeHeatMap = builderFactory.heatMapBuilder()
-                         .serviceIdentifier("service_3")
+                         .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
                          .heatMapResolution(FIVE_MIN)
                          .category(CVMonitoringCategory.PERFORMANCE)
                          .build();

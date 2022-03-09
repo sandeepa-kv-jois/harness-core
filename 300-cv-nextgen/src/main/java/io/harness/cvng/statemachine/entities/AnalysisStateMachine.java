@@ -11,6 +11,8 @@ import static io.harness.cvng.CVConstants.STATE_MACHINE_IGNORE_MINUTES;
 
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
+import io.harness.cvng.beans.cvnglog.ExecutionLogDTO;
+import io.harness.cvng.core.entities.VerificationTaskExecutionInstance;
 import io.harness.cvng.statemachine.beans.AnalysisState;
 import io.harness.cvng.statemachine.beans.AnalysisStatus;
 import io.harness.mongo.index.CompoundMongoIndex;
@@ -48,8 +50,8 @@ import org.mongodb.morphia.annotations.Id;
 @Entity(value = "analysisStateMachines", noClassnameStored = true)
 @HarnessEntity(exportable = true)
 @StoreIn(DbAliases.CVNG)
-public final class AnalysisStateMachine
-    implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess {
+public final class AnalysisStateMachine implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware,
+                                                   AccountAccess, VerificationTaskExecutionInstance {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -89,4 +91,24 @@ public final class AnalysisStateMachine
   }
 
   @FdTtlIndex @Builder.Default private Date validUntil = Date.from(OffsetDateTime.now().plusDays(14).toInstant());
+
+  @Override
+  public Instant getStartTime() {
+    return analysisStartTime;
+  }
+
+  @Override
+  public Instant getEndTime() {
+    return analysisEndTime;
+  }
+
+  public ExecutionLogDTO.LogLevel getLogLevel() {
+    if (AnalysisStatus.getFailedStatuses().contains(status)) {
+      return ExecutionLogDTO.LogLevel.ERROR;
+    } else if (AnalysisStatus.IGNORED.equals(status)) {
+      return ExecutionLogDTO.LogLevel.WARN;
+    } else {
+      return ExecutionLogDTO.LogLevel.INFO;
+    }
+  }
 }

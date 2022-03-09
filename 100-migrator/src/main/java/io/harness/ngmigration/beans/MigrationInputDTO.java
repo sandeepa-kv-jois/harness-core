@@ -12,6 +12,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ngmigration.serializer.CgEntityIdDeserializer;
 
 import software.wings.ngmigration.CgEntityId;
+import software.wings.ngmigration.NGMigrationEntityType;
 
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import java.util.Map;
@@ -29,5 +30,6 @@ public class MigrationInputDTO {
   private String accountIdentifier;
   private String orgIdentifier;
   private String projectIdentifier;
+  private Map<NGMigrationEntityType, InputDefaults> defaults;
   @JsonDeserialize(keyUsing = CgEntityIdDeserializer.class) private Map<CgEntityId, BaseProvidedInput> inputs;
 }

@@ -112,10 +112,10 @@ public class ChangeEventServiceImpl implements ChangeEventService {
   }
 
   @Override
-  public ChangeSummaryDTO getChangeSummary(ServiceEnvironmentParams serviceEnvironmentParams,
+  public ChangeSummaryDTO getChangeSummary(MonitoredServiceParams monitoredServiceParams,
       List<String> changeSourceIdentifiers, Instant startTime, Instant endTime) {
-    return getChangeSummary(serviceEnvironmentParams, Arrays.asList(serviceEnvironmentParams.getServiceIdentifier()),
-        Arrays.asList(serviceEnvironmentParams.getEnvironmentIdentifier()), null, null, startTime, endTime);
+    return getChangeSummary(monitoredServiceParams,
+        Arrays.asList(monitoredServiceParams.getMonitoredServiceIdentifier()), null, null, startTime, endTime);
   }
 
   @Override

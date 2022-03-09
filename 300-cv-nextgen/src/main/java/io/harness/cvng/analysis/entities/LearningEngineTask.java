@@ -11,6 +11,8 @@ import static io.harness.cvng.analysis.entities.LearningEngineTask.TaskPriority.
 
 import io.harness.annotation.HarnessEntity;
 import io.harness.annotation.StoreIn;
+import io.harness.cvng.beans.cvnglog.ExecutionLogDTO;
+import io.harness.cvng.core.entities.VerificationTaskExecutionInstance;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.FdTtlIndex;
@@ -53,8 +55,8 @@ import org.mongodb.morphia.annotations.Id;
 @Entity(value = "learningEngineTasks")
 @HarnessEntity(exportable = true)
 @StoreIn(DbAliases.CVNG)
-public abstract class LearningEngineTask
-    implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware, AccountAccess {
+public abstract class LearningEngineTask implements PersistentEntity, UuidAware, CreatedAtAware, UpdatedAtAware,
+                                                    AccountAccess, VerificationTaskExecutionInstance {
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -145,6 +147,26 @@ public abstract class LearningEngineTask
     }
     public int getValue() {
       return value;
+    }
+  }
+
+  @Override
+  public Instant getStartTime() {
+    return analysisStartTime;
+  }
+
+  @Override
+  public Instant getEndTime() {
+    return analysisEndTime;
+  }
+
+  public ExecutionLogDTO.LogLevel getLogLevel() {
+    if (ExecutionStatus.FAILED.equals(taskStatus) || ExecutionStatus.TIMEOUT.equals(taskStatus)) {
+      return ExecutionLogDTO.LogLevel.ERROR;
+    } else if (ExecutionStatus.QUEUED.equals(taskStatus)) {
+      return ExecutionLogDTO.LogLevel.WARN;
+    } else {
+      return ExecutionLogDTO.LogLevel.INFO;
     }
   }
 }

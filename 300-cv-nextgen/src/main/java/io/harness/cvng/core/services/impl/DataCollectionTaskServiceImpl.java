@@ -24,6 +24,7 @@ import io.harness.cvng.core.entities.DeploymentDataCollectionTask;
 import io.harness.cvng.core.entities.MetricCVConfig;
 import io.harness.cvng.core.services.api.DataCollectionTaskManagementService;
 import io.harness.cvng.core.services.api.DataCollectionTaskService;
+import io.harness.cvng.core.services.api.ExecutionLogService;
 import io.harness.cvng.core.services.api.MetricPackService;
 import io.harness.cvng.core.services.api.MonitoringSourcePerpetualTaskService;
 import io.harness.cvng.metrics.CVNGMetricsUtils;
@@ -64,6 +65,7 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
   @Inject
   private Map<DataCollectionTask.Type, DataCollectionTaskManagementService>
       dataCollectionTaskManagementServiceMapBinder;
+  @Inject private ExecutionLogService executionLogService;
 
   // TODO: this is creating reverse dependency. Find a way to get rid of this dependency.
   // Probabally by moving ProgressLog concept to a separate service and model.
@@ -202,6 +204,8 @@ public class DataCollectionTaskServiceImpl implements DataCollectionTaskService 
     } else {
       retry(dataCollectionTask);
     }
+    executionLogService.getLogger(dataCollectionTask)
+        .log(dataCollectionTask.getLogLevel(), "Data collection task status: " + dataCollectionTask.getStatus());
   }
 
   private void recordMetricsOnUpdateStatus(DataCollectionTask dataCollectionTask) {

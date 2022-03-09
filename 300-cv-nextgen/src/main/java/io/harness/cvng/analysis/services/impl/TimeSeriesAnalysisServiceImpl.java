@@ -459,8 +459,7 @@ public class TimeSeriesAnalysisServiceImpl implements TimeSeriesAnalysisService 
                                     .flatMap(x -> x.values().stream().filter(y -> y.getRisk() == Risk.NEED_ATTENTION))
                                     .count();
     heatMapService.updateRiskScore(cvConfig.getAccountId(), cvConfig.getOrgIdentifier(),
-        cvConfig.getProjectIdentifier(), cvConfig.getServiceIdentifier(), cvConfig.getEnvIdentifier(), cvConfig,
-        cvConfig.getCategory(), startTime, risk, anomalousMetricCount, 0);
+        cvConfig.getProjectIdentifier(), cvConfig, cvConfig.getCategory(), startTime, risk, anomalousMetricCount, 0);
     timeSeriesRecordService.updateRiskScores(cvConfigId, riskSummary);
   }
 

@@ -68,6 +68,8 @@ import io.harness.cvng.core.entities.StackdriverLogCVConfig;
 import io.harness.cvng.core.entities.TimeSeriesRecord;
 import io.harness.cvng.core.entities.TimeSeriesThreshold;
 import io.harness.cvng.core.entities.VerificationTask;
+import io.harness.cvng.core.entities.VerificationTaskExecutionInstance;
+import io.harness.cvng.core.entities.VerificationTaskIdAware;
 import io.harness.cvng.core.entities.Webhook;
 import io.harness.cvng.core.entities.changeSource.ChangeSource;
 import io.harness.cvng.core.entities.changeSource.HarnessCDChangeSource;
@@ -202,6 +204,8 @@ public class CVNextGenMorphiaRegister implements MorphiaRegistrar {
     set.add(SideKick.class);
     set.add(DynatraceCVConfig.class);
     set.add(SLOErrorBudgetReset.class);
+    set.add(VerificationTaskExecutionInstance.class);
+    set.add(VerificationTaskIdAware.class);
   }
 
   @Override

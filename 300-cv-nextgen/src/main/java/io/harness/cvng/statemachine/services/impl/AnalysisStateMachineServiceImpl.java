@@ -22,6 +22,7 @@ import io.harness.cvng.core.entities.VerificationTask;
 import io.harness.cvng.core.entities.VerificationTask.DeploymentInfo;
 import io.harness.cvng.core.entities.VerificationTask.TaskType;
 import io.harness.cvng.core.services.api.CVConfigService;
+import io.harness.cvng.core.services.api.ExecutionLogService;
 import io.harness.cvng.core.services.api.VerificationTaskService;
 import io.harness.cvng.models.VerificationType;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelIndicator;
@@ -68,6 +69,7 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
   @Inject private VerificationTaskService verificationTaskService;
   @Inject private Clock clock;
   @Inject private ServiceLevelIndicatorService serviceLevelIndicatorService;
+  @Inject private ExecutionLogService executionLogService;
 
   @Override
   public void initiateStateMachine(String verificationTaskId, AnalysisStateMachine stateMachine) {
@@ -99,6 +101,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
           .execute(stateMachine.getCurrentState());
     }
     hPersistence.save(stateMachine);
+    executionLogService.getLogger(stateMachine)
+        .log(stateMachine.getLogLevel(), "Analysis state machine status: " + stateMachine.getStatus());
   }
 
   @Override
@@ -131,6 +135,9 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
           analysisStateMachine.getVerificationTaskId(), analysisStateMachine.getAnalysisStartTime(),
           analysisStateMachine.getAnalysisEndTime(), STATE_MACHINE_IGNORE_MINUTES);
       analysisStateMachine.setStatus(AnalysisStatus.IGNORED);
+      executionLogService.getLogger(analysisStateMachine)
+          .log(
+              analysisStateMachine.getLogLevel(), "Analysis state machine status: " + analysisStateMachine.getStatus());
       return Optional.of(analysisStateMachine);
     }
     return Optional.empty();
@@ -214,6 +221,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
       nextStateExecutor.handleFinalStatuses(nextState);
     }
     hPersistence.save(analysisStateMachine);
+    executionLogService.getLogger(analysisStateMachine)
+        .log(analysisStateMachine.getLogLevel(), "Analysis state machine status: " + analysisStateMachine.getStatus());
     return analysisStateMachine.getCurrentState().getStatus();
   }
 
@@ -237,6 +246,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
     }
 
     hPersistence.save(analysisStateMachine);
+    executionLogService.getLogger(analysisStateMachine)
+        .log(analysisStateMachine.getLogLevel(), "Analysis state machine status: " + analysisStateMachine.getStatus());
   }
 
   @Override
@@ -317,6 +328,8 @@ public class AnalysisStateMachineServiceImpl implements AnalysisStateMachineServ
     } else {
       throw new IllegalStateException("Invalid verificationType");
     }
+    executionLogService.getLogger(stateMachine)
+        .log(stateMachine.getLogLevel(), "Analysis state machine status: " + stateMachine.getStatus());
     return stateMachine;
   }
 

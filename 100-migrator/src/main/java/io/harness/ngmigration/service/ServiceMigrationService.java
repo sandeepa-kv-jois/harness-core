@@ -102,7 +102,7 @@ public class ServiceMigrationService implements NgMigrationService {
       return PrimaryArtifact.builder()
           .sourceType(ArtifactSourceType.DOCKER_REGISTRY)
           .spec(DockerHubArtifactConfig.builder()
-                    .connectorRef(ParameterField.createValueField(connector.getIdentifier()))
+                    .connectorRef(ParameterField.createValueField(MigratorUtility.getIdentifierWithScope(connector)))
                     .imagePath(ParameterField.createValueField(dockerArtifactStream.getImageName()))
                     .tag(ParameterField.createValueField("<+input>"))
                     .build())
@@ -128,7 +128,7 @@ public class ServiceMigrationService implements NgMigrationService {
     }
 
     List<ManifestConfigWrapper> manifestConfigWrapperList =
-        manifestMigrationService.getManifests(manifests, entities, graph, migratedEntities);
+        manifestMigrationService.getManifests(manifests, inputDTO, entities, graph, migratedEntities);
     ServiceDefinition serviceDefinition =
         ServiceDefinition.builder()
             .type(ServiceDefinitionType.KUBERNETES)

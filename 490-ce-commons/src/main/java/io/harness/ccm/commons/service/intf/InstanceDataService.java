@@ -13,10 +13,12 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.ccm.commons.entities.batch.InstanceData;
 
 import java.util.List;
+import java.util.Map;
 
 @OwnedBy(CE)
 public interface InstanceDataService {
   InstanceData get(String instanceId);
   List<InstanceData> fetchInstanceDataForGivenInstances(List<String> instanceIds);
   List<InstanceData> fetchInstanceDataForGivenInstances(String accountId, String clusterId, List<String> instanceIds);
+  Map<String, Map<String, String>> fetchLabelsForGivenInstances(List<String> instanceIds);
 }

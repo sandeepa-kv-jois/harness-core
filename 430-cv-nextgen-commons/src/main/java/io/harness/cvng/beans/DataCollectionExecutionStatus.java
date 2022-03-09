@@ -21,7 +21,7 @@ public enum DataCollectionExecutionStatus {
   public static List<DataCollectionExecutionStatus> getFailedStatuses() {
     return Arrays.asList(FAILED, EXPIRED);
   }
-  public static List<DataCollectionExecutionStatus> getNonFinalStatues() {
+  public static List<DataCollectionExecutionStatus> getNonFinalStatuses() {
     return Arrays.asList(QUEUED, RUNNING, WAITING);
   }
 }

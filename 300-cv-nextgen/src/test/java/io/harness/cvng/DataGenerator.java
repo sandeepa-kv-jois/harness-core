@@ -122,6 +122,7 @@ public class DataGenerator {
   public AnalysisStateMachine buildStateMachine(
       AnalysisStatus status, String verificationTaskId, AnalysisState analysisState) {
     AnalysisStateMachine stateMachine = AnalysisStateMachine.builder()
+                                            .accountId(accountId)
                                             .verificationTaskId(verificationTaskId)
                                             .analysisStartTime(Instant.now().minus(5, ChronoUnit.MINUTES))
                                             .analysisEndTime(Instant.now())

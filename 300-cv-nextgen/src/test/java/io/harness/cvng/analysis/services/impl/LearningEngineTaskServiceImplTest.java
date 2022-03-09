@@ -82,8 +82,11 @@ public class LearningEngineTaskServiceImplTest extends CvNextGenTestBase {
     assertThat(task).isNull();
     LearningEngineTask taskToSave = TimeSeriesLearningEngineTask.builder().build();
     taskToSave.setUuid("leTaskId1");
+    taskToSave.setAccountId(accountId);
     taskToSave.setTaskStatus(ExecutionStatus.QUEUED);
     taskToSave.setVerificationTaskId(generateUuid());
+    taskToSave.setAnalysisStartTime(Instant.parse("2020-07-27T10:45:00.000Z"));
+    taskToSave.setAnalysisEndTime(Instant.parse("2020-07-27T10:50:00.000Z"));
     hPersistence.save(taskToSave);
 
     task = learningEngineTaskService.getNextAnalysisTask();
@@ -97,9 +100,12 @@ public class LearningEngineTaskServiceImplTest extends CvNextGenTestBase {
   public void testGetNextAnalysisTask_withTaskType() {
     LearningEngineTask taskToSave = TimeSeriesLearningEngineTask.builder().build();
     taskToSave.setUuid("leTaskId1");
+    taskToSave.setAccountId(accountId);
     taskToSave.setTaskStatus(ExecutionStatus.QUEUED);
     taskToSave.setVerificationTaskId(generateUuid());
     taskToSave.setAnalysisType(SERVICE_GUARD_LOG_ANALYSIS);
+    taskToSave.setAnalysisStartTime(Instant.parse("2020-07-27T10:45:00.000Z"));
+    taskToSave.setAnalysisEndTime(Instant.parse("2020-07-27T10:50:00.000Z"));
     hPersistence.save(taskToSave);
 
     taskToSave.setUuid("leTaskId2");
@@ -123,15 +129,21 @@ public class LearningEngineTaskServiceImplTest extends CvNextGenTestBase {
         verificationTaskService.createLiveMonitoringVerificationTask(accountId, cvConfigId, APP_DYNAMICS);
     LearningEngineTask taskToSave = TimeSeriesLearningEngineTask.builder().build();
     taskToSave.setUuid("leTaskId1");
+    taskToSave.setAccountId(accountId);
     taskToSave.setTaskStatus(ExecutionStatus.QUEUED);
     taskToSave.setVerificationTaskId(liveMonitoringVerificationTask);
     taskToSave.setAnalysisType(SERVICE_GUARD_LOG_ANALYSIS);
+    taskToSave.setAnalysisStartTime(Instant.parse("2020-07-27T10:45:00.000Z"));
+    taskToSave.setAnalysisEndTime(Instant.parse("2020-07-27T10:50:00.000Z"));
     learningEngineTaskService.createLearningEngineTask(taskToSave);
     taskToSave = CanaryLogAnalysisLearningEngineTask.builder().build();
     taskToSave.setUuid("leTaskId2");
+    taskToSave.setAccountId(accountId);
     taskToSave.setTaskStatus(ExecutionStatus.QUEUED);
     taskToSave.setVerificationTaskId(deploymentVerificationTaskId);
     taskToSave.setAnalysisType(CANARY_LOG_ANALYSIS);
+    taskToSave.setAnalysisStartTime(Instant.parse("2020-07-27T10:45:00.000Z"));
+    taskToSave.setAnalysisEndTime(Instant.parse("2020-07-27T10:50:00.000Z"));
     learningEngineTaskService.createLearningEngineTask(taskToSave);
 
     LearningEngineTask task = learningEngineTaskService.getNextAnalysisTask();
@@ -150,16 +162,22 @@ public class LearningEngineTaskServiceImplTest extends CvNextGenTestBase {
         verificationTaskService.createDeploymentVerificationTask(accountId, cvConfigId, generateUuid(), APP_DYNAMICS);
     LearningEngineTask taskToSave = TimeSeriesLearningEngineTask.builder().build();
     taskToSave.setUuid("leTaskId1");
+    taskToSave.setAccountId(accountId);
     taskToSave.setTaskStatus(ExecutionStatus.QUEUED);
     taskToSave.setVerificationTaskId(deploymentVerificationTaskId);
     taskToSave.setAnalysisType(SERVICE_GUARD_LOG_ANALYSIS);
+    taskToSave.setAnalysisStartTime(Instant.parse("2020-07-27T10:45:00.000Z"));
+    taskToSave.setAnalysisEndTime(Instant.parse("2020-07-27T10:50:00.000Z"));
     learningEngineTaskService.createLearningEngineTask(taskToSave);
     Thread.sleep(1);
     taskToSave = CanaryLogAnalysisLearningEngineTask.builder().build();
     taskToSave.setUuid("leTaskId2");
+    taskToSave.setAccountId(accountId);
     taskToSave.setTaskStatus(ExecutionStatus.QUEUED);
     taskToSave.setVerificationTaskId(deploymentVerificationTaskId);
     taskToSave.setAnalysisType(CANARY_LOG_ANALYSIS);
+    taskToSave.setAnalysisStartTime(Instant.parse("2020-07-27T10:45:00.000Z"));
+    taskToSave.setAnalysisEndTime(Instant.parse("2020-07-27T10:50:00.000Z"));
     learningEngineTaskService.createLearningEngineTask(taskToSave);
 
     LearningEngineTask task = learningEngineTaskService.getNextAnalysisTask();
@@ -305,10 +323,15 @@ public class LearningEngineTaskServiceImplTest extends CvNextGenTestBase {
 
   private LearningEngineTask getTaskToSave(ExecutionStatus taskStatus) {
     LearningEngineTask taskToSave = TimeSeriesLearningEngineTask.builder().build();
+    Instant startTime = Instant.parse("2020-07-27T10:45:00.000Z");
+    Instant endTime = Instant.parse("2020-07-27T10:50:00.000Z");
     taskToSave.setUuid("leTaskId1");
+    taskToSave.setAccountId(accountId);
     taskToSave.setTaskStatus(taskStatus);
     taskToSave.setVerificationTaskId(verificationTaskId);
     taskToSave.setAnalysisType(SERVICE_GUARD_LOG_ANALYSIS);
+    taskToSave.setAnalysisStartTime(startTime);
+    taskToSave.setAnalysisEndTime(endTime);
     return taskToSave;
   }
 }

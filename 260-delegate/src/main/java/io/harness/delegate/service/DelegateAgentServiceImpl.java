@@ -2442,10 +2442,12 @@ public class DelegateAgentServiceImpl implements DelegateAgentService {
   }
 
   private String getVersionWithPatch() {
+    String version = getVersion();
     if (multiVersion) {
-      return versionInfoManager.getFullVersion();
+      // Appending '000' as delegate does not support patch version.
+      return version + "-000";
     }
-    return getVersion();
+    return version;
   }
 
   private void initiateSelfDestruct() {

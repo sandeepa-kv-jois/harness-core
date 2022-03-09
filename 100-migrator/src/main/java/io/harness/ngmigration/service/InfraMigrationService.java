@@ -125,7 +125,7 @@ public class InfraMigrationService implements NgMigrationService {
     return InfrastructureDef.builder()
         .type(InfrastructureType.KUBERNETES_DIRECT)
         .spec(K8SDirectInfrastructure.builder()
-                  .connectorRef(ParameterField.createValueField(connector.getIdentifier()))
+                  .connectorRef(ParameterField.createValueField(MigratorUtility.getIdentifierWithScope(connector)))
                   .namespace(ParameterField.createValueField(k8sInfra.getNamespace()))
                   .releaseName(ParameterField.createValueField("release-<+INFRA_KEY>"))
                   .build())

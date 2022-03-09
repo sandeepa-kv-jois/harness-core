@@ -16,7 +16,7 @@ import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import io.harness.OrchestrationVisualizationTestBase;
+import io.harness.OrchestrationTestBase;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.OrchestrationEventLog;
@@ -46,7 +46,7 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 
 @OwnedBy(HarnessTeam.PIPELINE)
-public class OrchestrationLogPublisherTest extends OrchestrationVisualizationTestBase {
+public class OrchestrationLogPublisherTest extends OrchestrationTestBase {
   private static final String planExecutionId = generateUuid();
   private static final String nodeExecutionId = generateUuid();
   private static final OrchestrationLogEvent orchestrationLogEvent =

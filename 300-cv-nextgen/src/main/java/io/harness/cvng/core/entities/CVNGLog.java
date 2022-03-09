@@ -16,6 +16,7 @@ import io.harness.cvng.beans.cvnglog.CVNGLogType;
 import io.harness.cvng.beans.cvnglog.TraceableType;
 import io.harness.cvng.core.entities.cvnglogs.ApiCallLogRecord;
 import io.harness.cvng.core.entities.cvnglogs.CVNGLogRecord;
+import io.harness.cvng.core.entities.cvnglogs.ExecutionLogRecord;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
@@ -90,7 +91,7 @@ public final class CVNGLog implements PersistentEntity, UuidAware, AccountAccess
       case API_CALL_LOG:
         return ApiCallLogRecord.toCVNGLogRecord(cvngLogDTO);
       case EXECUTION_LOG:
-        throw new UnsupportedOperationException("Type: ExecutionLog. To be implemented");
+        return ExecutionLogRecord.toCVNGLogRecord(cvngLogDTO);
       default:
         throw new IllegalStateException("CVNG Logs: Log Type cannot be null");
     }

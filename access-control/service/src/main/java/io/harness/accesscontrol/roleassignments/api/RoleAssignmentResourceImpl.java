@@ -285,6 +285,12 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
   public ResponseDTO<List<RoleAssignmentResponseDTO>> create(
       HarnessScopeParams harnessScopeParams, RoleAssignmentCreateRequestDTO roleAssignmentCreateRequestDTO) {
     Scope scope = ScopeMapper.fromParams(harnessScopeParams);
+    if (roleAssignmentCreateRequestDTO == null) {
+      throw new InvalidRequestException("Request body is empty");
+    }
+    if (isEmpty(roleAssignmentCreateRequestDTO.getRoleAssignments())) {
+      return ResponseDTO.newResponse(new ArrayList<>());
+    }
     roleAssignmentCreateRequestDTO.getRoleAssignments().forEach(roleAssignmentDTO -> {
       validateDeprecatedResourceGroupNotUsed(
           roleAssignmentDTO.getResourceGroupIdentifier(), scope.getLevel().toString());
@@ -297,6 +303,12 @@ public class RoleAssignmentResourceImpl implements RoleAssignmentResource {
   public ResponseDTO<List<RoleAssignmentResponseDTO>> create(HarnessScopeParams harnessScopeParams,
       RoleAssignmentCreateRequestDTO roleAssignmentCreateRequestDTO, Boolean managed) {
     // TODO: remove this deprecated resource group handling
+    if (roleAssignmentCreateRequestDTO == null) {
+      throw new InvalidRequestException("Request body is empty");
+    }
+    if (isEmpty(roleAssignmentCreateRequestDTO.getRoleAssignments())) {
+      return ResponseDTO.newResponse(new ArrayList<>());
+    }
     List<RoleAssignmentDTO> roleAssignmentDTOs = new ArrayList<>();
     roleAssignmentCreateRequestDTO.getRoleAssignments().forEach(roleAssignmentDTO -> {
       if (HarnessResourceGroupConstants.DEPRECATED_ALL_RESOURCES_RESOURCE_GROUP_IDENTIFIER.equals(

@@ -35,8 +35,8 @@ public class AddMonitoredServiceToHeatMapMigration implements CVNGMigration {
                 .filter(HeatMapKeys.accountId, monitoredService.getAccountId())
                 .filter(HeatMapKeys.projectIdentifier, monitoredService.getProjectIdentifier())
                 .filter(HeatMapKeys.orgIdentifier, monitoredService.getOrgIdentifier())
-                .filter(HeatMapKeys.serviceIdentifier, monitoredService.getServiceIdentifier())
-                .filter(HeatMapKeys.envIdentifier, monitoredService.getEnvironmentIdentifier());
+                .filter("serviceIdentifier", monitoredService.getServiceIdentifier())
+                .filter("envIdentifier", monitoredService.getEnvironmentIdentifier());
 
         hPersistence.update(heatMapQuery,
             hPersistence.createUpdateOperations(HeatMap.class)

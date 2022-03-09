@@ -7,13 +7,18 @@
 
 package io.harness.ngmigration.service;
 
+import io.harness.encryption.Scope;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.ngmigration.beans.InputDefaults;
+import io.harness.ngmigration.beans.NgEntityDetail;
 import io.harness.pms.yaml.ParameterField;
 
+import software.wings.ngmigration.NGMigrationEntityType;
 import software.wings.ngmigration.NGYamlFile;
 
 import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import org.apache.commons.lang3.StringUtils;
 
 public class MigratorUtility {
@@ -50,5 +55,27 @@ public class MigratorUtility {
       default:
         throw new InvalidArgumentsException("Unknown type found: " + file.getType());
     }
+  }
+
+  public static Scope getDefaultScope(Map<NGMigrationEntityType, InputDefaults> inputDefaultsMap,
+      NGMigrationEntityType entityType, Scope defaultScope) {
+    if (inputDefaultsMap == null || !inputDefaultsMap.containsKey(entityType)) {
+      return defaultScope;
+    }
+    return inputDefaultsMap.get(entityType).getScope() != null ? inputDefaultsMap.get(entityType).getScope()
+                                                               : defaultScope;
+  }
+
+  public static String getIdentifierWithScope(NgEntityDetail entityDetail) {
+    String orgId = entityDetail.getOrgIdentifier();
+    String projectId = entityDetail.getProjectIdentifier();
+    String identifier = entityDetail.getIdentifier();
+    if (StringUtils.isAllBlank(orgId, projectId)) {
+      return "account." + identifier;
+    }
+    if (StringUtils.isNotBlank(projectId)) {
+      return "project." + identifier;
+    }
+    return "org." + identifier;
   }
 }

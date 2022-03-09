@@ -81,6 +81,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
   @Inject private ServiceLevelIndicatorService serviceLevelIndicatorService;
 
   private final DataGenerator dataGenerator = DataGenerator.builder().accountId(generateUuid()).build();
+  private String accountId;
   private String cvConfigId;
   private String verificationTaskId;
   private TimeSeriesAnalysisState timeSeriesAnalysisState;
@@ -91,6 +92,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
     builderFactory = BuilderFactory.getDefault();
     AppDynamicsCVConfig appDConfig = dataGenerator.getAppDynamicsCVConfig();
     CVConfig cvConfig = cvConfigService.save(appDConfig);
+    accountId = generateUuid();
     cvConfigId = cvConfig.getUuid();
     verificationTaskId = cvConfigId;
 
@@ -150,6 +152,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
     String verificationTaskId = generateUuid();
     String verificationJobInstanceId = generateUuid();
     VerificationTask verificationTask = VerificationTask.builder()
+                                            .accountId(accountId)
                                             .taskInfo(DeploymentInfo.builder()
                                                           .verificationJobInstanceId(verificationJobInstanceId)
                                                           .cvConfigId(cvConfigId)
@@ -183,6 +186,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
     String verificationTaskId = generateUuid();
     String verificationJobInstanceId = generateUuid();
     VerificationTask verificationTask = VerificationTask.builder()
+                                            .accountId(accountId)
                                             .taskInfo(DeploymentInfo.builder()
                                                           .verificationJobInstanceId(verificationJobInstanceId)
                                                           .cvConfigId(cvConfig.getUuid())
@@ -217,6 +221,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
     String verificationTaskId = generateUuid();
     String verificationJobInstanceId = generateUuid();
     VerificationTask verificationTask = VerificationTask.builder()
+                                            .accountId(accountId)
                                             .taskInfo(DeploymentInfo.builder()
                                                           .verificationJobInstanceId(verificationJobInstanceId)
                                                           .cvConfigId(cvConfig.getUuid())
@@ -250,6 +255,7 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
     String verificationTaskId = generateUuid();
     String verificationJobInstanceId = generateUuid();
     VerificationTask verificationTask = VerificationTask.builder()
+                                            .accountId(accountId)
                                             .taskInfo(DeploymentInfo.builder()
                                                           .verificationJobInstanceId(verificationJobInstanceId)
                                                           .cvConfigId(cvConfigId)
@@ -551,6 +557,8 @@ public class AnalysisStateMachineServiceImplTest extends CvNextGenTestBase {
     Instant currentTime = clock.instant();
     AnalysisStateMachine analysisStateMachine =
         AnalysisStateMachine.builder()
+            .accountId(accountId)
+            .verificationTaskId(verificationTaskId)
             .analysisStartTime(currentTime.minus(STATE_MACHINE_IGNORE_MINUTES + 10, ChronoUnit.MINUTES))
             .analysisEndTime(currentTime.minus(STATE_MACHINE_IGNORE_MINUTES + 5, ChronoUnit.MINUTES))
             .build();

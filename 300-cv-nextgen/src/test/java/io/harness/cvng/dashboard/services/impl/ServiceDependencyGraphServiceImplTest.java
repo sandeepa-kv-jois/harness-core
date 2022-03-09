@@ -199,14 +199,12 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
                                .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msOneHeatMap);
     msOneHeatMap = builderFactory.heatMapBuilder()
                        .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
-                       .serviceIdentifier(environmentParams.getServiceIdentifier())
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
@@ -215,14 +213,12 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
 
     HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
                                .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
-                               .serviceIdentifier("service_2")
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msTwoHeatMap);
     msTwoHeatMap = builderFactory.heatMapBuilder()
                        .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
-                       .serviceIdentifier("service_2")
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
@@ -231,14 +227,12 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
 
     HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
                                  .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
-                                 .serviceIdentifier("service_3")
                                  .heatMapResolution(FIVE_MIN)
                                  .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
     hPersistence.save(msThreeHeatMap);
     msThreeHeatMap = builderFactory.heatMapBuilder()
                          .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
-                         .serviceIdentifier("service_3")
                          .heatMapResolution(FIVE_MIN)
                          .category(CVMonitoringCategory.PERFORMANCE)
                          .build();
@@ -359,14 +353,12 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
 
     HeatMap msOneHeatMap = builderFactory.heatMapBuilder()
                                .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
-                               .serviceIdentifier(environmentParams.getServiceIdentifier())
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msOneHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msOneHeatMap);
     msOneHeatMap = builderFactory.heatMapBuilder()
                        .monitoredServiceIdentifier(monitoredServiceOneDTO.getIdentifier())
-                       .serviceIdentifier(environmentParams.getServiceIdentifier())
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
@@ -375,14 +367,12 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
 
     HeatMap msTwoHeatMap = builderFactory.heatMapBuilder()
                                .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
-                               .serviceIdentifier("service_2")
                                .heatMapResolution(FIVE_MIN)
                                .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msTwoHeatMap, endTime, 0.85, 0.75);
     hPersistence.save(msTwoHeatMap);
     msTwoHeatMap = builderFactory.heatMapBuilder()
                        .monitoredServiceIdentifier(monitoredServiceTwoDTO.getIdentifier())
-                       .serviceIdentifier("service_2")
                        .heatMapResolution(FIVE_MIN)
                        .category(CVMonitoringCategory.PERFORMANCE)
                        .build();
@@ -391,14 +381,12 @@ public class ServiceDependencyGraphServiceImplTest extends CvNextGenTestBase {
 
     HeatMap msThreeHeatMap = builderFactory.heatMapBuilder()
                                  .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
-                                 .serviceIdentifier("service_3")
                                  .heatMapResolution(FIVE_MIN)
                                  .build();
     setStartTimeEndTimeAndRiskScoreWith5MinBucket(msThreeHeatMap, endTime, 0.50, 0.70);
     hPersistence.save(msThreeHeatMap);
     msThreeHeatMap = builderFactory.heatMapBuilder()
                          .monitoredServiceIdentifier(monitoredServiceThreeDTO.getIdentifier())
-                         .serviceIdentifier("service_3")
                          .heatMapResolution(FIVE_MIN)
                          .category(CVMonitoringCategory.PERFORMANCE)
                          .build();

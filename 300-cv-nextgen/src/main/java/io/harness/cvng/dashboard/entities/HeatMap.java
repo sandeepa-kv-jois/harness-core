@@ -52,18 +52,6 @@ public final class HeatMap implements UuidAware, CreatedAtAware, AccountAccess, 
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
-                 .name("insert_idx")
-                 .field(HeatMapKeys.accountId)
-                 .field(HeatMapKeys.orgIdentifier)
-                 .field(HeatMapKeys.projectIdentifier)
-                 .field(HeatMapKeys.serviceIdentifier)
-                 .field(HeatMapKeys.envIdentifier)
-                 .field(HeatMapKeys.category)
-                 .field(HeatMapKeys.heatMapResolution)
-                 .field(HeatMapKeys.heatMapBucketStartTime)
-                 .field(HeatMapKeys.heatMapBucketEndTime)
-                 .build())
-        .add(CompoundMongoIndex.builder()
                  .name("insert_idxv2")
                  .field(HeatMapKeys.accountId)
                  .field(HeatMapKeys.orgIdentifier)
@@ -86,8 +74,6 @@ public final class HeatMap implements UuidAware, CreatedAtAware, AccountAccess, 
   }
 
   @Id private String uuid;
-  private String serviceIdentifier;
-  private String envIdentifier;
   private String monitoredServiceIdentifier;
   private String projectIdentifier;
   private String orgIdentifier;

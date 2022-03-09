@@ -13,12 +13,16 @@ import io.harness.annotation.StoreIn;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EmbeddedUser;
 import io.harness.iterator.PersistentRegularIterable;
+import io.harness.mongo.CollationLocale;
+import io.harness.mongo.CollationStrength;
+import io.harness.mongo.index.Collation;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
 import io.harness.mongo.index.MongoIndex;
 import io.harness.ng.DbAliases;
 import io.harness.ng.core.common.beans.NGTag;
 import io.harness.persistence.PersistentEntity;
+import io.harness.resourcegroup.v2.model.ResourceFilter.ResourceFilterKeys;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.google.common.collect.ImmutableList;
@@ -53,6 +57,16 @@ public class ResourceGroup implements PersistentRegularIterable, PersistentEntit
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
+                 .name("resourceGroupPrimaryKey_resourceFilter")
+                 .field(ResourceGroupKeys.accountIdentifier)
+                 .field(ResourceGroupKeys.orgIdentifier)
+                 .field(ResourceGroupKeys.projectIdentifier)
+                 .field(ResourceGroupKeys.identifier)
+                 .field(ResourceGroupKeys.resourceFilter + "." + ResourceFilterKeys.resources)
+                 .collation(
+                     Collation.builder().locale(CollationLocale.ENGLISH).strength(CollationStrength.PRIMARY).build())
+                 .build())
+        .add(CompoundMongoIndex.builder()
                  .name("uniqueResourceGroupV2")
                  .field(ResourceGroupKeys.accountIdentifier)
                  .field(ResourceGroupKeys.orgIdentifier)
@@ -74,7 +88,7 @@ public class ResourceGroup implements PersistentRegularIterable, PersistentEntit
   @Size(max = 128) @Singular List<NGTag> tags;
   @FdIndex @NotNull @Builder.Default Boolean harnessManaged = Boolean.FALSE;
   @NotNull @Singular List<ScopeSelector> includedScopes;
-  @Size(max = 256) @Singular("resourceFilter") List<ResourceFilter> resourceFilter;
+  ResourceFilter resourceFilter;
   Set<String> allowedScopeLevels;
 
   @CreatedDate Long createdAt;

@@ -121,18 +121,24 @@ public class ConnectorMigrationService implements NgMigrationService {
     String identifier = MigratorUtility.generateIdentifier(settingAttribute.getName());
     String projectIdentifier = null;
     String orgIdentifier = null;
+    Scope scope =
+        MigratorUtility.getDefaultScope(inputDTO.getDefaults(), NGMigrationEntityType.CONNECTOR, Scope.PROJECT);
+    // Handle this connector specific values
     if (inputDTO.getInputs() != null && inputDTO.getInputs().containsKey(entityId)) {
       // TODO: @deepakputhraya We should handle if the connector needs to be reused.
       BaseProvidedInput input = inputDTO.getInputs().get(entityId);
       identifier = StringUtils.isNotBlank(input.getIdentifier()) ? input.getIdentifier() : identifier;
       name = StringUtils.isNotBlank(input.getIdentifier()) ? input.getName() : name;
-      if (Scope.PROJECT.equals(input.getScope())) {
-        projectIdentifier = inputDTO.getProjectIdentifier();
-        orgIdentifier = inputDTO.getOrgIdentifier();
+      if (input.getScope() != null) {
+        scope = input.getScope();
       }
-      if (Scope.ORG.equals(input.getScope())) {
-        orgIdentifier = inputDTO.getOrgIdentifier();
-      }
+    }
+    if (Scope.PROJECT.equals(scope)) {
+      projectIdentifier = inputDTO.getProjectIdentifier();
+      orgIdentifier = inputDTO.getOrgIdentifier();
+    }
+    if (Scope.ORG.equals(scope)) {
+      orgIdentifier = inputDTO.getOrgIdentifier();
     }
 
     List<NGYamlFile> files = new ArrayList<>();

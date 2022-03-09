@@ -177,12 +177,12 @@ public class ChangeSourceServiceImplTest extends CvNextGenTestBase {
   @Category(UnitTests.class)
   public void testgetChangeSummary() {
     ChangeSummaryDTO changeSummaryDTO = ChangeSummaryDTO.builder().build();
-    when(changeEventService.getChangeSummary(eq(builderFactory.getContext().getServiceEnvironmentParams()),
+    when(changeEventService.getChangeSummary(eq(builderFactory.getContext().getMonitoredServiceParams()),
              eq(new ArrayList<>()), eq(Instant.ofEpochSecond(100)), eq(Instant.ofEpochSecond(100))))
         .thenReturn(changeSummaryDTO);
     ChangeSummaryDTO result =
-        changeSourceService.getChangeSummary(builderFactory.getContext().getServiceEnvironmentParams(),
-            new ArrayList<>(), Instant.ofEpochSecond(100), Instant.ofEpochSecond(100));
+        changeSourceService.getChangeSummary(builderFactory.getContext().getMonitoredServiceParams(), new ArrayList<>(),
+            Instant.ofEpochSecond(100), Instant.ofEpochSecond(100));
     assertThat(result).isEqualTo(changeSummaryDTO);
   }
 

@@ -84,6 +84,7 @@ public class OrchestrationServiceImplTest extends CvNextGenTestBase {
     CVConfig cvConfig = new AppDynamicsCVConfig();
     cvConfig.setVerificationType(VerificationType.TIME_SERIES);
     cvConfig.setUuid(cvConfigId);
+    cvConfig.setAccountId(accountId);
     hPersistence.save(cvConfig);
     dataGenerator = DataGenerator.builder().accountId(accountId).build();
     verificationTaskId =
