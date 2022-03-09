@@ -11,12 +11,11 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ACASIAN;
 import static io.harness.rule.OwnerRule.ACHYUTH;
+import static io.harness.rule.OwnerRule.FILIP;
 import static io.harness.rule.OwnerRule.SAHIL;
 import static io.harness.rule.OwnerRule.VAIBHAV_SI;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatCode;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.assertj.core.api.Assertions.*;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
@@ -29,13 +28,16 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.common.beans.SetupAbstractionKeys;
 import io.harness.cdng.environment.yaml.EnvironmentYaml;
+import io.harness.cdng.infra.beans.AttributeFilter;
 import io.harness.cdng.infra.beans.InfraMapping;
 import io.harness.cdng.infra.beans.K8sDirectInfraMapping;
 import io.harness.cdng.infra.beans.K8sGcpInfraMapping;
+import io.harness.cdng.infra.beans.PdcInfraMapping;
 import io.harness.cdng.infra.yaml.Infrastructure;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure;
 import io.harness.cdng.infra.yaml.K8SDirectInfrastructure.K8SDirectInfrastructureBuilder;
 import io.harness.cdng.infra.yaml.K8sGcpInfrastructure;
+import io.harness.cdng.infra.yaml.PdcInfrastructure;
 import io.harness.cdng.k8s.K8sStepHelper;
 import io.harness.cdng.pipeline.PipelineInfrastructure;
 import io.harness.cdng.service.steps.ServiceStepOutcome;
@@ -67,8 +69,10 @@ import io.harness.steps.OutputExpressionConstants;
 import io.harness.steps.environment.EnvironmentOutcome;
 
 import com.google.inject.name.Named;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Optional;
 import org.junit.Rule;
 import org.junit.Test;
@@ -195,6 +199,71 @@ public class InfrastructureStepTest extends CategoryTest {
   }
 
   @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testCreatePdcInfraMappingWithHosts() {
+    List<String> hosts = Arrays.asList("host1", "host2");
+    String sshKeyRef = "some-key-ref";
+
+    Infrastructure infrastructureSpec = PdcInfrastructure.builder()
+                                            .hosts(ParameterField.createValueField(hosts))
+                                            .sshKeyRef(ParameterField.createValueField(sshKeyRef))
+                                            .build();
+
+    InfraMapping expectedInfraMapping = PdcInfraMapping.builder().hosts(hosts).sshKeyRef(sshKeyRef).build();
+
+    InfraMapping infraMapping = infrastructureStep.createInfraMappingObject(infrastructureSpec);
+    assertThat(infraMapping).isEqualTo(expectedInfraMapping);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testCreatePdcInfraMappingWithConnectorAndHostFilters() {
+    String sshKeyRef = "some-key-ref";
+    String connectorRef = "some-connector-ref";
+    List<String> hostFilters = Arrays.asList("filter-host1", "filter-host2");
+
+    Infrastructure infrastructureSpec = PdcInfrastructure.builder()
+                                            .sshKeyRef(ParameterField.createValueField(sshKeyRef))
+                                            .connectorRef(ParameterField.createValueField(connectorRef))
+                                            .hostFilters(ParameterField.createValueField(hostFilters))
+                                            .build();
+
+    InfraMapping expectedInfraMapping =
+        PdcInfraMapping.builder().sshKeyRef(sshKeyRef).connectorRef(connectorRef).hostFilters(hostFilters).build();
+
+    InfraMapping infraMapping = infrastructureStep.createInfraMappingObject(infrastructureSpec);
+    assertThat(infraMapping).isEqualTo(expectedInfraMapping);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testCreatePdcInfraMappingWithConnectorAndAttributeFilters() {
+    String sshKeyRef = "some-key-ref";
+    String connectorRef = "some-connector-ref";
+    List<AttributeFilter> attributeFilters =
+        Arrays.asList(AttributeFilter.builder().attribute("some-attribute").value("some-value").build(),
+            AttributeFilter.builder().attribute("another-attribute").value("another-value").build());
+
+    Infrastructure infrastructureSpec = PdcInfrastructure.builder()
+                                            .sshKeyRef(ParameterField.createValueField(sshKeyRef))
+                                            .connectorRef(ParameterField.createValueField(connectorRef))
+                                            .attributeFilters(ParameterField.createValueField(attributeFilters))
+                                            .build();
+
+    InfraMapping expectedInfraMapping = PdcInfraMapping.builder()
+                                            .sshKeyRef(sshKeyRef)
+                                            .connectorRef(connectorRef)
+                                            .attributeFilters(attributeFilters)
+                                            .build();
+
+    InfraMapping infraMapping = infrastructureStep.createInfraMappingObject(infrastructureSpec);
+    assertThat(infraMapping).isEqualTo(expectedInfraMapping);
+  }
+
+  @Test
   @Owner(developers = VAIBHAV_SI)
   @Category(UnitTests.class)
   public void testProcessEnvironment() {
@@ -242,6 +311,47 @@ public class InfrastructureStepTest extends CategoryTest {
     assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(k8SDirectInfrastructureBuilder.build()))
         .isInstanceOf(InvalidRequestException.class)
         .hasMessageContaining("Unresolved Expression : [expression1]");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidatePdcInfrastructure() {
+    PdcInfrastructure infrastructure = PdcInfrastructure.builder()
+                                           .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+                                           .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
+                                           .build();
+
+    infrastructureStep.validateInfrastructure(infrastructure);
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidatePdcInfrastructureSshKeyExpression() {
+    PdcInfrastructure infrastructure = PdcInfrastructure.builder()
+                                           .sshKeyRef(new ParameterField<>(null, true, "expression1", null, true))
+                                           .hosts(ParameterField.createValueField(Arrays.asList("host1", "host2")))
+                                           .build();
+
+    assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Unresolved Expression : [expression1]");
+  }
+
+  @Test
+  @Owner(developers = FILIP)
+  @Category(UnitTests.class)
+  public void testValidatePdcInfrastructureHostsAndConnectorAreExpressions() {
+    PdcInfrastructure infrastructure = PdcInfrastructure.builder()
+                                           .sshKeyRef(ParameterField.createValueField("ssh-key-ref"))
+                                           .hosts(new ParameterField<>(null, true, "expression1", null, true))
+                                           .connectorRef(new ParameterField<>(null, true, "expression2", null, true))
+                                           .build();
+
+    assertThatThrownBy(() -> infrastructureStep.validateInfrastructure(infrastructure))
+        .isInstanceOf(InvalidRequestException.class)
+        .hasMessageContaining("Unresolved Expressions : [expression1] , [expression2]");
   }
 
   @Test
