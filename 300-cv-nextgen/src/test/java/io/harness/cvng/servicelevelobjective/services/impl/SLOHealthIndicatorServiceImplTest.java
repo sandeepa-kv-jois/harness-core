@@ -20,6 +20,7 @@ import io.harness.cvng.BuilderFactory;
 import io.harness.cvng.core.beans.params.ProjectParams;
 import io.harness.cvng.servicelevelobjective.beans.ServiceLevelIndicatorDTO;
 import io.harness.cvng.servicelevelobjective.entities.SLIRecord;
+import io.harness.cvng.servicelevelobjective.entities.SLIRecord.SLIRecordParam;
 import io.harness.cvng.servicelevelobjective.entities.SLOHealthIndicator;
 import io.harness.cvng.servicelevelobjective.entities.ServiceLevelObjective;
 import io.harness.cvng.servicelevelobjective.services.api.SLIRecordService;
@@ -91,13 +92,12 @@ public class SLOHealthIndicatorServiceImplTest extends CvNextGenTestBase {
         getSLIRecordParams(startTime, sliStateList, increment), sliId, verificationTaskId, sliVersion);
   }
 
-  private List<SLIRecord.SLIRecordParam> getSLIRecordParams(
+  private List<SLIRecordParam> getSLIRecordParams(
       Instant startTime, List<SLIRecord.SLIState> sliStates, Duration increment) {
-    List<SLIRecord.SLIRecordParam> sliRecordParams = new ArrayList<>();
+    List<SLIRecordParam> sliRecordParams = new ArrayList<>();
     for (int i = 0; i < sliStates.size(); i++) {
       SLIRecord.SLIState sliState = sliStates.get(i);
-      sliRecordParams.add(
-          SLIRecord.SLIRecordParam.builder().sliState(sliState).timeStamp(startTime.plus(increment)).build());
+      sliRecordParams.add(SLIRecordParam.builder().sliState(sliState).timeStamp(startTime.plus(increment)).build());
     }
     return sliRecordParams;
   }
