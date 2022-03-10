@@ -9,7 +9,7 @@ package io.harness.testing;
 
 option java_multiple_files = true;
 
-import "920-delegate-service-beans/src/main/proto/io/harness/delegate/delegate_service.proto";
+import "io/harness/delegate/delegate_service.proto";
 
 // The stages of a delegate stress test
 // Next ID: 2
