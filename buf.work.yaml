@@ -1,0 +1,3 @@
+version: v1
+directories:
+  - 160-stress-tester/src/main/proto
