@@ -34,5 +34,5 @@ message DelegateTaskStressTestStage {
   // the number of iterations to fire off per second. Recommended to not go
   // above 40 per stage, and 100 at any given time to give time for the stub to
   // actually fire off the task
-  int32 qps = 5;
+  int32 qps = 6;
 }
