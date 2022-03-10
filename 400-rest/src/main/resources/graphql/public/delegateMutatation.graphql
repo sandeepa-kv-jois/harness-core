@@ -100,7 +100,7 @@ type AttachScopeToDelegatePayload {
 
 type DelegateScope {
   name: String
-  uuid: String
+  uuid: String @deprecated(reason: "Use scope name.")
   taskTypes: [TaskGroup]
   environmentTypes: [EnvironmentType]
   applications: [String]
