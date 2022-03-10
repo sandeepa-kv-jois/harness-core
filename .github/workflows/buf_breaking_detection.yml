@@ -21,4 +21,4 @@ jobs:
       # Perform breaking change detection against the last commit
       - uses: bufbuild/buf-breaking-action@v1
         with:
-          against: 'https://github.com/kanikamittal09/harness-core.git#branch=develop,ref=HEAD~1'
+          against: 'https://github.com/sandeepa-kv-jois/harness-core.git#branch=develop,ref=HEAD~1'
