@@ -66,11 +66,6 @@ public class PmsMongoIndexesTest extends PipelineServiceTestBase {
       expectedIndexes = IOUtils.readLines(in, "UTF-8");
     }
 
-    String x = "";
-    for (String index : indexes) {
-      x += index + "\n";
-    }
-
     assertThat(indexes).isEqualTo(expectedIndexes);
   }
 }
