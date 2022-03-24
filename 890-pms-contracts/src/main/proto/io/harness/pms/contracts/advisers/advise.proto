@@ -11,8 +11,8 @@ option java_multiple_files = true;
 
 import "google/protobuf/duration.proto";
 
-import "io/harness/pms/contracts/commons/repair_action_code.proto";
-import "io/harness/pms/contracts/execution/status.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/commons/repair_action_code.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/status.proto";
 
 enum AdviseType {
   UNKNOWN = 0;
