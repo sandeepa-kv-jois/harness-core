@@ -11,8 +11,8 @@ option java_multiple_files = true;
 
 import "google/protobuf/timestamp.proto";
 
-import "io/harness/pms/contracts/interrupts/interrupt_config.proto";
-import "io/harness/pms/contracts/interrupts/interrupt_type.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/interrupts/interrupt_config.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/interrupts/interrupt_type.proto";
 
 message InterruptEffectProto {
   string interruptId = 1;
