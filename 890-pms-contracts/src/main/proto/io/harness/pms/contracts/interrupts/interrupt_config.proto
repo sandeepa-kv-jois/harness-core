@@ -11,7 +11,7 @@ option java_multiple_files = true;
 
 import "google/protobuf/timestamp.proto";
 
-import "io/harness/pms/contracts/advisers/advise.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/advisers/advise.proto";
 
 message InterruptConfig {
   IssuedBy issuedBy = 1;
