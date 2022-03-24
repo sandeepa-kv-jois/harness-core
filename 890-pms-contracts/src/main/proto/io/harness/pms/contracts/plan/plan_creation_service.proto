@@ -9,11 +9,11 @@ package io.harness.pms.contracts.plan;
 
 option java_multiple_files = true;
 
-import "io/harness/pms/contracts/plan/plan_node_proto.proto";
-import "io/harness/pms/contracts/plan/graph_layout.proto";
-import "io/harness/pms/contracts/plan/variables.proto";
-import "io/harness/pms/contracts/plan/execution_metadata.proto";
-import "io/harness/pms/contracts/triggers/trigger_payload.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/plan_node_proto.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/graph_layout.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/variables.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/execution_metadata.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/triggers/trigger_payload.proto";
 import "970-ng-commons/src/main/proto/io/harness/eventsframework/schemas/entity/entity_detail.proto";
 
 service PlanCreationService {

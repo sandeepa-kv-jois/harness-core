@@ -7,7 +7,7 @@ syntax = "proto3";
 
 package io.harness.pms.contracts.expression;
 
-import "io/harness/pms/contracts/ambiance/ambiance.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/ambiance/ambiance.proto";
 option java_multiple_files = true;
 
 service RemoteFunctorService {

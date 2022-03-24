@@ -6,15 +6,15 @@
 syntax = "proto3";
 
 package io.harness.pms.contracts.execution.events;
-import "io/harness/pms/contracts/execution/tasks/task_request.proto";
-import "io/harness/pms/contracts/execution/status.proto";
-import "io/harness/pms/contracts/execution/executable_response.proto";
-import "io/harness/pms/contracts/steps/io/step_response_proto.proto";
-import "io/harness/pms/contracts/facilitators/facilitators.proto";
-import "io/harness/pms/contracts/service/node_execution_event.proto";
-import "io/harness/pms/contracts/execution/failure/failure_info.proto";
-import "io/harness/pms/contracts/advisers/advise.proto";
-import "io/harness/pms/contracts/ambiance/ambiance.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/tasks/task_request.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/status.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/executable_response.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/steps/io/step_response_proto.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/facilitators/facilitators.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/service/node_execution_event.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/failure/failure_info.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/advisers/advise.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/ambiance/ambiance.proto";
 import "google/protobuf/timestamp.proto";
 
 option java_multiple_files = true;
