@@ -1,0 +1,62 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Buf_final
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on or pull request events on all branches
+  pull_request:
+    branches: "**"
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  # This workflow contains a single job called "build"
+  build:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    # Steps represent a sequence of tasks that will be executed as part of the job
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # Install buf
+      - uses: bufbuild/buf-setup-action@v1.1.0
+      
+      - name: Checkout branches
+        run: |
+          git checkout develop
+          git checkout ${{ github.head_ref }}
+          git status
+          
+      # get commits > get files per commit    
+      - name: Run buf breaking 
+        id : buf_breaking
+        run: |
+          EXIT_CODE=0
+          for i in $(git log develop..${{ github.head_ref }} --format=format:%H)
+          do 
+            echo $i
+            for j in $(git show --pretty="" --name-only $i | grep \.proto$)
+            do
+              echo $j;
+              buf breaking --against '.git#branch=develop' --path $j || TEMP_EXIT_CODE=$? 
+              if [ $TEMP_EXIT_CODE -ne 0 ]
+              then
+                EXIT_CODE=$TEMP_EXIT_CODE
+                echo $EXIT_CODE
+              fi
+             done
+          done 
+          echo "::set-output name=EXIT_CODE::$EXIT_CODE"
+      - name: Check
+        if : steps.buf_breaking.outputs.EXIT_CODE != 0
+        uses: actions/github-script@v5
+        with:
+          script: |
+            core.setFailed('Breaking changes found!')
