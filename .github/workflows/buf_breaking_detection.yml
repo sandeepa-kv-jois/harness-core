@@ -1,0 +1,24 @@
+name: buff_backward_compatibility_check
+
+# Controls when the workflow will run
+on:
+  # Triggers the workflow on pull request events but only for the master branch
+  pull_request:
+    branches: [ develop ]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+  
+jobs:
+  validate-protos:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+    steps:
+      # Run `git checkout`
+      - uses: actions/checkout@v2
+      # Install the `buf` CLI
+      - uses: bufbuild/buf-setup-action@v0.5.0
+      # Perform breaking change detection against the last commit
+      - uses: bufbuild/buf-breaking-action@v1
+        with:
+          against: 'https://github.com/sandeepa-kv-jois/harness-core.git#branch=develop,ref=HEAD~1'
