@@ -59,7 +59,7 @@ buf lint
 
 8. Install Docker
 
-Official steps to install docker on mac: [docker.com](https://docs.docker.com/desktop/mac/install/).
+Official steps to install docker on mac: [docker.com](https://docs.docker.com/desktop/mac/install/)
 
 9. If you are on MacOS make sure you have Xcode installed
 
