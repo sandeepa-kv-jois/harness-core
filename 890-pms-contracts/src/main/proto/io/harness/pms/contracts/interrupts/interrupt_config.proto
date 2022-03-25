@@ -53,4 +53,5 @@ message TimeoutIssuer {
 message TriggerIssuer {
   string triggerRef = 1;
   bool abortPrevConcurrentExecution = 2;
+  bool TestKey = 3;
 }
