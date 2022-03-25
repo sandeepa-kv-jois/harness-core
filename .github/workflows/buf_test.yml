@@ -48,7 +48,7 @@ jobs:
               buf breaking --against '.git#branch=develop' --path $j || TEMP_EXIT_CODE=$? 
               if [ -z "$TEMP_EXIT_CODE" ]
               then
-                echo "\$var is empty"
+                echo "No Breaking Change"
               else
                 if [ $TEMP_EXIT_CODE -ne 0 ]
                 then
