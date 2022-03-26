@@ -28,6 +28,8 @@ jobs:
       
       - name: Checkout pr branch
         run: |
+          git fetch origin develop
+          git checkout develop
           git fetch origin ${{ github.head_ref }}
           git checkout ${{ github.head_ref }}
           git status
