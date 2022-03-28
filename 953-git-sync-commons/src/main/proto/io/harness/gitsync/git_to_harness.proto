@@ -68,7 +68,7 @@ message ProcessingResponse {
   // used for sending status
   // false: reached the last stage of processing and processing_failure_stage can be ignored.
   // true: failed in one of the stages.
-  bool is_error = 4;
+  
 }
 
 message FileProcessingResponse {
