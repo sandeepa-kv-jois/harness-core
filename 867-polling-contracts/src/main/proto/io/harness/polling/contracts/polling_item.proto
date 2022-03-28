@@ -9,7 +9,7 @@ package io.harness.polling.contracts;
 
 option java_multiple_files = true;
 
-import "io/harness/polling/contracts/polling_payload_data.proto";
+import "867-polling-contracts/src/main/proto/io/harness/polling/contracts/polling_payload_data.proto";
 
 message PollingItem {
   Category category = 1;

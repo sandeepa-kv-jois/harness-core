@@ -9,12 +9,12 @@ package io.harness.pms.contracts.plan;
 
 option java_multiple_files = true;
 
-import "io/harness/pms/contracts/advisers/advisers.proto";
-import "io/harness/pms/contracts/facilitators/facilitators.proto";
-import "io/harness/pms/contracts/steps/step_type.proto";
-import "io/harness/pms/contracts/steps/skip_type.proto";
-import "io/harness/pms/contracts/refobjects/ref_objects.proto";
-import "io/harness/timeout/contracts/timeouts.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/advisers/advisers.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/facilitators/facilitators.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/steps/step_type.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/steps/skip_type.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/refobjects/ref_objects.proto";
+import "959-timeout-engine/src/main/proto/io/harness/timeout/contracts/timeouts.proto";
 
 message PlanNodeProto {
   string uuid = 1;

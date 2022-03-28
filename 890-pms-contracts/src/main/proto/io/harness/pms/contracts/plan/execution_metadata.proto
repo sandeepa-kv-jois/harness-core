@@ -9,8 +9,8 @@ package io.harness.pms.contracts.plan;
 
 option java_multiple_files = true;
 
-import "io/harness/pms/contracts/plan/trigger_info.proto";
-import "io/harness/pms/contracts/plan/principal_info.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/trigger_info.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/principal_info.proto";
 
 // next ID: 14
 message ExecutionMetadata {

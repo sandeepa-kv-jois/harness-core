@@ -12,16 +12,16 @@ option java_multiple_files = true;
 import "google/protobuf/timestamp.proto";
 import "google/protobuf/duration.proto";
 
-import "io/harness/pms/contracts/advisers/advise.proto";
-import "io/harness/pms/contracts/ambiance/ambiance.proto";
-import "io/harness/pms/contracts/plan/plan_node_proto.proto";
-import "io/harness/pms/contracts/execution/execution_mode.proto";
-import "io/harness/pms/contracts/execution/executable_response.proto";
-import "io/harness/pms/contracts/execution/failure/failure_info.proto";
-import "io/harness/pms/contracts/execution/skip/skip_info.proto";
-import "io/harness/pms/contracts/execution/status.proto";
-import "io/harness/pms/contracts/data/step_outcome_ref.proto";
-import "io/harness/pms/contracts/interrupts/interrupt_effect_proto.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/advisers/advise.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/ambiance/ambiance.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/plan_node_proto.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/execution_mode.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/executable_response.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/failure/failure_info.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/skip/skip_info.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/status.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/data/step_outcome_ref.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/interrupts/interrupt_effect_proto.proto";
 
 message NodeExecutionProto {
   string uuid = 1;

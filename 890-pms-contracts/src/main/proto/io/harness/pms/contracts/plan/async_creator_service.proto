@@ -9,7 +9,7 @@ package io.harness.pms.contracts.plan;
 
 option java_multiple_files = true;
 
-import "io/harness/pms/contracts/plan/plan_creation_service.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/plan/plan_creation_service.proto";
 
 message CreatePartialPlanEvent {
   map<string, PlanCreationContextValue> context = 2;

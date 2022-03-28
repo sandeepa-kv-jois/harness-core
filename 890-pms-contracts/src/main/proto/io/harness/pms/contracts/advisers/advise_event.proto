@@ -9,10 +9,10 @@ package io.harness.pms.contracts.advisers;
 
 option java_multiple_files = true;
 
-import "io/harness/pms/contracts/ambiance/ambiance.proto";
-import "io/harness/pms/contracts/advisers/advisers.proto";
-import "io/harness/pms/contracts/execution/failure/failure_info.proto";
-import "io/harness/pms/contracts/execution/status.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/ambiance/ambiance.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/advisers/advisers.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/failure/failure_info.proto";
+import "890-pms-contracts/src/main/proto/io/harness/pms/contracts/execution/status.proto";
 
 message AdviseEvent {
   io.harness.pms.contracts.ambiance.Ambiance ambiance = 1;

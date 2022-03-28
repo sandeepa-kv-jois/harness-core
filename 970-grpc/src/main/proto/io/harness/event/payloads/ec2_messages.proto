@@ -9,7 +9,7 @@ package io.harness.event.payloads;
 
 option java_multiple_files = true;
 
-import "io/harness/event/payloads/common_messages.proto";
+import "970-grpc/src/main/proto/io/harness/event/payloads/common_messages.proto";
 
 message Ec2InstanceInfo {
   string instance_id = 1;
