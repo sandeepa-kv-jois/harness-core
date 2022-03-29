@@ -7,9 +7,7 @@ git checkout buf_test
 git status 
 EXIT_CODE=0                                 
 
-IFS=$'\//n\/' 
-echo $IFS
-bufOut=($(./buf1 breaking --against '.git#branch=develop'))
+IFS=$'\n' bufOut=($(./buf1 breaking --against '.git#branch=develop'))
 for m in $(git log develop..buf_test --find-renames --format=format:%H  --diff-filter=R)
 do
     echo $m
