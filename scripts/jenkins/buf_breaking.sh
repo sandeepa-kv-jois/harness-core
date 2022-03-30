@@ -6,7 +6,7 @@ git fetch origin buf_test
 git checkout buf_test 
 git status 
 EXIT_CODE=0                                 
-
+output=""
 IFS=$'\n' bufOut=($(./buf1 breaking --against '.git#branch=develop'))
 for m in $(git log develop..buf_test --find-renames --format=format:%H  --diff-filter=R)
 do
@@ -19,6 +19,8 @@ do
         do
             if grep -q "$k" <<< "$l";
             then
+                output+=$l
+                output+="\n"
                 echo $l
             fi
         done
@@ -31,16 +33,21 @@ echo $i
 for j in $(git show --pretty="" --name-only $i | grep \.proto$)
 do
     echo $j;
-    ./buf1 breaking --against '.git#branch=develop' --path $j || TEMP_EXIT_CODE=$?
+    o=$(./buf1 breaking --against '.git#branch=develop' --path $j )
+    TEMP_EXIT_CODE=$?
     if [ -z "$TEMP_EXIT_CODE" ]
     then
     echo "No Breaking Change"
     else
     if [ $TEMP_EXIT_CODE -ne 0 ]
     then
+        echo $o
+        output+=$o
+        output+="\n"
         EXIT_CODE=$TEMP_EXIT_CODE
         echo $EXIT_CODE
     fi
     fi
     done
 done
+echo $output >> output.txt
