@@ -1,6 +1,8 @@
 build:
   roots:
     - 950-delegate-tasks-beans/src/main/proto
+    - 890-pms-contracts/src/main/proto
+    - 160-stress-tester/src/main/proto
 lint:
   use:
     - DEFAULT
