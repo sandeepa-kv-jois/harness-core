@@ -82,7 +82,7 @@ find . \( -iname "*.proto" -a -not -regex ".*/target/.*" \) |\
     grep -v src/main/proto/time_series_record.proto |\
     while read file; do validate_proto "$file"; done
 
-ISSUES=`buf check lint`
+ISSUES=`./buf1 lint`
 
 if [ ! -z "${ISSUES}" ]
 then
