@@ -63,6 +63,14 @@ validate_proto() {
 #executeWithRetry 'sortpom:sort'
 #echo "Sort Pom Completed"
 
+ISSUES=`buf check lint`
+
+if [ ! -z "${ISSUES}" ]
+then
+  echo $ISSUES
+  exit 1
+fi
+
 find . -iname "*.graphql" | xargs -L 1 prettier --write --print-width=120
 
 find . \( -iname "*.java" -o -iname "*.proto" \) | xargs clang-format -i
@@ -82,10 +90,3 @@ find . \( -iname "*.proto" -a -not -regex ".*/target/.*" \) |\
     grep -v src/main/proto/time_series_record.proto |\
     while read file; do validate_proto "$file"; done
 
-ISSUES=`buf check lint`
-
-if [ ! -z "${ISSUES}" ]
-then
-  echo $ISSUES
-  exit 1
-fi
