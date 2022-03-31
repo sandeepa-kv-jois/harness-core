@@ -22,6 +22,7 @@ do
                 output+=$l
                 output+="\n"
                 echo $l
+                EXIT_CODE=100
             fi
         done
     done
@@ -50,4 +51,5 @@ do
     fi
     done
 done
+echo $EXIT_CODE >> exit_code.txt
 echo $output >> output.txt
