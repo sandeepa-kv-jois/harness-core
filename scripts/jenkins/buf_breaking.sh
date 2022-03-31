@@ -33,21 +33,26 @@ do
 echo $i
 for j in $(git show --pretty="" --name-only $i | grep \.proto$)
 do
-    echo $j;
-    o=$(./buf1 breaking --against '.git#branch=develop' --path $j )
-    TEMP_EXIT_CODE=$?
-    if [ -z "$TEMP_EXIT_CODE" ]
+    git cat-file -e develop:$j 2> /dev/null
+    e=$?
+    if [ $e -eq 0 ]     
     then
-    echo "No Breaking Change"
-    else
-    if [ $TEMP_EXIT_CODE -ne 0 ]
-    then
-        echo $o
-        output+=$o
-        output+="\n"
-        EXIT_CODE=$TEMP_EXIT_CODE
-        echo $EXIT_CODE
-    fi
+        echo $j;
+        o=$(./buf1 breaking --against '.git#branch=develop' --path $j )
+        TEMP_EXIT_CODE=$?
+        if [ -z "$TEMP_EXIT_CODE" ]
+        then
+        echo "No Breaking Change"
+        else
+        if [ $TEMP_EXIT_CODE -ne 0 ]
+        then
+            echo $o
+            output+=$o
+            output+="\n"
+            EXIT_CODE=$TEMP_EXIT_CODE
+            echo $EXIT_CODE
+        fi
+        fi
     fi
     done
 done
