@@ -59,6 +59,16 @@ validate_proto() {
   fi
 }
 
+
+cd 950-delegate-tasks-beans/src/main/proto
+ISSUES=`buf check lint`
+
+if [ ! -z "${ISSUES}" ]
+then
+  echo $ISSUES
+  exit 1
+fi
+
 #echo "Running Sort Pom"
 #executeWithRetry 'sortpom:sort'
 #echo "Sort Pom Completed"
@@ -82,11 +92,3 @@ find . \( -iname "*.proto" -a -not -regex ".*/target/.*" \) |\
     grep -v src/main/proto/time_series_record.proto |\
     while read file; do validate_proto "$file"; done
 
-cd 950-delegate-tasks-beans/src/main/proto
-ISSUES=`buf check lint`
-
-if [ ! -z "${ISSUES}" ]
-then
-  echo $ISSUES
-  exit 1
-fi
