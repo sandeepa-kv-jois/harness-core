@@ -1,12 +1,11 @@
 version: v1
 breaking:
-  ignore_unstable_packages: true
   use:
     - FILE
 lint:
-  allow_comment_ignores: true
   use:
     - DEFAULT
   except:
     - ENUM_VALUE_PREFIX
+    - PACKAGE_VERSION_SUFFIX
     
