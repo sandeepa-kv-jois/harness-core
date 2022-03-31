@@ -63,7 +63,8 @@ validate_proto() {
 #executeWithRetry 'sortpom:sort'
 #echo "Sort Pom Completed"
 
-ISSUES=`buf check lint`
+ISSUES=$(buf check lint) || e=$?
+echo $e
 
 if [ ! -z "${ISSUES}" ]
 then
