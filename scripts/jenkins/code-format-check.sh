@@ -82,6 +82,7 @@ find . \( -iname "*.proto" -a -not -regex ".*/target/.*" \) |\
     grep -v src/main/proto/time_series_record.proto |\
     while read file; do validate_proto "$file"; done
 
+cd 950-delegate-tasks-beans/src/main/proto
 ISSUES=`buf check lint`
 
 if [ ! -z "${ISSUES}" ]
