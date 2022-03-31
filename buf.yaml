@@ -5,7 +5,7 @@ breaking:
 lint:
   allow_comment_ignores: true
   use:
-    - MINIMAL
+    - DEFAULT
   except:
     - ENUM_VALUE_PREFIX
     - PACKAGE_VERSION_SUFFIX
