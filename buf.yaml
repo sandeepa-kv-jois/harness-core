@@ -4,7 +4,7 @@ breaking:
     - FILE
 lint:
   use:
-    - DEFAULT
+    - MINIMAL
   except:
     - ENUM_VALUE_PREFIX
     - PACKAGE_VERSION_SUFFIX
