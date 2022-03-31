@@ -68,7 +68,10 @@ ISSUES=`buf check lint`
 if [ ! -z "${ISSUES}" ]
 then
   echo $ISSUES
+  echo "in if block"
   exit 1
+else
+  echo "here in buf"
 fi
 
 find . -iname "*.graphql" | xargs -L 1 prettier --write --print-width=120
