@@ -60,14 +60,6 @@ validate_proto() {
 }
 
 
-cd 950-delegate-tasks-beans/src/main/proto
-ISSUES=`buf check lint`
-
-if [ ! -z "${ISSUES}" ]
-then
-  echo $ISSUES
-  exit 1
-fi
 
 #echo "Running Sort Pom"
 #executeWithRetry 'sortpom:sort'
