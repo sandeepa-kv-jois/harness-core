@@ -69,7 +69,6 @@ find . -iname "*.graphql" | xargs -L 1 prettier --write --print-width=120
 
 find . \( -iname "*.java" -o -iname "*.proto" \) | xargs clang-format -i
 
-bazel run //:buildifier
 
 git diff --exit-code
 
