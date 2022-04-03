@@ -20,10 +20,6 @@ message CreatePartialPlanEvent {
   Dependencies deps = 6;
 }
 
-enum AsyncCreatorType {
-  INVALID = 0;
-  PLAN_CREATION = 1;
-}
 
 message PartialPlanResponse {
   string notifyId = 1;
