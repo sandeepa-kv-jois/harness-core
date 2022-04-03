@@ -30,3 +30,8 @@ message RetryExecutionInfo {
   string rootExecutionId = 2;
   string parentRetryId = 3;
 }
+
+enum AsyncCreatorType {
+  INVALID = 0;
+  PLAN_CREATION = 1;
+}
