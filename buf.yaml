@@ -1,6 +1,6 @@
 breaking:
   use:
-    - FILE
+    - PACkAGE
 lint:
   use:
     - DEFAULT
