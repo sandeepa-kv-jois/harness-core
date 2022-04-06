@@ -1,10 +1,12 @@
+version : v1
 breaking:
   use:
-    - PACkAGE
+    - PACKAGE
 lint:
   use:
     - DEFAULT
   except:
     - ENUM_VALUE_PREFIX
     - PACKAGE_VERSION_SUFFIX
+    - PACKAGE_DIRECTORY_MATCH
     
