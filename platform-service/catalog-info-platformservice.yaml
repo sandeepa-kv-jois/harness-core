@@ -6,7 +6,7 @@ metadata:
   name: platform-service
 spec:
   lifecycle: production
-  owner: @pl-engg
+  owner: pl-engg
   type: service
   providesApis:
     - platform-service
