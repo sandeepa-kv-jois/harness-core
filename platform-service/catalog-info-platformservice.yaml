@@ -3,6 +3,7 @@ kind: Component
 metadata:
   annotations:
     backstage.io/kubernetes-label-selector: 'app=platform-service'
+    backstage.io/techdocs-ref: value
   name: platform-service
 spec:
   lifecycle: production
