@@ -6,7 +6,7 @@ metadata:
   tags:
     - portal
   annotations:
-    backstage.io/techdocs-ref: dir:.
+    backstage.io/techdocs-ref: url:https://github.com/sandeepa-kv-jois/harness-core/tree/develop/access-control
 spec:
   owner: Team-A
   domain: access
