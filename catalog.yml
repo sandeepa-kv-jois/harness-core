@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: Harness_Core
+  description: Everything related to Harness-Repo
+  tags:
+    - portal
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  owner: Team-A
+  domain: core
