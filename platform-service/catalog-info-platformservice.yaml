@@ -1,13 +1,1 @@
-apiVersion: backstage.io/v1alpha1
-kind: Component
-metadata:
-  annotations:
-    backstage.io/kubernetes-label-selector: 'app=platform-service'
-    backstage.io/techdocs-ref: url:https://github.com/sandeepa-kv-jois/harness-core/blob/develop/platform-service/docs
-  name: platform-service
-spec:
-  lifecycle: production
-  owner: pl-engg
-  type: service
-  providesApis:
-    - platform-service
+
