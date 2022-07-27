@@ -10,3 +10,5 @@ spec:
   lifecycle: production
   owner: pl
   type: service
+  providesApis:
+    - access-control
