@@ -1,7 +1,8 @@
-site_name: 'example'
-
+site_name: Folder
+site_description: Harness portal code
+repo_url: https://github.com/sandeepa-kv-jois/harness-core
+edit_uri: edit/develop/access-control/docs/
 nav:
-  - Home: index.md
-
+  - 'Home': 'index.md'
 plugins:
   - techdocs-core
