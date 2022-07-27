@@ -8,7 +8,7 @@ metadata:
   name: access-control
 spec:
   lifecycle: production
-  owner: pl
+  owner: pl-team
   type: service
   providesApis:
     - access-control
