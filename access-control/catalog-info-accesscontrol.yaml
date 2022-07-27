@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   annotations:
-    backstage.io/kubernetes-label-selector: 'app=access-control'
+    backstage.io/kubernetes-label-selector: 'app=accesscontrol-service'
     github.com/project-slug: 'sandeepa-kv-jois/harness-core/access-control'
     backstage.io/techdocs-ref: dir:.
   name: access-control
