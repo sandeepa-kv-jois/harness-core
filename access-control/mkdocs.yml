@@ -1,4 +1,4 @@
-site_name: 'example-docs'
+site_name: 'access-control'
 
 nav:
   - Home: index.md
