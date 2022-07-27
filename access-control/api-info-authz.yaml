@@ -8,4 +8,4 @@ spec:
   lifecycle: production
   owner: pl
   definition:
-    $text: https://app.harness.io/authz/api/openapi.json 
+    $text: https://app.harness.io/prod1/authz/api/openapi.json 
