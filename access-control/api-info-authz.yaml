@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: access-control
+  description: The official Access control REST APIs
+spec:
+  type: openapi
+  lifecycle: production
+  owner: pl
+  definition:
+    $text: https://app.harness.io/authz/api/openapi.json 
