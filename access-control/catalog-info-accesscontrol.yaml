@@ -1,0 +1,12 @@
+apiVersion: backstage.io/v1alpha1
+kind: Service
+metadata:
+  name: access-control
+  description: Everything related to access-control service
+  tags:
+    - access-control
+  annotations:
+    backstage.io/techdocs-ref: dir:.
+spec:
+  owner: access-control
+  domain: harness
