@@ -9,6 +9,7 @@ metadata:
   name: access-control
 spec:
   lifecycle: production
+  system: NG 
   owner: pl-team
   type: service
   providesApis:
@@ -24,6 +25,7 @@ metadata:
   name: platform-service
 spec:
   lifecycle: production
+  system: NG
   owner: pl-engg
   type: service
   providesApis:
