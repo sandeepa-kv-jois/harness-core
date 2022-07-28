@@ -1,0 +1,9 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: NG
+  description: Everything related to NG
+  tags:
+    - portal
+spec:
+  domain: harness
