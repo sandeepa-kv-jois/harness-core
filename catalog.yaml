@@ -4,7 +4,7 @@ kind: Component
 metadata:
   annotations:
     backstage.io/kubernetes-label-selector: 'app=accesscontrol-service'
-    github.com/project-slug: 'harness/harness-core/blob/develop/access-control'
+    github.com/project-slug: 'harness/harness-core/tree/develop/access-control'
     backstage.io/techdocs-ref: dir:./access-control
   name: access-control
 spec:
@@ -19,7 +19,7 @@ kind: Component
 metadata:
   annotations:
     backstage.io/kubernetes-label-selector: 'app=platform-service'
-    github.com/project-slug: 'harness/harness-core/blob/develop/platform-service'
+    github.com/project-slug: 'harness/harness-core/tree/develop/platform-service'
     backstage.io/techdocs-ref: dir:./platform-service
   name: platform-service
 spec:
