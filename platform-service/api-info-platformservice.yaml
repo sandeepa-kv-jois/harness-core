@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: API
+metadata:
+  name: platform-service
+  description: The official Platform Service REST APIs
+spec:
+  type: openapi
+  lifecycle: production
+  owner: pl
+  definition:
+    $text: https://app.harness.io/prod1/audit/api/audit-openapi.json
