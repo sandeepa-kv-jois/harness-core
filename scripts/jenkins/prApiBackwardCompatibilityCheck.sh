@@ -81,7 +81,7 @@ fi
 if [ $PIPELINE_SERVICE_T -eq 0 ]
 then
     echo "====Generating Pipeline-Service Target-Branch Api Spec===="
-    java -jar bazel-bin/pipeline-service/module_deploy.jar generate-openapi-spec target/pipeline_target.json || PIPELINE_SERVICE_T=$?
+    java -jar bazel-bin/pipeline-service/service/module_deploy.jar generate-openapi-spec target/pipeline_target.json || PIPELINE_SERVICE_T=$?
 fi
 
 if [ $TEMPLATE_SERVICE_T -eq 0 ]
@@ -113,7 +113,7 @@ fi
 echo "=============SOURCE BRANCH================"
 git checkout $2
 last_commit=$(git log -1 --format="%H")
-email_id=$(git show $last_commit | grep Author | cut -d '<' -f2- | sed 's/.$//')
+email_id=$(git show -s --format='%ae' $last_commit)
 echo $email_id >> email.txt
 export EMAIL_ID=$email_id
 
@@ -240,7 +240,7 @@ fi
 if [ $PIPELINE_SERVICE_S -eq 0 ]
 then
     echo "====Generating Pipeline-Service Source-Branch Api Spec===="
-    java -jar bazel-bin/pipeline-service/module_deploy.jar generate-openapi-spec target/pipeline_source.json || PIPELINE_SERVICE_S=$?
+    java -jar bazel-bin/pipeline-service/service/module_deploy.jar generate-openapi-spec target/pipeline_source.json || PIPELINE_SERVICE_S=$?
 fi
 
 if [ $TEMPLATE_SERVICE_S -eq 0 ]
