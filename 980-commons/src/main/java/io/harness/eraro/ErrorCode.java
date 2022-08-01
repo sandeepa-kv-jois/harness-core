@@ -628,7 +628,8 @@ public enum ErrorCode {
   INVALID_IDENTIFIER_REF,
 
   SPOTINST_NULL_ERROR,
-  SCM_UNEXPECTED_ERROR;
+  SCM_UNEXPECTED_ERROR,
+  TEST_SCRIPT;
 
   private Status status = BAD_REQUEST;
   private String description;
