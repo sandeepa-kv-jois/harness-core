@@ -9,7 +9,7 @@ metadata:
   name: access-control
 spec:
   lifecycle: production
-  system: CD-NG 
+  system: CD-NG,CI 
   owner: pl-team
   type: service
   providesApis:
@@ -25,7 +25,7 @@ metadata:
   name: platform-service
 spec:
   lifecycle: production
-  system: CD-NG
+  system: CD-NG,CI
   owner: pl-engg
   type: service
   providesApis:
