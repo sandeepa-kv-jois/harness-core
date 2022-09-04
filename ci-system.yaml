@@ -1,0 +1,11 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: CI
+  description: Everything related to CI
+  tags:
+    - portal
+spec:
+  owner: Eng
+  domain: harness
+Footer
