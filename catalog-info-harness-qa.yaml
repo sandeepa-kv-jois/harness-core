@@ -1,10 +1,10 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: harness-qa-deployment
-  description: QA details
+  name: harness-ci-cd
+  description: Internal test pipelines
   annotations:
-    harnessci/project-slug: github/SarvJ1
+    harnessci/project-slug: github/sandeepa-kv-jois/harness-core
     accountIdentifier: vpCkHKsDSxK9_KYfjCTMKA
     orgIdentifier: QE_Team
     projectIdentifier: Quality_Assurence
