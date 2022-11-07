@@ -8,7 +8,7 @@ metadata:
     harness.io/cicd-orgIdentifier: QE_Team
     harness.io/cicd-projectIdentifier: Quality_Assurence
     harness.io/ci-pipelineIdentifiers: pipeline_id1,pipeline_idp2,pipeline_idp3 etc
-    harness.io/cd-serviceName: servicename
+    harness.io/cd-serviceID: serviceID
   tags:
     - java
     - data
