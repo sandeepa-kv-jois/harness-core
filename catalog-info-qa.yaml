@@ -8,7 +8,6 @@ metadata:
     harness.io/cicd-orgIdentifier: Pipelines_UI_Organisation
     harness.io/cicd-projectIdentifier: TemplateTestSanity3
     harness.io/ci-pipelineIdentifier: customDemo,cdcngauto_pfpo5r0f5l,cdcngauto_vcluj5jzol
-    harness.io/cd-serviceId: CustomDemo
   tags:
     - java
     - data
