@@ -1,0 +1,43 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: apitest3
+  description: QA details
+  annotations:
+    harness.io/cicd-accountIdentifier: XICOBc_qRa2PJmVaWOx-cQ
+    harness.io/cicd-orgIdentifier: Ng_Pipelines_K8s_Organisations
+    harness.io/cicd-projectIdentifier: NGPipeAutoDemoPronuDSzNAyzt
+    harness.io/ci-pipelineIdentifier: test-ci,test-ci1
+    harness.io/cd-serviceId: service8
+  tags:
+    - java
+    - data
+  links:
+    - url: https://example.com/user
+      title: Examples Users
+      icon: user
+    - url: https://example.com/group
+      title: Example Group
+      icon: group
+    - url: https://example.com/cloud
+      title: Link with Cloud Icon
+      icon: cloud
+    - url: https://example.com/dashboard
+      title: Dashboard
+      icon: dashboard
+    - url: https://example.com/help
+      title: Support
+      icon: help
+    - url: https://example.com/web
+      title: Website
+      icon: web
+    - url: https://example.com/alert
+      title: Alerts
+      icon: alert
+spec:
+  type: service
+  lifecycle: experimental
+  owner: team-a
+  system: artist-engagement-portal
+  dependsOn: ['resource:artists-db']
+  apiConsumedBy: ['component:www-artist']
