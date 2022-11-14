@@ -2,7 +2,7 @@ apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
   name: pr_pipelines
-  description: Artist Lookup
+  description: PR env pipelines
   annotations:
     harness.io/cicd-accountIdentifier: vpCkHKsDSxK9_KYfjCTMKA
     harness.io/cicd-orgIdentifier: default
@@ -10,8 +10,8 @@ metadata:
     harness.io/ci-pipelineIdentifiers: Dochub_pr_env,Seleniumgridsetup
     harness.io/cd-serviceId: CleanUpWakeUp
   tags:
-    - java
-    - data
+    - pr_env
+    - cleanup
   links:
     - url: https://example.com/user
       title: Examples Users
