@@ -7,9 +7,6 @@ metadata:
     harness.io/cicd-orgIdentifier: QE_Team
     harness.io/cicd-projectIdentifier: Quality_Assurence
  
-  tags:
-    - java
-    - data
   links:
     - url: https://example.com/user
       title: Examples Users
@@ -36,6 +33,5 @@ spec:
   type: service
   lifecycle: experimental
   owner: team-a
-  system: artist-engagement-portal
   dependsOn: ['resource:artists-db']
   apiConsumedBy: ['component:www-artist']
