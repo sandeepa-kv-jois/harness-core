@@ -7,6 +7,8 @@ metadata:
     github.com/project-slug: 'harness/harness-core/'
     backstage.io/techdocs-ref: dir:./access-control
   name: access-control
+  tags:
+    - java
 spec:
   lifecycle: production
   system: CD-NG 
@@ -14,8 +16,7 @@ spec:
   type: service
   providesApis:
     - access-control
-tags:
-    - java    
+  
 ---
 apiVersion: backstage.io/v1alpha1
 kind: Component
@@ -25,13 +26,13 @@ metadata:
     github.com/project-slug: 'harness/harness-core/tree/develop/platform-service'
     backstage.io/techdocs-ref: dir:./platform-service
   name: platform-service
+  tags:
+    - java   
 spec:
   lifecycle: production
   system: CD-NG
   owner: pl-eng
   type: service
   providesApis:
-    - platform-service
-tags:
-    - java    
+    - platform-service 
     
