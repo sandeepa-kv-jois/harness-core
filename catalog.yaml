@@ -10,7 +10,7 @@ metadata:
 spec:
   lifecycle: production
   system: CD-NG 
-  owner: pl-team
+  owner: pl-access-eng
   type: service
   providesApis:
     - access-control
