@@ -1,7 +1,7 @@
 apiVersion: backstage.io/v1alpha1
 kind: Component
 metadata:
-  name: PR pipelines
+  name: pr_pipelines
   description: Artist Lookup
   annotations:
     harness.io/cicd-accountIdentifier: vpCkHKsDSxK9_KYfjCTMKA
