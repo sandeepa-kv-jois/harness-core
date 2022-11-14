@@ -10,8 +10,8 @@ metadata:
     harness.io/ci-pipelineIdentifiers: Dochub_pr_env,Seleniumgridsetup
     harness.io/cd-serviceId: CleanUpWakeUp
   tags:
-    - pr_env
-    - cleanup
+    - prenv
+    - setup
   links:
     - url: https://example.com/user
       title: Examples Users
