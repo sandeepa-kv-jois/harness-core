@@ -3,9 +3,9 @@ kind: Component
 metadata:
   name: test-service
   annotations:
-    harness.io/cicd-accountIdentifier: rXUXvbFqRr2XwcjBu3Oq
-    harness.io/cicd-orgIdentifier: Pipelines_UI_Organisation
-    harness.io/cicd-projectIdentifier: TemplateTestSanity3
+    harness.io/cicd-accountIdentifier: vpCkHKsDSxK9_KYfjCTMKA
+    harness.io/cicd-orgIdentifier: QE_Team
+    harness.io/cicd-projectIdentifier: Quality_Assurence
  
   tags:
     - java
