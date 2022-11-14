@@ -5,10 +5,6 @@ metadata:
   description: Artist Lookup
   annotations:
     harness.io/cicd-accountIdentifier: vpCkHKsDSxK9_KYfjCTMKA
-    harness.io/cicd-orgIdentifier: default
-    harness.io/cicd-projectIdentifier: PREQA_NG_Pipelines
-    harness.io/ci-pipelineIdentifiers: Dochub_pr_env,Seleniumgridsetup
-    harness.io/cd-serviceId: CleanUpWakeUp
   tags:
     - java
     - data
