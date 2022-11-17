@@ -1,0 +1,188 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: HarnessTemplate
+  title: Create Harness Nginx Service Template
+  description: This creates a new service Using Harness CI
+spec:
+  owner: demo@harness.com
+  type: service
+  parameters:
+    - title: Harness Account Details
+      required:
+        - accountID
+        - orgID
+        - projID
+      properties:
+        accountID:
+          title: Account Identifier
+          type: string
+          description: Your Harness Account Identifier
+          default: dh-iBL35SqqpuqJF0yDjpQ
+          # ui:field: EntityNamePicker
+        orgID:
+          title: Org Identifier
+          type: string
+          description: Your Organization Identifier in Harness
+          default: default
+        projID:
+          title: Project Identifier
+          type: string
+          default: DeployDemo
+          description: Your Harness Project Identifier
+          #   allowedKinds:
+          #     - Group
+    - title: Kubernetes and Manifest Details
+      required:
+        - pipname
+        # - gitconnectorRef
+        # - kubconnectorRef
+        - pathref
+        # - namespace
+        # - releaseName
+      properties:
+        pipname:
+          title: Name of the Pipeline
+          type: string
+          description: Pipeline Name
+          # ui:field: EntityNamePicker
+        # gitconnectorRef:
+        #   title: Name of your Harness Github connector
+        #   type: string
+        #   description: Harness Github Connector
+        # kubconnectorRef:
+        #   title: Name of your Harness Kuberenetes connector
+        #   type: string
+        #   description: Harness Kuberenetes Connector
+        pathref:
+          title: Path of your manifest file
+          type: string
+          description: Manifest File Path
+        # namespace:
+        #   title: Namespace of your Kuberenetes Cluster
+        #   type: string
+        #   description: Namespace
+        # releaseName:
+        #   title: Name of your Release
+        #   type: string
+    
+  steps: 
+    - id: backstage_request
+      name: NGINX_Deployment
+      action: http:backstage:request
+      input:
+        method: 'POST'
+        path: /api/proxy/harness/gateway/pipeline/api/pipelines/v2?accountIdentifier=${{ parameters.accountID }}&orgIdentifier=${{ parameters.orgID }}&projectIdentifier=${{ parameters.projID }}
+        headers: 
+          content-type: application/json
+        body: {
+          pipeline: {
+              name: "${{ parameters.pipname }}",
+              identifier: "${{ parameters.pipname }}",
+              projectIdentifier: "${{ parameters.projID }}",
+              orgIdentifier: "${{ parameters.orgID }}",
+              tags: {},
+              stages: [
+                  {
+                      stage: {
+                          name: Deployment,
+                          identifier: Deployment,
+                          description: 'Deployed by Backstage' ,
+                          type: Deployment,
+                          spec: {
+                              serviceConfig: {
+                                  serviceRef: nginx,
+                                  serviceDefinition: {
+                                      spec: {
+                                          variables: [],
+                                          manifests: [
+                                              {
+                                                  manifest: {
+                                                      identifier: nginx,
+                                                      type: K8sManifest,
+                                                      spec: {
+                                                          store: {
+                                                              type: Github,
+                                                              spec: {
+                                                                  connectorRef: githubconn,
+                                                                  gitFetchType: Branch,
+                                                                  paths: [
+                                                                      "${{ parameters.pathref }}"
+                                                                  ],
+                                                                  branch: main
+                                                              }
+                                                          },
+                                                          skipResourceVersioning: false
+                                                      }
+                                                  }
+                                              }
+                                          ]
+                                      },
+                                      type: Kubernetes
+                                  }
+                              },
+                              infrastructure: {
+                                  environmentRef: Preprod,
+                                  infrastructureDefinition: {
+                                      type: KubernetesDirect,
+                                      spec: {
+                                          connectorRef: account.qatargetng,
+                                          namespace: harness-delegate-ng,
+                                          releaseName: latest
+                                      }
+                                  },
+                                  allowSimultaneousDeployments: false
+                              },
+                              execution: {
+                                  steps: [
+                                      {
+                                          step: {
+                                              type: K8sRollingDeploy,
+                                              name: Rollout,
+                                              identifier: Rollout,
+                                              spec: {
+                                                  skipDryRun: false
+                                              },
+                                              timeout: 10m
+                                          }
+                                      }
+                                  ],
+                                  rollbackSteps: []
+                              }
+                          },
+                          tags: {},
+                          failureStrategies: [
+                              {
+                                  onFailure: {
+                                      errors: [
+                                          AllErrors
+                                              ],
+                                      action: {
+                                          type: StageRollback
+                                              }
+                                            }
+                              }
+                                            ]
+                              }
+                          }
+                      ]
+                  }
+                }
+    - id: executing_pipeline
+      name: Executing Pipeline
+      action: http:backstage:request
+      input:
+        method: 'POST'
+        path: /api/proxy/harness/gateway/pipeline/api/pipeline/execute/${{ parameters.pipname }}?routingId=${{ parameters.accountID }}&accountIdentifier=${{ parameters.accountID }}&projectIdentifier=${{ parameters.projID }}&orgIdentifier=${{ parameters.orgID }}&moduleType=cd   
+   
+    - id: log-message
+      name: Log Message
+      action: debug:log
+      input:
+        message: 'Hey  Your Nginx server has been deployed successfully'       
+   
+
+  output:
+    links:
+    - title: Pipeline Details
+      url: 'https://app.harness.io/ng/#/account/${{ parameters.accountID }}/cd/orgs/${{ parameters.orgID }}/projects/${{ parameters.projID }}/pipelines/${{ parameters.pipname }}/executions?storeType=INLINE'
