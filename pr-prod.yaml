@@ -4,10 +4,10 @@ metadata:
   name: pr_pipelines
   description: PR env pipelines
   annotations:
-    harness.io/cicd-accountIdentifier: vpCkHKsDSxK9_KYfjCTMKA
-    harness.io/cicd-orgIdentifier: default
-    harness.io/cicd-projectIdentifier: PREQA_NG_Pipelines
-    harness.io/ci-pipelineIdentifiers: Dochub_pr_env,Seleniumgridsetup
+    harness.io/cicd-accountId: vpCkHKsDSxK9_KYfjCTMKA
+    harness.io/cicd-orgId: default
+    harness.io/cicd-projectId: PREQA_NG_Pipelines
+    harness.io/ci-pipelineIds: Dochub_pr_env,Seleniumgridsetup
     harness.io/cd-serviceId: CleanUpWakeUp
   tags:
     - prenv
