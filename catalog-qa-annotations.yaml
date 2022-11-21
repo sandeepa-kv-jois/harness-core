@@ -6,7 +6,7 @@ metadata:
   annotations:
     harness.io/cicd-accountIdentifier:: vpCkHKsDSxK9_KYfjCTMKA
     harness.io/cicd-orgIdentifier: QE_Team
-    harness.io/cicd-orgIdentifier: Quality_Assurence
+    harness.io/cicd-projectIdentifier: Quality_Assurence
   tags:
     - java
     - data
