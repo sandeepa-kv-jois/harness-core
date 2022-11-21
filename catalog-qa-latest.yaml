@@ -1,0 +1,39 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: harness-ci-cd
+  description: Internal test pipelines
+  annotations:
+    harness.io/cicd-accountId: vpCkHKsDSxK9_KYfjCTMKA
+    harness.io/cicd-orgId: QE_Team
+    harness.io/cicd-projectId: Quality_Assurence
+  tags:
+    - java
+    - data
+  links:
+    - url: https://example.com/user
+      title: Examples Users
+      icon: user
+    - url: https://example.com/group
+      title: Example Group
+      icon: group
+    - url: https://example.com/cloud
+      title: Link with Cloud Icon
+      icon: cloud
+    - url: https://example.com/dashboard
+      title: Dashboard
+      icon: dashboard
+    - url: https://example.com/help
+      title: Support
+      icon: help
+    - url: https://example.com/web
+      title: Website
+      icon: web
+    - url: https://example.com/alert
+      title: Alerts
+      icon: alert
+spec:
+  type: service
+  lifecycle: experimental
+  owner: QA
+  system: NG
