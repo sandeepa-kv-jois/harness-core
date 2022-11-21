@@ -4,7 +4,7 @@ metadata:
   name: harness-ci-cd
   description: Internal test pipelines
   annotations:
-    harness.io/cicd-accountIdentifier:: vpCkHKsDSxK9_KYfjCTMKA
+    harness.io/cicd-accountIdentifier: vpCkHKsDSxK9_KYfjCTMKA
     harness.io/cicd-orgIdentifier: QE_Team
     harness.io/cicd-projectIdentifier: Quality_Assurence
   tags:
