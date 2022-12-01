@@ -4,7 +4,7 @@ metadata:
   name: harness-ci-cd
   description: Internal test pipelines
   annotations:
-    harness.io/project-url:: https://app.harness.io/ng/#/account/vpCkHKsDSxK9_KYfjCTMKA/ci/orgs/QE_Team/projects/Quality_Assurence/dashboard
+    harness.io/project-url: https://app.harness.io/ng/#/account/vpCkHKsDSxK9_KYfjCTMKA/ci/orgs/QE_Team/projects/Quality_Assurence/dashboard
   
   tags:
     - java
