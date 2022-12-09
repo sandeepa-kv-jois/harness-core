@@ -6,7 +6,6 @@ metadata:
     backstage.io/kubernetes-label-selector: 'app=accesscontrol-service'
     backstage.io/techdocs-ref: dir:./access-control
     harness.io/project-url: https://stage.harness.io/ng/#/account/wFHXHD0RRQWoO8tIZT5YVw/ci/orgs/Harness/projects/RELEASEBUILDS/dashboard
-    harness.io/ci-pipelineIds: cutAccessControlRelease,AccessControlUBISaaSReleaseBuild,AccessControlUBIOnPremReleaseBuild
   name: access-control
   tags:
     - java
