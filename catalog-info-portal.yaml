@@ -6,6 +6,7 @@ metadata:
     backstage.io/kubernetes-label-selector: 'app=accesscontrol-service'
     backstage.io/techdocs-ref: dir:./access-control
     harness.io/project-url: https://stage.harness.io/ng/#/account/wFHXHD0RRQWoO8tIZT5YVw/ci/orgs/Harness/projects/RELEASEBUILDS/dashboard
+    harness.io/ci-pipelineIds: AccessControlUBISaaSReleaseBuild,cutAccessControlRelease,AccessControlUBIOnPremReleaseBuild 
   name: access-control
   tags:
     - java
@@ -25,7 +26,7 @@ metadata:
     backstage.io/kubernetes-label-selector: 'app=platform-service'
     backstage.io/techdocs-ref: dir:./platform-service
     harness.io/project-url: https://stage.harness.io/ng/#/account/wFHXHD0RRQWoO8tIZT5YVw/ci/orgs/Harness/projects/RELEASEBUILDS/dashboard
-    harness.io/ci-pipelineIds: CutPlatformServiceReleaseBranch,PlatformServiceUBISaaSReleaseBuild,PlatformServiceUBIOnPremReleaseBuild
+    harness.io/ci-pipelineIds: PlatformServiceUBISaaSReleaseBuild,CutPlatformServiceReleaseBranch,PlatformServiceUBIOnPremReleaseBuild
   name: platform-service
   tags:
     - java   
