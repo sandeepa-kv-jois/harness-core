@@ -8,11 +8,13 @@
 package io.harness.delay;
 
 import static java.time.Duration.ofSeconds;
+import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.config.PublisherConfiguration;
+import io.harness.mongo.queue.NgQueueFactory;
 import io.harness.mongo.queue.QueueFactory;
 import io.harness.queue.QueueConsumer;
 import io.harness.queue.QueueListener;
@@ -50,9 +52,8 @@ public class OrchestrationDelayModule extends AbstractModule {
   QueuePublisher<DelayEvent> delayQueuePublisher(Injector injector, VersionInfoManager versionInfoManager,
       PublisherConfiguration config, @Named("forNG") boolean forNG) {
     if (forNG) {
-      return QueueFactory.createNgQueuePublisher(injector, DelayEvent.class,
-          singletonList(versionInfoManager.getVersionInfo().getVersion()), config,
-          injector.getInstance(MongoTemplate.class));
+      return NgQueueFactory.createNgQueuePublisher(
+          injector, DelayEvent.class, emptyList(), config, injector.getInstance(MongoTemplate.class));
     }
     return QueueFactory.createQueuePublisher(injector, io.harness.delay.DelayEvent.class,
         singletonList(versionInfoManager.getVersionInfo().getVersion()), config);
@@ -63,9 +64,8 @@ public class OrchestrationDelayModule extends AbstractModule {
   QueueConsumer<DelayEvent> delayQueueConsumer(Injector injector, VersionInfoManager versionInfoManager,
       PublisherConfiguration config, @Named("forNG") boolean forNG) {
     if (forNG) {
-      return QueueFactory.createNgQueueConsumer(injector, io.harness.delay.DelayEvent.class, ofSeconds(5),
-          singletonList(singletonList(versionInfoManager.getVersionInfo().getVersion())), config,
-          injector.getInstance(MongoTemplate.class));
+      return NgQueueFactory.createNgQueueConsumer(injector, io.harness.delay.DelayEvent.class, ofSeconds(5),
+          emptyList(), config, injector.getInstance(MongoTemplate.class));
     }
     return QueueFactory.createQueueConsumer(injector, io.harness.delay.DelayEvent.class, ofSeconds(5),
         singletonList(singletonList(versionInfoManager.getVersionInfo().getVersion())), config);

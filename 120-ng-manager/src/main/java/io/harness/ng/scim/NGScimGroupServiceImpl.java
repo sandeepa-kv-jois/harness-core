@@ -69,6 +69,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
   @Override
   public ScimListResponse<ScimGroup> searchGroup(String filter, String accountId, Integer count, Integer startIndex) {
     startIndex = startIndex == null ? 0 : startIndex;
+    Integer tempStartIndex = startIndex == 0 ? 0 : startIndex - 1;
     count = count == null ? MAX_RESULT_COUNT : count;
     ScimListResponse<ScimGroup> searchGroupResponse = new ScimListResponse<>();
     log.info("NGSCIM: Searching groups in account {} with filter: {}", accountId, filter);
@@ -80,6 +81,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
         String[] split = filter.split(" eq ");
         String operand = split[1];
         searchQuery = operand.substring(1, operand.length() - 1);
+        log.info("NGSCIM: Search query is {}, for accountId {}", searchQuery, accountId);
       } catch (Exception ex) {
         log.error("NGSCIM: Failed to process for account {} group search query: {} ", accountId, filter, ex);
       }
@@ -87,7 +89,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
     List<ScimGroup> groupList = new ArrayList<>();
 
     try {
-      groupList = searchUserGroupByGroupName(accountId, searchQuery, count, startIndex);
+      groupList = searchUserGroupByGroupName(accountId, searchQuery, count, tempStartIndex);
       groupList.forEach(searchGroupResponse::resource);
     } catch (WingsException ex) {
       log.info("NGSCIM: Search in account {} for group , query: {}", accountId, searchQuery, ex);
@@ -96,6 +98,9 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
     searchGroupResponse.startIndex(startIndex);
     searchGroupResponse.itemsPerPage(count);
     searchGroupResponse.totalResults(groupList.size());
+    log.info("NGSCIM: Search Group Response is {}, for accountId {}",
+        searchGroupResponse.getResources().stream().map(ScimGroup::getDisplayName).collect(Collectors.toList()),
+        accountId);
     return searchGroupResponse;
   }
 
@@ -168,6 +173,8 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
       userGroupDTO.setUsers(fetchMembersOfUserGroup(scimGroup));
       userGroupService.update(userGroupDTO);
     }
+    log.info("NGSCIM: Member userIds provided by the SCIM Provider are {}, for account {}",
+        fetchMembersOfUserGroup(scimGroup), accountId);
     log.info("NGSCIM: Update group call successful accountId {}, groupId  {}, group resource: {}", accountId, groupId,
         scimGroup);
     return Response.status(Response.Status.OK).entity(scimGroup).build();
@@ -222,12 +229,18 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
     } catch (Exception ex) {
       log.error("NGSCIM: Failed to process the REPLACE_OKTA operation: {}, for accountId: {}, for GroupId {}",
           patchOperation.toString(), accountId, groupId, ex);
+      throw new InvalidRequestException("Failed to update group name");
     }
-    throw new InvalidRequestException("Failed to update group name");
+    return null;
   }
 
   @Override
   public Response updateGroup(String groupId, String accountId, PatchRequest patchRequest) {
+    String operation = isNotEmpty(patchRequest.getOperations()) ? patchRequest.getOperations().toString() : null;
+    String schemas = isNotEmpty(patchRequest.getSchemas()) ? patchRequest.getSchemas().toString() : null;
+    log.info(
+        "NGSCIM: Updating Group: Patch Request Logging\nOperations {}\n, Schemas {}\n,External Id {}\n, Meta {}, for accountId {}",
+        operation, schemas, patchRequest.getExternalId(), patchRequest.getMeta(), accountId);
     List<UserGroup> existingUserGroupList = userGroupService.list(Criteria.where(UserGroupKeys.identifier)
                                                                       .is(groupId)
                                                                       .and(UserGroupKeys.accountIdentifier)
@@ -260,7 +273,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
         }
         case ADD:
         case ADD_OKTA: {
-          updateNewMemberIds(userIdsFromOperation, newMemberIds);
+          updateNewMemberIds(userIdsFromOperation, newMemberIds, accountId);
           break;
         }
         case REMOVE:
@@ -269,7 +282,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
           break;
         }
         default: {
-          log.error("NGSCIM: Received unexpected PATCH operation: {}", patchOperation);
+          log.error("NGSCIM: Received unexpected PATCH operation: {}, for account id", patchOperation, accountId);
           break;
         }
       }
@@ -296,7 +309,8 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
     return Response.status(Response.Status.NO_CONTENT).build();
   }
 
-  private void updateNewMemberIds(Set<String> userIdsFromOperation, Set<String> newMemberIds) {
+  private void updateNewMemberIds(Set<String> userIdsFromOperation, Set<String> newMemberIds, String accountId) {
+    log.info("NGSCIM: User Ids received from SCIM provider are {}, for accountId {}", userIdsFromOperation, accountId);
     for (String userId : userIdsFromOperation) {
       Optional<UserInfo> userInfoOptional = ngUserService.getUserById(userId);
       if (userInfoOptional.isPresent()) {
@@ -317,14 +331,14 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
         userIds.add(operand.substring(1, operand.length() - 2));
         return userIds;
       } catch (Exception ex) {
-        log.error("SCIM: Not able to decode path. Received it in path: {}, for accountId: {}, for GroupId {}",
+        log.error("NGSCIM: Not able to decode path. Received it in path: {}, for accountId: {}, for GroupId {}",
             patchOperation.getPath(), accountId, groupId, ex);
       }
     }
 
     if (!"members".equals(patchOperation.getPath())) {
-      log.error(
-          "SCIM: Expect operation only on the members. Received it in path: {}, for accountId: {}, for GroupId {}",
+      log.warn(
+          "NGSCIM: Expect operation only on the members. Received it in path: {}, for accountId: {}, for GroupId {}",
           patchOperation.getPath(), accountId, groupId);
       return Collections.emptySet();
     }
@@ -349,6 +363,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
         Criteria.where(UserGroupKeys.identifier).is(groupId).and(UserGroupKeys.accountIdentifier).is(accountId), null,
         null);
     if (!isNotEmpty(userGroupList)) {
+      log.info("NGSCIM: UserGroup with id {} is not found in account {}", groupId, accountId);
       throw new UnauthorizedException(EXC_MSG_GROUP_DOESNT_EXIST, GROUP);
     }
     ScimGroup scimGroup = buildGroupResponse(userGroupList.get(0));
@@ -361,7 +376,7 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
     log.info("NGSCIM: Creating group in account {} where name {} with call: {}", accountId, groupQuery.getDisplayName(),
         groupQuery);
     String userGroupIdentifier = isNotEmpty(groupQuery.getDisplayName())
-        ? groupQuery.getDisplayName().replaceAll("\\.", "_").replaceAll("-", "_")
+        ? groupQuery.getDisplayName().replaceAll("\\.", "_").replaceAll("-", "_").replaceAll(" ", "_")
         : groupQuery.getDisplayName();
     UserGroupDTOBuilder userGroupDTOBuilder = UserGroupDTO.builder()
                                                   .name(groupQuery.getDisplayName())
@@ -370,10 +385,11 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
                                                   .identifier(userGroupIdentifier)
                                                   .externallyManaged(true);
     UserGroup userGroupCreated = null;
-
+    log.info("NGSCIM: User ids received for account {} from SCIM provider are {}", accountId,
+        fetchMembersOfUserGroup(groupQuery));
     if (StringUtils.isNotEmpty(groupQuery.getHarnessScopes())) {
       String[] scopes = groupQuery.getHarnessScopes().split(",");
-
+      log.info("NGSCIM: Harness Scopes of SCIM group are {}, for accountId {}", scopes, accountId);
       for (String scimScope : scopes) {
         String[] identifiers = scimScope.split(":");
         if (identifiers.length == 2) {
@@ -393,7 +409,8 @@ public class NGScimGroupServiceImpl implements ScimGroupService {
     }
 
     ScimGroup scimGroup = buildGroupResponse(userGroupCreated);
-    log.info("NGSCIM: Response for accountId {} to create group with call: {}", accountId, scimGroup);
+    log.info("NGSCIM: Response for accountId {} to create group {} with call: {}", accountId,
+        scimGroup.getDisplayName(), scimGroup);
     return scimGroup;
   }
 

@@ -7,22 +7,23 @@
 
 package io.harness.serializer.morphia;
 
-import io.harness.beans.outcomes.LiteEnginePodDetailsOutcome;
+import io.harness.app.beans.dto.CITaskDetails;
+import io.harness.app.beans.entities.PluginMetadataConfig;
+import io.harness.app.beans.entities.PluginMetadataStatus;
 import io.harness.beans.outcomes.VmDetailsOutcome;
-import io.harness.beans.sweepingoutputs.ContainerPortDetails;
 import io.harness.beans.sweepingoutputs.ContextElement;
 import io.harness.beans.sweepingoutputs.DliteVmStageInfraDetails;
 import io.harness.beans.sweepingoutputs.K8PodDetails;
 import io.harness.beans.sweepingoutputs.K8StageInfraDetails;
 import io.harness.beans.sweepingoutputs.PodCleanupDetails;
 import io.harness.beans.sweepingoutputs.StageDetails;
-import io.harness.beans.sweepingoutputs.StageInfraDetails;
 import io.harness.beans.sweepingoutputs.StepTaskDetails;
 import io.harness.beans.sweepingoutputs.VmStageInfraDetails;
 import io.harness.ci.beans.entities.BuildNumberDetails;
 import io.harness.ci.beans.entities.CIBuild;
 import io.harness.ci.beans.entities.CIExecutionConfig;
 import io.harness.ci.beans.entities.CITelemetrySentStatus;
+import io.harness.ci.execution.CIExecutionMetadata;
 import io.harness.ci.stdvars.BuildStandardVariables;
 import io.harness.ci.stdvars.GitVariables;
 import io.harness.morphia.MorphiaRegistrar;
@@ -36,6 +37,7 @@ public class CIBeansMorphiaRegistrar implements MorphiaRegistrar {
     set.add(BuildNumberDetails.class);
     set.add(CIBuild.class);
     set.add(CIExecutionConfig.class);
+    set.add(CITaskDetails.class);
     set.add(K8PodDetails.class);
     set.add(StageDetails.class);
     set.add(StepTaskDetails.class);
@@ -44,12 +46,12 @@ public class CIBeansMorphiaRegistrar implements MorphiaRegistrar {
     set.add(ContextElement.class);
     set.add(K8StageInfraDetails.class);
     set.add(VmStageInfraDetails.class);
-    set.add(ContainerPortDetails.class);
-    set.add(LiteEnginePodDetailsOutcome.class);
     set.add(VmDetailsOutcome.class);
-    set.add(StageInfraDetails.class);
     set.add(CITelemetrySentStatus.class);
     set.add(DliteVmStageInfraDetails.class);
+    set.add(CIExecutionMetadata.class);
+    set.add(PluginMetadataConfig.class);
+    set.add(PluginMetadataStatus.class);
   }
 
   @Override
@@ -57,7 +59,6 @@ public class CIBeansMorphiaRegistrar implements MorphiaRegistrar {
     w.put("sweepingoutputs.K8PodDetails", K8PodDetails.class);
     w.put("sweepingoutputs.StageDetails", StageDetails.class);
     w.put("sweepingoutputs.PodCleanupDetails", PodCleanupDetails.class);
-    w.put("sweepingoutputs.StageInfraDetails", StageInfraDetails.class);
     w.put("sweepingoutputs.K8StageInfraDetails", K8StageInfraDetails.class);
     w.put("sweepingoutputs.AwsVmStageInfraDetails", VmStageInfraDetails.class);
   }

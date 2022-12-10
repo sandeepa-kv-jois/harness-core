@@ -10,10 +10,10 @@ package io.harness.entities;
 import io.harness.ChangeHandler;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.changehandlers.PlanExecutionSummaryCIStageChangeDataHandler;
 import io.harness.changehandlers.PlanExecutionSummaryCdChangeDataHandler;
 import io.harness.changehandlers.PlanExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew;
 import io.harness.changehandlers.PlanExecutionSummaryChangeDataHandler;
-import io.harness.persistence.PersistentEntity;
 import io.harness.pms.plan.execution.beans.PipelineExecutionSummaryEntity;
 
 import com.google.inject.Inject;
@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 public class PipelineExecutionSummaryEntityCDCEntity implements CDCEntity<PipelineExecutionSummaryEntity> {
   @Inject private PlanExecutionSummaryChangeDataHandler planExecutionSummaryChangeDataHandler;
   @Inject private PlanExecutionSummaryCdChangeDataHandler planExecutionSummaryCdChangeDataHandler;
+  @Inject private PlanExecutionSummaryCIStageChangeDataHandler planExecutionSummaryCIStageChangeDataHandler;
   @Inject
   private PlanExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew
       planExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew;
@@ -34,16 +35,16 @@ public class PipelineExecutionSummaryEntityCDCEntity implements CDCEntity<Pipeli
       return planExecutionSummaryChangeDataHandler;
     } else if (handlerClass.contentEquals("PipelineExecutionSummaryEntityCD")) {
       return planExecutionSummaryCdChangeDataHandler;
-    } else if (handlerClass.contentEquals("PipelineExecutionSummaryEntityServiceAndInfra"))
-
-    {
+    } else if (handlerClass.contentEquals("PipelineExecutionSummaryEntityServiceAndInfra")) {
       return planExecutionSummaryCdChangeServiceInfraChangeDataHandlerNew;
+    } else if (handlerClass.contentEquals("PipelineExecutionSummaryEntityCIStage")) {
+      return planExecutionSummaryCIStageChangeDataHandler;
     }
     return null;
   }
 
   @Override
-  public Class<? extends PersistentEntity> getSubscriptionEntity() {
+  public Class<PipelineExecutionSummaryEntity> getSubscriptionEntity() {
     return PipelineExecutionSummaryEntity.class;
   }
 }

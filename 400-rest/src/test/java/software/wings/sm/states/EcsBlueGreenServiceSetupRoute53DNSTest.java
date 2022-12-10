@@ -15,8 +15,8 @@ import static software.wings.api.CommandStateExecutionData.Builder.aCommandState
 import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.EcsInfrastructureMapping.Builder.anEcsInfrastructureMapping;
 import static software.wings.beans.Environment.Builder.anEnvironment;
-import static software.wings.beans.artifact.Artifact.Builder.anArtifact;
 import static software.wings.beans.command.EcsSetupParams.EcsSetupParamsBuilder.anEcsSetupParams;
+import static software.wings.persistence.artifact.Artifact.Builder.anArtifact;
 import static software.wings.utils.WingsTestConstants.ACTIVITY_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
 import static software.wings.utils.WingsTestConstants.APP_NAME;
@@ -61,12 +61,12 @@ import software.wings.api.ServiceElement;
 import software.wings.beans.Activity;
 import software.wings.beans.AwsConfig;
 import software.wings.beans.Service;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.command.ContainerSetupCommandUnitExecutionData;
 import software.wings.beans.command.EcsSetupParams;
 import software.wings.helpers.ext.ecs.request.EcsBGRoute53ServiceSetupRequest;
 import software.wings.helpers.ext.ecs.response.EcsBGRoute53ServiceSetupResponse;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.service.impl.artifact.ArtifactCollectionUtils;
 import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.AppService;
@@ -217,16 +217,16 @@ public class EcsBlueGreenServiceSetupRoute53DNSTest extends WingsBaseTest {
     ContainerServiceElement containerServiceElement = ContainerServiceElement.builder().build();
     doReturn(containerServiceElement)
         .when(mockEcsStateHelper)
-        .buildContainerServiceElement(any(), any(), any(), any(), nullable(String.class), nullable(String.class),
-            nullable(String.class), any(), anyInt(), any());
+        .buildContainerServiceElement(any(), any(), any(), nullable(String.class), nullable(String.class),
+            nullable(String.class), any(), anyInt());
     SweepingOutputInstanceBuilder builder = SweepingOutputInstance.builder();
     doReturn(builder).when(mockContext).prepareSweepingOutputBuilder(any());
     doReturn("foo").when(mockEcsStateHelper).getSweepingOutputName(any(), anyBoolean(), nullable(String.class));
     doReturn(null).when(mockSweepingOutputService).save(any());
     ExecutionResponse response = state.handleAsyncResponse(mockContext, ImmutableMap.of(ACTIVITY_ID, delegateResponse));
     verify(mockEcsStateHelper)
-        .buildContainerServiceElement(any(), any(), any(), any(), nullable(String.class), nullable(String.class),
-            nullable(String.class), any(), anyInt(), any());
+        .buildContainerServiceElement(any(), any(), any(), nullable(String.class), nullable(String.class),
+            nullable(String.class), any(), anyInt());
     verify(mockEcsStateHelper).populateFromDelegateResponse(any(), any(), any());
   }
 

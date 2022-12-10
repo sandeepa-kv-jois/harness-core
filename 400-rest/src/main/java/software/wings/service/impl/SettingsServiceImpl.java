@@ -76,6 +76,8 @@ import io.harness.data.parser.CsvParser;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.event.handler.impl.EventPublishHelper;
 import io.harness.exception.ExceptionUtils;
+import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.InvalidCredentialsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnauthorizedUsageRestrictionsException;
 import io.harness.exception.WingsException;
@@ -122,7 +124,6 @@ import software.wings.beans.alert.AlertType;
 import software.wings.beans.alert.SettingAttributeValidationFailedAlert;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.StoreType;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.beans.artifact.ArtifactStream.ArtifactStreamKeys;
 import software.wings.beans.artifact.ArtifactStreamSummary;
@@ -137,6 +138,7 @@ import software.wings.dl.WingsPersistence;
 import software.wings.features.CeCloudAccountFeature;
 import software.wings.features.GitOpsFeature;
 import software.wings.features.api.UsageLimitedFeature;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.prune.PruneEvent;
 import software.wings.security.PermissionAttribute;
 import software.wings.security.PermissionAttribute.Action;
@@ -163,14 +165,17 @@ import software.wings.service.intfc.apm.ApmVerificationService;
 import software.wings.service.intfc.manipulation.SettingsServiceManipulationObserver;
 import software.wings.service.intfc.security.ManagerDecryptionService;
 import software.wings.service.intfc.security.SecretManager;
+import software.wings.service.intfc.yaml.YamlGitService;
 import software.wings.service.intfc.yaml.YamlPushService;
 import software.wings.settings.RestrictionsAndAppEnvMap;
 import software.wings.settings.SettingValue;
 import software.wings.settings.SettingVariableTypes;
 import software.wings.utils.ArtifactType;
 import software.wings.utils.CryptoUtils;
+import software.wings.utils.EmailHelperUtils;
 import software.wings.verification.CVConfiguration;
 import software.wings.verification.CVConfiguration.CVConfigurationKeys;
+import software.wings.yaml.gitSync.beans.YamlGitConfig;
 
 import com.amazonaws.arn.Arn;
 import com.google.common.annotations.VisibleForTesting;
@@ -252,6 +257,7 @@ public class SettingsServiceImpl implements SettingsService {
   @Inject private AWSCEConfigValidationService awsCeConfigService;
   @Inject private AzureCEConfigValidationService azureCEConfigValidationService;
   @Inject @Named(CeCloudAccountFeature.FEATURE_NAME) private UsageLimitedFeature ceCloudAccountFeature;
+  @Inject EmailHelperUtils emailHelperUtils;
 
   @Inject @Getter(onMethod = @__(@SuppressValidation)) private Subject<CloudProviderObserver> subject = new Subject<>();
   @Inject
@@ -263,6 +269,7 @@ public class SettingsServiceImpl implements SettingsService {
   @Inject private SettingAttributeDao settingAttributeDao;
   @Inject private CEMetadataRecordDao ceMetadataRecordDao;
   @Inject private RemoteObserverInformer remoteObserverInformer;
+  @Inject private YamlGitService yamlGitService;
 
   private static final String OPEN_SSH = "OPENSSH";
 
@@ -283,6 +290,24 @@ public class SettingsServiceImpl implements SettingsService {
 
   @Override
   public PageResponse<SettingAttribute> list(
+      PageRequest<SettingAttribute> req, String appIdFromRequest, String accountIdFromRequest) {
+    try {
+      PageResponse<SettingAttribute> pageResponse = wingsPersistence.query(SettingAttribute.class, req);
+      List<SettingAttribute> listSettings = pageResponse.getResponse();
+      RestrictionsAndAppEnvMap restrictionsAndAppEnvMap =
+          usageRestrictionsService.getRestrictionsAndAppEnvMapFromCache(accountIdFromRequest, Action.READ);
+      Map<String, Set<String>> appEnvMapFromUserPermissions = restrictionsAndAppEnvMap.getAppEnvMap();
+      if (isEmpty(appEnvMapFromUserPermissions) || !appEnvMapFromUserPermissions.containsKey(appIdFromRequest)) {
+        listSettings = Collections.emptyList();
+      }
+      return aPageResponse().withResponse(listSettings).withTotal(pageResponse.getTotal()).build();
+    } catch (Exception e) {
+      throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
+    }
+  }
+
+  @Override
+  public PageResponse<SettingAttribute> list(
       PageRequest<SettingAttribute> req, String appIdFromRequest, String envIdFromRequest, boolean forUsageInNewApp) {
     try {
       long timestamp = System.currentTimeMillis();
@@ -290,11 +315,17 @@ public class SettingsServiceImpl implements SettingsService {
       log.info("Time taken in DB Query for while fetching settings:  {}", System.currentTimeMillis() - timestamp);
 
       timestamp = System.currentTimeMillis();
-      List<SettingAttribute> filteredSettingAttributes = getFilteredSettingAttributes(
-          pageResponse.getResponse(), appIdFromRequest, envIdFromRequest, forUsageInNewApp);
+      List<SettingAttribute> filteredSettingAttributes =
+          getFilteredSettingAttributes(pageResponse.getResponse(), appIdFromRequest, envIdFromRequest, forUsageInNewApp)
+              .stream()
+              .filter(settingAttribute
+                  -> !(SettingCategory.CONNECTOR.equals(settingAttribute.getCategory())
+                      && "SMTP".equals(settingAttribute.getValue().getType())
+                      && emailHelperUtils.isNgSmtp(settingAttribute.getName())))
+              .collect(Collectors.toList());
       log.info("Total time taken in filtering setting records:  {}.", System.currentTimeMillis() - timestamp);
       return aPageResponse().withResponse(filteredSettingAttributes).withTotal(pageResponse.getTotal()).build();
-    } catch (Exception e) {
+    } catch (InvalidRequestException | InvalidCredentialsException | InvalidArgumentsException e) {
       throw new InvalidRequestException(ExceptionUtils.getMessage(e), e);
     }
   }
@@ -475,8 +506,8 @@ public class SettingsServiceImpl implements SettingsService {
     for (SettingAttribute settingAttribute : inputSettingAttributes) {
       PermissionAttribute.PermissionType permissionType = settingServiceHelper.getPermissionType(settingAttribute);
       isAccountAdmin = userService.hasPermission(accountId, permissionType);
-      boolean isRefereincing = isSettingAttributeReferencingCloudProvider(settingAttribute);
-      if (isRefereincing) {
+      boolean isReferring = isSettingAttributeReferencingCloudProvider(settingAttribute);
+      if (isReferring) {
         helmRepoSettingAttributes.add(settingAttribute);
       } else {
         if (isFilteredSettingAttribute(appIdFromRequest, envIdFromRequest, accountId, forUsageInNewApp,
@@ -570,6 +601,7 @@ public class SettingsServiceImpl implements SettingsService {
     }
 
     UsageRestrictions usageRestrictionsFromEntity = settingAttributeWithUsageRestrictions.getUsageRestrictions();
+
     if (usageRestrictionsService.hasAccess(accountId, isAccountAdmin, appIdFromRequest, envIdFromRequest,
             forUsageInNewApp, usageRestrictionsFromEntity, restrictionsFromUserPermissions,
             appEnvMapFromUserPermissions, appIdEnvMap, false)) {
@@ -1393,10 +1425,6 @@ public class SettingsServiceImpl implements SettingsService {
 
     ensureSettingAttributeSafeToDelete(settingAttribute);
 
-    if (featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, accountId)) {
-      pruneQueue.send(new PruneEvent(SettingAttribute.class, appId, settingAttribute.getUuid()));
-    }
-
     closeConnectivityErrorAlert(accountId, settingAttribute.getUuid());
     boolean deleted = wingsPersistence.delete(settingAttribute);
 
@@ -1542,32 +1570,38 @@ public class SettingsServiceImpl implements SettingsService {
             join(", ", infraMappingNames)));
       }
     } else {
-      if (!featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, connectorSetting.getAccountId())) {
-        List<String> allAccountApps = appService.getAppIdsByAccountId(connectorSetting.getAccountId());
-        List<ArtifactStream> artifactStreams =
-            artifactStreamService.listBySettingId(connectorSetting.getUuid())
-                .stream()
-                .filter(artifactStream -> allAccountApps.contains(artifactStream.getAppId()))
-                .filter(artifactStream -> serviceResourceService.get(artifactStream.getServiceId()) != null)
-                .collect(toList());
-        if (!artifactStreams.isEmpty()) {
-          List<String> artifactStreamNames = artifactStreams.stream()
-                                                 .map(ArtifactStream::getSourceName)
-                                                 .filter(java.util.Objects::nonNull)
-                                                 .collect(toList());
-          throw new InvalidRequestException(
-              format("Connector [%s] is referenced by %d Artifact %s [%s].", connectorSetting.getName(),
-                  artifactStreamNames.size(), plural("Source", artifactStreamNames.size()),
-                  join(", ", artifactStreamNames)),
-              USER);
+      if (SettingVariableTypes.GIT.name().equals(connectorSetting.getValue().getType())) {
+        List<YamlGitConfig> yamlGitConfigByConnector =
+            yamlGitService.getYamlGitConfigByConnector(connectorSetting.getAccountId(), connectorSetting.getUuid());
+        if (isNotEmpty(yamlGitConfigByConnector)) {
+          throw new InvalidRequestException(String.format("Connector is referenced for git sync in apps %s",
+              yamlGitConfigByConnector.stream().map(YamlGitConfig::getAppId).collect(Collectors.toList())));
         }
+      }
+      List<String> allAccountApps = appService.getAppIdsByAccountId(connectorSetting.getAccountId());
+      List<ArtifactStream> artifactStreams =
+          artifactStreamService.listBySettingId(connectorSetting.getUuid())
+              .stream()
+              .filter(artifactStream -> allAccountApps.contains(artifactStream.getAppId()))
+              .filter(artifactStream -> serviceResourceService.get(artifactStream.getServiceId()) != null)
+              .collect(toList());
+      if (!artifactStreams.isEmpty()) {
+        List<String> artifactStreamNames = artifactStreams.stream()
+                                               .map(ArtifactStream::getSourceName)
+                                               .filter(java.util.Objects::nonNull)
+                                               .collect(toList());
+        throw new InvalidRequestException(
+            format("Connector [%s] is referenced by %d Artifact %s [%s].", connectorSetting.getName(),
+                artifactStreamNames.size(), plural("Source", artifactStreamNames.size()),
+                join(", ", artifactStreamNames)),
+            USER);
+      }
 
-        List<Rejection> rejections = manipulationSubject.fireApproveFromAll(
-            SettingsServiceManipulationObserver::settingsServiceDeleting, connectorSetting);
-        if (isNotEmpty(rejections)) {
-          throw new InvalidRequestException(
-              format("[%s]", join("\n", rejections.stream().map(Rejection::message).collect(toList()))), USER);
-        }
+      List<Rejection> rejections = manipulationSubject.fireApproveFromAll(
+          SettingsServiceManipulationObserver::settingsServiceDeleting, connectorSetting);
+      if (isNotEmpty(rejections)) {
+        throw new InvalidRequestException(
+            format("[%s]", join("\n", rejections.stream().map(Rejection::message).collect(toList()))), USER);
       }
     }
 
@@ -1586,25 +1620,19 @@ public class SettingsServiceImpl implements SettingsService {
           USER);
     }
 
-    if (!featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, accountId)) {
-      List<ArtifactStream> artifactStreams = artifactStreamService.listBySettingId(cloudProviderSetting.getUuid());
-      if (!artifactStreams.isEmpty()) {
-        List<String> artifactStreamNames = artifactStreams.stream().map(ArtifactStream::getName).collect(toList());
-        throw new InvalidRequestException(
-            format("Cloud provider [%s] is referenced by %d Artifact %s [%s].", cloudProviderSetting.getName(),
-                artifactStreamNames.size(), plural("Source", artifactStreamNames.size()),
-                join(", ", artifactStreamNames)),
-            USER);
-      }
+    List<ArtifactStream> artifactStreams = artifactStreamService.listBySettingId(cloudProviderSetting.getUuid());
+    if (!artifactStreams.isEmpty()) {
+      List<String> artifactStreamNames = artifactStreams.stream().map(ArtifactStream::getName).collect(toList());
+      throw new InvalidRequestException(
+          format("Cloud provider [%s] is referenced by %d Artifact %s [%s].", cloudProviderSetting.getName(),
+              artifactStreamNames.size(), plural("Source", artifactStreamNames.size()),
+              join(", ", artifactStreamNames)),
+          USER);
     }
     // TODO:: workflow scan for finding out usage in Steps ???
   }
 
   private void ensureAzureArtifactsConnectorSafeToDelete(SettingAttribute connectorSetting) {
-    if (featureFlagService.isEnabled(FeatureName.ARTIFACT_STREAM_REFACTOR, connectorSetting.getAccountId())) {
-      return;
-    }
-
     List<ArtifactStream> artifactStreams = artifactStreamService.listBySettingId(connectorSetting.getUuid());
     if (isEmpty(artifactStreams)) {
       return;

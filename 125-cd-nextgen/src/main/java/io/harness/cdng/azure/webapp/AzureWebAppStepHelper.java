@@ -10,43 +10,64 @@ package io.harness.cdng.azure.webapp;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants.APPLICATION_SETTINGS;
 import static io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants.CONNECTION_STRINGS;
-import static io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants.STARTUP_SCRIPT;
+import static io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants.STARTUP_COMMAND;
 import static io.harness.data.structure.CollectionUtils.emptyIfNull;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.connector.docker.DockerAuthType.ANONYMOUS;
 import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.ACR_NAME;
+import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.AMAZON_S3_NAME;
 import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.ARTIFACTORY_REGISTRY_NAME;
+import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.AZURE_ARTIFACTS_NAME;
 import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.DOCKER_REGISTRY_NAME;
 import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.ECR_NAME;
 import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.GCR_NAME;
+import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.JENKINS_NAME;
 import static io.harness.delegate.task.artifacts.ArtifactSourceConstants.NEXUS3_REGISTRY_NAME;
+import static io.harness.delegate.task.artifacts.ArtifactSourceType.AMAZONS3;
+import static io.harness.delegate.task.artifacts.ArtifactSourceType.AZURE_ARTIFACTS;
+import static io.harness.delegate.task.artifacts.ArtifactSourceType.JENKINS;
+import static io.harness.delegate.task.artifacts.ArtifactSourceType.NEXUS3_REGISTRY;
 
 import static java.lang.String.format;
+import static java.util.Collections.singletonList;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.azure.utility.AzureResourceUtility;
 import io.harness.beans.DecryptableEntity;
+import io.harness.beans.FeatureName;
 import io.harness.beans.FileReference;
 import io.harness.beans.IdentifierRef;
+import io.harness.beans.Scope;
 import io.harness.cdng.CDStepHelper;
 import io.harness.cdng.artifact.outcome.AcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.artifact.outcome.ArtifactoryArtifactOutcome;
+import io.harness.cdng.artifact.outcome.ArtifactoryGenericArtifactOutcome;
+import io.harness.cdng.artifact.outcome.AzureArtifactsOutcome;
 import io.harness.cdng.artifact.outcome.DockerArtifactOutcome;
 import io.harness.cdng.artifact.outcome.EcrArtifactOutcome;
 import io.harness.cdng.artifact.outcome.GcrArtifactOutcome;
+import io.harness.cdng.artifact.outcome.JenkinsArtifactOutcome;
 import io.harness.cdng.artifact.outcome.NexusArtifactOutcome;
+import io.harness.cdng.artifact.outcome.S3ArtifactOutcome;
 import io.harness.cdng.azure.AzureHelperService;
 import io.harness.cdng.azure.config.ApplicationSettingsOutcome;
 import io.harness.cdng.azure.config.ConnectionStringsOutcome;
-import io.harness.cdng.azure.config.StartupScriptOutcome;
+import io.harness.cdng.azure.config.StartupCommandOutcome;
 import io.harness.cdng.azure.webapp.beans.AzureWebAppPreDeploymentDataOutput;
+import io.harness.cdng.execution.ExecutionInfoKey;
+import io.harness.cdng.execution.StageExecutionInfo;
+import io.harness.cdng.execution.azure.webapps.AzureWebAppsStageExecutionDetails;
+import io.harness.cdng.execution.service.StageExecutionInfoService;
 import io.harness.cdng.expressions.CDExpressionResolver;
+import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.infra.beans.AzureWebAppInfrastructureOutcome;
 import io.harness.cdng.infra.beans.InfrastructureOutcome;
 import io.harness.cdng.manifest.yaml.GitStoreConfig;
 import io.harness.cdng.manifest.yaml.harness.HarnessStore;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
+import io.harness.cdng.service.steps.ServiceStepOutcome;
+import io.harness.cdng.stepsdependency.constants.OutcomeExpressionConstants;
 import io.harness.connector.ConnectorInfoDTO;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.azure.registry.AzureRegistryType;
@@ -54,18 +75,29 @@ import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.delegate.task.artifacts.ArtifactSourceType;
 import io.harness.delegate.task.azure.appservice.AzureAppServicePreDeploymentData;
 import io.harness.delegate.task.azure.appservice.settings.AppSettingsFile;
 import io.harness.delegate.task.azure.appservice.settings.EncryptedAppSettingsFile;
 import io.harness.delegate.task.azure.appservice.webapp.ng.AzureWebAppInfraDelegateConfig;
+import io.harness.delegate.task.azure.artifact.ArtifactoryAzureArtifactRequestDetails;
+import io.harness.delegate.task.azure.artifact.AwsS3AzureArtifactRequestDetails;
 import io.harness.delegate.task.azure.artifact.AzureArtifactConfig;
 import io.harness.delegate.task.azure.artifact.AzureContainerArtifactConfig;
 import io.harness.delegate.task.azure.artifact.AzureContainerArtifactConfig.AzureContainerArtifactConfigBuilder;
+import io.harness.delegate.task.azure.artifact.AzureDevOpsArtifactRequestDetails;
+import io.harness.delegate.task.azure.artifact.AzurePackageArtifactConfig;
+import io.harness.delegate.task.azure.artifact.AzurePackageArtifactConfig.AzurePackageArtifactConfigBuilder;
+import io.harness.delegate.task.azure.artifact.JenkinsAzureArtifactRequestDetails;
+import io.harness.delegate.task.azure.artifact.NexusAzureArtifactRequestDetails;
 import io.harness.delegate.task.git.GitFetchFilesConfig;
 import io.harness.delegate.task.git.GitFetchRequest;
 import io.harness.delegate.task.git.GitFetchResponse;
 import io.harness.encryption.SecretRefHelper;
+import io.harness.eraro.ErrorCode;
+import io.harness.exception.AccessDeniedException;
 import io.harness.exception.InvalidArgumentsException;
+import io.harness.exception.WingsException;
 import io.harness.filestore.dto.node.FileNodeDTO;
 import io.harness.filestore.dto.node.FileStoreNodeDTO;
 import io.harness.filestore.dto.node.FolderNodeDTO;
@@ -90,6 +122,7 @@ import io.harness.security.encryption.EncryptedDataDetail;
 import io.harness.utils.IdentifierRefHelper;
 
 import software.wings.beans.TaskType;
+import software.wings.utils.RepositoryFormat;
 
 import com.google.common.collect.Sets;
 import com.google.inject.Inject;
@@ -101,8 +134,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
+import org.jetbrains.annotations.NotNull;
 
 @Singleton
 @Slf4j
@@ -116,7 +151,36 @@ public class AzureWebAppStepHelper {
   @Inject private CDExpressionResolver cdExpressionResolver;
   @Inject private ExecutionSweepingOutputService executionSweepingOutputService;
   @Inject private NGEncryptedDataService ngEncryptedDataService;
+  @Inject private CDFeatureFlagHelper cdFeatureFlagHelper;
   @Named("PRIVILEGED") @Inject private SecretManagerClientService secretManagerClientService;
+  @Inject private StageExecutionInfoService stageExecutionInfoService;
+
+  public ExecutionInfoKey getExecutionInfoKey(Ambiance ambiance, AzureWebAppInfraDelegateConfig infraDelegateConfig) {
+    ServiceStepOutcome serviceOutcome = (ServiceStepOutcome) outcomeService.resolve(
+        ambiance, RefObjectUtils.getOutcomeRefObject(OutcomeExpressionConstants.SERVICE));
+
+    AzureWebAppInfrastructureOutcome infrastructure = getAzureWebAppInfrastructureOutcome(ambiance);
+
+    Scope scope = Scope.builder()
+                      .accountIdentifier(AmbianceUtils.getAccountId(ambiance))
+                      .orgIdentifier(AmbianceUtils.getOrgIdentifier(ambiance))
+                      .projectIdentifier(AmbianceUtils.getProjectIdentifier(ambiance))
+                      .build();
+    return ExecutionInfoKey.builder()
+        .scope(scope)
+        .deploymentIdentifier(getDeploymentIdentifier(
+            ambiance, infraDelegateConfig.getAppName(), infraDelegateConfig.getDeploymentSlot()))
+        .envIdentifier(infrastructure.getEnvironment().getIdentifier())
+        .infraIdentifier(infrastructure.getInfraIdentifier())
+        .serviceIdentifier(serviceOutcome.getIdentifier())
+        .build();
+  }
+
+  public String getDeploymentIdentifier(Ambiance ambiance, String appName, String deploymentSlot) {
+    AzureWebAppInfrastructureOutcome infrastructureOutcome = getAzureWebAppInfrastructureOutcome(ambiance);
+    return String.format("%s-%s-%s-%s", infrastructureOutcome.getSubscription(),
+        infrastructureOutcome.getResourceGroup(), appName, deploymentSlot);
+  }
 
   public AzureAppServicePreDeploymentData getPreDeploymentData(Ambiance ambiance, String sweepingOutputName) {
     OptionalSweepingOutput sweepingOutput = executionSweepingOutputService.resolveOptional(
@@ -129,16 +193,16 @@ public class AzureWebAppStepHelper {
 
   public Map<String, StoreConfig> fetchWebAppConfig(Ambiance ambiance) {
     Map<String, StoreConfig> settingsConfig = new HashMap<>();
-    OptionalOutcome startupScriptOutcome =
-        outcomeService.resolveOptional(ambiance, RefObjectUtils.getOutcomeRefObject(STARTUP_SCRIPT));
+    OptionalOutcome startupCommandOutcome =
+        outcomeService.resolveOptional(ambiance, RefObjectUtils.getOutcomeRefObject(STARTUP_COMMAND));
     OptionalOutcome applicationSettingsOutcome =
         outcomeService.resolveOptional(ambiance, RefObjectUtils.getOutcomeRefObject(APPLICATION_SETTINGS));
     OptionalOutcome connectionStringsOutcome =
         outcomeService.resolveOptional(ambiance, RefObjectUtils.getOutcomeRefObject(CONNECTION_STRINGS));
 
-    if (startupScriptOutcome.isFound()) {
-      StartupScriptOutcome startupScript = (StartupScriptOutcome) startupScriptOutcome.getOutcome();
-      settingsConfig.put(STARTUP_SCRIPT, startupScript.getStore());
+    if (startupCommandOutcome.isFound()) {
+      StartupCommandOutcome startupCommand = (StartupCommandOutcome) startupCommandOutcome.getOutcome();
+      settingsConfig.put(STARTUP_COMMAND, startupCommand.getStore());
     }
 
     if (applicationSettingsOutcome.isFound()) {
@@ -177,6 +241,12 @@ public class AzureWebAppStepHelper {
 
   public TaskRequest prepareTaskRequest(StepElementParameters stepElementParameters, Ambiance ambiance,
       TaskParameters taskParameters, TaskType taskType, List<String> units) {
+    return prepareTaskRequest(
+        stepElementParameters, ambiance, taskParameters, taskType, taskType.getDisplayName(), units);
+  }
+
+  public TaskRequest prepareTaskRequest(StepElementParameters stepElementParameters, Ambiance ambiance,
+      TaskParameters taskParameters, TaskType taskType, String displayName, List<String> units) {
     AzureWebAppStepParameters stepSpec = (AzureWebAppStepParameters) stepElementParameters.getSpec();
     List<TaskSelectorYaml> taskSelectors = stepSpec.getDelegateSelectors().getValue();
 
@@ -187,8 +257,8 @@ public class AzureWebAppStepHelper {
                                   .parameters(new Object[] {taskParameters})
                                   .build();
 
-    return cdStepHelper.prepareTaskRequest(ambiance, taskData, units, taskType.getDisplayName(),
-        TaskSelectorYaml.toTaskSelector(emptyIfNull(taskSelectors)));
+    return cdStepHelper.prepareTaskRequest(
+        ambiance, taskData, units, displayName, TaskSelectorYaml.toTaskSelector(emptyIfNull(taskSelectors)));
   }
 
   public Map<String, AppSettingsFile> fetchWebAppConfigsFromHarnessStore(
@@ -199,15 +269,19 @@ public class AzureWebAppStepHelper {
 
   public AzureWebAppInfraDelegateConfig getInfraDelegateConfig(
       Ambiance ambiance, String webApp, String deploymentSlot) {
+    AzureWebAppInfrastructureOutcome infrastructure = getAzureWebAppInfrastructureOutcome(ambiance);
+    return getInfraDelegateConfig(ambiance, infrastructure, webApp, deploymentSlot);
+  }
+
+  @NotNull
+  private AzureWebAppInfrastructureOutcome getAzureWebAppInfrastructureOutcome(Ambiance ambiance) {
     InfrastructureOutcome infrastructureOutcome = cdStepHelper.getInfrastructureOutcome(ambiance);
     if (!(infrastructureOutcome instanceof AzureWebAppInfrastructureOutcome)) {
       throw new InvalidArgumentsException(Pair.of("infrastructure",
           format("Invalid infrastructure type: %s, expected: %s", infrastructureOutcome.getKind(),
               InfrastructureKind.AZURE_WEB_APP)));
     }
-
-    AzureWebAppInfrastructureOutcome infrastructure = (AzureWebAppInfrastructureOutcome) infrastructureOutcome;
-    return getInfraDelegateConfig(ambiance, infrastructure, webApp, deploymentSlot);
+    return (AzureWebAppInfrastructureOutcome) infrastructureOutcome;
   }
 
   public AzureWebAppInfraDelegateConfig getInfraDelegateConfig(
@@ -225,15 +299,18 @@ public class AzureWebAppStepHelper {
         .azureConnectorDTO(azureConnectorDTO)
         .subscription(infrastructure.getSubscription())
         .resourceGroup(infrastructure.getResourceGroup())
-        .appName(webApp)
+        .appName(webApp.toLowerCase())
         .deploymentSlot(AzureResourceUtility.fixDeploymentSlotName(deploymentSlot, webApp))
         .encryptionDataDetails(azureHelperService.getEncryptionDetails(azureConnectorDTO, ngAccess))
         .build();
   }
 
-  public AzureArtifactConfig getPrimaryArtifactConfig(Ambiance ambiance) {
-    ArtifactOutcome artifactOutcome = cdStepHelper.resolveArtifactsOutcome(ambiance).orElseThrow(
-        () -> new InvalidArgumentsException(Pair.of("artifacts", "Artifact is required for Azure WebApp")));
+  public ArtifactOutcome getPrimaryArtifactOutcome(Ambiance ambiance) {
+    return cdStepHelper.resolveArtifactsOutcome(ambiance).orElseThrow(
+        () -> new InvalidArgumentsException(Pair.of("artifacts", "Primary artifact is required for Azure WebApp")));
+  }
+
+  public AzureArtifactConfig getPrimaryArtifactConfig(Ambiance ambiance, ArtifactOutcome artifactOutcome) {
     switch (artifactOutcome.getArtifactType()) {
       case DOCKER_REGISTRY_NAME:
       case ECR_NAME:
@@ -241,8 +318,14 @@ public class AzureWebAppStepHelper {
       case ACR_NAME:
       case NEXUS3_REGISTRY_NAME:
       case ARTIFACTORY_REGISTRY_NAME:
-        return getAzureContainerArtifactConfig(ambiance, artifactOutcome);
-
+      case AMAZON_S3_NAME:
+      case JENKINS_NAME:
+      case AZURE_ARTIFACTS_NAME:
+        if (isPackageArtifactType(artifactOutcome)) {
+          return getAzurePackageArtifactConfig(ambiance, artifactOutcome);
+        } else {
+          return getAzureContainerArtifactConfig(ambiance, artifactOutcome);
+        }
       default:
         throw new InvalidArgumentsException(Pair.of("artifacts",
             format("Artifact type %s is not yet supported in Azure WebApp", artifactOutcome.getArtifactType())));
@@ -274,6 +357,24 @@ public class AzureWebAppStepHelper {
     return Sets.difference(aConfigs.entrySet(), bConfigs.entrySet())
         .stream()
         .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+  }
+
+  public boolean isPackageArtifactType(ArtifactOutcome artifactOutcome) {
+    switch (artifactOutcome.getArtifactType()) {
+      case ARTIFACTORY_REGISTRY_NAME:
+        return !(artifactOutcome instanceof ArtifactoryArtifactOutcome);
+      case AMAZON_S3_NAME:
+        return artifactOutcome instanceof S3ArtifactOutcome;
+      case NEXUS3_REGISTRY_NAME:
+        NexusArtifactOutcome nexusArtifactOutcome = (NexusArtifactOutcome) artifactOutcome;
+        return !RepositoryFormat.docker.name().equals(nexusArtifactOutcome.getRepositoryFormat());
+      case JENKINS_NAME:
+        return artifactOutcome instanceof JenkinsArtifactOutcome;
+      case AZURE_ARTIFACTS_NAME:
+        return artifactOutcome instanceof AzureArtifactsOutcome;
+      default:
+        return false;
+    }
   }
 
   private AzureArtifactConfig getAzureContainerArtifactConfig(Ambiance ambiance, ArtifactOutcome artifactOutcome) {
@@ -348,6 +449,110 @@ public class AzureWebAppStepHelper {
         .build();
   }
 
+  private AzurePackageArtifactConfig getAzurePackageArtifactConfig(Ambiance ambiance, ArtifactOutcome artifactOutcome) {
+    final AzurePackageArtifactConfigBuilder artifactConfigBuilder = AzurePackageArtifactConfig.builder();
+    ConnectorInfoDTO connectorInfoDTO;
+    switch (artifactOutcome.getArtifactType()) {
+      case ARTIFACTORY_REGISTRY_NAME:
+        ArtifactoryGenericArtifactOutcome artifactoryArtifactOutcome =
+            (ArtifactoryGenericArtifactOutcome) artifactOutcome;
+        artifactConfigBuilder.sourceType(ArtifactSourceType.ARTIFACTORY_REGISTRY);
+        artifactConfigBuilder.artifactDetails(
+            ArtifactoryAzureArtifactRequestDetails.builder()
+                .repository(artifactoryArtifactOutcome.getRepositoryName())
+                .repositoryFormat(artifactoryArtifactOutcome.getRepositoryFormat())
+                .artifactPaths(new ArrayList<>(singletonList(artifactoryArtifactOutcome.getArtifactPath())))
+                .build());
+        connectorInfoDTO = cdStepHelper.getConnector(artifactoryArtifactOutcome.getConnectorRef(), ambiance);
+        break;
+      case AMAZON_S3_NAME:
+        S3ArtifactOutcome s3ArtifactOutcome = (S3ArtifactOutcome) artifactOutcome;
+        artifactConfigBuilder.sourceType(AMAZONS3);
+        artifactConfigBuilder.artifactDetails(AwsS3AzureArtifactRequestDetails.builder()
+                                                  .region(s3ArtifactOutcome.getRegion())
+                                                  .bucketName(s3ArtifactOutcome.getBucketName())
+                                                  .filePath(s3ArtifactOutcome.getFilePath())
+                                                  .identifier(s3ArtifactOutcome.getIdentifier())
+                                                  .build());
+        connectorInfoDTO = cdStepHelper.getConnector(s3ArtifactOutcome.getConnectorRef(), ambiance);
+        break;
+      case NEXUS3_REGISTRY_NAME:
+        NexusArtifactOutcome nexusArtifactOutcome = (NexusArtifactOutcome) artifactOutcome;
+        if (!cdFeatureFlagHelper.isEnabled(
+                AmbianceUtils.getAccountId(ambiance), FeatureName.AZURE_WEB_APP_NG_NEXUS_PACKAGE)) {
+          throw new AccessDeniedException(
+              format(
+                  "Nexus artifact source with repository format '%s' not enabled for account '%s'. Please contact harness customer care to enable FF '%s'.",
+                  nexusArtifactOutcome.getRepositoryFormat(), AmbianceUtils.getAccountId(ambiance),
+                  FeatureName.AZURE_WEB_APP_NG_NEXUS_PACKAGE.name()),
+              ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
+        }
+        artifactConfigBuilder.sourceType(NEXUS3_REGISTRY);
+        artifactConfigBuilder.artifactDetails(NexusAzureArtifactRequestDetails.builder()
+                                                  .identifier(nexusArtifactOutcome.getIdentifier())
+                                                  .certValidationRequired(false)
+                                                  .artifactUrl(nexusArtifactOutcome.getMetadata().get("url"))
+                                                  .metadata(nexusArtifactOutcome.getMetadata())
+                                                  .repositoryFormat(nexusArtifactOutcome.getRepositoryFormat())
+                                                  .build());
+        connectorInfoDTO = cdStepHelper.getConnector(nexusArtifactOutcome.getConnectorRef(), ambiance);
+        break;
+      case JENKINS_NAME:
+        if (!cdFeatureFlagHelper.isEnabled(
+                AmbianceUtils.getAccountId(ambiance), FeatureName.AZURE_WEBAPP_NG_JENKINS_ARTIFACTS)) {
+          throw new AccessDeniedException("The Jenkins artifact source in NG is not enabled for this account."
+                  + " Please contact harness customer care.",
+              ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
+        }
+        JenkinsArtifactOutcome jenkinsArtifactOutcome = (JenkinsArtifactOutcome) artifactOutcome;
+        artifactConfigBuilder.sourceType(JENKINS);
+        artifactConfigBuilder.artifactDetails(JenkinsAzureArtifactRequestDetails.builder()
+                                                  .artifactPath(jenkinsArtifactOutcome.getArtifactPath())
+                                                  .jobName(jenkinsArtifactOutcome.getJobName())
+                                                  .build(jenkinsArtifactOutcome.getBuild())
+                                                  .identifier(jenkinsArtifactOutcome.getIdentifier())
+                                                  .build());
+        connectorInfoDTO = cdStepHelper.getConnector(jenkinsArtifactOutcome.getConnectorRef(), ambiance);
+        break;
+      case AZURE_ARTIFACTS_NAME:
+        if (!cdFeatureFlagHelper.isEnabled(
+                AmbianceUtils.getAccountId(ambiance), FeatureName.AZURE_WEBAPP_NG_AZURE_DEVOPS_ARTIFACTS)) {
+          throw new AccessDeniedException("The Azure DevOps artifact source in NG is not enabled for this account."
+                  + " Please contact harness customer care.",
+              ErrorCode.NG_ACCESS_DENIED, WingsException.USER);
+        }
+        AzureArtifactsOutcome azureArtifactsOutcome = (AzureArtifactsOutcome) artifactOutcome;
+        artifactConfigBuilder.sourceType(AZURE_ARTIFACTS);
+        artifactConfigBuilder.artifactDetails(AzureDevOpsArtifactRequestDetails.builder()
+                                                  .packageType(azureArtifactsOutcome.getPackageType())
+                                                  .packageName(azureArtifactsOutcome.getPackageName())
+                                                  .project(azureArtifactsOutcome.getProject())
+                                                  .feed(azureArtifactsOutcome.getFeed())
+                                                  .scope(azureArtifactsOutcome.getScope())
+                                                  .version(azureArtifactsOutcome.getVersion())
+                                                  .identifier(azureArtifactsOutcome.getIdentifier())
+                                                  .versionRegex(azureArtifactsOutcome.getVersionRegex())
+                                                  .build());
+        connectorInfoDTO = cdStepHelper.getConnector(azureArtifactsOutcome.getConnectorRef(), ambiance);
+        break;
+      default:
+        throw new InvalidArgumentsException(
+            Pair.of("artifacts", format("Unsupported artifact type %s", artifactOutcome.getArtifactType())));
+    }
+
+    NGAccess ngAccess = AmbianceUtils.getNgAccess(ambiance);
+    List<EncryptedDataDetail> encryptedDataDetails = new ArrayList<>();
+    if (connectorInfoDTO.getConnectorConfig().getDecryptableEntities() != null) {
+      for (DecryptableEntity decryptableEntity : connectorInfoDTO.getConnectorConfig().getDecryptableEntities()) {
+        encryptedDataDetails.addAll(secretManagerClientService.getEncryptionDetails(ngAccess, decryptableEntity));
+      }
+    }
+
+    return artifactConfigBuilder.connectorConfig(connectorInfoDTO.getConnectorConfig())
+        .encryptedDataDetails(encryptedDataDetails)
+        .build();
+  }
+
   private AzureRegistryType getAzureRegistryType(DockerConnectorDTO dockerConfig) {
     if (dockerConfig.getAuth().getAuthType().equals(ANONYMOUS)) {
       return AzureRegistryType.DOCKER_HUB_PUBLIC;
@@ -356,7 +561,7 @@ public class AzureWebAppStepHelper {
     }
   }
 
-  private AppSettingsFile fetchFileContentFromHarnessStore(
+  public AppSettingsFile fetchFileContentFromHarnessStore(
       Ambiance ambiance, String settingsType, HarnessStore harnessStore) {
     HarnessStore renderedHarnessStore = (HarnessStore) cdExpressionResolver.updateExpressions(ambiance, harnessStore);
     if (!ParameterField.isNull(renderedHarnessStore.getFiles())
@@ -374,6 +579,46 @@ public class AzureWebAppStepHelper {
     }
 
     throw new InvalidArgumentsException(Pair.of(settingsType, "Either 'files' or 'secretFiles' is required"));
+  }
+
+  @Nullable
+  public AzureWebAppsStageExecutionDetails findLastSuccessfulStageExecutionDetails(
+      Ambiance ambiance, AzureWebAppInfraDelegateConfig infraDelegateConfig) {
+    ExecutionInfoKey executionInfoKey = getExecutionInfoKey(ambiance, infraDelegateConfig);
+    List<StageExecutionInfo> stageExecutionInfoList = stageExecutionInfoService.listLatestSuccessfulStageExecutionInfo(
+        executionInfoKey, ambiance.getStageExecutionId(), 2);
+
+    if (isNotEmpty(stageExecutionInfoList)) {
+      AzureWebAppsStageExecutionDetails executionDetails =
+          (AzureWebAppsStageExecutionDetails) stageExecutionInfoList.get(0).getExecutionDetails();
+      log.info(
+          "Last successful deployment found with pipeline executionId: {}", executionDetails.getPipelineExecutionId());
+      if (isNotEmpty(executionDetails.getTargetSlot())) {
+        if (stageExecutionInfoList.size() == 2) {
+          executionDetails = (AzureWebAppsStageExecutionDetails) stageExecutionInfoList.get(1).getExecutionDetails();
+          log.info("Pre last successful deployment found with pipeline executionId: {}",
+              executionDetails.getPipelineExecutionId());
+        } else {
+          executionDetails = null;
+        }
+      }
+
+      return executionDetails;
+    }
+
+    return null;
+  }
+
+  public String getTaskTypeVersion(ArtifactOutcome artifactOutcome) {
+    switch (artifactOutcome.getArtifactType()) {
+      case NEXUS3_REGISTRY_NAME:
+      case JENKINS_NAME:
+      case AZURE_ARTIFACTS_NAME:
+        return isPackageArtifactType(artifactOutcome) ? TaskType.AZURE_WEB_APP_TASK_NG_V2.name()
+                                                      : TaskType.AZURE_WEB_APP_TASK_NG.name();
+      default:
+        return TaskType.AZURE_WEB_APP_TASK_NG.name();
+    }
   }
 
   private AppSettingsFile fetchFileContentFromFileStore(Ambiance ambiance, String settingsType, String filePath) {

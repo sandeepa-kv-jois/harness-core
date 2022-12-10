@@ -8,6 +8,7 @@
 package io.harness.k8s.steadystate.watcher.workload;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.delegate.clienttools.ClientTool.OC;
 import static io.harness.k8s.kubectl.Utils.encloseWithQuotesIfNeeded;
 import static io.harness.logging.LogLevel.ERROR;
 import static io.harness.logging.LogLevel.INFO;
@@ -17,6 +18,7 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.configuration.KubernetesCliCommandType;
+import io.harness.delegate.clienttools.InstallUtils;
 import io.harness.exception.KubernetesCliTaskRuntimeException;
 import io.harness.exception.sanitizer.ExceptionMessageSanitizer;
 import io.harness.k8s.K8sConstants;
@@ -46,7 +48,7 @@ public class DeploymentConfigCliWatcher implements WorkloadWatcher {
     String statusFormat = k8SStatusWatchDTO.getStatusFormat();
     K8sDelegateTaskParams k8sDelegateTaskParams = k8SStatusWatchDTO.getK8sDelegateTaskParams();
 
-    try (ByteArrayOutputStream errorCaptureStream = new ByteArrayOutputStream();
+    try (ByteArrayOutputStream errorCaptureStream = new ByteArrayOutputStream(1024);
          LogOutputStream statusErrorStream =
              new LogOutputStream() {
                @SneakyThrows
@@ -68,8 +70,14 @@ public class DeploymentConfigCliWatcher implements WorkloadWatcher {
       ProcessResult result;
       String printableExecutedCommand;
 
-      String rolloutStatusCommand = getRolloutStatusCommandForDeploymentConfig(
-          k8sDelegateTaskParams.getOcPath(), k8sDelegateTaskParams.getKubeconfigPath(), resourceId);
+      String ocPath = null;
+      try {
+        ocPath = InstallUtils.getLatestVersionPath(OC);
+      } catch (Exception ex) {
+        log.warn("Unable to fetch OC binary path from delegate. Kindly ensure it is configured as env variable." + ex);
+      }
+      String rolloutStatusCommand =
+          getRolloutStatusCommandForDeploymentConfig(ocPath, k8sDelegateTaskParams.getKubeconfigPath(), resourceId);
 
       printableExecutedCommand = rolloutStatusCommand.substring(rolloutStatusCommand.indexOf("oc --kubeconfig"));
       executionLogCallback.saveExecutionLog(printableExecutedCommand + "\n");

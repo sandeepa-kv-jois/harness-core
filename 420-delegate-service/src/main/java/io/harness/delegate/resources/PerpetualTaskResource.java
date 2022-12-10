@@ -1,3 +1,10 @@
+/*
+ * Copyright 2022 Harness Inc. All rights reserved.
+ * Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+ * that can be found in the licenses directory at the root of this repository, also available at
+ * https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+ */
+
 package io.harness.delegate.resources;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
@@ -8,6 +15,8 @@ import io.harness.perpetualtask.HeartbeatRequest;
 import io.harness.perpetualtask.HeartbeatResponse;
 import io.harness.perpetualtask.PerpetualTaskAssignDetails;
 import io.harness.perpetualtask.PerpetualTaskContextResponse;
+import io.harness.perpetualtask.PerpetualTaskFailureRequest;
+import io.harness.perpetualtask.PerpetualTaskFailureResponse;
 import io.harness.perpetualtask.PerpetualTaskListResponse;
 import io.harness.perpetualtask.PerpetualTaskResponse;
 import io.harness.perpetualtask.PerpetualTaskService;
@@ -65,12 +74,14 @@ public class PerpetualTaskResource {
     return Response.ok(response).build();
   }
 
+  // TODO: ARPIT remove this deprecated call once DEL-5026 changes are in immutable delegate agent.
   @PUT
   @Path("/heartbeat")
   @Timed
   @ExceptionMetered
   @DelegateAuth
   @ApiOperation(value = "Heartbeat recording", nickname = "heartbeat")
+  @Deprecated
   public Response heartbeat(@QueryParam("accountId") String accountId, HeartbeatRequest heartbeatRequest) {
     PerpetualTaskResponse perpetualTaskResponse = PerpetualTaskResponse.builder()
                                                       .responseMessage(heartbeatRequest.getResponseMessage())
@@ -79,5 +90,18 @@ public class PerpetualTaskResource {
     long heartbeatMillis = HTimestamps.toInstant(heartbeatRequest.getHeartbeatTimestamp()).toEpochMilli();
     perpetualTaskService.triggerCallback(heartbeatRequest.getId(), heartbeatMillis, perpetualTaskResponse);
     return Response.ok(HeartbeatResponse.newBuilder().build()).build();
+  }
+
+  @PUT
+  @Path("/failure")
+  @Timed
+  @ExceptionMetered
+  @DelegateAuth
+  @ApiOperation(value = "Record perpetual task failure", nickname = "recordTaskFailure")
+  public Response recordTaskFailure(
+      @QueryParam("accountId") String accountId, PerpetualTaskFailureRequest perpetualTaskFailureRequest) {
+    perpetualTaskService.recordTaskFailure(
+        perpetualTaskFailureRequest.getId(), perpetualTaskFailureRequest.getExceptionMessage());
+    return Response.ok(PerpetualTaskFailureResponse.newBuilder().build()).build();
   }
 }

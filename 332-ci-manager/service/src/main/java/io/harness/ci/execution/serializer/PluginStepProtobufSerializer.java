@@ -74,7 +74,8 @@ public class PluginStepProtobufSerializer implements ProtobufStepSerializer<Plug
     if (reports != null) {
       if (reports.getType() == UnitTestReportType.JUNIT) {
         JUnitTestReport junitTestReport = (JUnitTestReport) reports.getSpec();
-        List<String> resolvedReport = junitTestReport.resolve(identifier, "run");
+        List<String> resolvedReport =
+            RunTimeInputHandler.resolveListParameter("paths", "run", identifier, junitTestReport.getPaths(), false);
 
         Report report = Report.newBuilder().setType(Report.Type.JUNIT).addAllPaths(resolvedReport).build();
         builder.addReports(report);
@@ -85,7 +86,7 @@ public class PluginStepProtobufSerializer implements ProtobufStepSerializer<Plug
         builder.setContainerPort(port)
             .setImage(RunTimeInputHandler.resolveStringParameter(
                 "Image", "Plugin", identifier, pluginStepInfo.getImage(), true))
-            .addAllEntrypoint(Optional.ofNullable(pluginStepInfo.getEntrypoint()).orElse(emptyList()))
+            .addAllEntrypoint(Optional.ofNullable(pluginStepInfo.getEntrypoint().getValue()).orElse(emptyList()))
             .putAllEnvironment(envVarMap)
             .setContext(stepContext)
             .build();

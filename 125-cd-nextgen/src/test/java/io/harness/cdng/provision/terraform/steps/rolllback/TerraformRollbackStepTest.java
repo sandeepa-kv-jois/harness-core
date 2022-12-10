@@ -27,7 +27,6 @@ import io.harness.account.services.AccountService;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EnvironmentType;
-import io.harness.beans.FeatureName;
 import io.harness.category.element.UnitTests;
 import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.manifest.yaml.ArtifactoryStorageConfigDTO;
@@ -53,7 +52,6 @@ import io.harness.plancreator.steps.common.StepElementParameters;
 import io.harness.pms.contracts.ambiance.Ambiance;
 import io.harness.pms.contracts.execution.Status;
 import io.harness.pms.contracts.execution.tasks.TaskRequest;
-import io.harness.pms.execution.utils.AmbianceUtils;
 import io.harness.pms.sdk.core.data.OptionalSweepingOutput;
 import io.harness.pms.sdk.core.resolver.outputs.ExecutionSweepingOutputService;
 import io.harness.pms.sdk.core.steps.io.StepResponse;
@@ -101,12 +99,10 @@ public class TerraformRollbackStepTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testObtainTaskSkippedRollback() {
     Ambiance ambiance = Ambiance.newBuilder().putSetupAbstractions("accountId", "test-account").build();
-    final List<String> planStepsFqn = asList("step1", "step2");
     TerraformRollbackStepParameters rollbackSpec =
-        TerraformRollbackStepParameters.builder().provisionerIdentifier("id").planStepsFqn(planStepsFqn).build();
+        TerraformRollbackStepParameters.builder().provisionerIdentifier("id").build();
     StepElementParameters stepElementParameters = StepElementParameters.builder().spec(rollbackSpec).build();
 
-    doReturn(true).when(cdFeatureFlagHelper).isEnabled("test-account", FeatureName.EXPORT_TF_PLAN_JSON_NG);
     doReturn("fullId").when(terraformStepHelper).generateFullIdentifier("id", ambiance);
 
     HIterator<TerraformConfig> iterator = mock(HIterator.class);
@@ -119,7 +115,6 @@ public class TerraformRollbackStepTest extends CategoryTest {
     assertThat(taskRequest.getSkipTaskRequest().getMessage())
         .isEqualTo("No successful Provisioning found with provisionerIdentifier: [id]. Skipping rollback.");
     verify(stepHelper, times(0)).sendRollbackTelemetryEvent(any(), any(), any());
-    verify(terraformStepHelper).cleanupTfPlanJsonForProvisioner(ambiance, planStepsFqn, "id");
   }
 
   @Test
@@ -225,9 +220,6 @@ public class TerraformRollbackStepTest extends CategoryTest {
 
     doReturn("fullId").when(terraformStepHelper).generateFullIdentifier("id", ambiance);
     doReturn(EnvironmentType.PROD).when(stepHelper).getEnvironmentType(ambiance);
-    doReturn(true)
-        .when(cdFeatureFlagHelper)
-        .isEnabled(AmbianceUtils.getAccountId(ambiance), FeatureName.TF_MODULE_SOURCE_INHERIT_SSH);
     HIterator<TerraformConfig> iterator = mock(HIterator.class);
     doReturn(iterator).when(terraformConfigHelper).getIterator(ambiance, "fullId");
     when(iterator.hasNext()).thenReturn(true, true, false);

@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessModule._955_ACCOUNT_MGMT;
 import static io.harness.annotations.dev.HarnessTeam.PL;
 import static io.harness.beans.FeatureName.AUTO_ACCEPT_SAML_ACCOUNT_INVITES;
 import static io.harness.beans.FeatureName.CG_LICENSE_USAGE;
+import static io.harness.beans.FeatureName.PL_NO_EMAIL_FOR_SAML_ACCOUNT_INVITES;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.SearchFilter.Operator.EQ;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
@@ -20,7 +21,6 @@ import static io.harness.eraro.ErrorCode.INVALID_REQUEST;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.DELETE_ACTION;
 import static io.harness.eventsframework.EventsFrameworkMetadataConstants.UPDATE_ACTION;
 import static io.harness.exception.WingsException.USER;
-import static io.harness.k8s.KubernetesConvention.getAccountIdentifier;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
 import static io.harness.mongo.MongoUtils.setUnset;
 import static io.harness.persistence.HQuery.excludeAuthority;
@@ -29,7 +29,6 @@ import static io.harness.utils.Misc.generateSecretKey;
 import static io.harness.validation.Validator.notNullCheck;
 
 import static software.wings.beans.Account.GLOBAL_ACCOUNT_ID;
-import static software.wings.beans.AppContainer.Builder.anAppContainer;
 import static software.wings.beans.Base.ID_KEY2;
 import static software.wings.beans.CGConstants.GLOBAL_APP_ID;
 import static software.wings.beans.NotificationGroup.NotificationGroupBuilder.aNotificationGroup;
@@ -39,18 +38,16 @@ import static software.wings.beans.RoleType.APPLICATION_ADMIN;
 import static software.wings.beans.RoleType.NON_PROD_SUPPORT;
 import static software.wings.beans.RoleType.PROD_SUPPORT;
 import static software.wings.beans.SystemCatalog.CatalogType.APPSTACK;
+import static software.wings.persistence.AppContainer.Builder.anAppContainer;
 
 import static java.lang.System.currentTimeMillis;
 import static java.time.Duration.ofDays;
 import static java.time.Duration.ofHours;
 import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 import static java.util.stream.Collectors.toSet;
 import static org.apache.commons.lang3.StringUtils.EMPTY;
 import static org.apache.commons.lang3.StringUtils.isBlank;
 
-import io.harness.account.ProvisionStep;
-import io.harness.account.ProvisionStep.ProvisionStepKeys;
 import io.harness.annotations.dev.BreakDependencyOn;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
@@ -64,7 +61,6 @@ import io.harness.beans.PageResponse.PageResponseBuilder;
 import io.harness.cache.HarnessCacheManager;
 import io.harness.ccm.license.CeLicenseInfo;
 import io.harness.cdlicense.impl.CgCdLicenseUsageService;
-import io.harness.configuration.DeployMode;
 import io.harness.cvng.beans.ServiceGuardLimitDTO;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
@@ -90,7 +86,6 @@ import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnauthorizedException;
-import io.harness.exception.UnexpectedException;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
 import io.harness.lock.AcquiredLock;
@@ -98,12 +93,15 @@ import io.harness.lock.PersistentLocker;
 import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
 import io.harness.managerclient.HttpsCertRequirement.CertRequirement;
-import io.harness.network.Http;
+import io.harness.mappers.AccountMapper;
 import io.harness.ng.core.account.AuthenticationMechanism;
 import io.harness.ng.core.account.DefaultExperience;
 import io.harness.ng.core.account.OauthProviderType;
+import io.harness.ng.core.dto.AccountDTO;
 import io.harness.observer.RemoteObserverInformer;
 import io.harness.observer.Subject;
+import io.harness.outbox.OutboxEvent;
+import io.harness.outbox.api.OutboxService;
 import io.harness.persistence.HIterator;
 import io.harness.persistence.HPersistence;
 import io.harness.reflection.ReflectionUtils;
@@ -119,7 +117,6 @@ import software.wings.beans.AccountEvent;
 import software.wings.beans.AccountPreferences;
 import software.wings.beans.AccountStatus;
 import software.wings.beans.AccountType;
-import software.wings.beans.AppContainer;
 import software.wings.beans.Application.ApplicationKeys;
 import software.wings.beans.LicenseInfo;
 import software.wings.beans.NotificationGroup;
@@ -134,10 +131,11 @@ import software.wings.beans.User;
 import software.wings.beans.User.UserKeys;
 import software.wings.beans.governance.GovernanceConfig;
 import software.wings.beans.loginSettings.LoginSettingsService;
+import software.wings.beans.loginSettings.events.LoginSettingsWhitelistedDomainsUpdateEvent;
+import software.wings.beans.loginSettings.events.WhitelistedDomainsYamlDTO;
 import software.wings.beans.sso.LdapSettings;
 import software.wings.beans.sso.LdapSettings.LdapSettingsKeys;
 import software.wings.beans.sso.OauthSettings;
-import software.wings.beans.sso.SSOSettings;
 import software.wings.beans.sso.SSOType;
 import software.wings.beans.trigger.Trigger;
 import software.wings.beans.trigger.TriggerConditionType;
@@ -148,9 +146,9 @@ import software.wings.features.GovernanceFeature;
 import software.wings.helpers.ext.account.DeleteAccountHelper;
 import software.wings.helpers.ext.mail.EmailData;
 import software.wings.licensing.LicenseService;
+import software.wings.persistence.AppContainer;
 import software.wings.scheduler.AlertCheckJob;
 import software.wings.scheduler.InstanceStatsCollectorJob;
-import software.wings.scheduler.LdapGroupSyncJob;
 import software.wings.scheduler.LdapGroupSyncJobHelper;
 import software.wings.scheduler.LimitVicinityCheckerJob;
 import software.wings.scheduler.ScheduledTriggerJob;
@@ -179,6 +177,7 @@ import software.wings.service.intfc.SystemCatalogService;
 import software.wings.service.intfc.UserService;
 import software.wings.service.intfc.WorkflowExecutionService;
 import software.wings.service.intfc.account.AccountCrudObserver;
+import software.wings.service.intfc.account.AccountLicenseObserver;
 import software.wings.service.intfc.compliance.GovernanceConfigService;
 import software.wings.service.intfc.template.TemplateGalleryService;
 import software.wings.service.intfc.verification.CVConfigurationService;
@@ -188,16 +187,13 @@ import com.google.common.base.Splitter;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import com.google.inject.name.Named;
 import com.mongodb.DuplicateKeyException;
-import java.io.IOException;
 import java.lang.reflect.Field;
-import java.net.SocketTimeoutException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.security.SecureRandom;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -213,8 +209,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.TimeZone;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 import javax.validation.Valid;
 import javax.validation.constraints.NotNull;
@@ -225,13 +219,10 @@ import org.apache.commons.validator.routines.DomainValidator;
 import org.apache.commons.validator.routines.UrlValidator;
 import org.mongodb.morphia.Morphia;
 import org.mongodb.morphia.mapping.Mapper;
+import org.mongodb.morphia.query.CountOptions;
 import org.mongodb.morphia.query.Query;
 import org.mongodb.morphia.query.UpdateOperations;
 import org.mongodb.morphia.query.UpdateResults;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.zeroturnaround.exec.ProcessExecutor;
-import org.zeroturnaround.exec.stream.LogOutputStream;
 
 /**
  * Created by peeyushaggarwal on 10/11/16.
@@ -251,15 +242,10 @@ public class AccountServiceImpl implements AccountService {
   private static final String ILLEGAL_ACCOUNT_NAME_CHARACTERS = "[~!@#$%^*\\[\\]{}<>'\"/:;\\\\]";
   private static final int MAX_ACCOUNT_NAME_LENGTH = 50;
   private static final String WELCOME_EMAIL_TEMPLATE_NAME = "welcome_email";
-  private static final String GENERATE_SAMPLE_DELEGATE_CURL_COMMAND_FORMAT_STRING =
-      "curl -s -X POST -H 'content-type: application/json' "
-      + "--url https://app.harness.io/gateway/gratis/api/webhooks/cmnhGRyXyBP5RJzz8Ae9QP7mqUATVotr7v2knjOf "
-      + "-d '{\"application\":\"4qPkwP5dQI2JduECqGZpcg\","
-      + "\"parameters\":{\"Environment\":\"%s\",\"delegate\":\"delegate\","
-      + "\"account_id\":\"%s\",\"account_id_short\":\"%s\",\"account_secret\":\"%s\"}}'";
-  private static final String SAMPLE_DELEGATE_STATUS_ENDPOINT_FORMAT_STRING = "http://%s/account-%s.txt";
   private static final String DELIMITER = "####";
   private static final String DEFAULT_EXPERIENCE = "defaultExperience";
+  private static final String[] RESERVED_SUBDOMAIN_PREFIX_REGEXES = {
+      "^agent$", "^app(-?\\d+)?$", "^pr$", "^qa$", "^stress$", "^prod(-?\\d+)?$"};
 
   @Inject protected AuthService authService;
   @Inject protected HarnessCacheManager harnessCacheManager;
@@ -304,12 +290,15 @@ public class AccountServiceImpl implements AccountService {
   @Inject private HPersistence persistence;
   @Inject private CgCdLicenseUsageService cgCdLicenseUsageService;
   @Inject private DelegateVersionService delegateVersionService;
+  @Inject private OutboxService outboxService;
 
   @Inject @Named("BackgroundJobScheduler") private PersistentScheduler jobScheduler;
   @Inject private GovernanceFeature governanceFeature;
   private Map<String, UrlInfo> techStackDocLinks;
 
   @Getter private Subject<AccountCrudObserver> accountCrudSubject = new Subject<>();
+
+  @Getter private Subject<AccountLicenseObserver> accountLicenseObserverSubject = new Subject<>();
 
   @Override
   public Account save(@Valid Account account, boolean fromDataGen) {
@@ -506,9 +495,6 @@ public class AccountServiceImpl implements AccountService {
     } else if (account.isCreatedFromNG()) {
       updateNextGenEnabled(account.getUuid(), true);
     }
-    if (!DeployMode.isOnPrem(mainConfiguration.getDeployMode().name())) {
-      featureFlagService.enableAccount(FeatureName.USE_IMMUTABLE_DELEGATE, account.getUuid());
-    }
   }
 
   List<Role> createDefaultRoles(Account account) {
@@ -569,6 +555,15 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
+  public Boolean updateIsProductLed(String accountId, boolean isProductLed) {
+    Account account = get(accountId);
+    account.setProductLed(isProductLed);
+    update(account);
+    publishAccountChangeEventViaEventFramework(accountId, UPDATE_ACTION);
+    return true;
+  }
+
+  @Override
   public AccountDetails getAccountDetails(String accountId) {
     Account account = wingsPersistence.get(Account.class, accountId);
     if (account == null) {
@@ -585,7 +580,7 @@ public class AccountServiceImpl implements AccountService {
     accountDetails.setCeLicenseInfo(account.getCeLicenseInfo());
     accountDetails.setDefaultExperience(account.getDefaultExperience());
     accountDetails.setCreatedFromNG(account.isCreatedFromNG());
-    accountDetails.setActiveServiceCount(workflowExecutionService.getActiveServiceCount(accountId));
+    accountDetails.setActiveServiceCount(cgCdLicenseUsageService.getActiveServiceInTimePeriod(accountId, 60));
     if (featureFlagService.isEnabled(CG_LICENSE_USAGE, accountId)) {
       accountDetails.setActiveServicesUsageInfo(cgCdLicenseUsageService.getActiveServiceLicenseUsage(accountId));
     }
@@ -632,6 +627,7 @@ public class AccountServiceImpl implements AccountService {
   @Override
   public boolean delete(String accountId) {
     boolean success = accountId != null && deleteAccountHelper.deleteAccount(accountId);
+    accountLicenseObserverSubject.fireInform(AccountLicenseObserver::onLicenseChange, accountId);
     if (success) {
       publishAccountChangeEventViaEventFramework(accountId, DELETE_ACTION);
     }
@@ -901,7 +897,8 @@ public class AccountServiceImpl implements AccountService {
             .set(AccountKeys.cloudCostEnabled, account.isCloudCostEnabled())
             .set(AccountKeys.nextGenEnabled, account.isNextGenEnabled())
             .set(AccountKeys.ceAutoCollectK8sEvents, account.isCeAutoCollectK8sEvents())
-            .set("whitelistedDomains", account.getWhitelistedDomains());
+            .set("whitelistedDomains", account.getWhitelistedDomains())
+            .set("isProductLed", account.isProductLed());
 
     if (null != account.getLicenseInfo()) {
       updateOperations.set(AccountKeys.licenseInfo, account.getLicenseInfo());
@@ -931,6 +928,7 @@ public class AccountServiceImpl implements AccountService {
       remoteObserverInformer.sendEvent(
           ReflectionUtils.getMethod(AccountCrudObserver.class, "onAccountUpdated", Account.class),
           AccountServiceImpl.class, updatedAccount);
+      accountLicenseObserverSubject.fireInform(AccountLicenseObserver::onLicenseChange, updatedAccount);
     }
     return updatedAccount;
   }
@@ -943,8 +941,12 @@ public class AccountServiceImpl implements AccountService {
 
   @Override
   public Optional<Account> getOnPremAccount() {
-    List<Account> accounts = listAccounts(Sets.newHashSet(GLOBAL_ACCOUNT_ID));
-    return isNotEmpty(accounts) ? Optional.of(accounts.get(0)) : Optional.empty();
+    Account account =
+        wingsPersistence.createQuery(Account.class, excludeAuthority).field("_id").notEqual(GLOBAL_ACCOUNT_ID).get();
+    if (account == null) {
+      return Optional.empty();
+    }
+    return Optional.of(account);
   }
 
   @Override
@@ -960,17 +962,22 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
-  public List<Account> listAccounts(Set<String> excludedAccountIds) {
-    Query<Account> query = wingsPersistence.createQuery(Account.class, excludeAuthority);
-    if (isNotEmpty(excludedAccountIds)) {
-      query.field("_id").notIn(excludedAccountIds);
+  public List<Account> listHarnessSupportAccounts(Set<String> excludedAccountIds, Set<String> fieldsToBeIncluded) {
+    Query<Account> query = wingsPersistence.createQuery(Account.class, excludeAuthority)
+                               .filter(AccountKeys.isHarnessSupportAccessAllowed, Boolean.TRUE);
+    if (isNotEmpty(fieldsToBeIncluded)) {
+      for (String field : fieldsToBeIncluded) {
+        query.project(field, true);
+      }
     }
 
     List<Account> accountList = new ArrayList<>();
     try (HIterator<Account> iterator = new HIterator<>(query.fetch())) {
       for (Account account : iterator) {
         LicenseUtils.decryptLicenseInfo(account, false);
-        accountList.add(account);
+        if (!excludedAccountIds.contains(account.getUuid())) {
+          accountList.add(account);
+        }
       }
     }
     return accountList;
@@ -981,7 +988,7 @@ public class AccountServiceImpl implements AccountService {
     if (licenseService.isAccountDeleted(accountId)) {
       throw new InvalidRequestException("Deleted AccountId: " + accountId);
     }
-    log.info("Getting delegate configuration from Delegate ring");
+    log.debug("Getting delegate configuration from Delegate ring");
 
     // Prefer using delegateConfiguration from DelegateRing.
     List<String> delegateVersionFromRing = delegateVersionService.getDelegateJarVersions(accountId);
@@ -1100,12 +1107,25 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
-  public List<Account> listAllAccounts() {
-    List<Account> accountList = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
-                                    .filter(ApplicationKeys.appId, GLOBAL_APP_ID)
-                                    .asList();
-    decryptLicenseInfo(accountList);
-    return accountList;
+  public List<AccountDTO> getAllAccounts() {
+    Query<Account> query = wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
+                               .project(ID_KEY2, true)
+                               .project(AccountKeys.accountName, true)
+                               .project(AccountKeys.companyName, true)
+                               .project(AccountKeys.defaultExperience, true)
+                               .project(AccountKeys.authenticationMechanism, true)
+                               .project(AccountKeys.nextGenEnabled, true)
+                               .project(AccountKeys.serviceAccountConfig, true)
+                               .project(AccountKeys.isProductLed, true)
+                               .project(AccountKeys.twoFactorAdminEnforced, true)
+                               .filter(ApplicationKeys.appId, GLOBAL_APP_ID);
+    List<AccountDTO> accountDTOList = new ArrayList<>();
+    try (HIterator<Account> iterator = new HIterator<>(query.fetch())) {
+      for (Account account : iterator) {
+        accountDTOList.add(AccountMapper.toAccountDTO(account));
+      }
+    }
+    return accountDTOList;
   }
 
   @Override
@@ -1129,13 +1149,42 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
-  public List<Account> listAllAccountWithDefaultsWithoutLicenseInfo() {
+  public List<Account> getAccountsWithBasicInfo(boolean includeLicenseInfo) {
+    if (includeLicenseInfo) {
+      return wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
+          .project(ID_KEY2, true)
+          .project(AccountKeys.accountName, true)
+          .project(AccountKeys.companyName, true)
+          .project(AccountKeys.licenseInfo, true)
+          .filter(ApplicationKeys.appId, GLOBAL_APP_ID)
+          .asList();
+    }
     return wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
         .project(ID_KEY2, true)
         .project(AccountKeys.accountName, true)
         .project(AccountKeys.companyName, true)
         .filter(ApplicationKeys.appId, GLOBAL_APP_ID)
         .asList();
+  }
+
+  @Override
+  public Query<Account> getBasicAccountQuery() {
+    return wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
+        .project(ID_KEY2, true)
+        .project(AccountKeys.accountName, true)
+        .project(AccountKeys.companyName, true)
+        .filter(ApplicationKeys.appId, GLOBAL_APP_ID);
+  }
+
+  @Override
+  public Query<Account> getBasicAccountWithLicenseInfoQuery() {
+    return wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
+        .project(ID_KEY2, true)
+        .project(AccountKeys.accountName, true)
+        .project(AccountKeys.companyName, true)
+        .project(AccountKeys.licenseInfo, true)
+        .project(AccountKeys.encryptedLicenseInfo, true)
+        .filter(ApplicationKeys.appId, GLOBAL_APP_ID);
   }
 
   public Set<String> getAccountsWithDisabledHarnessUserGroupAccess() {
@@ -1252,101 +1301,6 @@ public class AccountServiceImpl implements AccountService {
     return getAccountType(accountId).map(AccountType::isCommunity).orElse(false);
   }
 
-  @Override
-  public String generateSampleDelegate(String accountId) {
-    assertTrialAccount(accountId);
-    if (isBlank(mainConfiguration.getSampleTargetEnv())) {
-      String err = "Sample target env not configured";
-      log.warn(err);
-      throw new UnexpectedException(err);
-    }
-
-    String script =
-        String.format(GENERATE_SAMPLE_DELEGATE_CURL_COMMAND_FORMAT_STRING, mainConfiguration.getSampleTargetEnv(),
-            accountId, getAccountIdentifier(accountId), getFromCache(accountId).getAccountKey());
-    Logger scriptLogger = LoggerFactory.getLogger("generate-delegate-" + accountId);
-    try {
-      ProcessExecutor processExecutor = new ProcessExecutor()
-                                            .timeout(10, TimeUnit.MINUTES)
-                                            .command("/bin/bash", "-c", script)
-                                            .readOutput(true)
-                                            .redirectOutput(new LogOutputStream() {
-                                              @Override
-                                              protected void processLine(String line) {
-                                                scriptLogger.info(line);
-                                              }
-                                            })
-                                            .redirectError(new LogOutputStream() {
-                                              @Override
-                                              protected void processLine(String line) {
-                                                scriptLogger.error(line);
-                                              }
-                                            });
-      int exitCode = processExecutor.execute().getExitValue();
-      if (exitCode == 0) {
-        return "SUCCESS";
-      }
-      log.error("Curl script to generate delegate returned non-zero exit code: {}", exitCode);
-    } catch (IOException e) {
-      log.error("Error executing generate delegate curl command", e);
-    } catch (InterruptedException e) {
-      log.info("Interrupted", e);
-    } catch (TimeoutException e) {
-      log.info("Timed out", e);
-    }
-
-    String err = "Failed to provision";
-    log.warn(err);
-    throw new UnexpectedException(err);
-  }
-
-  @Override
-  public boolean sampleDelegateExists(String accountId) {
-    assertTrialAccount(accountId);
-    return delegateService.sampleDelegateExists(accountId);
-  }
-
-  @Override
-  public List<ProvisionStep> sampleDelegateProgress(String accountId) {
-    assertTrialAccount(accountId);
-
-    if (isBlank(mainConfiguration.getSampleTargetStatusHost())) {
-      String err = "Sample target status host not configured";
-      log.warn(err);
-      throw new UnexpectedException(err);
-    }
-
-    try {
-      String url = String.format(SAMPLE_DELEGATE_STATUS_ENDPOINT_FORMAT_STRING,
-          mainConfiguration.getSampleTargetStatusHost(), getAccountIdentifier(accountId));
-      log.info("Fetching delegate provisioning progress for account {} from {}", accountId, url);
-      String result = Http.getResponseStringFromUrl(url, 30, 10).trim();
-      if (isNotEmpty(result)) {
-        log.info("Provisioning progress for account {}: {}", accountId, result);
-        if (result.contains("<title>404 Not Found</title>")) {
-          return singletonList(ProvisionStep.builder().step("Provisioning Started").done(false).build());
-        }
-        List<ProvisionStep> steps = new ArrayList<>();
-        for (JsonElement element : new JsonParser().parse(result).getAsJsonArray()) {
-          JsonObject jsonObject = element.getAsJsonObject();
-          steps.add(ProvisionStep.builder()
-                        .step(jsonObject.get(ProvisionStepKeys.step).getAsString())
-                        .done(jsonObject.get(ProvisionStepKeys.done).getAsBoolean())
-                        .build());
-        }
-        return steps;
-      }
-      throw new UnexpectedException(String.format("Empty provisioning result for account %s", accountId));
-    } catch (SocketTimeoutException e) {
-      // Timed out for some reason. Return empty list to indicate unknown progress. UI can ignore and try again.
-      log.info("Timed out getting progress. Returning empty list.");
-      return new ArrayList<>();
-    } catch (IOException e) {
-      throw new UnexpectedException(
-          String.format("Exception in fetching delegate provisioning progress for account %s", accountId), e);
-    }
-  }
-
   private void assertTrialAccount(String accountId) {
     Account account = getFromCache(accountId);
 
@@ -1430,7 +1384,6 @@ public class AccountServiceImpl implements AccountService {
     // 3. LdapGroupSyncJob
     List<LdapSettings> ldapSettings = getAllLdapSettingsForAccount(accountId);
     for (LdapSettings ldapSetting : ldapSettings) {
-      LdapGroupSyncJob.add(jobScheduler, accountId, ldapSetting.getUuid());
       ldapGroupSyncJobHelper.syncJob(ldapSetting);
     }
     log.info("Started all background quartz jobs for account {}", accountId);
@@ -1452,10 +1405,6 @@ public class AccountServiceImpl implements AccountService {
     }
 
     // 3. LdapGroupSyncJob
-    List<LdapSettings> ldapSettings = getAllLdapSettingsForAccount(accountId);
-    for (LdapSettings ldapSetting : ldapSettings) {
-      LdapGroupSyncJob.delete(jobScheduler, ssoSettingService, accountId, ldapSetting.getUuid());
-    }
     log.info("Stopped all background quartz jobs for account {}", accountId);
   }
 
@@ -1556,6 +1505,19 @@ public class AccountServiceImpl implements AccountService {
       }
     }
     return false;
+  }
+
+  @Override
+  public Set<String> getFeatureFlagEnabledAccountIds(String featureFlagName) {
+    FeatureName featureName;
+    try {
+      featureName = FeatureName.valueOf(featureFlagName);
+    } catch (IllegalArgumentException ex) {
+      String errMsg = String.format("Invalid feature flag name received: %s", featureFlagName);
+      log.error(errMsg, ex);
+      throw new InvalidRequestException(errMsg);
+    }
+    return featureFlagService.getAccountIds(featureName);
   }
 
   @Override
@@ -1692,17 +1654,49 @@ public class AccountServiceImpl implements AccountService {
     // Filter the valid domains after trimming trailing spaces
     Set<String> validDomains =
         whitelistedDomains.stream().filter(DomainValidator.getInstance()::isValid).collect(Collectors.toSet());
-
+    // Domain name sanitising
+    validDomains = validDomains.stream()
+                       .map(s -> s.replace("http://", "").replace("http:// www.", "").replace("www.", ""))
+                       .filter(EmptyPredicate::isNotEmpty)
+                       .collect(Collectors.toSet());
     if (whitelistedDomains.size() != validDomains.size()) {
       throw new WingsException("Invalid domain name");
     }
 
+    List<Account> accounts = getAccounts(Arrays.asList(accountId));
+    if (isEmpty(accounts)) {
+      throw new AccountNotFoundException(
+          "Account is not found for the given id: " + accountId, null, ACCOUNT_DOES_NOT_EXIST, Level.ERROR, USER, null);
+    }
+    Account account = accounts.get(0);
     UpdateOperations<Account> whitelistedDomainsUpdateOperations =
         wingsPersistence.createUpdateOperations(Account.class);
     setUnset(whitelistedDomainsUpdateOperations, AccountKeys.whitelistedDomains, validDomains);
     wingsPersistence.update(wingsPersistence.createQuery(Account.class).filter(Mapper.ID_KEY, accountId),
         whitelistedDomainsUpdateOperations);
+    ngAuditLoginSettings(accountId, account.getWhitelistedDomains(), validDomains);
     return get(accountId);
+  }
+
+  private void ngAuditLoginSettings(
+      String accountIdentifier, Set<String> oldWhitelistedDomains, Set<String> newWhitelistedDomains) {
+    try {
+      OutboxEvent outboxEvent = outboxService.save(
+          LoginSettingsWhitelistedDomainsUpdateEvent.builder()
+              .accountIdentifier(accountIdentifier)
+              .oldWhitelistedDomainsYamlDTO(
+                  WhitelistedDomainsYamlDTO.builder().whitelistedDomains(oldWhitelistedDomains).build())
+              .newWhitelistedDomainsYamlDTO(
+                  WhitelistedDomainsYamlDTO.builder().whitelistedDomains(newWhitelistedDomains).build())
+              .build());
+      log.info(
+          "NG Auth Audits: for account {} and outboxEventId {} successfully saved the audit for LoginSettingsWhitelistedDomainsUpdateEvent to outbox",
+          accountIdentifier, outboxEvent.getId());
+    } catch (Exception ex) {
+      log.error(
+          "NG Auth Audits: for account {} saving the LoginSettingsWhitelistedDomainsUpdateEvent to outbox failed with exception: ",
+          accountIdentifier, ex);
+    }
   }
 
   @Override
@@ -1809,12 +1803,51 @@ public class AccountServiceImpl implements AccountService {
    * @param subdomainUrl subdomain URL object
    * @return boolean
    */
-  @Override
   public boolean validateSubdomainUrl(SubdomainUrl subdomainUrl) {
     // Sanity check for subdomain URL
     String[] schemes = {"https"};
     UrlValidator urlValidator = new UrlValidator(schemes);
     return urlValidator.isValid(subdomainUrl.getUrl());
+  }
+
+  /**
+   * Checks whether the subdomain URL is reserved or not
+   *
+   * @param subdomainUrl Object of type SubdomainUrl
+   * @return true if subdomain URL is reserved otherwise false
+   */
+  public boolean checkReservedSubdomainUrl(SubdomainUrl subdomainUrl) throws InvalidArgumentsException {
+    String host = "";
+    try {
+      // parse the url to get host
+      URL url = new URL(subdomainUrl.getUrl());
+      host = url.getHost();
+    } catch (MalformedURLException e) {
+      log.warn("subdomain url '{}' is malformed: {}", subdomainUrl.getUrl(), e);
+      throw new InvalidArgumentsException("Subdomain URL is malformed", USER);
+    }
+
+    /**
+     * ASSUMPTION:
+     *   First segment is custom part - the rest is static for the environment.
+     *   For example https://[segment].harness.io
+     */
+    int i = host.indexOf('.');
+    if (i <= 0) {
+      // throw if there's no custom part, or it's empty (i == 0)
+      throw new InvalidArgumentsException("Subdomain URL is malformed", USER);
+    }
+
+    // get segment and run through all reserved prefix regexes
+    String segment = host.substring(0, i).toLowerCase();
+    for (String reservedRegex : RESERVED_SUBDOMAIN_PREFIX_REGEXES) {
+      if (segment.matches(reservedRegex)) {
+        return true;
+      }
+    }
+
+    // subdomain has a non-reserved prefix
+    return false;
   }
 
   /**
@@ -1850,14 +1883,19 @@ public class AccountServiceImpl implements AccountService {
       throw new UnauthorizedException("User is not authorized to add subdomain URL", USER);
     }
 
-    // Check if URL is not duplicate
+    // Check if URL is duplicate
     if (checkDuplicateSubdomainUrl(subDomainUrl)) {
       throw new InvalidArgumentsException("Subdomain URL is already taken", USER);
     }
 
     // Check if URL is valid
     if (!validateSubdomainUrl(subDomainUrl)) {
-      throw new InvalidArgumentsException("Subdomain URL provided is invalid", USER);
+      throw new InvalidArgumentsException("Subdomain URL is invalid", USER);
+    }
+
+    // Check if subdomain is reserved
+    if (checkReservedSubdomainUrl(subDomainUrl)) {
+      throw new InvalidArgumentsException("Subdomain URL is reserved", USER);
     }
 
     setSubdomainUrl(get(accountId), subDomainUrl);
@@ -1967,7 +2005,7 @@ public class AccountServiceImpl implements AccountService {
   }
 
   @Override
-  public boolean isRestrictedAccessEnabled(String accountId) {
+  public boolean isHarnessSupportAccessDisabled(String accountId) {
     Account account = get(accountId);
     notNullCheck("Invalid Account for the given Id: " + accountId, account);
     if (account.isHarnessSupportAccessAllowed()) {
@@ -1978,20 +2016,13 @@ public class AccountServiceImpl implements AccountService {
 
   @Override
   public boolean isAutoInviteAcceptanceEnabled(String accountId) {
-    if (!featureFlagService.isEnabled(AUTO_ACCEPT_SAML_ACCOUNT_INVITES, accountId)) {
-      // This feature is restricted only to a certain accounts
-      return false;
-    }
+    return isSSOEnabled(get(accountId)) && featureFlagService.isEnabled(AUTO_ACCEPT_SAML_ACCOUNT_INVITES, accountId);
+  }
 
-    Account account = get(accountId);
-
-    if (!AuthenticationMechanism.SAML.equals(account.getAuthenticationMechanism())) {
-      // Currently this provision is only for SAML authenticated accounts
-      return false;
-    }
-
-    List<SSOSettings> ssoSettings = ssoSettingService.getAllSsoSettings(accountId);
-    return ssoSettings.stream().anyMatch(settings -> settings.getType() == SSOType.SAML);
+  @Override
+  public boolean isPLNoEmailForSamlAccountInvitesEnabled(String accountId) {
+    return isSSOEnabled(get(accountId))
+        && featureFlagService.isEnabled(PL_NO_EMAIL_FOR_SAML_ACCOUNT_INVITES, accountId);
   }
 
   @Override
@@ -2039,6 +2070,20 @@ public class AccountServiceImpl implements AccountService {
   public boolean isAccountActivelyUsed(String accountId) {
     Account account = getFromCacheWithFallback(accountId);
     return account.isAccountActivelyUsed();
+  }
+
+  @Override
+  public boolean isImmutableDelegateEnabled(String accountId) {
+    Account account = getFromCacheWithFallback(accountId);
+    return account != null && account.isImmutableDelegateEnabled();
+  }
+
+  @Override
+  public boolean doMultipleAccountsExist() {
+    return wingsPersistence.createQuery(Account.class, excludeAuthorityCount)
+               .filter(ApplicationKeys.appId, GLOBAL_APP_ID)
+               .count(new CountOptions().limit(2))
+        > 1;
   }
 
   @Override

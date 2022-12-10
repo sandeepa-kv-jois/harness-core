@@ -26,6 +26,7 @@ import static io.harness.rule.OwnerRule.PRABU;
 import static io.harness.rule.OwnerRule.ROHIT_KUMAR;
 import static io.harness.rule.OwnerRule.SRINIVAS;
 import static io.harness.rule.OwnerRule.YOGESH;
+import static io.harness.rule.OwnerRule.YUVRAJ;
 
 import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.ElementExecutionSummary.ElementExecutionSummaryBuilder.anElementExecutionSummary;
@@ -33,11 +34,11 @@ import static software.wings.beans.Environment.Builder.anEnvironment;
 import static software.wings.beans.NotificationGroup.NotificationGroupBuilder.aNotificationGroup;
 import static software.wings.beans.WorkflowExecution.WorkflowExecutionKeys;
 import static software.wings.beans.WorkflowExecution.builder;
-import static software.wings.beans.artifact.Artifact.Builder.anArtifact;
 import static software.wings.common.NotificationMessageResolver.NotificationMessageType.APPROVAL_EXPIRED_WORKFLOW_NOTIFICATION;
 import static software.wings.common.NotificationMessageResolver.NotificationMessageType.WORKFLOW_ABORT_NOTIFICATION;
 import static software.wings.common.NotificationMessageResolver.NotificationMessageType.WORKFLOW_PAUSE_NOTIFICATION;
 import static software.wings.common.NotificationMessageResolver.NotificationMessageType.WORKFLOW_RESUME_NOTIFICATION;
+import static software.wings.persistence.artifact.Artifact.Builder.anArtifact;
 import static software.wings.security.JWT_CATEGORY.EXTERNAL_SERVICE_SECRET;
 import static software.wings.service.impl.slack.SlackApprovalUtils.createSlackApprovalMessage;
 import static software.wings.sm.StateExecutionInstance.Builder.aStateExecutionInstance;
@@ -135,11 +136,11 @@ import software.wings.beans.approval.ServiceNowApprovalParams;
 import software.wings.beans.approval.ShellScriptApprovalParams;
 import software.wings.beans.approval.ShellScriptApprovalParams.ShellScriptApprovalParamsKeys;
 import software.wings.beans.approval.SlackApprovalParams;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactMetadataKeys;
 import software.wings.beans.security.UserGroup;
 import software.wings.common.NotificationMessageResolver;
 import software.wings.common.TemplateExpressionProcessor;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.security.SecretManager;
 import software.wings.service.ApprovalUtils;
 import software.wings.service.impl.JiraHelperService;
@@ -771,6 +772,26 @@ public class ApprovalStateTest extends WingsBaseTest {
   }
 
   @Test
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void testParsePropertiesWithTimeoutAsString() {
+    final Map<String, Object> properties = new HashMap<>();
+    Integer timeout = 50934043;
+    properties.put("timeoutMillis", timeout.toString());
+    approvalState.parseProperties(properties);
+    assertThat(approvalState.getTimeoutMillis()).isEqualTo(timeout);
+  }
+
+  @Test
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void testParsePropertiesWithNegativeTimeout() {
+    final Map<String, Object> properties = new HashMap<>();
+    properties.put("timeoutMillis", "-543423");
+    assertThatThrownBy(() -> approvalState.parseProperties(properties)).isInstanceOf(InvalidRequestException.class);
+  }
+
+  @Test
   @Owner(developers = ROHIT_KUMAR)
   @Category(UnitTests.class)
   public void testSetPipelineVariables() {
@@ -783,6 +804,27 @@ public class ApprovalStateTest extends WingsBaseTest {
 
     approvalState.setPipelineVariables(executionContextMock);
     assertThat(workflowStandardParams.getWorkflowElement().getVariables().get("key")).isEqualTo("value");
+  }
+
+  @Test
+  @Owner(developers = YUVRAJ)
+  @Category(UnitTests.class)
+  public void testSetPipelineVariables1() {
+    final ExecutionContext executionContextMock = mock(ExecutionContext.class);
+    final WorkflowStandardParams workflowStandardParams = new WorkflowStandardParams();
+    workflowStandardParams.setWorkflowVariables(ImmutableMap.of("key", "value"));
+    doReturn(workflowStandardParams).when(executionContextMock).getContextElement(ContextElementType.STANDARD);
+    Map<String, Object> variableMap = new HashMap<>();
+    variableMap.put("var1", "value1");
+    variableMap.put("var2", "value2");
+    variableMap.put("var3", "value3");
+    WorkflowElement workflowElement = WorkflowElement.builder().variables(variableMap).build();
+    workflowStandardParams.setWorkflowElement(workflowElement);
+    approvalState.setPipelineVariables(executionContextMock);
+    assertThat(workflowStandardParams.getWorkflowElement().getVariables().get("key")).isEqualTo("value");
+    assertThat(workflowStandardParams.getWorkflowElement().getVariables().get("var1")).isEqualTo("value1");
+    assertThat(workflowStandardParams.getWorkflowElement().getVariables().get("var2")).isEqualTo("value2");
+    assertThat(workflowStandardParams.getWorkflowElement().getVariables().get("var3")).isEqualTo("value3");
   }
 
   @Test

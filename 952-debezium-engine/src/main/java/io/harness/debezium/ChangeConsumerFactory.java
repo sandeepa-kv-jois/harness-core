@@ -7,6 +7,7 @@
 
 package io.harness.debezium;
 
+import io.harness.cf.client.api.CfClient;
 import io.harness.exception.InvalidRequestException;
 
 import com.google.inject.Inject;
@@ -15,13 +16,14 @@ public class ChangeConsumerFactory {
   @Inject private DebeziumProducerFactory producerFactory;
 
   @SuppressWarnings("unchecked")
-  public <T extends MongoCollectionChangeConsumer> T get(
-      String collectionName, ChangeConsumerConfig changeConsumerConfig) {
+  public <T extends MongoCollectionChangeConsumer> T get(long sleepInterval, String collectionName,
+      ChangeConsumerConfig changeConsumerConfig, long producingCountPerBatch, int redisStreamSize, CfClient cfClient) {
     ConsumerType consumerType = changeConsumerConfig.getConsumerType();
     if (consumerType != null) {
       switch (consumerType) {
         case EVENTS_FRAMEWORK:
-          return (T) new EventsFrameworkChangeConsumer(collectionName, producerFactory);
+          return (T) new EventsFrameworkChangeConsumer(
+              sleepInterval, collectionName, producerFactory, producingCountPerBatch, redisStreamSize, cfClient);
         default:
           throw new InvalidRequestException("Change Consumer not Supported for " + consumerType.toString());
       }

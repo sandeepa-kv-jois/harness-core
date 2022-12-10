@@ -1,3 +1,8 @@
+# Copyright 2022 Harness Inc. All rights reserved.
+# Use of this source code is governed by the PolyForm Free Trial 1.0.0 license
+# that can be found in the licenses directory at the root of this repository, also available at
+# https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
+
 load("//:test-util.bzl", "DISTRIBUTE_TESTING_WORKER", "DISTRIBUTE_TESTING_WORKERS", "OPTIMIZED_PACKAGE_TESTS")
 
 MAX_COMPILE_TESTS = 512
@@ -28,7 +33,7 @@ def run_tests(**kwargs):
             size = "enormous",
             jvm_flags = [
                 "$(HARNESS_ARGS)",
-                "-Xmx32G",
+                "-Xmx4G",
                 "-XX:+HeapDumpOnOutOfMemoryError",
                 "-XX:HeapDumpPath=$${TEST_WARNINGS_OUTPUT_FILE}/../heap.hprof",
             ],
@@ -132,6 +137,7 @@ EOF""" % code,
         )
 
         target_name = package + ".tests" + index
+        tags = "exclusive"
         native.java_test(
             name = package + ".tests" + index,
             test_class = package + "." + test_class,
@@ -145,7 +151,7 @@ EOF""" % code,
             visibility = ["//visibility:public"],
             jvm_flags = [
                 "$(HARNESS_ARGS)",
-                "-Xmx32G",
+                "-Xmx4G",
                 "-XX:+HeapDumpOnOutOfMemoryError",
                 "-XX:HeapDumpPath=$${TEST_WARNINGS_OUTPUT_FILE}/../heap.hprof",
             ],
@@ -207,6 +213,7 @@ def optimized_package_test(combined_tests_target_index, package, index, test_cla
         return []
 
     target_name = package + ".tests" + index
+    tags = "exclusive"
     native.java_test(
         name = target_name,
         test_class = package + "." + test_class,
@@ -217,7 +224,7 @@ def optimized_package_test(combined_tests_target_index, package, index, test_cla
         visibility = ["//visibility:public"],
         jvm_flags = [
             "$(HARNESS_ARGS)",
-            "-Xmx32G",
+            "-Xmx4G",
             "-XX:+HeapDumpOnOutOfMemoryError",
             "-XX:HeapDumpPath=$${TEST_WARNINGS_OUTPUT_FILE}/../heap.hprof",
         ],

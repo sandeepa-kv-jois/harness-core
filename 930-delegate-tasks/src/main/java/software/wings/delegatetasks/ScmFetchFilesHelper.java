@@ -11,11 +11,12 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.connector.scm.GitConnectionType.REPO;
+import static io.harness.delegate.beans.connector.scm.bitbucket.BitbucketApiAccessType.USERNAME_AND_TOKEN;
 import static io.harness.delegate.beans.connector.scm.github.GithubApiAccessType.TOKEN;
 import static io.harness.exception.WingsException.USER;
-import static io.harness.filesystem.FileIo.createDirectoryIfDoesNotExist;
 import static io.harness.logging.LogLevel.ERROR;
 
+import static software.wings.beans.GitConfig.ProviderType.BITBUCKET;
 import static software.wings.beans.GitConfig.ProviderType.GITHUB;
 import static software.wings.beans.GitConfig.ProviderType.GITLAB;
 
@@ -27,18 +28,21 @@ import io.harness.annotations.dev.TargetModule;
 import io.harness.beans.FileContentBatchResponse;
 import io.harness.connector.service.scm.ScmDelegateClient;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketUsernameTokenApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubTokenSpecDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabApiAccessDTO;
+import io.harness.delegate.beans.connector.scm.gitlab.GitlabApiAccessType;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabTokenSpecDTO;
+import io.harness.delegate.task.git.ScmFetcherUtils;
 import io.harness.encryption.SecretRefData;
 import io.harness.exception.ExceptionUtils;
 import io.harness.exception.GitClientException;
-import io.harness.exception.WingsException;
 import io.harness.exception.YamlException;
-import io.harness.filesystem.FileIo;
 import io.harness.git.model.GitFile;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
@@ -53,9 +57,7 @@ import software.wings.beans.yaml.GitFetchFilesResult;
 
 import com.google.inject.Inject;
 import com.google.inject.Singleton;
-import java.io.IOException;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
@@ -130,9 +132,11 @@ public class ScmFetchFilesHelper {
         getFileContentBatchResponseByFolder(gitFileConfig, scmConnector);
 
     boolean relativize = !ROOT_DIRECTORY_PATHS.contains(gitFileConfig.getFilePath());
+    boolean useBase64 = true;
     if (isEmpty(fileBatchContentResponse.getFileBatchContentResponse().getFileContentsList())) {
       fileBatchContentResponse = getFileContentBatchResponseByFilePath(gitFileConfig, scmConnector);
       relativize = false;
+      useBase64 = false;
     }
 
     List<FileContent> fileContents = fileBatchContentResponse.getFileBatchContentResponse()
@@ -155,7 +159,7 @@ public class ScmFetchFilesHelper {
 
     try {
       for (FileContent fileContent : fileContents) {
-        writeFile(directoryPath, fileContent, gitFileConfig.getFilePath(), relativize);
+        ScmFetcherUtils.writeFile(directoryPath, fileContent, gitFileConfig.getFilePath(), relativize, useBase64);
       }
     } catch (Exception ex) {
       executionLogCallback.saveExecutionLog(ExceptionUtils.getMessage(ex), ERROR, CommandExecutionStatus.FAILURE);
@@ -164,7 +168,7 @@ public class ScmFetchFilesHelper {
 
   public boolean shouldUseScm(boolean isOptimizedFilesFetch, GitConfig gitConfig) {
     return isOptimizedFilesFetch && gitConfig.getSshSettingAttribute() == null
-        && Arrays.asList(GITHUB, GITLAB).contains(gitConfig.getProviderType());
+        && Arrays.asList(GITHUB, GITLAB, BITBUCKET).contains(gitConfig.getProviderType());
   }
 
   public ScmConnector getScmConnector(GitConfig gitConfig) {
@@ -173,6 +177,8 @@ public class ScmFetchFilesHelper {
         return getGitHubConnector(gitConfig);
       case GITLAB:
         return getGitLabConnector(gitConfig);
+      case BITBUCKET:
+        return getBitbucketConnector(gitConfig);
       default:
         return null;
     }
@@ -196,6 +202,7 @@ public class ScmFetchFilesHelper {
         .url(gitConfig.getRepoUrl())
         .connectionType(REPO)
         .apiAccess(GitlabApiAccessDTO.builder()
+                       .type(GitlabApiAccessType.TOKEN)
                        .spec(GitlabTokenSpecDTO.builder()
                                  .tokenRef(SecretRefData.builder().decryptedValue(gitConfig.getPassword()).build())
                                  .build())
@@ -203,26 +210,20 @@ public class ScmFetchFilesHelper {
         .build();
   }
 
-  private void writeFile(String directoryPath, FileContent fileContent, String basePath, boolean relativize)
-      throws IOException {
-    String filePath;
-    if (relativize) {
-      filePath = Paths.get(basePath).relativize(Paths.get(fileContent.getPath())).toString();
-      if (isEmpty(filePath)) {
-        filePath = Paths.get(fileContent.getPath()).getFileName().toString();
-      }
-    } else {
-      filePath = fileContent.getPath();
-    }
-
-    Path finalPath = Paths.get(directoryPath, filePath);
-    Path parent = finalPath.getParent();
-    if (parent == null) {
-      throw new WingsException("Failed to create file at path " + finalPath.toString());
-    }
-
-    createDirectoryIfDoesNotExist(parent.toString());
-    FileIo.writeUtf8StringToFile(finalPath.toString(), fileContent.getContent());
+  private BitbucketConnectorDTO getBitbucketConnector(GitConfig gitConfig) {
+    return BitbucketConnectorDTO.builder()
+        .url(gitConfig.getRepoUrl())
+        .connectionType(REPO)
+        .apiAccess(
+            BitbucketApiAccessDTO.builder()
+                .type(USERNAME_AND_TOKEN)
+                .spec(BitbucketUsernameTokenApiAccessDTO.builder()
+                          .usernameRef(
+                              SecretRefData.builder().decryptedValue((gitConfig.getUsername()).toCharArray()).build())
+                          .tokenRef(SecretRefData.builder().decryptedValue(gitConfig.getPassword()).build())
+                          .build())
+                .build())
+        .build();
   }
 
   private void throwFailedToFetchFileException(GitFileConfig gitFileConfig, FileContent fileContent) {
@@ -246,7 +247,7 @@ public class ScmFetchFilesHelper {
     FileContentBatchResponse fileBatchContentResponse;
     if (gitFileConfig.isUseBranch()) {
       fileBatchContentResponse = scmDelegateClient.processScmRequest(c
-          -> scmServiceClient.listFiles(scmConnector, Collections.singleton(gitFileConfig.getFilePath()),
+          -> scmServiceClient.listFilesV2(scmConnector, Collections.singleton(gitFileConfig.getFilePath()),
               gitFileConfig.getBranch(), SCMGrpc.newBlockingStub(c)));
     } else {
       fileBatchContentResponse = scmDelegateClient.processScmRequest(c

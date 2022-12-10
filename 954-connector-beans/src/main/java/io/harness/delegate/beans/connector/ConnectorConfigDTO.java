@@ -16,19 +16,23 @@ import io.harness.delegate.beans.connector.artifactoryconnector.ArtifactoryConne
 import io.harness.delegate.beans.connector.awsconnector.AwsConnectorDTO;
 import io.harness.delegate.beans.connector.awskmsconnector.AwsKmsConnectorDTO;
 import io.harness.delegate.beans.connector.awssecretmanager.AwsSecretManagerDTO;
+import io.harness.delegate.beans.connector.azureartifacts.AzureArtifactsConnectorDTO;
 import io.harness.delegate.beans.connector.azureconnector.AzureConnectorDTO;
 import io.harness.delegate.beans.connector.azurekeyvaultconnector.AzureKeyVaultConnectorDTO;
 import io.harness.delegate.beans.connector.ceawsconnector.CEAwsConnectorDTO;
 import io.harness.delegate.beans.connector.ceazure.CEAzureConnectorDTO;
 import io.harness.delegate.beans.connector.cek8s.CEKubernetesClusterConfigDTO;
 import io.harness.delegate.beans.connector.customhealthconnector.CustomHealthConnectorDTO;
+import io.harness.delegate.beans.connector.customsecretmanager.CustomSecretManagerConnectorDTO;
 import io.harness.delegate.beans.connector.datadog.DatadogConnectorDTO;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
 import io.harness.delegate.beans.connector.dynatrace.DynatraceConnectorDTO;
+import io.harness.delegate.beans.connector.elkconnector.ELKConnectorDTO;
 import io.harness.delegate.beans.connector.errortracking.ErrorTrackingConnectorDTO;
 import io.harness.delegate.beans.connector.gcpccm.GcpCloudCostConnectorDTO;
 import io.harness.delegate.beans.connector.gcpconnector.GcpConnectorDTO;
 import io.harness.delegate.beans.connector.gcpkmsconnector.GcpKmsConnectorDTO;
+import io.harness.delegate.beans.connector.gcpsecretmanager.GcpSecretManagerConnectorDTO;
 import io.harness.delegate.beans.connector.helm.HttpHelmConnectorDTO;
 import io.harness.delegate.beans.connector.helm.OciHelmConnectorDTO;
 import io.harness.delegate.beans.connector.jenkins.JenkinsConnectorDTO;
@@ -48,7 +52,9 @@ import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.beans.connector.servicenow.ServiceNowConnectorDTO;
 import io.harness.delegate.beans.connector.splunkconnector.SplunkConnectorDTO;
+import io.harness.delegate.beans.connector.spotconnector.SpotConnectorDTO;
 import io.harness.delegate.beans.connector.sumologic.SumoLogicConnectorDTO;
+import io.harness.delegate.beans.connector.tasconnector.TasConnectorDTO;
 import io.harness.delegate.beans.connector.vaultconnector.VaultConnectorDTO;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -78,6 +84,7 @@ import java.util.List;
       @JsonSubTypes.Type(value = AzureKeyVaultConnectorDTO.class, name = "AzureKeyVault"),
       @JsonSubTypes.Type(value = GcpConnectorDTO.class, name = "Gcp"),
       @JsonSubTypes.Type(value = AwsConnectorDTO.class, name = "Aws"),
+      @JsonSubTypes.Type(value = SpotConnectorDTO.class, name = "Spot"),
       @JsonSubTypes.Type(value = AzureConnectorDTO.class, name = "Azure"),
       @JsonSubTypes.Type(value = CEAwsConnectorDTO.class, name = "CEAws"),
       @JsonSubTypes.Type(value = ArtifactoryConnectorDTO.class, name = "Artifactory"),
@@ -98,7 +105,12 @@ import java.util.List;
       @JsonSubTypes.Type(value = AzureRepoConnectorDTO.class, name = "AzureRepo"),
       @JsonSubTypes.Type(value = PhysicalDataCenterConnectorDTO.class, name = "Pdc"),
       @JsonSubTypes.Type(value = JenkinsConnectorDTO.class, name = "Jenkins"),
-      @JsonSubTypes.Type(value = OciHelmConnectorDTO.class, name = "OciHelmRepo")
+      @JsonSubTypes.Type(value = OciHelmConnectorDTO.class, name = "OciHelmRepo"),
+      @JsonSubTypes.Type(value = CustomSecretManagerConnectorDTO.class, name = "CustomSecretManager"),
+      @JsonSubTypes.Type(value = ELKConnectorDTO.class, name = "ElasticSearch"),
+      @JsonSubTypes.Type(value = GcpSecretManagerConnectorDTO.class, name = "GcpSecretManager"),
+      @JsonSubTypes.Type(value = AzureArtifactsConnectorDTO.class, name = "AzureArtifacts"),
+      @JsonSubTypes.Type(value = TasConnectorDTO.class, name = "Tas")
 })
 @OwnedBy(DX)
 @Schema(name = "ConnectorConfig", description = "This is the view of the ConnectorConfig entity defined in Harness")
@@ -109,5 +121,10 @@ public abstract class ConnectorConfigDTO implements DecryptableEntity {
 
   public void validate() {
     // no op implementation which base classes can override
+  }
+
+  public ConnectorConfigOutcomeDTO toOutcome() {
+    // no op implementation which base classes can override
+    return null;
   }
 }

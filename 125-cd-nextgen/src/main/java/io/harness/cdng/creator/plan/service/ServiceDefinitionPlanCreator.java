@@ -7,11 +7,15 @@
 
 package io.harness.cdng.creator.plan.service;
 
+import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
+
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.azure.config.yaml.ApplicationSettingsConfiguration;
+import io.harness.cdng.azure.config.yaml.ConnectionStringsConfiguration;
+import io.harness.cdng.azure.config.yaml.StartupCommandConfiguration;
 import io.harness.cdng.configfile.ConfigFileWrapper;
 import io.harness.cdng.creator.plan.PlanCreatorConstants;
-import io.harness.cdng.manifest.yaml.storeConfig.StoreConfigWrapper;
 import io.harness.cdng.service.ServiceSpec;
 import io.harness.cdng.service.beans.AzureWebAppServiceSpec;
 import io.harness.cdng.service.beans.ServiceConfig;
@@ -25,7 +29,6 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.UUIDGenerator;
 import io.harness.exception.InvalidRequestException;
 import io.harness.ng.core.k8s.ServiceSpecType;
-import io.harness.ng.core.service.yaml.NGServiceV2InfoConfig;
 import io.harness.pms.contracts.facilitators.FacilitatorObtainment;
 import io.harness.pms.contracts.facilitators.FacilitatorType;
 import io.harness.pms.contracts.plan.Dependency;
@@ -78,9 +81,6 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
       // Adding children for v1 service
       if (serviceConfigNode != null) {
         addChildrenForServiceV1(planCreationResponseMap, serviceConfigNode);
-      } else {
-        YamlNode serviceV2Node = YamlUtils.findParentNode(serviceDefField.getNode(), YamlTypes.SERVICE_ENTITY);
-        addChildrenForServiceV2(planCreationResponseMap, serviceV2Node);
       }
 
       return planCreationResponseMap;
@@ -141,21 +141,21 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
       AzureWebAppServiceSpec azureWebAppServiceSpec =
           (AzureWebAppServiceSpec) serviceConfig.getServiceDefinition().getServiceSpec();
 
-      StoreConfigWrapper startupScript = azureWebAppServiceSpec.getStartupScript();
-      if (startupScript != null) {
-        String startupScriptPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForStartupScript(
+      StartupCommandConfiguration startupCommand = azureWebAppServiceSpec.getStartupCommand();
+      if (startupCommand != null) {
+        String startupCommandPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForStartupCommand(
             serviceConfigNode, planCreationResponseMap, serviceConfig, kryoSerializer);
-        serviceSpecChildrenIds.add(startupScriptPlanNodeId);
+        serviceSpecChildrenIds.add(startupCommandPlanNodeId);
       }
 
-      StoreConfigWrapper applicationSettings = azureWebAppServiceSpec.getApplicationSettings();
+      ApplicationSettingsConfiguration applicationSettings = azureWebAppServiceSpec.getApplicationSettings();
       if (applicationSettings != null) {
         String applicationSettingsPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForApplicationSettings(
             serviceConfigNode, planCreationResponseMap, serviceConfig, kryoSerializer);
         serviceSpecChildrenIds.add(applicationSettingsPlanNodeId);
       }
 
-      StoreConfigWrapper connectionStrings = azureWebAppServiceSpec.getConnectionStrings();
+      ConnectionStringsConfiguration connectionStrings = azureWebAppServiceSpec.getConnectionStrings();
       if (connectionStrings != null) {
         String connectionStringsPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForConnectionStrings(
             serviceConfigNode, planCreationResponseMap, serviceConfig, kryoSerializer);
@@ -165,61 +165,6 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
 
     // Add serviceSpec node
     addServiceSpecNode(serviceConfig, planCreationResponseMap, serviceSpecChildrenIds);
-  }
-
-  private void addChildrenForServiceV2(
-      Map<String, PlanCreationResponse> planCreationResponseMap, YamlNode serviceV2Node) throws IOException {
-    NGServiceV2InfoConfig config = YamlUtils.read(serviceV2Node.toString(), NGServiceV2InfoConfig.class);
-
-    List<String> serviceSpecChildrenIds = new ArrayList<>();
-    boolean createPlanForArtifacts = ServiceDefinitionPlanCreatorHelper.validateCreatePlanNodeForArtifactsV2(config);
-    if (createPlanForArtifacts) {
-      String artifactNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForArtifactsV2(
-          serviceV2Node, planCreationResponseMap, config, kryoSerializer);
-      serviceSpecChildrenIds.add(artifactNodeId);
-    }
-
-    if (ServiceDefinitionPlanCreatorHelper.shouldCreatePlanNodeForManifestsV2(config)) {
-      String manifestPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForManifestsV2(
-          serviceV2Node, planCreationResponseMap, config, kryoSerializer);
-      serviceSpecChildrenIds.add(manifestPlanNodeId);
-    }
-
-    if (ServiceDefinitionPlanCreatorHelper.shouldCreatePlanNodeForConfigFilesV2(config)) {
-      String configFilesPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForConfigFilesV2(
-          serviceV2Node, planCreationResponseMap, config, kryoSerializer);
-      serviceSpecChildrenIds.add(configFilesPlanNodeId);
-    }
-
-    if (config.getServiceDefinition().getServiceSpec() instanceof AzureWebAppServiceSpec) {
-      AzureWebAppServiceSpec azureWebAppServiceSpec =
-          (AzureWebAppServiceSpec) config.getServiceDefinition().getServiceSpec();
-
-      StoreConfigWrapper startupScript = azureWebAppServiceSpec.getStartupScript();
-      if (startupScript != null) {
-        String configFilesPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForStartupScriptV2(
-            serviceV2Node, planCreationResponseMap, config, kryoSerializer);
-        serviceSpecChildrenIds.add(configFilesPlanNodeId);
-      }
-
-      StoreConfigWrapper applicationSettings = azureWebAppServiceSpec.getApplicationSettings();
-      if (applicationSettings != null) {
-        String applicationSettingsPlanNodeId =
-            ServiceDefinitionPlanCreatorHelper.addDependenciesForApplicationSettingsV2(
-                serviceV2Node, planCreationResponseMap, config, kryoSerializer);
-        serviceSpecChildrenIds.add(applicationSettingsPlanNodeId);
-      }
-
-      StoreConfigWrapper connectionStrings = azureWebAppServiceSpec.getConnectionStrings();
-      if (connectionStrings != null) {
-        String connectionStringsPlanNodeId = ServiceDefinitionPlanCreatorHelper.addDependenciesForConnectionStringsV2(
-            serviceV2Node, planCreationResponseMap, config, kryoSerializer);
-        serviceSpecChildrenIds.add(connectionStringsPlanNodeId);
-      }
-    }
-
-    // Add serviceSpec node
-    addServiceSpecNodeV2(config, planCreationResponseMap, serviceSpecChildrenIds);
   }
 
   private void addServiceSpecNode(ServiceConfig serviceConfig,
@@ -236,32 +181,6 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
     PlanNode node =
         PlanNode.builder()
             .uuid(serviceConfig.getServiceDefinition().getServiceSpec().getUuid())
-            .stepType(ServiceSpecStep.STEP_TYPE)
-            .name(PlanCreatorConstants.SERVICE_SPEC_NODE_NAME)
-            .identifier(YamlTypes.SERVICE_SPEC)
-            .stepParameters(stepParameters)
-            .facilitatorObtainment(
-                FacilitatorObtainment.newBuilder()
-                    .setType(EmptyPredicate.isEmpty(serviceSpecChildrenIds)
-                            ? FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.SYNC).build()
-                            : FacilitatorType.newBuilder().setType(OrchestrationFacilitatorType.CHILDREN).build())
-                    .build())
-            .skipExpressionChain(false)
-            .build();
-    planCreationResponseMap.put(node.getUuid(), PlanCreationResponse.builder().node(node.getUuid(), node).build());
-  }
-
-  private void addServiceSpecNodeV2(NGServiceV2InfoConfig serviceV2InfoConfig,
-      Map<String, PlanCreationResponse> planCreationResponseMap, List<String> serviceSpecChildrenIds) {
-    ServiceSpec serviceSpec = serviceV2InfoConfig.getServiceDefinition().getServiceSpec();
-    ServiceSpecStepParameters stepParameters =
-        ServiceSpecStepParameters.builder()
-            .originalVariables(ParameterField.createValueField(serviceSpec.getVariables()))
-            .childrenNodeIds(serviceSpecChildrenIds)
-            .build();
-    PlanNode node =
-        PlanNode.builder()
-            .uuid(serviceV2InfoConfig.getServiceDefinition().getServiceSpec().getUuid())
             .stepType(ServiceSpecStep.STEP_TYPE)
             .name(PlanCreatorConstants.SERVICE_SPEC_NODE_NAME)
             .identifier(YamlTypes.SERVICE_SPEC)
@@ -306,13 +225,13 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
   boolean shouldCreatePlanNodeForConfigFiles(ServiceConfig actualServiceConfig) {
     List<ConfigFileWrapper> configFiles = actualServiceConfig.getServiceDefinition().getServiceSpec().getConfigFiles();
 
-    if (EmptyPredicate.isNotEmpty(configFiles)) {
+    if (isNotEmpty(configFiles)) {
       return true;
     }
 
     return actualServiceConfig.getStageOverrides() != null
         && actualServiceConfig.getStageOverrides().getConfigFiles() != null
-        && EmptyPredicate.isNotEmpty(actualServiceConfig.getStageOverrides().getConfigFiles());
+        && isNotEmpty(actualServiceConfig.getStageOverrides().getConfigFiles());
   }
 
   @Override
@@ -324,6 +243,8 @@ public class ServiceDefinitionPlanCreator extends ChildrenPlanCreator<YamlField>
   public Map<String, Set<String>> getSupportedTypes() {
     return Collections.singletonMap(YamlTypes.SERVICE_DEFINITION,
         ImmutableSet.of(ServiceSpecType.KUBERNETES, ServiceSpecType.SSH, ServiceSpecType.WINRM,
-            ServiceSpecType.NATIVE_HELM, ServiceSpecType.SERVERLESS_AWS_LAMBDA, ServiceSpecType.AZURE_WEBAPP));
+            ServiceSpecType.NATIVE_HELM, ServiceSpecType.SERVERLESS_AWS_LAMBDA, ServiceSpecType.AZURE_WEBAPP,
+            ServiceSpecType.ECS, ServiceSpecType.CUSTOM_DEPLOYMENT, ServiceSpecType.ELASTIGROUP, ServiceSpecType.TAS,
+            ServiceSpecType.ASG));
   }
 }

@@ -7,15 +7,16 @@
 
 package io.harness;
 
-import static io.harness.AuthorizationServiceHeader.TEMPLATE_SERVICE;
 import static io.harness.TemplateServiceConfiguration.getResourceClasses;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.authorization.AuthorizationServiceHeader.TEMPLATE_SERVICE;
 import static io.harness.logging.LoggingInitializer.initializeLogging;
 
 import static com.google.common.collect.ImmutableMap.of;
 
 import io.harness.accesscontrol.NGAccessDeniedExceptionMapper;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.authorization.AuthorizationServiceHeader;
 import io.harness.cache.CacheModule;
 import io.harness.controller.PrimaryVersionChangeScheduler;
 import io.harness.exception.GeneralException;
@@ -45,6 +46,7 @@ import io.harness.ng.core.exceptionmappers.JerseyViolationExceptionMapperV2;
 import io.harness.ng.core.exceptionmappers.NotAllowedExceptionMapper;
 import io.harness.ng.core.exceptionmappers.NotFoundExceptionMapper;
 import io.harness.ng.core.exceptionmappers.WingsExceptionMapperV2;
+import io.harness.ng.core.filter.ApiResponseFilter;
 import io.harness.outbox.OutboxEventPollService;
 import io.harness.request.RequestContextFilter;
 import io.harness.resource.VersionInfoResource;
@@ -57,6 +59,7 @@ import io.harness.template.GenerateOpenApiSpecCommand;
 import io.harness.template.InspectCommand;
 import io.harness.template.beans.yaml.NGTemplateConfig;
 import io.harness.template.entity.TemplateEntity;
+import io.harness.template.event.TemplateEventConsumerService;
 import io.harness.template.gitsync.TemplateEntityGitSyncHandler;
 import io.harness.template.migration.TemplateMigrationProvider;
 import io.harness.threading.ExecutorModule;
@@ -75,6 +78,7 @@ import com.google.inject.Key;
 import com.google.inject.Module;
 import com.google.inject.Provides;
 import com.google.inject.Singleton;
+import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import io.dropwizard.Application;
 import io.dropwizard.configuration.EnvironmentVariableSubstitutor;
@@ -170,6 +174,13 @@ public class TemplateServiceApplication extends Application<TemplateServiceConfi
       TemplateServiceConfiguration configuration() {
         return templateServiceConfiguration;
       }
+
+      @Provides
+      @Singleton
+      @Named("dbAliases")
+      public List<String> getDbAliases() {
+        return templateServiceConfiguration.getDbAliases();
+      }
     });
     modules.add(TemplateServiceModule.getInstance(templateServiceConfiguration));
     modules.add(new MetricRegistryModule(metricRegistry));
@@ -213,6 +224,7 @@ public class TemplateServiceApplication extends Application<TemplateServiceConfi
     registerRequestContextFilter(environment);
     registerAuthFilters(templateServiceConfiguration, environment, injector);
     registerCorrelationFilter(environment, injector);
+    registerApiResponseFilter(environment, injector);
 
     if (templateServiceConfiguration.isShouldDeployWithGitSync()) {
       registerGitSyncSdk(templateServiceConfiguration, injector, environment);
@@ -233,6 +245,7 @@ public class TemplateServiceApplication extends Application<TemplateServiceConfi
 
   private void registerManagedBeans(Environment environment, Injector injector) {
     environment.lifecycle().manage(injector.getInstance(OutboxEventPollService.class));
+    environment.lifecycle().manage(injector.getInstance(TemplateEventConsumerService.class));
   }
 
   private void registerResources(Environment environment, Injector injector) {
@@ -301,6 +314,10 @@ public class TemplateServiceApplication extends Application<TemplateServiceConfi
     environment.jersey().register(injector.getInstance(CorrelationFilter.class));
   }
 
+  private void registerApiResponseFilter(Environment environment, Injector injector) {
+    environment.jersey().register(injector.getInstance(ApiResponseFilter.class));
+  }
+
   private void registerMigrations(Injector injector) {
     NGMigrationConfiguration config = getMigrationSdkConfiguration();
     NGMigrationSdkInitHelper.initialize(injector, config);
@@ -334,7 +351,7 @@ public class TemplateServiceApplication extends Application<TemplateServiceConfi
         .deployMode(DeployMode.REMOTE)
         .microservice(Microservice.TEMPLATESERVICE)
         .scmConnectionConfig(gitSdkConfiguration.getScmConnectionConfig())
-        .eventsRedisConfig(config.getEventsFrameworkConfiguration().getRedisConfig())
+        .eventsFrameworkConfiguration(config.getEventsFrameworkConfiguration())
         .serviceHeader(TEMPLATE_SERVICE)
         .gitSyncEntitiesConfiguration(gitSyncEntitiesConfigurations)
         .gitSyncEntitySortComparator(TemplateGitEntityOrderComparator.class)

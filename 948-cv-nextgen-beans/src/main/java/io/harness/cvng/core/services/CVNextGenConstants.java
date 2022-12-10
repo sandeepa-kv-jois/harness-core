@@ -13,10 +13,13 @@ public interface CVNextGenConstants {
   String CV_NEXTGEN_RESOURCE_PREFIX = "cv-nextgen";
   String DELEGATE_DATA_COLLECTION = "delegate-data-collection";
   String CVNG_LOG_RESOURCE_PATH = "cvng-log";
+
+  String CVNG_RISK_CATEGORY_PATH = "risk-category";
   String LOG_RECORD_RESOURCE_PATH = "log-record";
   String HOST_RECORD_RESOURCE_PATH = "host-record";
   String DELEGATE_DATA_COLLECTION_TASK = "delegate-data-collection-task";
   String VERIFICATION_SERVICE_SECRET = "VERIFICATION_SERVICE_SECRET";
+  String ERROR_TRACKING_SERVICE_SECRET = "ERROR_TRACKING_SERVICE_SECRET";
   String CV_NEXT_GEN_SERVICE_ENDPOINTS_PREFIX = CV_NEXTGEN_RESOURCE_PREFIX + "/service";
   // TODO: move this to duration
   long CV_ANALYSIS_WINDOW_MINUTES = 5;
@@ -43,6 +46,7 @@ public interface CVNextGenConstants {
   String PROJECT_PATH = "account/{" + ACCOUNT_IDENTIFIER_KEY + "}/org/{" + ORG_IDENTIFIER_KEY + "}/project/{"
       + PROJECT_IDENTIFIER_KEY + "}";
   String CHANGE_EVENT_PATH = PROJECT_PATH + "/change-event";
+  String HEALTH_SOURCE_PATH = PROJECT_PATH + "/health-source";
   String VERIFY_STEP_PATH = PROJECT_PATH + "/verify-step";
   String MONITORED_SERVICE_YAML_ROOT = "monitoredService";
 }

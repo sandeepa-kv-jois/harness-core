@@ -12,6 +12,8 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.morphia.MorphiaRegistrar;
 import io.harness.pms.serializer.kryo.PmsContractsKryoRegistrar;
+import io.harness.serializer.kryo.NGCoreKryoRegistrar;
+import io.harness.serializer.kryo.SecretManagerClientKryoRegistrar;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -30,11 +32,15 @@ public class PmsSdkCoreModuleRegistrars {
           .add(PmsSdkCoreKryoRegistrar.class)
           .addAll(PmsCommonsModuleRegistrars.kryoRegistrars)
           .add(PmsContractsKryoRegistrar.class)
+          .add(NGCoreKryoRegistrar.class)
+          .add(SecretManagerClientKryoRegistrar.class)
+          .addAll(AccessControlClientRegistrars.kryoRegistrars)
           .build();
 
   public final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
       ImmutableSet.<Class<? extends MorphiaRegistrar>>builder()
           .add(PmsSdkCoreMorphiaRegistrar.class)
           .addAll(PmsCommonsModuleRegistrars.morphiaRegistrars)
+          .addAll(NGCoreClientRegistrars.morphiaRegistrars)
           .build();
 }

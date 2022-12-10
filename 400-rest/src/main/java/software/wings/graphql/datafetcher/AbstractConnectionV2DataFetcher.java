@@ -20,10 +20,10 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.TargetModule;
 import io.harness.eraro.ErrorCode;
 import io.harness.eraro.ResponseMessage;
+import io.harness.exception.ExceptionLogger;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.ff.FeatureFlagService;
-import io.harness.logging.ExceptionLogger;
 
 import software.wings.beans.SettingAttribute.SettingAttributeKeys;
 import software.wings.dl.WingsPersistence;
@@ -169,7 +169,7 @@ public abstract class AbstractConnectionV2DataFetcher<F, S, O> extends BaseDataF
       return fetchConnection(filters, pageQueryParameters, sortCriteria);
     } catch (WingsException ex) {
       if (ErrorCode.ACCESS_DENIED == ex.getCode()) {
-        log.warn("User doesn't have access to resource or no entities exist in that app");
+        log.warn("User doesn't have access to resource or no entities exist in that app", ex);
       }
       throw ex;
     }

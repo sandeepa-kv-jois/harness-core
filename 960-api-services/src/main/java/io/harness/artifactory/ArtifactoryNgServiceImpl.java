@@ -7,8 +7,10 @@
 
 package io.harness.artifactory;
 
+import static io.harness.artifactory.ArtifactoryClientImpl.getArtifactoryClient;
+
+import static java.util.stream.Collectors.toList;
 import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.docker;
-import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.generic;
 import static org.jfrog.artifactory.client.model.impl.PackageTypeImpl.maven;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -25,12 +27,13 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.io.InputStream;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
+import org.jfrog.artifactory.client.model.impl.PackageTypeImpl;
 
 @Singleton
 @Slf4j
@@ -59,7 +62,7 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
           "Both Artifact Path and Artifact Path Filter cannot be empty",
           new ArtifactoryRegistryException("Could not find an artifact"));
     } else if (EmptyPredicate.isEmpty(artifactPathFilter)) {
-      return BuildDetails.Builder.aBuildDetails().withArtifactPath(artifactPath).build();
+      artifactPathFilter = artifactPath;
     }
 
     String filePath = Paths.get(artifactDirectory, artifactPathFilter).toString();
@@ -100,11 +103,20 @@ public class ArtifactoryNgServiceImpl implements ArtifactoryNgService {
       case maven:
         return artifactoryClient.getRepositories(artifactoryConfig, Arrays.asList(maven));
       case generic:
-        return artifactoryClient.getRepositoriesByRepoType(artifactoryConfig, generic);
       case any:
       default:
-        return artifactoryClient.getRepositories(artifactoryConfig, new ArrayList<>());
+        return artifactoryClient.getRepositories(artifactoryConfig,
+            Arrays.stream(PackageTypeImpl.values()).filter(type -> docker != type).collect(toList()));
     }
+  }
+
+  @Override
+  public List<ArtifactoryImagePath> getImagePaths(ArtifactoryConfigRequest artifactoryConfig, String repoKey) {
+    List<String> repos = artifactoryClient.listDockerImages(getArtifactoryClient(artifactoryConfig), repoKey);
+    if (EmptyPredicate.isEmpty(repos)) {
+      return Collections.emptyList();
+    }
+    return repos.stream().map(repo -> ArtifactoryImagePath.builder().imagePath(repo).build()).collect(toList());
   }
 
   @Override

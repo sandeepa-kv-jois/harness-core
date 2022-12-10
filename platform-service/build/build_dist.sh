@@ -30,9 +30,12 @@ cp ../../platform-service/config/config.yml .
 cp ../../platform-service/config/keystore.jks .
 cp ../../platform-service/config/key.pem .
 cp ../../platform-service/config/cert.pem .
-cp ../../platform-service/build/container/Dockerfile-platform-service-jenkins-k8-openjdk ./Dockerfile
-cp ../../platform-service/build/container/Dockerfile-platform-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
+cp ../../dockerization/base-images/apm/inject-onprem-apm-bins-into-dockerimage.sh .
+cp ../../dockerization/base-images/apm/inject-saas-apm-bins-into-dockerimage.sh .
+cp ../../platform-service/build/container/Dockerfile-platform-service-cie-jdk ./Dockerfile-cie-jdk
 cp -r ../../platform-service/build/container/scripts/ .
+cp ../../platform-service/config/jfr/default.jfc .
+cp ../../platform-service/config/jfr/profile.jfc .
 
 java -jar platform-service-capsule.jar scan-classpath-metadata
 

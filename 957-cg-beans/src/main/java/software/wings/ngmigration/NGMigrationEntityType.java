@@ -12,6 +12,8 @@ import io.harness.annotations.dev.OwnedBy;
 
 @OwnedBy(HarnessTeam.CDC)
 public enum NGMigrationEntityType {
+  WORKFLOW_EXECUTION,
+  TEMPLATE,
   ACCOUNT,
   APPLICATION,
   DUMMY_HEAD,
@@ -24,6 +26,9 @@ public enum NGMigrationEntityType {
   SECRET("secrets"),
   INFRA,
   SECRET_MANAGER,
+  SERVICE_VARIABLE,
+  USER_GROUP,
+  CONFIG_FILE,
   MANIFEST;
 
   private String yamlFolderName;

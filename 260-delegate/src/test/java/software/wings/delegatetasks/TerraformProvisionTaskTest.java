@@ -31,6 +31,7 @@ import static org.mockito.Matchers.anyMap;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Matchers.eq;
 import static org.mockito.Matchers.startsWith;
+import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -54,6 +55,8 @@ import io.harness.delegate.task.terraform.TerraformBaseHelperImpl;
 import io.harness.delegate.task.terraform.TerraformCommand;
 import io.harness.delegate.task.terraform.TerraformCommandUnit;
 import io.harness.filesystem.FileIo;
+import io.harness.logging.LogCallback;
+import io.harness.provision.TerraformPlanSummary;
 import io.harness.rule.Owner;
 import io.harness.rule.OwnerRule;
 import io.harness.secretmanagerclient.EncryptDecryptHelper;
@@ -105,11 +108,13 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.zeroturnaround.exec.stream.LogOutputStream;
+import wiremock.org.apache.commons.io.FileUtils;
 
 @TargetModule(HarnessModule._930_DELEGATE_TASKS)
 @OwnedBy(CDP)
 @RunWith(JUnitParamsRunner.class)
 public class TerraformProvisionTaskTest extends WingsBaseTest {
+  @Mock private LogCallback logCallback;
   @Mock private EncryptionService mockEncryptionService;
   @Mock private GitClient gitClient;
   @Mock private DelegateLogService logService;
@@ -182,6 +187,14 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
 
     sourceRepoEncryptionDetails = new ArrayList<>();
     sourceRepoEncryptionDetails.add(EncryptedDataDetail.builder().build());
+
+    doAnswer(invocation -> {
+      String dest = invocation.getArgument(1);
+      FileUtils.copyDirectory(new File(GIT_REPO_DIRECTORY), new File(dest));
+      return null;
+    })
+        .when(gitClient)
+        .cloneRepoAndCopyToDestDir(any(GitOperationContext.class), anyString(), any(LogCallback.class));
 
     doReturn(GIT_REPO_DIRECTORY).when(gitClientHelper).getRepoDirectory(any(GitOperationContext.class));
 
@@ -277,7 +290,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     // regular apply
     TerraformProvisionParametersBuilder terraformProvisionParametersBuilder =
         getTerraformProvisionParametersBuilder(false, false, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY,
-            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false)
+            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false, true)
             .awsConfigId("awsConfigId")
             .awsRoleArn("awsRoleArn")
             .awsConfig(awsConfig)
@@ -320,7 +333,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     // regular apply
     TerraformProvisionParametersBuilder terraformProvisionParametersBuilder =
         getTerraformProvisionParametersBuilder(false, false, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY,
-            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false)
+            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false, true)
             .awsConfigId("awsConfigId")
             .awsRoleArn("awsRoleArn")
             .awsConfig(awsConfig)
@@ -370,7 +383,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     // regular apply
     TerraformProvisionParametersBuilder terraformProvisionParametersBuilder =
         getTerraformProvisionParametersBuilder(false, false, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY,
-            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false)
+            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false, true)
             .awsConfigId("awsConfigId")
             .awsConfig(awsConfig)
             .awsRegion("awsRegion")
@@ -407,8 +420,8 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
         false, false, encryptedPlanContent, TerraformCommandUnit.Apply, TerraformCommand.APPLY, false, false);
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
-    verifyCommandExecuted(
-        "terraform init", "terraform workspace", "terraform refresh", "terraform apply", "terraform output");
+    verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform show",
+        "terraform apply", "terraform output");
     verify(terraformExecutionData, TerraformCommand.APPLY);
     // verify that plan is getting deleted after getting applied
     Mockito.verify(planEncryptDecryptHelper, times(1)).deleteEncryptedRecord(any(), any());
@@ -426,25 +439,55 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
         false, false, encryptedPlanContent, TerraformCommandUnit.Apply, TerraformCommand.APPLY, false, true);
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
-    verifyCommandExecuted("terraform init", "terraform workspace", "terraform apply", "terraform output");
+    verifyCommandExecuted(
+        "terraform init", "terraform workspace", "terraform show", "terraform apply", "terraform output");
     verify(terraformExecutionData, TerraformCommand.APPLY);
   }
 
   /**
-   *  should not skip refresh since not using approved plan
+   * should not skip refresh since not using approved plan
    */
   @Test
   @Owner(developers = OwnerRule.YOGESH)
   @Category(UnitTests.class)
-  public void TC1_testPlanAndExport() throws IOException, TimeoutException, InterruptedException {
+  public void TC1_testPlanAndExport_withoutInfraChanges() throws IOException, TimeoutException, InterruptedException {
     setupForApply();
     // run plan only and execute terraform show command
     byte[] terraformPlan = "terraformPlan".getBytes();
+    TerraformPlanSummary terraformPlanSummary =
+        TerraformPlanSummary.builder().add(0).change(0).destroy(0).changesExist(false).build();
     TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
         true, true, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY, true, false);
     doReturn(terraformPlan)
         .when(terraformProvisionTaskSpy)
         .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
+    doReturn(terraformPlanSummary)
+        .when(terraformProvisionTaskSpy)
+        .analyseTerraformPlan(any(), any(), any(), any(), any(), any());
+    TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
+    verify(terraformExecutionData, TerraformCommand.APPLY);
+    verifyCommandExecuted(
+        "terraform init", "terraform workspace", "terraform refresh", "terraform plan", "terraform show");
+    assertThat(terraformExecutionData.getEncryptedTfPlan()).isEqualTo(null);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MLUKIC)
+  @Category(UnitTests.class)
+  public void TC1_testPlanAndExport_withInfraChanges() throws IOException, TimeoutException, InterruptedException {
+    setupForApply();
+    // run plan only and execute terraform show command
+    byte[] terraformPlan = "terraformPlan".getBytes();
+    TerraformPlanSummary terraformPlanSummary =
+        TerraformPlanSummary.builder().add(1).change(2).destroy(0).changesExist(true).build();
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        true, true, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY, true, false);
+    doReturn(terraformPlan)
+        .when(terraformProvisionTaskSpy)
+        .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
+    doReturn(terraformPlanSummary)
+        .when(terraformProvisionTaskSpy)
+        .analyseTerraformPlan(any(), any(), any(), any(), any(), any());
     doReturn(encryptedPlanContent).when(planEncryptDecryptHelper).encryptContent(any(), any(), any());
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
     Mockito.verify(planEncryptDecryptHelper, times(1)).encryptContent(any(), any(), any());
@@ -468,16 +511,23 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
         true, true, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY, true, skipRefresh);
     terraformProvisionTaskSpy.run(terraformProvisionParameters);
 
-    assertThat(getCommandsExecuted().contains("terraform show")).isEqualTo(shouldExportJsonPlan);
+    if (shouldExportJsonPlan) {
+      assertThat(getCommandsExecuted().stream().filter(item -> item.equalsIgnoreCase("terraform show")).count())
+          .isEqualTo(2);
+    } else {
+      assertThat(getCommandsExecuted().stream().filter(item -> item.equalsIgnoreCase("terraform show")).count())
+          .isEqualTo(1);
+    }
   }
 
   /**
-   *  should not skip refresh since not using approved plan
+   * should not skip refresh since not using approved plan
    */
   @Test
   @Owner(developers = OwnerRule.YOGESH)
   @Category(UnitTests.class)
-  public void TC2_testApplyPlanAndExport() throws IOException, TimeoutException, InterruptedException {
+  public void TC2_testApplyPlanAndExport_withoutInfraChanges()
+      throws IOException, TimeoutException, InterruptedException {
     setupForApply();
     // run plan only and execute terraform show command
     byte[] terraformPlan = "terraformPlan".getBytes();
@@ -486,6 +536,30 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     doReturn(terraformPlan)
         .when(terraformProvisionTaskSpy)
         .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
+    TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
+    verify(terraformExecutionData, TerraformCommand.APPLY);
+    verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform plan",
+        "terraform show", "terraform show");
+    assertThat(terraformExecutionData.getEncryptedTfPlan()).isEqualTo(null);
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.YOGESH)
+  @Category(UnitTests.class)
+  public void TC2_testApplyPlanAndExport_withInfraChanges() throws IOException, TimeoutException, InterruptedException {
+    setupForApply();
+    // run plan only and execute terraform show command
+    byte[] terraformPlan = "terraformPlan".getBytes();
+    TerraformPlanSummary terraformPlanSummary =
+        TerraformPlanSummary.builder().add(1).change(2).destroy(0).changesExist(true).build();
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        true, true, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY, true, true);
+    doReturn(terraformPlan)
+        .when(terraformProvisionTaskSpy)
+        .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
+    doReturn(terraformPlanSummary)
+        .when(terraformProvisionTaskSpy)
+        .analyseTerraformPlan(any(), any(), any(), any(), any(), any());
     doReturn(encryptedPlanContent).when(planEncryptDecryptHelper).encryptContent(any(), any(), any());
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
     verify(terraformExecutionData, TerraformCommand.APPLY);
@@ -535,6 +609,23 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
     verify(terraformExecutionData, TerraformCommand.DESTROY);
     verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform destroy");
+
+    FileIo.deleteDirectoryAndItsContentIfExists(GIT_REPO_DIRECTORY);
+    FileIo.deleteDirectoryAndItsContentIfExists("./terraform-working-dir");
+  }
+
+  @Test
+  @Owner(developers = TMACARI)
+  @Category(UnitTests.class)
+  public void TC1_testRollbackRunDestroy() throws IOException, TimeoutException, InterruptedException {
+    setupForDestroyTests();
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        false, false, null, TerraformCommandUnit.Rollback, TerraformCommand.DESTROY, false, false);
+    terraformProvisionParameters.getVariables().remove("var3");
+    TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
+    verify(terraformExecutionData, TerraformCommand.DESTROY);
+    verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform destroy");
+    assertThat(terraformExecutionData.getOutputs()).isNull();
 
     FileIo.deleteDirectoryAndItsContentIfExists(GIT_REPO_DIRECTORY);
     FileIo.deleteDirectoryAndItsContentIfExists("./terraform-working-dir");
@@ -612,7 +703,8 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
         false, false, encryptedPlanContent, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, false, false);
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
     verify(terraformExecutionData, TerraformCommand.DESTROY);
-    verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform apply");
+    verifyCommandExecuted(
+        "terraform init", "terraform workspace", "terraform refresh", "terraform show", "terraform apply");
 
     FileIo.deleteDirectoryAndItsContentIfExists(GIT_REPO_DIRECTORY);
     FileIo.deleteDirectoryAndItsContentIfExists("./terraform-working-dir");
@@ -624,26 +716,49 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
   @Test
   @Owner(developers = OwnerRule.YOGESH)
   @Category(UnitTests.class)
-  public void TC2_destroyUsingPlan() throws InterruptedException, TimeoutException, IOException {
+  public void TC2_destroyUsingPlan_withoutInfraChanges() throws InterruptedException, TimeoutException, IOException {
     setupForDestroyTests();
 
-    byte[] terraformDestroyPlan = "terraformDestroyPlan".getBytes();
     TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
         false, false, encryptedPlanContent, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, false, true);
     TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
     verify(terraformExecutionData, TerraformCommand.DESTROY);
-    verifyCommandExecuted("terraform init", "terraform workspace", "terraform apply");
+    verifyCommandExecuted("terraform init", "terraform workspace", "terraform show", "terraform apply");
   }
 
   @Test
   @Owner(developers = OwnerRule.YOGESH)
   @Category(UnitTests.class)
-  public void TC1_destroyRunPlanOnly() throws InterruptedException, TimeoutException, IOException {
+  public void TC1_destroyRunPlanOnly_withoutInfraChanges() throws InterruptedException, TimeoutException, IOException {
     setupForDestroyTests();
 
     byte[] terraformDestroyPlan = "terraformDestroyPlan".getBytes();
     TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
         true, true, null, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, true, false);
+    doReturn(terraformDestroyPlan)
+        .when(terraformProvisionTaskSpy)
+        .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
+    TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
+    verify(terraformExecutionData, TerraformCommand.DESTROY);
+    assertThat(terraformExecutionData.getEncryptedTfPlan()).isEqualTo(null);
+    verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform plan",
+        "terraform show", "terraform show");
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MLUKIC)
+  @Category(UnitTests.class)
+  public void TC1_destroyRunPlanOnly_withInfraChanges() throws InterruptedException, TimeoutException, IOException {
+    setupForDestroyTests();
+
+    byte[] terraformDestroyPlan = "terraformDestroyPlan\nPlan: 0 to add, 0 to change, 3 to destroy".getBytes();
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        true, true, null, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, true, false);
+    TerraformPlanSummary terraformPlanSummary =
+        TerraformPlanSummary.builder().add(0).change(0).destroy(3).changesExist(true).build();
+    doReturn(terraformPlanSummary)
+        .when(terraformProvisionTaskSpy)
+        .analyseTerraformPlan(any(), any(), any(), any(), any(), any());
     doReturn(terraformDestroyPlan)
         .when(terraformProvisionTaskSpy)
         .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
@@ -662,12 +777,40 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
   @Test
   @Owner(developers = OwnerRule.YOGESH)
   @Category(UnitTests.class)
-  public void TC2_destroyRunPlanOnly() throws InterruptedException, TimeoutException, IOException {
+  public void TC2_destroyRunPlanOnly_withoutInfraChanges() throws InterruptedException, TimeoutException, IOException {
     setupForDestroyTests();
 
-    byte[] terraformDestroyPlan = "terraformDestroyPlan".getBytes();
+    byte[] terraformDestroyPlan = "terraformDestroyPlan\nNo changes.".getBytes();
+    TerraformPlanSummary terraformPlanSummary =
+        TerraformPlanSummary.builder().add(0).change(0).destroy(0).changesExist(false).build();
     TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
         true, true, null, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, true, true);
+    doReturn(terraformDestroyPlan)
+        .when(terraformProvisionTaskSpy)
+        .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
+    doReturn(terraformPlanSummary)
+        .when(terraformProvisionTaskSpy)
+        .analyseTerraformPlan(any(), any(), any(), any(), any(), any());
+    TerraformExecutionData terraformExecutionData = terraformProvisionTaskSpy.run(terraformProvisionParameters);
+    verify(terraformExecutionData, TerraformCommand.DESTROY);
+    assertThat(terraformExecutionData.getEncryptedTfPlan()).isEqualTo(null);
+    verifyCommandExecuted(
+        "terraform init", "terraform workspace", "terraform refresh", "terraform plan", "terraform show");
+  }
+
+  @Test
+  @Owner(developers = OwnerRule.MLUKIC)
+  @Category(UnitTests.class)
+  public void TC2_destroyRunPlanOnly_withInfraChanges() throws InterruptedException, TimeoutException, IOException {
+    setupForDestroyTests();
+    byte[] terraformDestroyPlan = "terraformDestroyPlan\nPlan: 0 to add, 0 to change, 3 to destroy".getBytes();
+    TerraformPlanSummary terraformPlanSummary =
+        TerraformPlanSummary.builder().add(0).change(0).destroy(3).changesExist(true).build();
+    TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
+        true, true, null, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, true, true);
+    doReturn(terraformPlanSummary)
+        .when(terraformProvisionTaskSpy)
+        .analyseTerraformPlan(any(), any(), any(), any(), any(), any());
     doReturn(terraformDestroyPlan)
         .when(terraformProvisionTaskSpy)
         .getTerraformPlanFile(anyString(), any(TerraformProvisionParameters.class));
@@ -693,7 +836,13 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
         true, true, null, TerraformCommandUnit.Destroy, TerraformCommand.DESTROY, true, skipRefresh);
     terraformProvisionTaskSpy.run(terraformProvisionParameters);
 
-    assertThat(getCommandsExecuted().contains("terraform show")).isEqualTo(shouldExportJsonPlan);
+    if (shouldExportJsonPlan) {
+      assertThat(getCommandsExecuted().stream().filter(item -> item.equalsIgnoreCase("terraform show")).count())
+          .isEqualTo(2);
+    } else {
+      assertThat(getCommandsExecuted().stream().filter(item -> item.equalsIgnoreCase("terraform show")).count())
+          .isEqualTo(1);
+    }
   }
 
   @Test
@@ -707,7 +856,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
     byte[] terraformPlan = "terraformPlan".getBytes();
     EncryptedRecordData encryptedRecordData = EncryptedRecordData.builder().build();
     TerraformProvisionParameters terraformProvisionParameters = createTerraformProvisionParameters(
-        true, true, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY, true, false, true);
+        true, true, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY, true, false, true, true);
 
     doReturn(terraformPlan)
         .when(terraformProvisionTaskSpy)
@@ -725,8 +874,8 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
         .uploadTfPlanJson(eq(ACCOUNT_ID), eq(WingsTestConstants.DELEGATE_ID), eq(TASK_ID), eq(ENTITY_ID),
             eq(TERRAFORM_PLAN_FILE_OUTPUT_NAME), jsonPlanLocalFilePathCaptor.capture());
     verify(terraformExecutionData, TerraformCommand.APPLY);
-    verifyCommandExecuted(
-        "terraform init", "terraform workspace", "terraform refresh", "terraform plan", "terraform show");
+    verifyCommandExecuted("terraform init", "terraform workspace", "terraform refresh", "terraform plan",
+        "terraform show", "terraform show");
     assertThat(terraformExecutionData.getTfPlanJsonFiledId()).isEqualTo(delegatePlanJsonFileId);
     // check for file cleanup
     assertThat(new File(jsonPlanLocalFilePathCaptor.getValue())).doesNotExist();
@@ -765,12 +914,13 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
       boolean exportPlanToApplyStep, EncryptedRecordData encryptedTfPlan, TerraformCommandUnit commandUnit,
       TerraformCommand command, boolean saveTerraformJson, boolean skipRefresh) {
     return createTerraformProvisionParameters(runPlanOnly, exportPlanToApplyStep, encryptedTfPlan, commandUnit, command,
-        saveTerraformJson, skipRefresh, false);
+        saveTerraformJson, skipRefresh, false, true);
   }
 
   private TerraformProvisionParameters createTerraformProvisionParameters(boolean runPlanOnly,
       boolean exportPlanToApplyStep, EncryptedRecordData encryptedTfPlan, TerraformCommandUnit commandUnit,
-      TerraformCommand command, boolean saveTerraformJson, boolean skipRefresh, boolean useOptimizedTfPlan) {
+      TerraformCommand command, boolean saveTerraformJson, boolean skipRefresh, boolean useOptimizedTfPlan,
+      boolean shouldAnalyseTfPlanSummary) {
     Map<String, String> backendConfigs = new HashMap<>();
     backendConfigs.put("var1", "value1");
 
@@ -784,7 +934,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
 
     return getTerraformProvisionParametersBuilder(runPlanOnly, exportPlanToApplyStep, encryptedTfPlan, commandUnit,
         command, saveTerraformJson, skipRefresh, backendConfigs, variables, environmentVariables, tfVarFiles,
-        useOptimizedTfPlan)
+        useOptimizedTfPlan, shouldAnalyseTfPlanSummary)
         .build();
   }
 
@@ -792,7 +942,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
       boolean exportPlanToApplyStep, EncryptedRecordData encryptedTfPlan, TerraformCommandUnit commandUnit,
       TerraformCommand command, boolean saveTerraformJson, boolean skipRefresh, Map<String, String> backendConfigs,
       Map<String, String> variables, Map<String, String> environmentVariables, List<String> tfVarFiles,
-      boolean useOptimizedTfPlan) {
+      boolean useOptimizedTfPlan, boolean shouldAnalyseTfPlanSummary) {
     return TerraformProvisionParameters.builder()
         .sourceRepo(gitConfig)
         .sourceRepoSettingId(SOURCE_REPO_SETTINGS_ID)
@@ -815,7 +965,9 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
         .saveTerraformJson(saveTerraformJson)
         .useOptimizedTfPlanJson(useOptimizedTfPlan)
         .skipRefreshBeforeApplyingPlan(skipRefresh)
-        .secretManagerConfig(KmsConfig.builder().name("config").uuid("uuid").build());
+        .secretManagerConfig(KmsConfig.builder().name("config").uuid("uuid").build())
+        .analyseTfPlanSummary(shouldAnalyseTfPlanSummary)
+        .syncGitCloneAndCopyToDestDir(false);
   }
 
   @Test
@@ -929,7 +1081,7 @@ public class TerraformProvisionTaskTest extends WingsBaseTest {
 
     TerraformProvisionParametersBuilder terraformProvisionParametersBuilder =
         getTerraformProvisionParametersBuilder(false, false, null, TerraformCommandUnit.Apply, TerraformCommand.APPLY,
-            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false)
+            false, false, backendConfigs, variables, environmentVariables, tfVarFiles, false, true)
             .awsConfigId("awsConfigId")
             .awsConfig(awsConfig)
             .awsRegion("awsRegion")

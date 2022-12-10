@@ -14,6 +14,9 @@ import static io.harness.beans.SweepingOutputInstance.Scope;
 import static io.harness.beans.SweepingOutputInstance.builder;
 import static io.harness.context.ContextElementType.TERRAFORM_INHERIT_PLAN;
 import static io.harness.provision.TerraformConstants.TF_NAME_PREFIX;
+import static io.harness.provision.TerraformConstants.TF_PLAN_RESOURCES_ADD;
+import static io.harness.provision.TerraformConstants.TF_PLAN_RESOURCES_CHANGE;
+import static io.harness.provision.TerraformConstants.TF_PLAN_RESOURCES_DESTROY;
 import static io.harness.rule.OwnerRule.ABOSII;
 import static io.harness.rule.OwnerRule.ARVIND;
 import static io.harness.rule.OwnerRule.BOJANA;
@@ -248,6 +251,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         .getDefaultSecretManager(any());
     doNothing().when(stateExecutionService).appendDelegateTaskDetails(anyString(), any());
     doReturn(true).when(featureFlagService).isEnabled(eq(FeatureName.ACTIVITY_ID_BASED_TF_BASE_DIR), anyString());
+    doReturn(true).when(featureFlagService).isEnabled(eq(FeatureName.SYNC_GIT_CLONE_AND_COPY_TO_DEST_DIR), anyString());
     doReturn(WORKFLOW_EXECUTION_ID).when(executionContext).getWorkflowExecutionId();
     doReturn(gitConfig).when(gitUtilsManager).getGitConfig(any());
   }
@@ -384,6 +388,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
     assertParametersVariables(parameters);
     assertParametersBackendConfigs(parameters);
     assertThat(parameters.isUseActivityIdBasedTfBaseDir()).isTrue();
+    assertThat(parameters.isSyncGitCloneAndCopyToDestDir()).isTrue();
   }
 
   @Test
@@ -664,6 +669,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         (TerraformProvisionParameters) delegateTaskCaptor.getValue().getData().getParameters()[0];
     assertThat(parameters.getEncryptedTfPlan()).isNotNull();
     assertThat(parameters.isUseActivityIdBasedTfBaseDir()).isTrue();
+    assertThat(parameters.isSyncGitCloneAndCopyToDestDir()).isTrue();
   }
 
   @Test
@@ -795,8 +801,12 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
     state.setProvisionerId(PROVISIONER_ID);
     when(executionContext.getAppId()).thenReturn(APP_ID);
     Map<String, ResponseData> response = new HashMap<>();
-    TerraformExecutionData terraformExecutionData =
-        TerraformExecutionData.builder().executionStatus(ExecutionStatus.SUCCESS).tfPlanJson("").build();
+    TerraformExecutionData terraformExecutionData = TerraformExecutionData.builder()
+                                                        .executionStatus(ExecutionStatus.SUCCESS)
+                                                        .entityId("entityId")
+                                                        .tfPlanJson("")
+                                                        .environmentVariables(getTerraformPlanSummaryVariables(true))
+                                                        .build();
     response.put("activityId", terraformExecutionData);
     TerraformInfrastructureProvisioner provisioner =
         TerraformInfrastructureProvisioner.builder().appId(APP_ID).repoName(REPO_NAME).build();
@@ -806,7 +816,10 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         .prepareSweepingOutputBuilder(any(SweepingOutputInstance.Scope.class));
 
     ExecutionResponse executionResponse = state.handleAsyncResponse(executionContext, response);
+    TerraformProvisionInheritPlanElement terraformProvisionInheritPlanElement =
+        (TerraformProvisionInheritPlanElement) executionResponse.getNotifyElements().get(0);
     assertThat(executionResponse.getStateExecutionData()).isEqualTo(terraformExecutionData);
+    assertThat(terraformProvisionInheritPlanElement.getEntityId()).isEqualTo(terraformExecutionData.getEntityId());
     assertThat(executionResponse.getExecutionStatus()).isEqualTo(ExecutionStatus.SUCCESS);
     assertThat(
         ((TerraformProvisionInheritPlanElement) executionResponse.getContextElements().get(0)).getProvisionerId())
@@ -827,6 +840,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
     response.put("activityId",
         TerraformExecutionData.builder()
             .encryptedTfPlan(EncryptedRecordData.builder().build())
+            .environmentVariables(getTerraformPlanSummaryVariables(true))
             .tfPlanJson("{}")
             .build());
     state.setProvisionerId(PROVISIONER_ID);
@@ -960,6 +974,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
     assertThat(parameters.getAwsRoleArn()).isEqualTo("arn");
     assertThat(parameters.getAwsRegion()).isEqualTo("region");
     assertThat(parameters.isUseActivityIdBasedTfBaseDir()).isTrue();
+    assertThat(parameters.isSyncGitCloneAndCopyToDestDir()).isTrue();
   }
 
   @Test
@@ -1125,6 +1140,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
                                                         .executionStatus(ExecutionStatus.SUCCESS)
                                                         .activityId(ACTIVITY_ID)
                                                         .outputs(outputs)
+                                                        .environmentVariables(getTerraformPlanSummaryVariables(true))
                                                         .build();
     response.put("activityId", terraformExecutionData);
     TerraformInfrastructureProvisioner provisioner =
@@ -1187,6 +1203,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
                                                         .workspace("workspace")
                                                         .executionStatus(ExecutionStatus.SUCCESS)
                                                         .activityId(ACTIVITY_ID)
+                                                        .environmentVariables(getTerraformPlanSummaryVariables(true))
                                                         .build();
 
     Map<String, ResponseData> response = new HashMap<>();
@@ -1233,6 +1250,18 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         NameValuePair.builder().name("access_token").value("access_token").valueType("ENCRYPTED_TEXT").build());
   }
 
+  private List<NameValuePair> getTerraformPlanSummaryVariables(boolean changesExist) {
+    if (changesExist) {
+      return asList(NameValuePair.builder().name(TF_PLAN_RESOURCES_ADD).value("1").build(),
+          NameValuePair.builder().name(TF_PLAN_RESOURCES_CHANGE).value("1").build(),
+          NameValuePair.builder().name(TF_PLAN_RESOURCES_DESTROY).value("0").build());
+    } else {
+      return asList(NameValuePair.builder().name(TF_PLAN_RESOURCES_ADD).value("0").build(),
+          NameValuePair.builder().name(TF_PLAN_RESOURCES_CHANGE).value("0").build(),
+          NameValuePair.builder().name(TF_PLAN_RESOURCES_DESTROY).value("0").build());
+    }
+  }
+
   @Test
   @Owner(developers = ABOSII)
   @Category(UnitTests.class)
@@ -1251,6 +1280,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
                                               .variables(nameValuePairList)
                                               .tfVarFiles(asList("file-1", "file-2"))
                                               .targets(asList("target1", "target2"))
+                                              .environmentVariables(getTerraformPlanSummaryVariables(true))
                                               .build();
 
     TerraformInfrastructureProvisioner provisioner = TerraformInfrastructureProvisioner.builder()
@@ -1331,6 +1361,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
                                               .executionStatus(ExecutionStatus.SUCCESS)
                                               .workspace("workspace")
                                               .targets(asList("target1", "target2"))
+                                              .environmentVariables(getTerraformPlanSummaryVariables(true))
                                               .build();
 
     TerraformInfrastructureProvisioner provisioner = TerraformInfrastructureProvisioner.builder()
@@ -1515,6 +1546,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
             .executionStatus(ExecutionStatus.SUCCESS)
             .outputs(
                 "{\"outputVar\": { \"value\" :\"outputVarValue\"}, \"complex\": { \"value\": { \"output\": \"value\"}}}")
+            .environmentVariables(getTerraformPlanSummaryVariables(true))
             .build();
     Map<String, ResponseData> response = new HashMap<>();
     response.put("activityId", terraformExecutionData);
@@ -1564,6 +1596,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
     TerraformExecutionData terraformExecutionData =
         TerraformExecutionData.builder()
             .executionStatus(ExecutionStatus.SUCCESS)
+            .environmentVariables(getTerraformPlanSummaryVariables(true))
             .outputs(
                 "{\"outputVar\": { \"value\" :\"outputVarValue\"}, \"complex\": { \"value\": { \"output\": \"value\"}}}")
             .build();
@@ -1629,6 +1662,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
             .executionStatus(ExecutionStatus.SUCCESS)
             .outputs(
                 "{\"outputVar\": { \"value\" :\"outputVarValue\"}, \"complex\": { \"value\": { \"output\": \"value\"}}}")
+            .environmentVariables(getTerraformPlanSummaryVariables(true))
             .build();
     Map<String, ResponseData> response = new HashMap<>();
     response.put("activityId", terraformExecutionData);
@@ -1693,6 +1727,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         TerraformInfrastructureProvisioner.builder().appId(APP_ID).repoName(REPO_NAME).build();
     TerraformExecutionData terraformExecutionData = TerraformExecutionData.builder()
                                                         .executionStatus(ExecutionStatus.SUCCESS)
+                                                        .environmentVariables(getTerraformPlanSummaryVariables(true))
                                                         .outputs("{\"outputVar\": { \"value\" :\"outputVarValue\"}}")
                                                         .build();
     Map<String, ResponseData> response = new HashMap<>();
@@ -1757,6 +1792,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
             .executionStatus(ExecutionStatus.SUCCESS)
             .outputs(
                 "{\"outputVar\": { \"value\" :\"outputVarValue\"}, \"complex\": { \"value\": { \"output\": \"value\"}}}")
+            .environmentVariables(getTerraformPlanSummaryVariables(true))
             .build();
     Map<String, ResponseData> response = new HashMap<>();
     response.put("activityId", terraformExecutionData);
@@ -2123,6 +2159,7 @@ public class TerraformProvisionStateTest extends WingsBaseTest {
         TerraformExecutionData.builder()
             .encryptedTfPlan(EncryptedRecordData.builder().build())
             .tfPlanJsonFiledId("fileId")
+            .environmentVariables(getTerraformPlanSummaryVariables(true))
             .build());
     state.setProvisionerId(PROVISIONER_ID);
     doReturn(SweepingOutputInquiry.builder()).when(executionContext).prepareSweepingOutputInquiryBuilder();

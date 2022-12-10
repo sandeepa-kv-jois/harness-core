@@ -7,6 +7,7 @@
 
 package io.harness.expression;
 
+import static io.harness.rule.OwnerRule.BRIJESH;
 import static io.harness.rule.OwnerRule.GARVIT;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -19,6 +20,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.data.structure.EmptyPredicate;
 import io.harness.exception.HintException;
 import io.harness.exception.UnresolvedExpressionsException;
+import io.harness.expression.common.ExpressionMode;
 import io.harness.rule.Owner;
 
 import com.google.common.collect.ImmutableList;
@@ -360,7 +362,8 @@ public class EngineExpressionEvaluatorTest extends CategoryTest {
     Map<String, Object> m =
         new HashMap<>(ImmutableMap.of("a", "<+a>", "b", "<+b>", "c", "<+a> < <+b> == <+<+a> < <+b>>", "d",
             new HashMap<>(ImmutableMap.of("a", "<+a> + <+<+a> + <+e>>", "b", "<+a> + <+<+b> + <+e>>"))));
-    EngineExpressionEvaluator.PartialEvaluateResult result = evaluator.partialResolve(m);
+    EngineExpressionEvaluator.PartialEvaluateResult result =
+        evaluator.partialResolve(m, ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
     assertThat(result).isNotNull();
     assertThat(result.isPartial()).isFalse();
 
@@ -398,6 +401,16 @@ public class EngineExpressionEvaluatorTest extends CategoryTest {
     assertThatThrownBy(() -> evaluator.renderExpression("<+a> + <+b> + <+c> + <+d>>", false))
         .isInstanceOf(UnresolvedExpressionsException.class)
         .hasMessage("Unresolved expressions: b");
+  }
+
+  @Test
+  @Owner(developers = BRIJESH)
+  @Category(UnitTests.class)
+  public void testCalculateExecutionMode() {
+    assertThat(EngineExpressionEvaluator.calculateExpressionMode(true))
+        .isEqualTo(ExpressionMode.RETURN_NULL_IF_UNRESOLVED);
+    assertThat(EngineExpressionEvaluator.calculateExpressionMode(false))
+        .isEqualTo(ExpressionMode.THROW_EXCEPTION_IF_UNRESOLVED);
   }
 
   @Value

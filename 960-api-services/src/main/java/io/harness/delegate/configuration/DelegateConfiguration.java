@@ -63,6 +63,9 @@ public class DelegateConfiguration {
   private String clientCertificateFilePath;
   private String clientCertificateKeyFilePath;
 
+  private boolean isImmutable;
+  private boolean isLocalNgDelegate;
+
   /*
    * If true, the delegate will send the unmodified authority in grpc calls instead of a service specific authority.
    *

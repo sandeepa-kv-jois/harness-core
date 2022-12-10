@@ -7,14 +7,20 @@
 
 package io.harness;
 
-import static io.harness.AuthorizationServiceHeader.TEMPLATE_SERVICE;
 import static io.harness.annotations.dev.HarnessTeam.CDC;
+import static io.harness.authorization.AuthorizationServiceHeader.TEMPLATE_SERVICE;
+import static io.harness.eventsframework.EventsFrameworkConstants.ENTITY_CRUD;
+import static io.harness.eventsframework.EventsFrameworkMetadataConstants.ORGANIZATION_ENTITY;
+import static io.harness.eventsframework.EventsFrameworkMetadataConstants.PROJECT_ENTITY;
 import static io.harness.lock.DistributedLockImplementation.MONGO;
+import static io.harness.ng.core.template.TemplateEntityConstants.ARTIFACT_SOURCE;
+import static io.harness.ng.core.template.TemplateEntityConstants.CUSTOM_DEPLOYMENT;
 import static io.harness.ng.core.template.TemplateEntityConstants.MONITORED_SERVICE;
 import static io.harness.ng.core.template.TemplateEntityConstants.PIPELINE;
 import static io.harness.ng.core.template.TemplateEntityConstants.SECRET_MANAGER;
 import static io.harness.ng.core.template.TemplateEntityConstants.STAGE;
 import static io.harness.ng.core.template.TemplateEntityConstants.STEP;
+import static io.harness.ng.core.template.TemplateEntityConstants.STEP_GROUP;
 import static io.harness.outbox.OutboxSDKConstants.DEFAULT_OUTBOX_POLL_CONFIGURATION;
 
 import io.harness.account.AccountClientModule;
@@ -24,6 +30,7 @@ import io.harness.audit.client.remote.AuditClientModule;
 import io.harness.callback.DelegateCallback;
 import io.harness.callback.DelegateCallbackToken;
 import io.harness.callback.MongoDatabase;
+import io.harness.customDeployment.CustomDeploymentClientModule;
 import io.harness.delegate.beans.DelegateAsyncTaskResponse;
 import io.harness.delegate.beans.DelegateSyncTaskResponse;
 import io.harness.delegate.beans.DelegateTaskProgressResponse;
@@ -42,6 +49,7 @@ import io.harness.mongo.AbstractMongoModule;
 import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoPersistence;
 import io.harness.morphia.MorphiaRegistrar;
+import io.harness.ng.core.event.MessageListener;
 import io.harness.organization.OrganizationClientModule;
 import io.harness.outbox.TransactionOutboxModule;
 import io.harness.outbox.api.OutboxEventHandler;
@@ -50,14 +58,21 @@ import io.harness.persistence.NoopUserProvider;
 import io.harness.persistence.UserProvider;
 import io.harness.pipeline.yamlschema.PipelineYamlSchemaClientModule;
 import io.harness.project.ProjectClientModule;
+import io.harness.reconcile.NgManagerReconcileClientModule;
 import io.harness.redis.RedisConfig;
 import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.TemplateServiceModuleRegistrars;
 import io.harness.service.DelegateServiceDriverModule;
+import io.harness.service.ServiceResourceClientModule;
+import io.harness.template.event.OrgEntityCrudStreamListener;
+import io.harness.template.event.ProjectEntityCrudStreamListener;
 import io.harness.template.events.TemplateOutboxEventHandler;
 import io.harness.template.eventsframework.TemplateEventsFrameworkModule;
+import io.harness.template.handler.CustomDeploymentYamlConversionHandler;
 import io.harness.template.handler.PipelineTemplateYamlConversionHandler;
+import io.harness.template.handler.SecretManagerTemplateYamlConversionHandler;
+import io.harness.template.handler.StepGroupTemplateYamlConversionHandler;
 import io.harness.template.handler.TemplateYamlConversionHandler;
 import io.harness.template.handler.TemplateYamlConversionHandlerRegistry;
 import io.harness.template.mappers.TemplateFilterPropertiesMapper;
@@ -65,6 +80,8 @@ import io.harness.template.services.NGTemplateSchemaService;
 import io.harness.template.services.NGTemplateSchemaServiceImpl;
 import io.harness.template.services.NGTemplateService;
 import io.harness.template.services.NGTemplateServiceImpl;
+import io.harness.template.services.TemplateGitXService;
+import io.harness.template.services.TemplateGitXServiceImpl;
 import io.harness.template.services.TemplateMergeService;
 import io.harness.template.services.TemplateMergeServiceImpl;
 import io.harness.template.services.TemplateRefreshService;
@@ -75,6 +92,9 @@ import io.harness.waiter.AbstractWaiterModule;
 import io.harness.waiter.WaiterConfiguration;
 import io.harness.yaml.YamlSdkModule;
 import io.harness.yaml.schema.beans.YamlSchemaRootClass;
+import io.harness.yaml.schema.client.YamlSchemaClientModule;
+import io.harness.yaml.schema.client.config.YamlSchemaClientConfig;
+import io.harness.yaml.schema.client.config.YamlSchemaHttpClientConfig;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.base.Suppliers;
@@ -89,14 +109,19 @@ import com.google.inject.multibindings.MapBinder;
 import com.google.inject.name.Named;
 import com.google.inject.name.Names;
 import io.dropwizard.jackson.Jackson;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.function.Supplier;
+import javax.validation.Validation;
+import javax.validation.ValidatorFactory;
 import lombok.extern.slf4j.Slf4j;
+import org.hibernate.validator.parameternameprovider.ReflectionParameterNameProvider;
 import org.mongodb.morphia.converters.TypeConverter;
 import org.springframework.core.convert.converter.Converter;
+import ru.vyarus.guice.validator.ValidationModule;
 
 @Slf4j
 @OwnedBy(CDC)
@@ -138,6 +163,7 @@ public class TemplateServiceModule extends AbstractModule {
     install(PrimaryVersionManagerModule.getInstance());
     install(TimeModule.getInstance());
     install(FiltersModule.getInstance());
+    install(new ValidationModule(getValidatorFactory()));
     install(new ProjectClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
         this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
     install(new OrganizationClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
@@ -154,6 +180,10 @@ public class TemplateServiceModule extends AbstractModule {
     install(new AuditClientModule(this.templateServiceConfiguration.getAuditClientConfig(),
         this.templateServiceConfiguration.getManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId(),
         this.templateServiceConfiguration.isEnableAudit()));
+    install(new CustomDeploymentClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
+        this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
+    install(new NgManagerReconcileClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
+        this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
     install(new TransactionOutboxModule(DEFAULT_OUTBOX_POLL_CONFIGURATION, TEMPLATE_SERVICE.getServiceId(), false));
     install(new TokenClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
         this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
@@ -163,6 +193,15 @@ public class TemplateServiceModule extends AbstractModule {
     install(new AccountClientModule(templateServiceConfiguration.getManagerClientConfig(),
         templateServiceConfiguration.getManagerServiceSecret(), TEMPLATE_SERVICE.toString()));
     install(YamlSdkModule.getInstance());
+    Map<String, YamlSchemaHttpClientConfig> yamlSchemaHttpClientConfigMap = new HashMap<>();
+    yamlSchemaHttpClientConfigMap.put("cd",
+        YamlSchemaHttpClientConfig.builder()
+            .serviceHttpClientConfig(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig())
+            .secret(this.templateServiceConfiguration.getNgManagerServiceSecret())
+            .build());
+    install(YamlSchemaClientModule.getInstance(
+        YamlSchemaClientConfig.builder().yamlSchemaHttpClientMap(yamlSchemaHttpClientConfigMap).build(),
+        TEMPLATE_SERVICE.getServiceId()));
 
     bind(ScheduledExecutorService.class)
         .annotatedWith(Names.named("taskPollExecutor"))
@@ -176,14 +215,19 @@ public class TemplateServiceModule extends AbstractModule {
     bind(NGTemplateSchemaService.class).to(NGTemplateSchemaServiceImpl.class);
     bind(TemplateRefreshService.class).to(TemplateRefreshServiceImpl.class);
     bind(TemplateMergeService.class).to(TemplateMergeServiceImpl.class).in(Singleton.class);
+    bind(TemplateGitXService.class).to(TemplateGitXServiceImpl.class).in(Singleton.class);
 
     install(EnforcementClientModule.getInstance(templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
         templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId(),
         templateServiceConfiguration.getEnforcementClientConfiguration()));
 
+    install(new ServiceResourceClientModule(this.templateServiceConfiguration.getNgManagerServiceHttpClientConfig(),
+        this.templateServiceConfiguration.getNgManagerServiceSecret(), TEMPLATE_SERVICE.getServiceId()));
+
     MapBinder<String, FilterPropertiesMapper> filterPropertiesMapper =
         MapBinder.newMapBinder(binder(), String.class, FilterPropertiesMapper.class);
     filterPropertiesMapper.addBinding(FilterType.TEMPLATE.toString()).to(TemplateFilterPropertiesMapper.class);
+    registerEventsFrameworkMessageListeners();
   }
 
   @Provides
@@ -264,6 +308,15 @@ public class TemplateServiceModule extends AbstractModule {
         () -> getDelegateCallbackToken(delegateServiceGrpcClient));
   }
 
+  private void registerEventsFrameworkMessageListeners() {
+    bind(MessageListener.class)
+        .annotatedWith(Names.named(PROJECT_ENTITY + ENTITY_CRUD))
+        .to(ProjectEntityCrudStreamListener.class);
+    bind(MessageListener.class)
+        .annotatedWith(Names.named(ORGANIZATION_ENTITY + ENTITY_CRUD))
+        .to(OrgEntityCrudStreamListener.class);
+  }
+
   @Provides
   @Singleton
   TemplateYamlConversionHandlerRegistry getTemplateYamlConversionHandlerRegistry(Injector injector) {
@@ -272,11 +325,17 @@ public class TemplateServiceModule extends AbstractModule {
     templateYamlConversionHandlerRegistry.register(STEP, injector.getInstance(TemplateYamlConversionHandler.class));
     templateYamlConversionHandlerRegistry.register(STAGE, injector.getInstance(TemplateYamlConversionHandler.class));
     templateYamlConversionHandlerRegistry.register(
+        CUSTOM_DEPLOYMENT, injector.getInstance(CustomDeploymentYamlConversionHandler.class));
+    templateYamlConversionHandlerRegistry.register(
         PIPELINE, injector.getInstance(PipelineTemplateYamlConversionHandler.class));
     templateYamlConversionHandlerRegistry.register(
         MONITORED_SERVICE, injector.getInstance(TemplateYamlConversionHandler.class));
     templateYamlConversionHandlerRegistry.register(
-        SECRET_MANAGER, injector.getInstance(TemplateYamlConversionHandler.class));
+        SECRET_MANAGER, injector.getInstance(SecretManagerTemplateYamlConversionHandler.class));
+    templateYamlConversionHandlerRegistry.register(
+        ARTIFACT_SOURCE, injector.getInstance(TemplateYamlConversionHandler.class));
+    templateYamlConversionHandlerRegistry.register(
+        STEP_GROUP, injector.getInstance(StepGroupTemplateYamlConversionHandler.class));
     return templateYamlConversionHandlerRegistry;
   }
 
@@ -306,5 +365,12 @@ public class TemplateServiceModule extends AbstractModule {
             .build());
     log.info("delegate callback token generated =[{}]", delegateCallbackToken.getToken());
     return delegateCallbackToken;
+  }
+
+  private ValidatorFactory getValidatorFactory() {
+    return Validation.byDefaultProvider()
+        .configure()
+        .parameterNameProvider(new ReflectionParameterNameProvider())
+        .buildValidatorFactory();
   }
 }

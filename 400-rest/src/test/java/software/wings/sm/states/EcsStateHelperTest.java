@@ -13,6 +13,7 @@ import static io.harness.beans.ExecutionStatus.RUNNING;
 import static io.harness.beans.ExecutionStatus.SUCCESS;
 import static io.harness.beans.FeatureName.ECS_REGISTER_TASK_DEFINITION_TAGS;
 import static io.harness.beans.FeatureName.ENABLE_ADDING_SERVICE_VARS_TO_ECS_SPEC;
+import static io.harness.beans.FeatureName.FIXED_INSTANCE_ZERO_ALLOW;
 import static io.harness.delegate.beans.pcf.ResizeStrategy.RESIZE_NEW_FIRST;
 import static io.harness.exception.FailureType.TIMEOUT;
 import static io.harness.rule.OwnerRule.ADWAIT;
@@ -29,9 +30,9 @@ import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.EcsInfrastructureMapping.Builder.anEcsInfrastructureMapping;
 import static software.wings.beans.Environment.Builder.anEnvironment;
 import static software.wings.beans.SettingAttribute.Builder.aSettingAttribute;
-import static software.wings.beans.artifact.Artifact.Builder.anArtifact;
 import static software.wings.beans.command.CommandUnitDetails.CommandUnitType.AWS_ECS_SERVICE_SETUP;
 import static software.wings.beans.command.EcsSetupParams.EcsSetupParamsBuilder.anEcsSetupParams;
+import static software.wings.persistence.artifact.Artifact.Builder.anArtifact;
 import static software.wings.sm.InstanceStatusSummary.InstanceStatusSummaryBuilder.anInstanceStatusSummary;
 import static software.wings.utils.WingsTestConstants.ACTIVITY_ID;
 import static software.wings.utils.WingsTestConstants.APP_ID;
@@ -103,7 +104,6 @@ import software.wings.beans.Service;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.StoreType;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.command.ContainerSetupCommandUnitExecutionData;
 import software.wings.beans.command.ContainerSetupParams;
 import software.wings.beans.command.EcsResizeParams;
@@ -125,6 +125,7 @@ import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsDeployRollbackDataFetchResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceDeployResponse;
 import software.wings.helpers.ext.k8s.request.K8sValuesLocation;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.service.impl.artifact.ArtifactCollectionUtils;
 import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.DelegateService;
@@ -155,6 +156,7 @@ import org.junit.experimental.categories.Category;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.invocation.InvocationOnMock;
 import org.mockito.stubbing.Answer;
@@ -313,6 +315,7 @@ public class EcsStateHelperTest extends CategoryTest {
   @Category(UnitTests.class)
   public void testBuildContainerServiceElement() {
     ExecutionContextImpl mockContext = mock(ExecutionContextImpl.class);
+    Mockito.when(featureFlagService.isEnabled(FIXED_INSTANCE_ZERO_ALLOW, mockContext.getAccountId())).thenReturn(true);
     when(mockContext.renderExpression(any())).thenAnswer(new Answer<String>() {
       @Override
       public String answer(InvocationOnMock invocation) throws Throwable {
@@ -338,7 +341,7 @@ public class EcsStateHelperTest extends CategoryTest {
             .build();
     doReturn(executionData).when(mockContext).getStateExecutionData();
     ContainerServiceElement element = helper.buildContainerServiceElement(
-        mockContext, data, SUCCESS, details, "3", "2", "fixedInstances", RESIZE_NEW_FIRST, 10, mockLogger);
+        mockContext, data, details, "3", "2", "fixedInstances", RESIZE_NEW_FIRST, 10);
     assertThat(element).isNotNull();
     assertThat(element.getUuid()).isEqualTo(SERVICE_ID);
     assertThat(element.getName()).isEqualTo("ContainerServiceName");

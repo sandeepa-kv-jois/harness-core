@@ -12,7 +12,9 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.cli.CliResponse;
 import io.harness.logging.LogCallback;
+import io.harness.logging.PlanHumanReadableOutputStream;
 import io.harness.logging.PlanJsonLogOutputStream;
+import io.harness.logging.PlanLogOutputStream;
 import io.harness.terraform.beans.TerraformVersion;
 import io.harness.terraform.request.TerraformApplyCommandRequest;
 import io.harness.terraform.request.TerraformDestroyCommandRequest;
@@ -64,6 +66,17 @@ public interface TerraformClient {
   @Nonnull
   CliResponse show(String planName, long timeoutInMillis, Map<String, String> envVariables, String scriptDirectory,
       @Nonnull LogCallback executionLogCallback, @Nonnull PlanJsonLogOutputStream planJsonLogOutputStream)
+      throws InterruptedException, TimeoutException, IOException;
+
+  @Nonnull
+  CliResponse show(String planName, long timeoutInMillis, Map<String, String> envVariables, String scriptDirectory,
+      @Nonnull LogCallback executionLogCallback, @Nonnull PlanLogOutputStream planLogOutputStream)
+      throws InterruptedException, TimeoutException, IOException;
+
+  @Nonnull
+  CliResponse prepareHumanReadablePlan(String planName, long timeoutInMillis, Map<String, String> envVariables,
+      String scriptDirectory, @Nonnull LogCallback executionLogCallback,
+      @Nonnull PlanHumanReadableOutputStream planHumanReadableOutputStream)
       throws InterruptedException, TimeoutException, IOException;
 
   @Nonnull

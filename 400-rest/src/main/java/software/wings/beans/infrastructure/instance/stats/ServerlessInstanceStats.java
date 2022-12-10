@@ -10,11 +10,14 @@ package software.wings.beans.infrastructure.instance.stats;
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotation.HarnessEntity;
+import io.harness.annotations.StoreIn;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.EmbeddedUser;
 import io.harness.mongo.index.CompoundMongoIndex;
 import io.harness.mongo.index.FdIndex;
+import io.harness.mongo.index.FdTtlIndex;
 import io.harness.mongo.index.MongoIndex;
+import io.harness.ng.DbAliases;
 import io.harness.persistence.AccountAccess;
 import io.harness.persistence.CreatedAtAware;
 import io.harness.persistence.CreatedByAware;
@@ -29,8 +32,10 @@ import software.wings.beans.infrastructure.instance.InvocationCount.InvocationCo
 
 import com.google.common.collect.ImmutableList;
 import java.time.Instant;
+import java.time.OffsetDateTime;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Date;
 import java.util.List;
 import javax.validation.constraints.NotNull;
 import lombok.AccessLevel;
@@ -45,12 +50,14 @@ import org.mongodb.morphia.annotations.Id;
 
 @Data
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
+@StoreIn(DbAliases.HARNESS)
 @Entity(value = "serverless-instance-stats", noClassnameStored = true)
 @HarnessEntity(exportable = false)
 @FieldNameConstants(innerTypeName = "ServerlessInstanceStatsKeys")
 @OwnedBy(CDP)
 public class ServerlessInstanceStats implements PersistentEntity, UuidAware, CreatedAtAware, CreatedByAware,
                                                 UpdatedAtAware, UpdatedByAware, AccountAccess {
+  public static final long TTL_MONTHS = 6;
   public static List<MongoIndex> mongoIndexes() {
     return ImmutableList.<MongoIndex>builder()
         .add(CompoundMongoIndex.builder()
@@ -75,6 +82,7 @@ public class ServerlessInstanceStats implements PersistentEntity, UuidAware, Cre
   @NonFinal private Instant timestamp;
   @NonFinal private String accountId;
   @NonFinal private Collection<AggregateInvocationCount> aggregateCounts = new ArrayList<>();
+  @FdTtlIndex Date validUntil = Date.from(OffsetDateTime.now().plusMonths(TTL_MONTHS).toInstant());
 
   public ServerlessInstanceStats(
       Instant timestamp, String accountId, Collection<AggregateInvocationCount> aggregateCounts) {
@@ -90,10 +98,10 @@ public class ServerlessInstanceStats implements PersistentEntity, UuidAware, Cre
   @Value
   @Builder
   public static class AggregateInvocationCount {
-    private EntityType entityType;
-    private String name;
-    private String id;
-    @NonFinal private long invocationCount;
-    private InvocationCountKey invocationCountKey;
+    EntityType entityType;
+    String name;
+    String id;
+    @NonFinal long invocationCount;
+    InvocationCountKey invocationCountKey;
   }
 }

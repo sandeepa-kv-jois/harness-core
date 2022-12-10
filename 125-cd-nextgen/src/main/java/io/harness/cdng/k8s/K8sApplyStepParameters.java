@@ -19,7 +19,6 @@ import io.harness.plancreator.steps.TaskSelectorYaml;
 import io.harness.pms.yaml.ParameterField;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nonnull;
 import lombok.Builder;
@@ -38,31 +37,21 @@ public class K8sApplyStepParameters extends K8sApplyBaseStepInfo implements K8sS
   @Builder(builderMethodName = "infoBuilder")
   public K8sApplyStepParameters(ParameterField<Boolean> skipDryRun, ParameterField<Boolean> skipSteadyStateCheck,
       ParameterField<List<String>> filePaths, ParameterField<List<TaskSelectorYaml>> delegateSelectors,
-      List<ManifestConfigWrapper> overrides) {
-    super(skipDryRun, skipSteadyStateCheck, filePaths, delegateSelectors, overrides);
+      List<ManifestConfigWrapper> overrides, ParameterField<Boolean> skipRendering) {
+    super(skipDryRun, skipSteadyStateCheck, filePaths, delegateSelectors, overrides, skipRendering);
   }
 
   @Nonnull
   @Override
   @JsonIgnore
   public List<String> getCommandUnits() {
+    List<String> commandUnits = K8sSpecParameters.super.getCommandUnits();
     if (!ParameterField.isNull(skipSteadyStateCheck)
         && CDStepHelper.getParameterFieldBooleanValue(skipSteadyStateCheck,
             K8sApplyBaseStepInfoKeys.skipSteadyStateCheck,
             String.format("%s step", ExecutionNodeType.K8S_APPLY.getYamlType()))) {
-      return Arrays.asList(K8sCommandUnitConstants.FetchFiles, K8sCommandUnitConstants.Init,
-          K8sCommandUnitConstants.Prepare, K8sCommandUnitConstants.Apply, K8sCommandUnitConstants.WrapUp);
-    } else {
-      return Arrays.asList(K8sCommandUnitConstants.FetchFiles, K8sCommandUnitConstants.Init,
-          K8sCommandUnitConstants.Prepare, K8sCommandUnitConstants.Apply, K8sCommandUnitConstants.WaitForSteadyState,
-          K8sCommandUnitConstants.WrapUp);
+      commandUnits.remove(K8sCommandUnitConstants.WaitForSteadyState);
     }
-  }
-
-  @Nonnull
-  @Override
-  @JsonIgnore
-  public List<String> getCommandUnits(boolean isPruningEnabled) {
-    return getCommandUnits();
+    return commandUnits;
   }
 }

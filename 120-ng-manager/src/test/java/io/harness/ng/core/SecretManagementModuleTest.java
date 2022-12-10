@@ -20,6 +20,8 @@ import io.harness.CategoryTest;
 import io.harness.accesscontrol.clients.AccessControlClient;
 import io.harness.account.AccountClient;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cache.CacheConfig;
+import io.harness.cache.CacheModule;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.impl.DefaultConnectorServiceImpl;
 import io.harness.connector.services.ConnectorService;
@@ -37,13 +39,13 @@ import io.harness.ng.opa.OpaService;
 import io.harness.ng.opa.OpaServiceImpl;
 import io.harness.ng.opa.entities.secret.OpaSecretService;
 import io.harness.ng.opa.entities.secret.OpaSecretServiceImpl;
+import io.harness.ngsettings.client.remote.NGSettingsClient;
 import io.harness.opaclient.OpaServiceClient;
 import io.harness.outbox.api.OutboxService;
 import io.harness.pms.redisConsumer.DebeziumConsumerConfig;
 import io.harness.redis.RedisConfig;
 import io.harness.remote.client.ServiceHttpClientConfig;
 import io.harness.repositories.ConnectorRepository;
-import io.harness.repositories.NGEncryptedDataRepository;
 import io.harness.repositories.accountsetting.AccountSettingRepository;
 import io.harness.repositories.ng.core.spring.SecretRepository;
 import io.harness.rule.Owner;
@@ -52,6 +54,7 @@ import io.harness.secretmanagerclient.services.api.SecretManagerClientService;
 import io.harness.serializer.KryoRegistrar;
 import io.harness.serializer.NextGenRegistrars;
 import io.harness.service.DelegateGrpcClientWrapper;
+import io.harness.template.remote.TemplateResourceClient;
 
 import software.wings.service.intfc.FileService;
 
@@ -74,6 +77,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 @OwnedBy(PL)
 public class SecretManagementModuleTest extends CategoryTest {
   private SecretManagementModule secretManagementModule;
+  private CacheModule cacheModule;
   private SecretManagementClientModule secretManagementClientModule;
   @Mock private SecretRepository secretRepository;
   @Mock private ConnectorRepository connectorRepository;
@@ -98,6 +102,7 @@ public class SecretManagementModuleTest extends CategoryTest {
     secretManagementModule = new SecretManagementModule();
     secretManagementClientModule =
         new SecretManagementClientModule(secretManagerClientConfig, serviceSecret, "NextGenManager");
+    cacheModule = new CacheModule(CacheConfig.builder().build());
 
     List<Module> modules = new ArrayList<>();
     modules.add(new ProviderModule() {
@@ -147,13 +152,6 @@ public class SecretManagementModuleTest extends CategoryTest {
       @Singleton
       AccessControlClient getAccessControlClient() {
         return mock(AccessControlClient.class);
-      }
-    });
-    modules.add(new ProviderModule() {
-      @Provides
-      @Singleton
-      NGEncryptedDataRepository ngEncryptedDataRepository() {
-        return mock(NGEncryptedDataRepository.class);
       }
     });
     modules.add(new ProviderModule() {
@@ -258,6 +256,21 @@ public class SecretManagementModuleTest extends CategoryTest {
       @Singleton
       OpaServiceClient registerOpaServiceClientService() {
         return mock(OpaServiceClient.class);
+      }
+    });
+    modules.add(cacheModule);
+    modules.add(new ProviderModule() {
+      @Provides
+      @Singleton
+      TemplateResourceClient getTemplateResourceClient() {
+        return mock(TemplateResourceClient.class);
+      }
+    });
+    modules.add(new ProviderModule() {
+      @Provides
+      @Singleton
+      NGSettingsClient getNGSettingsClient() {
+        return mock(NGSettingsClient.class);
       }
     });
 

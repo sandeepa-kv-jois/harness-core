@@ -15,15 +15,16 @@ import static io.harness.delegate.task.terraform.TerraformExceptionConstants.Hin
 import static io.harness.logging.LogLevel.INFO;
 import static io.harness.provision.TerraformConstants.TERRAFORM_BACKEND_CONFIGS_FILE_NAME;
 import static io.harness.provision.TerraformConstants.TERRAFORM_VARIABLES_FILE_NAME;
+import static io.harness.provision.TerraformConstants.TF_BACKEND_CONFIG_DIR;
 import static io.harness.provision.TerraformConstants.TF_VAR_FILES_DIR;
 
 import static java.lang.String.format;
 
 import io.harness.annotations.dev.OwnedBy;
-import io.harness.cli.CliResponse;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.storeconfig.ArtifactoryStoreDelegateConfig;
 import io.harness.delegate.beans.storeconfig.GitStoreDelegateConfig;
+import io.harness.delegate.task.terraform.TerraformBackendConfigFileInfo;
 import io.harness.delegate.task.terraform.TerraformBaseHelper;
 import io.harness.delegate.task.terraform.TerraformTaskNGParameters;
 import io.harness.delegate.task.terraform.TerraformTaskNGResponse;
@@ -34,7 +35,9 @@ import io.harness.git.model.GitBaseRequest;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.PlanJsonLogOutputStream;
+import io.harness.logging.PlanLogOutputStream;
 import io.harness.terraform.TerraformHelperUtils;
+import io.harness.terraform.TerraformStepResponse;
 import io.harness.terraform.request.TerraformExecuteStepRequest;
 
 import com.google.inject.Inject;
@@ -113,14 +116,22 @@ public class TerraformDestroyTaskHandler extends TerraformAbstractTaskHandler {
         taskParameters.getVarFileInfos(), scriptDirectory, logCallback, taskParameters.getAccountId(), tfVarDirectory);
 
     File tfOutputsFile = Paths.get(scriptDirectory, format(TERRAFORM_VARIABLES_FILE_NAME, "output")).toFile();
-
-    try (PlanJsonLogOutputStream planJsonLogOutputStream = new PlanJsonLogOutputStream()) {
+    String tfBackendConfigDirectory = Paths.get(baseDir, TF_BACKEND_CONFIG_DIR).toString();
+    String backendConfigFile = taskParameters.getBackendConfig() != null
+        ? TerraformHelperUtils.createFileFromStringContent(
+            taskParameters.getBackendConfig(), scriptDirectory, TERRAFORM_BACKEND_CONFIGS_FILE_NAME)
+        : taskParameters.getBackendConfig();
+    TerraformBackendConfigFileInfo configFileInfo = null;
+    if (taskParameters.getBackendConfigFileInfo() != null) {
+      configFileInfo = taskParameters.getBackendConfigFileInfo();
+      backendConfigFile = terraformBaseHelper.checkoutRemoteBackendConfigFileAndConvertToFilePath(
+          configFileInfo, scriptDirectory, logCallback, taskParameters.getAccountId(), tfBackendConfigDirectory);
+    }
+    try (PlanJsonLogOutputStream planJsonLogOutputStream = new PlanJsonLogOutputStream();
+         PlanLogOutputStream planLogOutputStream = new PlanLogOutputStream()) {
       TerraformExecuteStepRequest terraformExecuteStepRequest =
           TerraformExecuteStepRequest.builder()
-              .tfBackendConfigsFile(taskParameters.getBackendConfig() != null
-                      ? TerraformHelperUtils.createFileFromStringContent(
-                          taskParameters.getBackendConfig(), scriptDirectory, TERRAFORM_BACKEND_CONFIGS_FILE_NAME)
-                      : taskParameters.getBackendConfig())
+              .tfBackendConfigsFile(backendConfigFile)
               .tfOutputsFile(tfOutputsFile.getAbsolutePath())
               .tfVarFilePaths(varFilePaths)
               .workspace(taskParameters.getWorkspace())
@@ -131,18 +142,31 @@ public class TerraformDestroyTaskHandler extends TerraformAbstractTaskHandler {
               .envVars(taskParameters.getEnvironmentVariables())
               .isSaveTerraformJson(taskParameters.isSaveTerraformStateJson())
               .logCallback(logCallback)
+              .isSaveTerraformHumanReadablePlan(taskParameters.isSaveTerraformHumanReadablePlan())
               .planJsonLogOutputStream(planJsonLogOutputStream)
+              .planLogOutputStream(planLogOutputStream)
+              .analyseTfPlanSummary(false) // this only temporary until the logic for NG is implemented - FF should be
+                                           // sent from manager side
               .timeoutInMillis(taskParameters.getTimeoutInMillis())
+              .useOptimizedTfPlan(taskParameters.isUseOptimizedTfPlan())
+              .accountId(taskParameters.getAccountId())
               .build();
 
-      CliResponse response = terraformBaseHelper.executeTerraformDestroyStep(terraformExecuteStepRequest);
+      TerraformStepResponse terraformStepResponse =
+          terraformBaseHelper.executeTerraformDestroyStep(terraformExecuteStepRequest);
 
-      logCallback.saveExecutionLog("Script execution finished with status: " + response.getCommandExecutionStatus(),
+      logCallback.saveExecutionLog("Script execution finished with status: "
+              + terraformStepResponse.getCliResponse().getCommandExecutionStatus(),
           INFO, CommandExecutionStatus.RUNNING);
 
       if (isNotEmpty(taskParameters.getVarFileInfos())) {
         terraformBaseHelper.addVarFilesCommitIdsToMap(
             taskParameters.getAccountId(), taskParameters.getVarFileInfos(), commitIdToFetchedFilesMap);
+      }
+
+      if (configFileInfo != null) {
+        terraformBaseHelper.addBackendFileCommitIdsToMap(
+            taskParameters.getAccountId(), taskParameters.getBackendConfigFileInfo(), commitIdToFetchedFilesMap);
       }
 
       File tfStateFile = TerraformHelperUtils.getTerraformStateFile(scriptDirectory, taskParameters.getWorkspace());

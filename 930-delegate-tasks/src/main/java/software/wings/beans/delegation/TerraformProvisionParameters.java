@@ -68,6 +68,8 @@ public class TerraformProvisionParameters implements TaskParameters, ActivityAcc
   @Expression(ALLOW_SECRETS) private final Map<String, String> variables;
   private final Map<String, EncryptedDataDetail> encryptedVariables;
 
+  private final TfVarGitSource remoteBackendConfig;
+  private final String backendConfigStoreType;
   private final Map<String, String> backendConfigs;
   private final Map<String, EncryptedDataDetail> encryptedBackendConfigs;
 
@@ -83,6 +85,8 @@ public class TerraformProvisionParameters implements TaskParameters, ActivityAcc
   private final List<String> tfVarFiles;
   private final boolean runPlanOnly;
   private final boolean exportPlanToApplyStep;
+  private final boolean exportPlanToHumanReadableOutput;
+
   private final String workspace;
   private final String delegateTag;
 
@@ -96,6 +100,7 @@ public class TerraformProvisionParameters implements TaskParameters, ActivityAcc
 
   private final boolean useTfClient; // FF: USE_TF_CLIENT
   private final boolean useActivityIdBasedTfBaseDir;
+  private final boolean syncGitCloneAndCopyToDestDir;
   /**
    * Boolean to indicate if we should skip updating terraform state using refresh command before applying an approved
    * terraform plan
@@ -108,6 +113,8 @@ public class TerraformProvisionParameters implements TaskParameters, ActivityAcc
   private final String awsRoleArn;
   private final String awsRegion;
   private List<EncryptedDataDetail> awsConfigEncryptionDetails;
+
+  private final boolean analyseTfPlanSummary; // FF: ANALYSE_TF_PLAN_SUMMARY
 
   @Override
   public List<ExecutionCapability> fetchRequiredExecutionCapabilities(ExpressionEvaluator maskingEvaluator) {

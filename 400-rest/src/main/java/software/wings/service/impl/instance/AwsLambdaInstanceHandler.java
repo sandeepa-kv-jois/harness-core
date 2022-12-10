@@ -63,7 +63,6 @@ import software.wings.beans.SettingAttribute;
 import software.wings.beans.SyncTaskContext;
 import software.wings.beans.Tag;
 import software.wings.beans.WorkflowExecution;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.infrastructure.instance.InvocationCount;
 import software.wings.beans.infrastructure.instance.InvocationCount.InvocationCountKey;
 import software.wings.beans.infrastructure.instance.ServerlessInstance;
@@ -75,6 +74,7 @@ import software.wings.beans.infrastructure.instance.key.AwsLambdaInstanceKey;
 import software.wings.beans.infrastructure.instance.key.deployment.AwsLambdaDeploymentKey;
 import software.wings.beans.infrastructure.instance.key.deployment.DeploymentKey;
 import software.wings.delegatetasks.DelegateProxyFactory;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.service.AwsLambdaInstanceSyncPerpetualTaskCreator;
 import software.wings.service.InstanceSyncPerpetualTaskCreator;
 import software.wings.service.impl.aws.model.embed.AwsLambdaDetails;
@@ -457,8 +457,8 @@ public class AwsLambdaInstanceHandler extends InstanceHandler implements Instanc
   }
 
   @Override
-  public FeatureName getFeatureFlagToStopIteratorBasedInstanceSync() {
-    return STOP_INSTANCE_SYNC_VIA_ITERATOR_FOR_AWS_LAMBDA_DEPLOYMENTS;
+  public Optional<FeatureName> getFeatureFlagToStopIteratorBasedInstanceSync() {
+    return Optional.of(STOP_INSTANCE_SYNC_VIA_ITERATOR_FOR_AWS_LAMBDA_DEPLOYMENTS);
   }
 
   @VisibleForTesting
@@ -681,8 +681,8 @@ public class AwsLambdaInstanceHandler extends InstanceHandler implements Instanc
   }
 
   @Override
-  public FeatureName getFeatureFlagToEnablePerpetualTaskForInstanceSync() {
-    return MOVE_AWS_LAMBDA_INSTANCE_SYNC_TO_PERPETUAL_TASK;
+  public Optional<FeatureName> getFeatureFlagToEnablePerpetualTaskForInstanceSync() {
+    return Optional.of(MOVE_AWS_LAMBDA_INSTANCE_SYNC_TO_PERPETUAL_TASK);
   }
 
   @Override

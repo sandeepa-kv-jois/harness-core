@@ -12,6 +12,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionStrategyType;
 import io.harness.beans.FeatureName;
+import io.harness.cdng.featureFlag.CDFeatureFlagHelper;
 import io.harness.cdng.featureFlag.CdEnumFilter;
 import io.harness.cdng.infra.beans.ProvisionerType;
 import io.harness.cdng.pipeline.NGStepType;
@@ -19,6 +20,8 @@ import io.harness.cdng.pipeline.StepCategory;
 import io.harness.cdng.pipeline.StepData;
 import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.exception.GeneralException;
+import io.harness.exception.InvalidRequestException;
+import io.harness.steps.matrix.StrategyParameters;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.CacheBuilder;
@@ -38,6 +41,8 @@ import java.util.stream.Collectors;
 @OwnedBy(CDP)
 public class CDNGPipelineConfigurationHelper {
   @Inject private CdEnumFilter enumFilter;
+  @Inject private CDNGPipelineExecutionStrategyHelperV2 cdngPipelineExecutionStrategyHelperV2;
+  @Inject private CDFeatureFlagHelper featureFlagHelper;
 
   @VisibleForTesting static String LIBRARY = "Library";
 
@@ -56,12 +61,21 @@ public class CDNGPipelineConfigurationHelper {
   }
 
   public String getExecutionStrategyYaml(ServiceDefinitionType serviceDefinitionType,
-      ExecutionStrategyType executionStrategyType, boolean includeVerify) throws IOException {
+      ExecutionStrategyType executionStrategyType, boolean includeVerify, String accountId) throws IOException {
     // Note: Additional condition for GitOps is added because we do not want to show the GitOps Strategy in
     // the UI but also provide the support to UI for default yaml
+    ClassLoader classLoader = this.getClass().getClassLoader();
     if (ServiceDefinitionType.getExecutionStrategies(serviceDefinitionType).contains(executionStrategyType)
         || executionStrategyType == ExecutionStrategyType.GITOPS) {
-      ClassLoader classLoader = this.getClass().getClassLoader();
+      if (executionStrategyType == ExecutionStrategyType.GITOPS
+          && featureFlagHelper.isEnabled(accountId, FeatureName.GITOPS_FETCH_LINKED_APPS)) {
+        return Resources.toString(
+            Objects.requireNonNull(
+                classLoader.getResource(String.format("executionStrategyYaml/%s-%s%s-with-linked-apps.yaml",
+                    serviceDefinitionType.getYamlName().toLowerCase(),
+                    executionStrategyType.getDisplayName().toLowerCase(), includeVerify ? "-with-verify" : ""))),
+            StandardCharsets.UTF_8);
+      }
       return Resources.toString(
           Objects.requireNonNull(classLoader.getResource(
               String.format("executionStrategyYaml/%s-%s%s.yaml", serviceDefinitionType.getYamlName().toLowerCase(),
@@ -69,6 +83,36 @@ public class CDNGPipelineConfigurationHelper {
           StandardCharsets.UTF_8);
     } else {
       throw new GeneralException("Execution Strategy Not supported for given deployment type");
+    }
+  }
+
+  public String generateExecutionStrategyYaml(String accountIdentifier, ServiceDefinitionType serviceDefinitionType,
+      ExecutionStrategyType executionStrategyType, boolean includeVerify, StrategyParameters strategyParameters)
+      throws IOException {
+    String yamlName = serviceDefinitionType.getYamlName();
+    if (ServiceDefinitionType.SSH.getYamlName().equals(yamlName)
+        || ServiceDefinitionType.WINRM.getYamlName().equals(yamlName)) {
+      return generateSshWinRmExecutionStrategyYaml(
+          accountIdentifier, serviceDefinitionType, executionStrategyType, includeVerify, strategyParameters);
+    }
+    throw new InvalidRequestException(
+        String.format("Execution Strategy not supported for service type, yamlName: %s", yamlName));
+  }
+
+  private String generateSshWinRmExecutionStrategyYaml(String accountIdentifier,
+      ServiceDefinitionType serviceDefinitionType, ExecutionStrategyType executionStrategyType, boolean includeVerify,
+      StrategyParameters strategyParameters) throws IOException {
+    if (ExecutionStrategyType.CANARY.equals(executionStrategyType)) {
+      return cdngPipelineExecutionStrategyHelperV2.generateCanaryYaml(
+          accountIdentifier, serviceDefinitionType, includeVerify, strategyParameters);
+    } else if (ExecutionStrategyType.ROLLING.equals(executionStrategyType)) {
+      return cdngPipelineExecutionStrategyHelperV2.generateRollingYaml(
+          accountIdentifier, serviceDefinitionType, includeVerify, strategyParameters);
+    } else if (ExecutionStrategyType.BASIC.equals(executionStrategyType)) {
+      return cdngPipelineExecutionStrategyHelperV2.generateBasicYaml(
+          accountIdentifier, serviceDefinitionType, includeVerify, strategyParameters);
+    } else {
+      return getExecutionStrategyYaml(serviceDefinitionType, executionStrategyType, includeVerify, accountIdentifier);
     }
   }
 
@@ -85,6 +129,7 @@ public class CDNGPipelineConfigurationHelper {
   public List<ServiceDefinitionType> getServiceDefinitionTypes(String accountId) {
     return Arrays.stream(ServiceDefinitionType.values())
         .filter(enumFilter.filter(accountId, FeatureName.SSH_NG))
+        .filter(enumFilter.filter(accountId, FeatureName.NG_SVC_ENV_REDESIGN))
         .collect(Collectors.toList());
   }
 

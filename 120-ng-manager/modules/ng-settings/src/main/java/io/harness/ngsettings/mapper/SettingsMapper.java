@@ -18,6 +18,26 @@ import io.harness.ngsettings.utils.SettingUtils;
 
 public class SettingsMapper {
   public SettingDTO writeSettingDTO(
+      Setting setting, SettingConfiguration settingConfiguration, Boolean isSettingEditable, String defaultValue) {
+    return SettingDTO.builder()
+        .identifier(setting.getIdentifier())
+        .name(settingConfiguration.getName())
+        .orgIdentifier(setting.getOrgIdentifier())
+        .projectIdentifier(setting.getProjectIdentifier())
+        .allowedValues(settingConfiguration.getAllowedValues())
+        .allowOverrides(setting.getAllowOverrides())
+        .category(settingConfiguration.getCategory())
+        .groupIdentifier(settingConfiguration.getGroupIdentifier())
+        .valueType(settingConfiguration.getValueType())
+        .defaultValue(defaultValue)
+        .value(setting.getValue())
+        .settingSource(SettingUtils.getSettingSource(setting))
+        .isSettingEditable(isSettingEditable)
+        .allowedScopes(settingConfiguration.getAllowedScopes())
+        .build();
+  }
+
+  public SettingDTO writeSettingDTO(
       Setting setting, SettingConfiguration settingConfiguration, Boolean isSettingEditable) {
     return SettingDTO.builder()
         .identifier(setting.getIdentifier())
@@ -29,10 +49,11 @@ public class SettingsMapper {
         .category(settingConfiguration.getCategory())
         .groupIdentifier(settingConfiguration.getGroupIdentifier())
         .valueType(settingConfiguration.getValueType())
-        .defaultValue(settingConfiguration.getDefaultValue())
+        .defaultValue(setting.getValue())
         .value(setting.getValue())
         .settingSource(SettingUtils.getSettingSource(setting))
         .isSettingEditable(isSettingEditable)
+        .allowedScopes(settingConfiguration.getAllowedScopes())
         .build();
   }
 
@@ -49,23 +70,15 @@ public class SettingsMapper {
         .allowOverrides(settingConfiguration.getAllowOverrides())
         .settingSource(SettingSource.DEFAULT)
         .isSettingEditable(isSettingEditable)
+        .allowedScopes(settingConfiguration.getAllowedScopes())
         .build();
   }
 
-  public SettingDTO writeSettingDTO(
-      Boolean allowOverrides, SettingConfiguration settingConfiguration, Boolean isSettingEditable) {
-    return SettingDTO.builder()
-        .identifier(settingConfiguration.getIdentifier())
-        .name(settingConfiguration.getName())
-        .category(settingConfiguration.getCategory())
-        .groupIdentifier(settingConfiguration.getGroupIdentifier())
-        .valueType(settingConfiguration.getValueType())
-        .defaultValue(settingConfiguration.getDefaultValue())
-        .value(settingConfiguration.getDefaultValue())
-        .allowedValues(settingConfiguration.getAllowedValues())
-        .allowOverrides(allowOverrides)
-        .settingSource(SettingSource.DEFAULT)
-        .isSettingEditable(isSettingEditable)
+  public SettingResponseDTO writeSettingResponseDTO(
+      Setting setting, SettingConfiguration settingConfiguration, Boolean isSettingEditable, String defaultValue) {
+    return SettingResponseDTO.builder()
+        .setting(writeSettingDTO(setting, settingConfiguration, isSettingEditable, defaultValue))
+        .lastModifiedAt(setting.getLastModifiedAt())
         .build();
   }
 
@@ -97,6 +110,8 @@ public class SettingsMapper {
         .valueType(settingConfiguration.getValueType())
         .defaultValue(settingConfiguration.getDefaultValue())
         .isSettingEditable(isSettingEditable)
+        .settingSource(SettingUtils.getSettingSource(setting))
+        .allowedScopes(settingConfiguration.getAllowedScopes())
         .build();
   }
 
@@ -115,6 +130,8 @@ public class SettingsMapper {
         .valueType(settingConfiguration.getValueType())
         .defaultValue(settingConfiguration.getDefaultValue())
         .isSettingEditable(isSettingEditable)
+        .settingSource(SettingUtils.getSettingSourceFromOrgAndProject(orgIdentifier, projectIdentifier))
+        .allowedScopes(settingConfiguration.getAllowedScopes())
         .build();
   }
 

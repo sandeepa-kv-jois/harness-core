@@ -20,6 +20,7 @@ import io.harness.serializer.kryo.DelegateServiceKryoRegister;
 import io.harness.serializer.kryo.EventEntitiesKryoRegistrar;
 import io.harness.serializer.kryo.ManagerKryoRegistrar;
 import io.harness.serializer.kryo.NgAuthenticationServiceKryoRegistrar;
+import io.harness.serializer.kryo.NgPersistenceKryoRegistrar;
 import io.harness.serializer.kryo.NotificationBeansKryoRegistrar;
 import io.harness.serializer.kryo.NotificationDelegateTasksKryoRegistrar;
 import io.harness.serializer.kryo.ProjectAndOrgKryoRegistrar;
@@ -31,8 +32,10 @@ import io.harness.serializer.morphia.EventEntitiesMorphiaRegister;
 import io.harness.serializer.morphia.EventMorphiaRegistrar;
 import io.harness.serializer.morphia.LimitsMorphiaRegistrar;
 import io.harness.serializer.morphia.ManagerMorphiaRegistrar;
+import io.harness.serializer.morphia.NgPersistenceMorphiaRegistrar;
 import io.harness.serializer.morphia.NotificationBeansMorphiaRegistrar;
 import io.harness.serializer.morphia.ProjectAndOrgMorphiaRegistrar;
+import io.harness.serializer.morphia.TaskDataV2Convertor;
 
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
@@ -72,6 +75,7 @@ public class ManagerRegistrars {
           .add(EventEntitiesKryoRegistrar.class)
           .addAll(DelegateTaskRegistrars.kryoRegistrars)
           .add(NgAuthenticationServiceKryoRegistrar.class)
+          .add(NgPersistenceKryoRegistrar.class)
           .build();
 
   public static final ImmutableSet<Class<? extends MorphiaRegistrar>> morphiaRegistrars =
@@ -102,6 +106,7 @@ public class ManagerRegistrars {
           .addAll(NGAuditCommonsRegistrars.morphiaRegistrars)
           .addAll(OutboxEventRegistrars.morphiaRegistrars)
           .add(EventEntitiesMorphiaRegister.class)
+          .add(NgPersistenceMorphiaRegistrar.class)
           .addAll(DelegateTaskRegistrars.morphiaRegistrars)
           .build();
 
@@ -109,6 +114,7 @@ public class ManagerRegistrars {
       ImmutableSet.<Class<? extends TypeConverter>>builder()
           .addAll(PersistenceRegistrars.morphiaConverters)
           .addAll(DelegateTasksBeansRegistrars.morphiaConverters)
+          .add(TaskDataV2Convertor.class)
           .build();
 
   public static final ImmutableList<Class<? extends Converter<?, ?>>> springConverters =

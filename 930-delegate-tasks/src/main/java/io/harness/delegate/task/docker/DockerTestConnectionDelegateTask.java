@@ -8,6 +8,7 @@
 package io.harness.delegate.task.docker;
 
 import io.harness.connector.ConnectorValidationResult;
+import io.harness.connector.task.docker.DockerValidationHandler;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
@@ -15,8 +16,8 @@ import io.harness.delegate.beans.connector.docker.DockerTestConnectionTaskParams
 import io.harness.delegate.beans.connector.docker.DockerTestConnectionTaskResponse;
 import io.harness.delegate.beans.connector.docker.DockerValidationParams;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
-import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.delegate.task.common.AbstractDelegateRunnableTask;
 
 import com.google.inject.Inject;
 import java.util.function.BooleanSupplier;

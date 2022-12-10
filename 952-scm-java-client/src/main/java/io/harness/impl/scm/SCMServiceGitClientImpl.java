@@ -16,6 +16,10 @@ import io.harness.beans.gitsync.GitFileDetails;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
 import io.harness.beans.gitsync.GitWebhookDetails;
+import io.harness.beans.request.GitFileRequest;
+import io.harness.beans.request.ListFilesInCommitRequest;
+import io.harness.beans.response.GitFileResponse;
+import io.harness.beans.response.ListFilesInCommitResponse;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.product.ci.scm.proto.CompareCommitsResponse;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
@@ -38,6 +42,7 @@ import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.ListCommitsInPRResponse;
 import io.harness.product.ci.scm.proto.ListCommitsResponse;
 import io.harness.product.ci.scm.proto.ListWebhooksResponse;
+import io.harness.product.ci.scm.proto.RefreshTokenResponse;
 import io.harness.product.ci.scm.proto.SCMGrpc;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 import io.harness.service.ScmClient;
@@ -60,13 +65,13 @@ public class SCMServiceGitClientImpl implements ScmClient {
   ScmServiceClient scmServiceClient;
 
   @Override
-  public CreateFileResponse createFile(ScmConnector scmConnector, GitFileDetails gitFileDetails) {
-    return scmServiceClient.createFile(scmConnector, gitFileDetails, scmBlockingStub);
+  public CreateFileResponse createFile(ScmConnector scmConnector, GitFileDetails gitFileDetails, boolean useGitClient) {
+    return scmServiceClient.createFile(scmConnector, gitFileDetails, scmBlockingStub, useGitClient);
   }
 
   @Override
-  public UpdateFileResponse updateFile(ScmConnector scmConnector, GitFileDetails gitFileDetails) {
-    return scmServiceClient.updateFile(scmConnector, gitFileDetails, scmBlockingStub);
+  public UpdateFileResponse updateFile(ScmConnector scmConnector, GitFileDetails gitFileDetails, boolean useGitClient) {
+    return scmServiceClient.updateFile(scmConnector, gitFileDetails, scmBlockingStub, useGitClient);
   }
 
   @Override
@@ -101,8 +106,13 @@ public class SCMServiceGitClientImpl implements ScmClient {
   }
 
   @Override
-  public FindFilesInCommitResponse findFilesInCommit(ScmConnector scmConnector, GitFilePathDetails gitFilePathDetails) {
-    return scmServiceClient.findFilesInCommit(scmConnector, gitFilePathDetails, scmBlockingStub);
+  public FindFilesInCommitResponse listFilesInCommit(ScmConnector scmConnector, GitFilePathDetails gitFilePathDetails) {
+    return scmServiceClient.listFilesInCommit(scmConnector, gitFilePathDetails, scmBlockingStub);
+  }
+
+  @Override
+  public ListFilesInCommitResponse listFilesInCommit(ScmConnector scmConnector, ListFilesInCommitRequest request) {
+    return scmServiceClient.listFilesInCommit(scmConnector, request, scmBlockingStub);
   }
 
   @Override
@@ -218,8 +228,18 @@ public class SCMServiceGitClientImpl implements ScmClient {
   }
 
   @Override
+  public RefreshTokenResponse refreshToken(
+      ScmConnector scmConnector, String clientId, String clientSecret, String endpoint, String refreshToken) {
+    return scmServiceClient.refreshToken(scmConnector, clientId, clientSecret, endpoint, refreshToken, scmBlockingStub);
+  }
+  @Override
   public GetLatestCommitOnFileResponse getLatestCommitOnFile(
       ScmConnector scmConnector, String branchName, String filePath) {
     return scmServiceClient.getLatestCommitOnFile(scmConnector, branchName, filePath, scmBlockingStub);
+  }
+
+  @Override
+  public GitFileResponse getFile(ScmConnector scmConnector, GitFileRequest gitFileContentRequest) {
+    return scmServiceClient.getFile(scmConnector, gitFileContentRequest, scmBlockingStub);
   }
 }

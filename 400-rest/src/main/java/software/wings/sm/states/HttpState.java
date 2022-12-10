@@ -43,8 +43,8 @@ import io.harness.exception.ExceptionUtils;
 import io.harness.exception.FailureType;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
-import io.harness.expression.ExpressionReflectionUtils;
 import io.harness.ff.FeatureFlagService;
+import io.harness.reflection.ExpressionReflectionUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
 
@@ -505,7 +505,8 @@ public class HttpState extends State implements SweepingOutputStateMixin {
       executionData.setAssertionStatement(assertion);
       executionData.setTemplateVariable(templateUtils.processTemplateVariables(context, getTemplateVariables()));
       ExecutionStatus executionStatus = ExecutionStatus.SUCCESS;
-      if (!evaluateAssertion(context, executionData) || executionData.getStatus() == ExecutionStatus.ERROR) {
+      if (!evaluateAssertion(context, executionData) || executionData.getStatus().equals(ExecutionStatus.ERROR)
+          || executionData.getStatus().equals(ExecutionStatus.FAILED)) {
         executionStatus = ExecutionStatus.FAILED;
         appendFailureType(executionResponseBuilder, context, httpStateExecutionResponse);
       }

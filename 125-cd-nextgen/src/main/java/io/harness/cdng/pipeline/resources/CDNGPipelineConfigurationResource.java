@@ -9,6 +9,8 @@ package io.harness.cdng.pipeline.resources;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
 
+import io.harness.NGCommonEntityConstants;
+import io.harness.accesscontrol.AccountIdentifier;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.ExecutionStrategyType;
 import io.harness.cdng.infra.beans.ProvisionerType;
@@ -18,6 +20,7 @@ import io.harness.cdng.service.beans.ServiceDefinitionType;
 import io.harness.ng.core.dto.ErrorDTO;
 import io.harness.ng.core.dto.FailureDTO;
 import io.harness.ng.core.dto.ResponseDTO;
+import io.harness.steps.matrix.StrategyParameters;
 
 import com.google.common.io.Resources;
 import com.google.inject.Inject;
@@ -35,12 +38,14 @@ import java.util.Objects;
 import javax.validation.constraints.NotNull;
 import javax.ws.rs.Consumes;
 import javax.ws.rs.GET;
+import javax.ws.rs.POST;
 import javax.ws.rs.Path;
 import javax.ws.rs.Produces;
 import javax.ws.rs.QueryParam;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import retrofit2.http.Body;
 
 @OwnedBy(CDP)
 @Api("pipelines")
@@ -72,9 +77,11 @@ public class CDNGPipelineConfigurationResource {
   public ResponseDTO<String>
   getExecutionStrategyYaml(@NotNull @QueryParam("serviceDefinitionType") ServiceDefinitionType serviceDefinitionType,
       @NotNull @QueryParam("strategyType") ExecutionStrategyType executionStrategyType,
-      @QueryParam("includeVerify") boolean includeVerify) throws IOException {
+      @QueryParam("includeVerify") boolean includeVerify,
+      @Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @QueryParam(
+          NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier) throws IOException {
     return ResponseDTO.newResponse(cdngPipelineConfigurationHelper.getExecutionStrategyYaml(
-        serviceDefinitionType, executionStrategyType, includeVerify));
+        serviceDefinitionType, executionStrategyType, includeVerify, accountIdentifier));
   }
 
   @GET
@@ -139,5 +146,20 @@ public class CDNGPipelineConfigurationResource {
     return ResponseDTO.newResponse(
         Resources.toString(Objects.requireNonNull(classLoader.getResource("failureStrategyYaml/failurestrategy.yaml")),
             StandardCharsets.UTF_8));
+  }
+
+  @POST
+  @Path("/strategies/yaml-snippets/")
+  @ApiOperation(
+      value = "Gets generated Yaml snippet based on strategy parameters", nickname = "postExecutionStrategyYaml")
+  public ResponseDTO<String>
+  getExecutionStrategyYaml(@Parameter(description = NGCommonEntityConstants.ACCOUNT_PARAM_MESSAGE) @NotNull @QueryParam(
+                               NGCommonEntityConstants.ACCOUNT_KEY) @AccountIdentifier String accountIdentifier,
+      @NotNull @QueryParam("serviceDefinitionType") ServiceDefinitionType serviceDefinitionType,
+      @NotNull @QueryParam("strategyType") ExecutionStrategyType executionStrategyType,
+      @QueryParam("includeVerify") boolean includeVerify, @NotNull @Body StrategyParameters strategyParameters)
+      throws IOException {
+    return ResponseDTO.newResponse(cdngPipelineConfigurationHelper.generateExecutionStrategyYaml(
+        accountIdentifier, serviceDefinitionType, executionStrategyType, includeVerify, strategyParameters));
   }
 }

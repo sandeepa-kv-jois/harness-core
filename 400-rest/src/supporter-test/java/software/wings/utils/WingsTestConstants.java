@@ -159,6 +159,8 @@ public interface WingsTestConstants {
 
   String CLONED_PIPELINE_ID = "CLONED_PIPELINE_ID";
 
+  String ORIGINAL_EXECUTION_ID = "ORIGINAL_EXECUTION_ID";
+
   String PIPELINE_NAME = "PIPELINE_NAME";
 
   String PIPELINE_URL = "PIPELINE_URL";
@@ -336,6 +338,8 @@ public interface WingsTestConstants {
   String TRIGGER_DESCRIPTION = "TRIGGER_DESCRIPTION";
 
   String ARTIFACT_FILTER = "ARTIFACT_FILTER";
+
+  String ENTITY_TYPE_APP_DEFAULTS = "APP_DEFAULTS";
 
   String ENTITY_ID = "ENTITY_ID";
 

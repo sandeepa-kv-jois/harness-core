@@ -13,11 +13,10 @@ import io.harness.annotations.dev.HarnessModule;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.annotations.dev.TargetModule;
 
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.artifact.ArtifactStream;
 import software.wings.helpers.ext.jenkins.BuildDetails;
+import software.wings.persistence.artifact.Artifact;
 
-import java.util.List;
 import java.util.Map;
 
 @OwnedBy(CDC)
@@ -32,5 +31,5 @@ public interface ArtifactCollectionService {
   Artifact collectNewArtifacts(
       String appId, ArtifactStream artifactStream, String buildNumber, Map<String, Object> artifactVariables);
 
-  List<Artifact> collectNewArtifacts(String appId, String artifactStreamId);
+  void collectNewArtifacts(String appId, String artifactStreamId);
 }

@@ -9,14 +9,16 @@ package io.harness.connector.impl;
 
 import static io.harness.NGConstants.HARNESS_SECRET_MANAGER_IDENTIFIER;
 import static io.harness.annotations.dev.HarnessTeam.PL;
+import static io.harness.beans.FeatureName.DO_NOT_RENEW_APPROLE_TOKEN;
 import static io.harness.beans.FeatureName.ENABLE_CERT_VALIDATION;
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.eraro.ErrorCode.INVALID_AZURE_VAULT_CONFIGURATION;
 import static io.harness.eraro.ErrorCode.INVALID_CREDENTIAL;
 import static io.harness.eraro.ErrorCode.SECRET_MANAGEMENT_ERROR;
 import static io.harness.eraro.ErrorCode.VAULT_OPERATION_ERROR;
 import static io.harness.exception.WingsException.USER;
-import static io.harness.remote.client.RestClientUtils.getResponse;
+import static io.harness.remote.client.CGRestUtils.getResponse;
 import static io.harness.security.encryption.AccessType.APP_ROLE;
 import static io.harness.security.encryption.AccessType.AWS_IAM;
 import static io.harness.security.encryption.AccessType.TOKEN;
@@ -28,6 +30,7 @@ import static software.wings.beans.TaskType.NG_AZURE_VAULT_FETCH_ENGINES;
 import static software.wings.beans.TaskType.NG_VAULT_FETCHING_TASK;
 import static software.wings.beans.TaskType.NG_VAULT_RENEW_APP_ROLE_TOKEN;
 import static software.wings.beans.TaskType.NG_VAULT_RENEW_TOKEN;
+import static software.wings.beans.TaskType.NG_VAULT_TOKEN_LOOKUP;
 
 import static java.time.Duration.ofMillis;
 
@@ -41,6 +44,7 @@ import io.harness.connector.entities.embedded.vaultconnector.VaultConnector;
 import io.harness.connector.entities.embedded.vaultconnector.VaultConnector.VaultConnectorKeys;
 import io.harness.connector.services.NGConnectorSecretManagerService;
 import io.harness.connector.services.NGVaultService;
+import io.harness.delegate.AccountId;
 import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.TaskData;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
@@ -53,6 +57,7 @@ import io.harness.delegatetasks.NGVaultFetchEngineTaskResponse;
 import io.harness.delegatetasks.NGVaultRenewalAppRoleTaskResponse;
 import io.harness.delegatetasks.NGVaultRenewalTaskParameters;
 import io.harness.delegatetasks.NGVaultRenewalTaskResponse;
+import io.harness.delegatetasks.NGVaultTokenLookupTaskResponse;
 import io.harness.encryption.Scope;
 import io.harness.encryption.SecretRefData;
 import io.harness.encryption.SecretRefHelper;
@@ -74,6 +79,7 @@ import io.harness.ng.core.dto.secrets.SecretDTOV2;
 import io.harness.ng.core.dto.secrets.SecretTextSpecDTO;
 import io.harness.ng.core.encryptors.NGManagerEncryptorHelper;
 import io.harness.ng.core.entities.NGEncryptedData;
+import io.harness.remote.client.CGRestUtils;
 import io.harness.repositories.ConnectorRepository;
 import io.harness.secretmanagerclient.NGSecretManagerMetadata;
 import io.harness.secretmanagerclient.SecretType;
@@ -100,6 +106,7 @@ import software.wings.beans.AzureVaultConfig;
 import software.wings.beans.BaseVaultConfig;
 import software.wings.beans.TaskType;
 import software.wings.beans.VaultConfig;
+import software.wings.helpers.ext.vault.VaultTokenLookupResult;
 import software.wings.service.impl.security.NGEncryptorService;
 
 import com.google.inject.Inject;
@@ -119,6 +126,7 @@ import org.jetbrains.annotations.Nullable;
 @Slf4j
 public class NGVaultServiceImpl implements NGVaultService {
   private static final int NUM_OF_RETRIES = 3;
+  public static final String UNKNOWN_RESPONSE = "Unknown Response from delegate";
   private final DelegateGrpcClientWrapper delegateService;
   private final NGConnectorSecretManagerService ngConnectorSecretManagerService;
   private final ConnectorRepository connectorRepository;
@@ -150,6 +158,7 @@ public class NGVaultServiceImpl implements NGVaultService {
     SecretManagerConfig secretManagerConfig = getSecretManagerConfig(vaultConnector.getAccountIdentifier(),
         vaultConnector.getOrgIdentifier(), vaultConnector.getProjectIdentifier(), vaultConnector.getIdentifier());
     BaseVaultConfig baseVaultConfig = (BaseVaultConfig) secretManagerConfig;
+
     setCertValidation(vaultConnector.getAccountIdentifier(), baseVaultConfig);
     NGVaultRenewalTaskParameters parameters =
         NGVaultRenewalTaskParameters.builder().encryptionConfig(baseVaultConfig).build();
@@ -158,7 +167,7 @@ public class NGVaultServiceImpl implements NGVaultService {
         getDelegateResponseData(vaultConnector.getAccountIdentifier(), parameters, NG_VAULT_RENEW_TOKEN);
 
     if (!(delegateResponseData instanceof NGVaultRenewalTaskResponse)) {
-      throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unknown Response from delegate", USER);
+      throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, UNKNOWN_RESPONSE, USER);
     }
 
     NGVaultRenewalTaskResponse ngVaultRenewalTaskResponse = (NGVaultRenewalTaskResponse) delegateResponseData;
@@ -167,6 +176,7 @@ public class NGVaultServiceImpl implements NGVaultService {
     if (ngVaultRenewalTaskResponse.isSuccessful()) {
       vaultConnector.setRenewedAt(System.currentTimeMillis());
       connectorRepository.save(vaultConnector, ChangeType.NONE);
+      updatePerpetualTaskWhenTokenIsRenewed(vaultConnector);
     }
   }
 
@@ -199,6 +209,12 @@ public class NGVaultServiceImpl implements NGVaultService {
 
   @Override
   public void renewAppRoleClientToken(VaultConnector vaultConnector) {
+    if (CGRestUtils.getResponse(accountClient.isFeatureFlagEnabled(
+            DO_NOT_RENEW_APPROLE_TOKEN.name(), vaultConnector.getAccountIdentifier()))) {
+      vaultConnector.setRenewAppRoleToken(false);
+      connectorRepository.save(vaultConnector, ChangeType.NONE);
+      return;
+    }
     SecretManagerConfig secretManagerConfig = getSecretManagerConfig(vaultConnector.getAccountIdentifier(),
         vaultConnector.getOrgIdentifier(), vaultConnector.getProjectIdentifier(), vaultConnector.getIdentifier());
     BaseVaultConfig baseVaultConfig = (BaseVaultConfig) secretManagerConfig;
@@ -233,6 +249,42 @@ public class NGVaultServiceImpl implements NGVaultService {
     }
     vaultConnector.setRenewedAt(System.currentTimeMillis());
     connectorRepository.save(vaultConnector, ChangeType.NONE);
+    updatePerpetualTaskWhenTokenIsRenewed(vaultConnector);
+  }
+
+  @Override
+  public VaultTokenLookupResult tokenLookup(BaseVaultConfig vaultConfig) {
+    String name = vaultConfig.getName();
+    log.info("Token lookup for vault id {}", name);
+    String accountIdentifier = vaultConfig.getAccountId();
+    setCertValidation(accountIdentifier, vaultConfig);
+    int failedAttempts = 0;
+    while (true) {
+      try {
+        NGVaultRenewalTaskParameters parameters =
+            NGVaultRenewalTaskParameters.builder().encryptionConfig(vaultConfig).build();
+
+        DelegateResponseData delegateResponseData =
+            getDelegateResponseData(accountIdentifier, parameters, NG_VAULT_TOKEN_LOOKUP);
+
+        if (!(delegateResponseData instanceof NGVaultTokenLookupTaskResponse)) {
+          throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, UNKNOWN_RESPONSE, USER);
+        }
+
+        NGVaultTokenLookupTaskResponse ngVaultTokenLookupTaskResponse =
+            (NGVaultTokenLookupTaskResponse) delegateResponseData;
+
+        return ngVaultTokenLookupTaskResponse.getVaultTokenLookupResult();
+      } catch (WingsException e) {
+        failedAttempts++;
+        log.warn(
+            "Failed to do Token lookup for Vault server {}. trial num: {}", vaultConfig.getName(), failedAttempts, e);
+        if (failedAttempts == NUM_OF_RETRIES) {
+          throw e;
+        }
+        sleep(ofMillis(1000));
+      }
+    }
   }
 
   @Override
@@ -251,7 +303,7 @@ public class NGVaultServiceImpl implements NGVaultService {
             getDelegateResponseData(accountIdentifier, parameters, NG_VAULT_RENEW_APP_ROLE_TOKEN);
 
         if (!(delegateResponseData instanceof NGVaultRenewalAppRoleTaskResponse)) {
-          throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unknown Response from delegate", USER);
+          throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, UNKNOWN_RESPONSE, USER);
         }
 
         NGVaultRenewalAppRoleTaskResponse ngVaultRenewalAppRoleTaskResponse =
@@ -296,48 +348,128 @@ public class NGVaultServiceImpl implements NGVaultService {
           "This API is not supported for secret manager of type: " + requestDTO.getEncryptionType());
     }
   }
+
+  @Override
+  public void processTokenLookup(ConnectorDTO connectorDTO, String accountIdentifier) {
+    AccountId accountId = AccountId.newBuilder().setId(accountIdentifier).build();
+    io.harness.delegate.TaskType taskType =
+        io.harness.delegate.TaskType.newBuilder().setType(NG_VAULT_TOKEN_LOOKUP.name()).build();
+    if (!delegateService.isTaskTypeSupported(accountId, taskType)) {
+      return;
+    }
+    if (!isTokenLookupRequired(connectorDTO)) {
+      return;
+    }
+
+    ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
+    VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfo.getConnectorConfig();
+
+    SecretRefData secretRefData = vaultConnectorDTO.getAuthToken();
+    String orgIdentifier = connectorInfo.getOrgIdentifier();
+    String projectIdentifier = connectorInfo.getProjectIdentifier();
+    decryptSecretRefData(accountIdentifier, orgIdentifier, projectIdentifier, secretRefData);
+    VaultConfig vaultConfig = commonVaultConfigBuilder(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorInfo.getName(), vaultConnectorDTO);
+    vaultConfig.setAuthToken(String.valueOf(secretRefData.getDecryptedValue()));
+
+    VaultTokenLookupResult tokenLookupResult = tokenLookup(vaultConfig);
+    if (tokenLookupResult == null) {
+      String message = "Was not able to perform token lookup (self). Please check your credentials and try again";
+      throw new SecretManagementException(VAULT_OPERATION_ERROR, message, USER);
+    }
+    if (tokenLookupResult.getExpiryTime() == null) {
+      // this means this is root token
+      throw new SecretManagementException(
+          "The token used is a root token. Please set renewal interval as zero if you are using root token.");
+    }
+    if (!tokenLookupResult.isRenewable()) {
+      // this means the token is not renewable
+      throw new SecretManagementException(
+          "The token used is a non-renewable token. Please set renewal interval as zero or use a renewable token.");
+    }
+  }
+
   @Override
   public void processAppRole(ConnectorDTO connectorDTO, ConnectorConfigDTO existingConnectorConfigDTO,
       String accountIdentifier, boolean create) {
-    if (null != connectorDTO.getConnectorInfo()
-        && ConnectorType.VAULT == connectorDTO.getConnectorInfo().getConnectorType()) {
-      ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
-      VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfo.getConnectorConfig();
-      if (AccessType.APP_ROLE == vaultConnectorDTO.getAccessType()) {
-        SecretRefData secretRefData = vaultConnectorDTO.getSecretId();
-        String orgIdentifier = connectorInfo.getOrgIdentifier();
-        String projectIdentifier = connectorInfo.getProjectIdentifier();
-        decryptSecretRefData(accountIdentifier, orgIdentifier, projectIdentifier, secretRefData);
-        VaultConfig vaultConfig = VaultConfig.builder()
-                                      .accountId(accountIdentifier)
-                                      .name(connectorInfo.getName())
-                                      .vaultUrl(vaultConnectorDTO.getVaultUrl())
-                                      .appRoleId(vaultConnectorDTO.getAppRoleId())
-                                      .secretId(String.valueOf(secretRefData.getDecryptedValue()))
-                                      .build();
-
-        VaultAppRoleLoginResult loginResult = appRoleLogin(vaultConfig);
-        if (loginResult != null && isNotEmpty(loginResult.getClientToken())) {
-          Scope scope = secretRefData.getScope();
-          orgIdentifier = getOrgIdentifier(orgIdentifier, scope);
-          projectIdentifier = getProjectIdentifier(projectIdentifier, scope);
-
-          if (null != existingConnectorConfigDTO
-              && APP_ROLE != ((VaultConnectorDTO) existingConnectorConfigDTO).getAccessType()) {
-            create = true;
-          }
-          SecretRefData authTokenRefData =
-              populateSecretRefData(connectorInfo.getIdentifier() + "_" + VaultConnectorKeys.authTokenRef,
-                  loginResult.getClientToken().toCharArray(), scope, accountIdentifier, orgIdentifier,
-                  projectIdentifier, create);
-          vaultConnectorDTO.setAuthToken(authTokenRefData);
-        } else {
-          String message =
-              "Was not able to login Vault using the AppRole auth method. Please check your credentials and try again";
-          throw new SecretManagementException(VAULT_OPERATION_ERROR, message, USER);
-        }
-      }
+    if (!isProcessAppRoleInputValid(connectorDTO, accountIdentifier)) {
+      return;
     }
+
+    ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
+    VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfo.getConnectorConfig();
+
+    SecretRefData secretRefData = vaultConnectorDTO.getSecretId();
+    String orgIdentifier = connectorInfo.getOrgIdentifier();
+    String projectIdentifier = connectorInfo.getProjectIdentifier();
+    decryptSecretRefData(accountIdentifier, orgIdentifier, projectIdentifier, secretRefData);
+    VaultConfig vaultConfig = commonVaultConfigBuilder(
+        accountIdentifier, orgIdentifier, projectIdentifier, connectorInfo.getName(), vaultConnectorDTO);
+    vaultConfig.setAppRoleId(vaultConnectorDTO.getAppRoleId());
+    vaultConfig.setSecretId(String.valueOf(secretRefData.getDecryptedValue()));
+
+    VaultAppRoleLoginResult loginResult = appRoleLogin(vaultConfig);
+    if (loginResult == null || isEmpty(loginResult.getClientToken())) {
+      String message =
+          "Was not able to login Vault using the AppRole auth method. Please check your credentials and try again";
+      throw new SecretManagementException(VAULT_OPERATION_ERROR, message, USER);
+    }
+
+    if (!vaultConnectorDTO.isRenewAppRoleToken()) {
+      return;
+    }
+
+    Scope scope = secretRefData.getScope();
+    orgIdentifier = getOrgIdentifier(orgIdentifier, scope);
+    projectIdentifier = getProjectIdentifier(projectIdentifier, scope);
+
+    if (null != existingConnectorConfigDTO
+        && APP_ROLE != ((VaultConnectorDTO) existingConnectorConfigDTO).getAccessType()) {
+      create = true;
+    }
+    SecretRefData authTokenRefData = populateSecretRefData(
+        connectorInfo.getIdentifier() + "_" + VaultConnectorKeys.authTokenRef,
+        loginResult.getClientToken().toCharArray(), scope, accountIdentifier, orgIdentifier, projectIdentifier, create);
+    vaultConnectorDTO.setAuthToken(authTokenRefData);
+  }
+
+  private VaultConfig commonVaultConfigBuilder(String accountIdentifier, String orgIdentifier, String projectIdentifier,
+      String name, VaultConnectorDTO vaultConnectorDTO) {
+    return VaultConfig.builder()
+        .accountId(accountIdentifier)
+        .name(name)
+        .vaultUrl(vaultConnectorDTO.getVaultUrl())
+        .namespace(vaultConnectorDTO.getNamespace())
+        .ngMetadata(NGSecretManagerMetadata.builder()
+                        .accountIdentifier(accountIdentifier)
+                        .orgIdentifier(orgIdentifier)
+                        .projectIdentifier(projectIdentifier)
+                        .build())
+        .build();
+  }
+
+  private boolean isTokenLookupRequired(ConnectorDTO connectorDTO) {
+    if (connectorDTO.getConnectorInfo() == null
+        || connectorDTO.getConnectorInfo().getConnectorType() != ConnectorType.VAULT) {
+      return false;
+    }
+
+    ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
+    VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfo.getConnectorConfig();
+
+    return vaultConnectorDTO.getAccessType() == TOKEN && vaultConnectorDTO.getRenewalIntervalMinutes() != 0;
+  }
+
+  private boolean isProcessAppRoleInputValid(ConnectorDTO connectorDTO, String accountIdentifier) {
+    if (connectorDTO.getConnectorInfo() == null
+        || connectorDTO.getConnectorInfo().getConnectorType() != ConnectorType.VAULT) {
+      return false;
+    }
+
+    ConnectorInfoDTO connectorInfo = connectorDTO.getConnectorInfo();
+    VaultConnectorDTO vaultConnectorDTO = (VaultConnectorDTO) connectorInfo.getConnectorConfig();
+
+    return vaultConnectorDTO.getAccessType() == AccessType.APP_ROLE;
   }
 
   private SecretManagerMetadataDTO getHashicorpVaultMetadata(String accountIdentifier,
@@ -564,7 +696,7 @@ public class NGVaultServiceImpl implements NGVaultService {
         DelegateResponseData delegateResponseData = delegateService.executeSyncTask(delegateTaskRequest);
         DelegateTaskUtils.validateDelegateTaskResponse(delegateResponseData);
         if (!(delegateResponseData instanceof NGAzureKeyVaultFetchEngineResponse)) {
-          throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unknown Response from delegate", USER);
+          throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, UNKNOWN_RESPONSE, USER);
         }
         return ((NGAzureKeyVaultFetchEngineResponse) delegateResponseData).getSecretEngines();
       } catch (WingsException e) {
@@ -708,7 +840,7 @@ public class NGVaultServiceImpl implements NGVaultService {
             getDelegateResponseData(vaultConfig.getAccountId(), parameters, NG_VAULT_FETCHING_TASK);
 
         if (!(delegateResponseData instanceof NGVaultFetchEngineTaskResponse)) {
-          throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, "Unknown Response from delegate", USER);
+          throw new SecretManagementException(SECRET_MANAGEMENT_ERROR, UNKNOWN_RESPONSE, USER);
         }
         return ((NGVaultFetchEngineTaskResponse) delegateResponseData).getSecretEngineSummaryList();
       } catch (WingsException e) {
@@ -798,5 +930,12 @@ public class NGVaultServiceImpl implements NGVaultService {
         .encryptionType(encryptedData.getEncryptionType())
         .base64Encoded(encryptedData.isBase64Encoded())
         .build();
+  }
+
+  private void updatePerpetualTaskWhenTokenIsRenewed(VaultConnector vaultConnector) {
+    String heartBeatPerpetualTaskId =
+        ngConnectorSecretManagerService.getPerpetualTaskId(vaultConnector.getAccountIdentifier(),
+            vaultConnector.getOrgIdentifier(), vaultConnector.getProjectIdentifier(), vaultConnector.getIdentifier());
+    ngConnectorSecretManagerService.resetHeartBeatTask(vaultConnector.getAccountIdentifier(), heartBeatPerpetualTaskId);
   }
 }

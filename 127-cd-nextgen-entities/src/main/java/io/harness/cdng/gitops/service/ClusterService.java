@@ -47,6 +47,13 @@ public interface ClusterService {
   long bulkCreate(@NotNull List<Cluster> entities);
 
   /**
+   * @param entities cluster entities to be bulk deleted
+   * @return number of clusters unlinked
+   */
+  long bulkDelete(
+      @NotNull List<Cluster> entities, String accountId, String orgIdentifier, String projectIdentifier, String envRef);
+
+  /**
    * @param accountId         the account id
    * @param orgIdentifier     the organization identifier
    * @param projectIdentifier the project identifier
@@ -60,15 +67,16 @@ public interface ClusterService {
 
   /**
    * Deletes a cluster from all the environments its linked into
-   * @param accountId the account id
-   * @param orgIdentifier the organization identifier
+   *
+   * @param accountId         the account id
+   * @param orgIdentifier     the organization identifier
    * @param projectIdentifier the project identifier
-   * @param clusterRef identifier of the actual gitops cluster that exists in harness gitops
+   * @param clusterRef        identifier of the actual gitops cluster that exists in harness gitops
    * @return DeleteResult
    */
   @NotNull
-  DeleteResult deleteFromAllEnv(@NotEmpty String accountId, @NotEmpty String orgIdentifier,
-      @NotEmpty String projectIdentifier, @NotEmpty String clusterRef);
+  DeleteResult deleteFromAllEnv(
+      @NotEmpty String accountId, String orgIdentifier, String projectIdentifier, @NotEmpty String clusterRef);
 
   /**
    * Deletes all clusters linked to a particular harness environment.
@@ -80,6 +88,18 @@ public interface ClusterService {
    */
   @NotNull
   boolean deleteAllFromEnv(@NotEmpty String accountId, @NotEmpty String orgIdentifier,
+      @NotEmpty String projectIdentifier, @NotEmpty String envIdentifier);
+
+  /**
+   * Deletes all clusters linked to a particular harness environment.
+   * @param accountId  the account id
+   * @param orgIdentifier the organization identifier
+   * @param projectIdentifier the project identifier
+   * @param envIdentifier identifier of the environment the gitops cluster is linked to
+   * @return long return number of records deleted
+   */
+  @NotNull
+  long deleteAllFromEnvAndReturnCount(@NotEmpty String accountId, @NotEmpty String orgIdentifier,
       @NotEmpty String projectIdentifier, @NotEmpty String envIdentifier);
 
   /**

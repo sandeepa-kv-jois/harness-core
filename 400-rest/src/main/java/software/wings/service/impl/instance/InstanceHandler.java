@@ -35,12 +35,12 @@ import software.wings.beans.Environment;
 import software.wings.beans.InfrastructureMapping;
 import software.wings.beans.Service;
 import software.wings.beans.WorkflowExecution;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.infrastructure.instance.Instance;
 import software.wings.beans.infrastructure.instance.Instance.InstanceBuilder;
 import software.wings.beans.infrastructure.instance.InstanceType;
 import software.wings.beans.infrastructure.instance.key.HostInstanceKey;
 import software.wings.beans.infrastructure.instance.key.deployment.DeploymentKey;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.service.intfc.AppService;
 import software.wings.service.intfc.EnvironmentService;
 import software.wings.service.intfc.InfrastructureMappingService;
@@ -101,14 +101,16 @@ public abstract class InstanceHandler {
 
     if (this instanceof InstanceSyncByPerpetualTaskHandler) {
       InstanceSyncByPerpetualTaskHandler handler = (InstanceSyncByPerpetualTaskHandler) this;
+
+      Optional<FeatureName> featureFlagOpt = handler.getFeatureFlagToEnablePerpetualTaskForInstanceSync();
       isPerpetualTaskEnabled =
-          featureFlagService.isEnabled(handler.getFeatureFlagToEnablePerpetualTaskForInstanceSync(), accountId);
+          featureFlagOpt.map(featureName -> featureFlagService.isEnabled(featureName, accountId)).orElse(true);
     }
 
     return isPerpetualTaskEnabled ? instanceSyncFlow == PERPETUAL_TASK : instanceSyncFlow == ITERATOR;
   }
 
-  public abstract FeatureName getFeatureFlagToStopIteratorBasedInstanceSync();
+  public abstract Optional<FeatureName> getFeatureFlagToStopIteratorBasedInstanceSync();
 
   public abstract Optional<List<DeploymentInfo>> getDeploymentInfo(PhaseExecutionData phaseExecutionData,
       PhaseStepExecutionData phaseStepExecutionData, WorkflowExecution workflowExecution,

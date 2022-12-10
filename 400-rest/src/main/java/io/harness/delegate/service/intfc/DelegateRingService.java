@@ -8,6 +8,7 @@
 package io.harness.delegate.service.intfc;
 
 import java.util.List;
+import java.util.Map;
 
 public interface DelegateRingService {
   String getDelegateImageTag(String accountId);
@@ -16,7 +17,13 @@ public interface DelegateRingService {
 
   List<String> getDelegateVersions(String accountId);
 
-  List<String> getDelegateVersionsForRing(String ringName);
+  Map<String, List<String>> getDelegateVersionsForAllRings(boolean skipCache);
+
+  List<String> getDelegateVersionsForRing(String ringName, boolean skipCache);
 
   String getWatcherVersions(String accountId);
+
+  Map<String, String> getWatcherVersionsAllRings(boolean skipCache);
+
+  String getWatcherVersionsForRing(String ringName, boolean skipCache);
 }

@@ -19,6 +19,7 @@ import static io.harness.ci.commonconstants.CIExecutionConstants.STEP_REQUEST_MI
 import static io.harness.ci.commonconstants.CIExecutionConstants.STEP_WORK_DIR;
 import static io.harness.ci.commonconstants.CIExecutionConstants.UNIX_STEP_COMMAND;
 import static io.harness.ci.commonconstants.CIExecutionConstants.WIN_STEP_COMMAND;
+import static io.harness.delegate.beans.ci.pod.CIContainerType.BACKGROUND;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.PLUGIN;
 import static io.harness.delegate.beans.ci.pod.CIContainerType.RUN;
 
@@ -29,14 +30,14 @@ import io.harness.beans.environment.pod.container.ContainerDefinitionInfo;
 import io.harness.beans.environment.pod.container.ContainerImageDetails;
 import io.harness.beans.execution.ManualExecutionSource;
 import io.harness.beans.executionargs.CIExecutionArgs;
-import io.harness.beans.stages.IntegrationStageConfig;
-import io.harness.beans.stages.IntegrationStageConfigImpl;
+import io.harness.beans.stages.IntegrationStageNode;
+import io.harness.cimanager.stages.IntegrationStageConfig;
+import io.harness.cimanager.stages.IntegrationStageConfigImpl;
 import io.harness.delegate.beans.ci.pod.ContainerResourceParams;
 import io.harness.exception.InvalidRequestException;
 import io.harness.k8s.model.ImageDetails;
 import io.harness.plancreator.execution.ExecutionElementConfig;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
-import io.harness.plancreator.stages.stage.StageElementConfig;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -80,8 +81,15 @@ public class K8InitializeStepUtilsHelper {
   private static final Integer GIT_STEP_LIMIT_MEM = 250;
   private static final Integer GIT_STEP_LIMIT_CPU = 300;
 
-  public static StageElementConfig getIntegrationStageElementConfig() {
-    return StageElementConfig.builder().identifier("ciStage").type("CI").stageType(getIntegrationStageConfig()).build();
+  private static final String BACKGROUND_STEP_LIMIT_MEM = "500Mi";
+  private static final String BACKGROUND_STEP_LIMIT_CPU = "300m";
+
+  public static IntegrationStageNode getIntegrationStageNode() {
+    return IntegrationStageNode.builder()
+        .identifier("ciStage")
+        .type(IntegrationStageNode.StepType.CI)
+        .integrationStageConfig((IntegrationStageConfigImpl) getIntegrationStageConfig())
+        .build();
   }
 
   public static IntegrationStageConfig getIntegrationStageConfig() {
@@ -202,7 +210,7 @@ public class K8InitializeStepUtilsHelper {
   public static JsonNode getDockerStepElementConfigAsJsonNode() {
     ObjectMapper mapper = new ObjectMapper();
     ObjectNode stepElementConfig = mapper.createObjectNode();
-    stepElementConfig.put("identifier", PLUGIN_STEP_ID);
+    stepElementConfig.put("identifier", "step-docker");
 
     stepElementConfig.put("type", "BuildAndPushDockerRegistry");
     stepElementConfig.put("name", "docker step");
@@ -240,6 +248,33 @@ public class K8InitializeStepUtilsHelper {
     settings.put(GIT_CLONE_DEPTH_ATTRIBUTE, GIT_CLONE_MANUAL_DEPTH.toString());
     stepSpecType.set("settings", settings);
 
+    stepElementConfig.set("spec", stepSpecType);
+    return stepElementConfig;
+  }
+
+  public static JsonNode getBackgroundStepElementConfigAsJsonNode() {
+    ObjectMapper mapper = new ObjectMapper();
+    ObjectNode stepElementConfig = mapper.createObjectNode();
+    stepElementConfig.put("identifier", RUN_STEP_ID);
+
+    stepElementConfig.put("type", "Background");
+    stepElementConfig.put("name", RUN_STEP_NAME);
+
+    ObjectNode stepSpecType = mapper.createObjectNode();
+    stepSpecType.put("identifier", RUN_STEP_ID);
+    stepSpecType.put("name", RUN_STEP_NAME);
+    stepSpecType.put("command", BUILD_SCRIPT);
+    stepSpecType.put("image", RUN_STEP_IMAGE);
+    stepSpecType.put("connectorRef", RUN_STEP_CONNECTOR);
+    stepSpecType.put("connectorRef", RUN_STEP_CONNECTOR);
+
+    ArrayNode arrayNode = mapper.createArrayNode();
+    arrayNode.add("redis-server");
+
+    stepSpecType.set("entrypoint", arrayNode);
+    stepSpecType.set("resources",
+        mapper.createObjectNode().set("limits",
+            mapper.createObjectNode().put("cpu", BACKGROUND_STEP_LIMIT_CPU).put("memory", BACKGROUND_STEP_LIMIT_MEM)));
     stepElementConfig.set("spec", stepSpecType);
     return stepElementConfig;
   }
@@ -282,6 +317,12 @@ public class K8InitializeStepUtilsHelper {
         .stepIdentifier(RUN_STEP_ID)
         .stepName(RUN_STEP_NAME)
         .build();
+  }
+
+  public static ContainerDefinitionInfo getBackgroundStepContainer(Integer index) {
+    ContainerDefinitionInfo containerDefinitionInfo = getRunStepContainer(index);
+    containerDefinitionInfo.setContainerType(BACKGROUND);
+    return containerDefinitionInfo;
   }
 
   private static ContainerDefinitionInfo getGitPluginStepContainer(Integer index) {
@@ -438,19 +479,19 @@ public class K8InitializeStepUtilsHelper {
         .build();
   }
 
-  public static StageElementConfig getIntegrationStageElementConfigWithStepGroup() throws Exception {
-    return StageElementConfig.builder()
+  public static IntegrationStageNode getIntegrationStageNodeWithStepGroup() throws Exception {
+    return IntegrationStageNode.builder()
         .identifier("ciStage")
-        .type("CI")
-        .stageType(getIntegrationStageConfigWithStepGroup1())
+        .type(IntegrationStageNode.StepType.CI)
+        .integrationStageConfig((IntegrationStageConfigImpl) getIntegrationStageConfigWithStepGroup1())
         .build();
   }
 
-  public static StageElementConfig getIntegrationStageElementConfigWithStepGroup1() throws Exception {
-    return StageElementConfig.builder()
+  public static IntegrationStageNode getIntegrationStageNodeWithStepGroup1() throws Exception {
+    return IntegrationStageNode.builder()
         .identifier("ciStage")
-        .type("CI")
-        .stageType(getIntegrationStageConfigWithStepGroup1())
+        .type(IntegrationStageNode.StepType.CI)
+        .integrationStageConfig((IntegrationStageConfigImpl) getIntegrationStageConfigWithStepGroup1())
         .build();
   }
 
@@ -479,6 +520,30 @@ public class K8InitializeStepUtilsHelper {
   public static List<ExecutionWrapperConfig> getExecutionWrapperConfigListWithStepGroup2() throws Exception {
     return newArrayList(ExecutionWrapperConfig.builder().step(getRunStepElementConfigAsJsonNode()).build(),
         ExecutionWrapperConfig.builder().stepGroup(getRunStepsInStepGroupAsJsonNode3()).build());
+  }
+
+  public static List<ExecutionWrapperConfig> getExecutionWrapperConfigListWithStrategy() throws Exception {
+    K8InitializeStepUtilsHelper k8InitializeStepUtilsHelper = new K8InitializeStepUtilsHelper();
+    String step1String = k8InitializeStepUtilsHelper.readFile("strategy/stepWithStrategy1.json");
+    String step2String = k8InitializeStepUtilsHelper.readFile("strategy/stepWithStrategy2.json");
+    String step3String = k8InitializeStepUtilsHelper.readFile("strategy/stepWithStrategy3.json");
+    String stepGroup1String = k8InitializeStepUtilsHelper.readFile("strategy/stepGroupWithStrategy1.json");
+    String stepGroup2String = k8InitializeStepUtilsHelper.readFile("strategy/stepGroupWithStrategy2.json");
+    String stepGroup3String = k8InitializeStepUtilsHelper.readFile("strategy/stepGroupWithStrategy3.json");
+    ObjectMapper mapper = new ObjectMapper();
+    ExecutionWrapperConfig step1 = mapper.readValue(step1String, ExecutionWrapperConfig.class);
+    ExecutionWrapperConfig step2 = mapper.readValue(step2String, ExecutionWrapperConfig.class);
+    ExecutionWrapperConfig step3 = mapper.readValue(step3String, ExecutionWrapperConfig.class);
+    ExecutionWrapperConfig stepGroup1 = mapper.readValue(stepGroup1String, ExecutionWrapperConfig.class);
+    ExecutionWrapperConfig stepGroup2 = mapper.readValue(stepGroup2String, ExecutionWrapperConfig.class);
+    ExecutionWrapperConfig stepGroup3 = mapper.readValue(stepGroup3String, ExecutionWrapperConfig.class);
+    step1.setUuid("MAB-xgo2QTyxGP5ER1ZHdg");
+    step2.setUuid("MAB-xgo2QTyxGP5ER1ZHdg");
+    step3.setUuid("MAB-xgo2QTyxGP5ER1ZHdg");
+    stepGroup1.setUuid("18R7LnNLTu6dZpd4Nvjp_A");
+    stepGroup2.setUuid("18R7LnNLTu6dZpd4Nvjp_A");
+    stepGroup3.setUuid("18R7LnNLTu6dZpd4Nvjp_A");
+    return newArrayList(step1, step2, step3, stepGroup1, stepGroup2, stepGroup3);
   }
 
   private String readFile(String filename) {

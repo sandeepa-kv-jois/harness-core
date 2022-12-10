@@ -7,6 +7,7 @@
 
 package software.wings.service.impl.yaml;
 
+import static io.harness.beans.FeatureName.REMOVE_HINT_YAML_GIT_COMMITS;
 import static io.harness.beans.PageRequest.PageRequestBuilder.aPageRequest;
 import static io.harness.beans.PageRequest.UNLIMITED;
 import static io.harness.beans.SearchFilter.Operator.EQ;
@@ -17,6 +18,7 @@ import static io.harness.delegate.beans.TaskData.DEFAULT_ASYNC_CALL_TIMEOUT;
 import static io.harness.exception.WingsException.ExecutionContext.MANAGER;
 import static io.harness.exception.WingsException.USER;
 import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_ERROR;
+import static io.harness.logging.AutoLogContext.OverrideBehavior.OVERRIDE_NESTS;
 import static io.harness.microservice.NotifyEngineTarget.GENERAL;
 import static io.harness.validation.Validator.notNullCheck;
 
@@ -45,8 +47,8 @@ import static software.wings.service.impl.yaml.YamlProcessingLogContext.BRANCH_N
 import static software.wings.service.impl.yaml.YamlProcessingLogContext.CHANGESET_ID;
 import static software.wings.service.impl.yaml.YamlProcessingLogContext.GIT_CONNECTOR_ID;
 import static software.wings.service.impl.yaml.YamlProcessingLogContext.WEBHOOK_TOKEN;
-import static software.wings.yaml.gitSync.YamlGitConfig.BRANCH_NAME_KEY;
-import static software.wings.yaml.gitSync.YamlGitConfig.GIT_CONNECTOR_ID_KEY;
+import static software.wings.yaml.gitSync.beans.YamlGitConfig.BRANCH_NAME_KEY;
+import static software.wings.yaml.gitSync.beans.YamlGitConfig.GIT_CONNECTOR_ID_KEY;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
@@ -72,6 +74,7 @@ import io.harness.data.structure.EmptyPredicate;
 import io.harness.data.structure.NullSafeImmutableMap;
 import io.harness.delegate.beans.TaskData;
 import io.harness.eraro.ErrorCode;
+import io.harness.exception.ExceptionLogger;
 import io.harness.exception.GeneralException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.UnexpectedException;
@@ -81,7 +84,6 @@ import io.harness.ff.FeatureFlagService;
 import io.harness.git.model.ChangeType;
 import io.harness.logging.AccountLogContext;
 import io.harness.logging.AutoLogContext;
-import io.harness.logging.ExceptionLogger;
 import io.harness.mongo.ProcessTimeLogContext;
 import io.harness.persistence.HIterator;
 import io.harness.rest.RestResponse;
@@ -149,9 +151,9 @@ import software.wings.yaml.gitSync.GitSyncWebhook.GitSyncWebhookKeys;
 import software.wings.yaml.gitSync.GitWebhookRequestAttributes;
 import software.wings.yaml.gitSync.YamlChangeSet;
 import software.wings.yaml.gitSync.YamlChangeSet.Status;
-import software.wings.yaml.gitSync.YamlGitConfig;
-import software.wings.yaml.gitSync.YamlGitConfig.SyncMode;
-import software.wings.yaml.gitSync.YamlGitConfig.YamlGitConfigKeys;
+import software.wings.yaml.gitSync.beans.YamlGitConfig;
+import software.wings.yaml.gitSync.beans.YamlGitConfig.SyncMode;
+import software.wings.yaml.gitSync.beans.YamlGitConfig.YamlGitConfigKeys;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
@@ -272,14 +274,14 @@ public class YamlGitServiceImpl implements YamlGitService {
         gitConfig.setBranch(ygs.getBranchName());
         if (EmptyPredicate.isNotEmpty(gitConfig.getSshSettingId())) {
           SettingAttribute settingAttributeForSshKey = getAndDecryptSettingAttribute(gitConfig.getSshSettingId());
-          gitConfig.setSshSettingAttribute(settingAttributeForSshKey);
+          gitConfig.setSshSettingAttribute(settingAttributeForSshKey.toDTO());
         }
       }
     } else {
       // This is to support backward compatibility. Should be removed once we move to using gitConnector completely
       if (EmptyPredicate.isNotEmpty(ygs.getSshSettingId())) {
         SettingAttribute settingAttributeForSshKey = getAndDecryptSettingAttribute(ygs.getSshSettingId());
-        gitConfig = ygs.getGitConfig(settingAttributeForSshKey);
+        gitConfig = ygs.getGitConfig(settingAttributeForSshKey.toDTO());
       } else {
         gitConfig = ygs.getGitConfig(null);
       }
@@ -630,7 +632,7 @@ public class YamlGitServiceImpl implements YamlGitService {
     String appId = yamlChangeSet.getAppId();
     String yamlChangeSetId = yamlChangeSet.getUuid();
     try (AutoLogContext ignore1 = new AccountLogContext(accountId, OVERRIDE_ERROR);
-         AppLogContext ignore2 = new AppLogContext(appId, OVERRIDE_ERROR);
+         AppLogContext ignore2 = new AppLogContext(appId, OVERRIDE_NESTS);
          YamlProcessingLogContext ignore3 =
              YamlProcessingLogContext.builder().changeSetId(yamlChangeSetId).build(OVERRIDE_ERROR)) {
       log.info(GIT_YAML_LOG_PREFIX + "Started handling harness -> git change set");
@@ -647,7 +649,7 @@ public class YamlGitServiceImpl implements YamlGitService {
             USER);
       }
 
-      ensureValidNameSyntax(gitFileChanges);
+      ensureValidNameSyntax(gitFileChanges, yamlChangeSet);
 
       gitConfigHelperService.convertToRepoGitConfig(gitConfig, yamlGitConfig.getRepositoryName());
 
@@ -674,7 +676,7 @@ public class YamlGitServiceImpl implements YamlGitService {
                                                         .gitFileChanges(gitFileChanges)
                                                         .forcePush(true)
                                                         .yamlChangeSetIds(yamlChangeSetIds)
-                                                        .yamlGitConfig(yamlGitConfig)
+                                                        .yamlGitConfig(yamlGitConfig.toDTO())
                                                         .lastProcessedGitCommit(lastProcessedGitCommitId)
                                                         .pushOnlyIfHeadSeen(pushOnlyIfHeadSeen)
                                                         .build()})
@@ -705,9 +707,10 @@ public class YamlGitServiceImpl implements YamlGitService {
    * Check filePath is valid.
    *
    * @param gitFileChanges
+   * @param yamlChangeSet
    */
   @VisibleForTesting
-  void ensureValidNameSyntax(List<GitFileChange> gitFileChanges) {
+  void ensureValidNameSyntax(List<GitFileChange> gitFileChanges, YamlChangeSet yamlChangeSet) {
     if (isEmpty(gitFileChanges)) {
       return;
     }
@@ -722,10 +725,11 @@ public class YamlGitServiceImpl implements YamlGitService {
     gitFileChanges.forEach(gitFileChange
         -> matchPathPrefix(gitFileChange.getFilePath().charAt(0) == '/' ? gitFileChange.getFilePath().substring(1)
                                                                         : gitFileChange.getFilePath(),
-            folderYamlTypes));
+            folderYamlTypes, yamlChangeSet, gitFileChange));
   }
 
-  private void matchPathPrefix(String filePath, List<YamlType> folderYamlTypes) {
+  private void matchPathPrefix(
+      String filePath, List<YamlType> folderYamlTypes, YamlChangeSet yamlChangeSet, GitFileChange gitFileChange) {
     // only check for file and not directories
 
     if (Pattern.compile(YamlType.MANIFEST_FILE.getPathExpression()).matcher(filePath).matches()
@@ -758,8 +762,11 @@ public class YamlGitServiceImpl implements YamlGitService {
     if (filePath.endsWith(YamlConstants.YAML_EXTENSION)) {
       if (folderYamlTypes.stream().noneMatch(
               yamlType -> Pattern.compile(yamlType.getPathExpression()).matcher(filePath).matches())) {
-        throw new WingsException(
-            "Invalid entity name, entity can not contain / in the name. Caused invalid file path: " + filePath, USER);
+        String message =
+            "Invalid entity name, entity can not contain / in the name. Caused invalid file path: " + filePath;
+        gitSyncErrorService.upsertGitSyncErrors(
+            gitFileChange, message, yamlChangeSet.isFullSync(), yamlChangeSet.isGitToHarness());
+        throw new WingsException(message, USER);
       }
     }
   }
@@ -927,6 +934,14 @@ public class YamlGitServiceImpl implements YamlGitService {
   }
 
   @Override
+  public List<YamlGitConfig> getYamlGitConfigByConnector(String accountId, String connectorId) {
+    return wingsPersistence.createQuery(YamlGitConfig.class)
+        .filter(YamlGitConfigKeys.accountId, accountId)
+        .filter(GIT_CONNECTOR_ID_KEY, connectorId)
+        .asList();
+  }
+
+  @Override
   public List<String> getYamlGitConfigIds(
       String accountId, String gitConnectorId, String branchName, String repositoryName) {
     List<String> yamlGitConfigIds = new ArrayList<>();
@@ -994,7 +1009,7 @@ public class YamlGitServiceImpl implements YamlGitService {
                                                     GitDiffRequest.builder()
                                                         .lastProcessedCommitId(processedCommit)
                                                         .endCommitId(getEndCommitId(headCommitId, accountId))
-                                                        .yamlGitConfig(yamlGitConfig)
+                                                        .yamlGitConfig(yamlGitConfig.toDTO())
                                                         .build(),
                                                     true /*excludeFilesOutsideSetupFolder */})
                                                 .timeout(DEFAULT_ASYNC_CALL_TIMEOUT)
@@ -1033,7 +1048,7 @@ public class YamlGitServiceImpl implements YamlGitService {
                                             .putIfNotNull(WEBHOOK_TOKEN, webhookToken)
                                             .putIfNotNull(CHANGESET_ID, yamlChangeSetId)
                                             .build(),
-        OVERRIDE_ERROR);
+        OVERRIDE_NESTS);
   }
 
   @Override
@@ -1343,7 +1358,9 @@ public class YamlGitServiceImpl implements YamlGitService {
     // After MultiGit support gitCommit record would have list of yamlGitConfigs.
 
     FindOptions findOptions = new FindOptions();
-    findOptions.modifier("$hint", "gitCommitAccountIdStatusYgcLastUpdatedIdx");
+    if (featureFlagService.isNotEnabled(REMOVE_HINT_YAML_GIT_COMMITS, accountId)) {
+      findOptions.modifier("$hint", "gitCommitAccountIdStatusYgcLastUpdatedIdx");
+    }
 
     GitCommit gitCommit = wingsPersistence.createQuery(GitCommit.class)
                               .filter(GitCommitKeys.accountId, accountId)

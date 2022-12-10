@@ -17,6 +17,7 @@ import io.harness.ModuleType;
 import io.harness.SCMGrpcClientModule;
 import io.harness.ScmConnectionConfig;
 import io.harness.accesscontrol.clients.AccessControlClient;
+import io.harness.account.AccountClient;
 import io.harness.annotations.dev.HarnessTeam;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.aws.AwsClient;
@@ -35,6 +36,8 @@ import io.harness.ci.config.VmImageConfig;
 import io.harness.ci.execution.OrchestrationExecutionEventHandlerRegistrar;
 import io.harness.ci.ff.CIFeatureFlagNoopServiceImpl;
 import io.harness.ci.ff.CIFeatureFlagService;
+import io.harness.ci.license.CILicenseNoopServiceImpl;
+import io.harness.ci.license.CILicenseService;
 import io.harness.ci.registrars.ExecutionAdvisers;
 import io.harness.ci.registrars.ExecutionRegistrar;
 import io.harness.cistatus.service.GithubService;
@@ -56,6 +59,7 @@ import io.harness.govern.ServersModule;
 import io.harness.impl.scm.ScmServiceClientImpl;
 import io.harness.lock.DistributedLockImplementation;
 import io.harness.lock.PersistentLockModule;
+import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoPersistence;
 import io.harness.persistence.HPersistence;
 import io.harness.pms.sdk.PmsSdkConfiguration;
@@ -133,6 +137,18 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
         bind(CIFeatureFlagService.class).to(CIFeatureFlagNoopServiceImpl.class);
       }
     });
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(CILicenseService.class).to(CILicenseNoopServiceImpl.class);
+      }
+    });
+    modules.add(new AbstractModule() {
+      @Override
+      protected void configure() {
+        bind(AccountClient.class).toInstance(mock(AccountClient.class));
+      }
+    });
 
     modules.add(new AbstractModule() {
       @Override
@@ -193,6 +209,7 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
         CIStepConfig.builder()
             .gitCloneConfig(StepImageConfig.builder().image("gc:1.2.3").build())
             .buildAndPushDockerRegistryConfig(StepImageConfig.builder().image("bpdr:1.2.3").build())
+            .buildAndPushACRConfig(StepImageConfig.builder().image("bpacr:1.2.3").build())
             .buildAndPushECRConfig(StepImageConfig.builder().image("bpecr:1.2.3").build())
             .buildAndPushGCRConfig(StepImageConfig.builder().image("bpgcr:1.2.3").build())
             .gcsUploadConfig(StepImageConfig.builder().image("gcsupload:1.2.3").build())
@@ -235,6 +252,12 @@ public class CIExecutionRule implements MethodRule, InjectorRuleMixin, MongoRule
       @Singleton
       DistributedLockImplementation distributedLockImplementation() {
         return DistributedLockImplementation.NOOP;
+      }
+
+      @Provides
+      @Singleton
+      MongoConfig mongoConfig() {
+        return MongoConfig.builder().build();
       }
 
       @Provides

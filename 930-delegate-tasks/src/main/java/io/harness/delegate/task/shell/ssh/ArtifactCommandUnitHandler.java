@@ -79,7 +79,6 @@ public abstract class ArtifactCommandUnitHandler {
       log.info("check if artifact:[{}] exists at location: [{}]", key, file.getAbsolutePath());
       if (!file.isDirectory() && file.exists()) {
         log.info("artifact:[{}] found locally", key);
-        logCallback.saveExecutionLog(format("artifact: [%s] found locally", key));
         return new FileInputStream(file);
       }
       log.info("file:[{}] doesn't exist locally. Downloading from artifactory", key);
@@ -92,8 +91,8 @@ public abstract class ArtifactCommandUnitHandler {
             format(SshExceptionConstants.ARTIFACT_DOWNLOAD_HINT, artifactDelegateConfig.getArtifactType()),
             format(SshExceptionConstants.ARTIFACT_DOWNLOAD_EXPLANATION, artifactDelegateConfig.getIdentifier(),
                 artifactDelegateConfig.getArtifactType()),
-            new SshCommandExecutionException(
-                format(SshExceptionConstants.ARTIFACT_DOWNLOAD_FAILED, artifactDelegateConfig.getArtifactType())));
+            new SshCommandExecutionException(format(SshExceptionConstants.ARTIFACT_DOWNLOAD_FAILED,
+                artifactDelegateConfig.getArtifactType(), artifactDelegateConfig.getIdentifier())));
       }
 
       log.info("Input stream acquired for file:[{}]. Saving locally", key);

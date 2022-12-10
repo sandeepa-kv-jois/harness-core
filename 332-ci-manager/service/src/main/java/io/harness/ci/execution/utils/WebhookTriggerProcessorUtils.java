@@ -7,6 +7,7 @@
 
 package io.harness.ci.utils;
 
+import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.exception.WingsException.USER;
 
 import io.harness.annotations.dev.HarnessTeam;
@@ -117,6 +118,7 @@ public class WebhookTriggerProcessorUtils {
         .authorAvatar(author.getAvatar())
         .sender(prHook.getSender().getLogin())
         .action(prHook.getAction().toString().toLowerCase())
+        .mergeSha(pr.getMergeSha())
         .build();
   }
 
@@ -140,10 +142,16 @@ public class WebhookTriggerProcessorUtils {
   }
 
   private static WebhookGitUser convertUser(User user) {
+    String id;
+    if (!isEmpty(user.getLogin())) {
+      id = user.getLogin();
+    } else {
+      id = user.getId();
+    }
     return WebhookGitUser.builder()
         .avatar(user.getAvatar())
         .email(user.getEmail())
-        .gitId(user.getLogin())
+        .gitId(id)
         .name(user.getName())
         .build();
   }

@@ -15,8 +15,8 @@ import io.harness.delegate.beans.DelegateResponseData;
 import io.harness.delegate.beans.DelegateTaskPackage;
 import io.harness.delegate.beans.DelegateTaskResponse;
 import io.harness.delegate.beans.logstreaming.ILogStreamingTaskClient;
-import io.harness.delegate.task.AbstractDelegateRunnableTask;
 import io.harness.delegate.task.TaskParameters;
+import io.harness.delegate.task.common.AbstractDelegateRunnableTask;
 import io.harness.exception.UnknownEnumTypeException;
 import io.harness.impl.ScmResponseStatusUtils;
 import io.harness.product.ci.scm.proto.CompareCommitsResponse;
@@ -187,10 +187,19 @@ public class ScmGitRefTask extends AbstractDelegateRunnableTask {
       case GET_LATEST_COMMIT_ON_FILE: {
         final GetLatestCommitOnFileResponse getLatestCommitOnFileResponse = scmDelegateClient.processScmRequest(c
             -> scmServiceClient.getLatestCommitOnFile(scmGitRefTaskParams.getScmConnector(),
-                scmGitRefTaskParams.getBranch(), scmGitRefTaskParams.getBaseBranch(), SCMGrpc.newBlockingStub(c)));
+                scmGitRefTaskParams.getBranch(), scmGitRefTaskParams.getFilePath(), SCMGrpc.newBlockingStub(c)));
         return ScmGitRefTaskResponseData.builder()
             .gitRefType(scmGitRefTaskParams.getGitRefType())
-            .getLatestCommitResponse(getLatestCommitOnFileResponse.toByteArray())
+            .getLatestCommitOnFileResponse(getLatestCommitOnFileResponse.toByteArray())
+            .build();
+      }
+      case LATEST_COMMIT_V2: {
+        GetLatestCommitResponse latestCommitResponse = scmDelegateClient.processScmRequest(c
+            -> scmServiceClient.getLatestCommit(scmGitRefTaskParams.getScmConnector(), scmGitRefTaskParams.getBranch(),
+                scmGitRefTaskParams.getRef(), SCMGrpc.newBlockingStub(c)));
+        return ScmGitRefTaskResponseData.builder()
+            .gitRefType(scmGitRefTaskParams.getGitRefType())
+            .getLatestCommitResponse(latestCommitResponse.toByteArray())
             .build();
       }
       default:

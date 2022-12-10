@@ -36,10 +36,10 @@ import software.wings.beans.AwsConfig;
 import software.wings.beans.InfrastructureMapping;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.WorkflowExecution;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.infrastructure.instance.Instance;
 import software.wings.beans.infrastructure.instance.key.deployment.AwsAmiDeploymentKey;
 import software.wings.beans.infrastructure.instance.key.deployment.DeploymentKey;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.service.AwsAmiInstanceSyncPerpetualTaskCreator;
 import software.wings.service.InstanceSyncPerpetualTaskCreator;
 import software.wings.service.impl.aws.model.AwsAsgListInstancesResponse;
@@ -158,8 +158,8 @@ public class AwsAmiInstanceHandler extends AwsInstanceHandler implements Instanc
   }
 
   @Override
-  public FeatureName getFeatureFlagToStopIteratorBasedInstanceSync() {
-    return STOP_INSTANCE_SYNC_VIA_ITERATOR_FOR_AWS_AMI_DEPLOYMENTS;
+  public Optional<FeatureName> getFeatureFlagToStopIteratorBasedInstanceSync() {
+    return Optional.of(STOP_INSTANCE_SYNC_VIA_ITERATOR_FOR_AWS_AMI_DEPLOYMENTS);
   }
 
   /**
@@ -253,8 +253,8 @@ public class AwsAmiInstanceHandler extends AwsInstanceHandler implements Instanc
   }
 
   @Override
-  public FeatureName getFeatureFlagToEnablePerpetualTaskForInstanceSync() {
-    return FeatureName.MOVE_AWS_AMI_INSTANCE_SYNC_TO_PERPETUAL_TASK;
+  public Optional<FeatureName> getFeatureFlagToEnablePerpetualTaskForInstanceSync() {
+    return Optional.of(FeatureName.MOVE_AWS_AMI_INSTANCE_SYNC_TO_PERPETUAL_TASK);
   }
 
   @Override

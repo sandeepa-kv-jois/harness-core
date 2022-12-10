@@ -7,6 +7,7 @@
 
 package io.harness.changestreamsframework;
 
+import io.harness.CDCStateEntity;
 import io.harness.ChangeDataCaptureServiceConfig;
 import io.harness.annotations.ChangeDataCapture;
 import io.harness.annotations.dev.HarnessTeam;
@@ -14,6 +15,8 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.mongo.MongoConfig;
 import io.harness.mongo.MongoModule;
 import io.harness.persistence.PersistentEntity;
+
+import software.wings.dl.WingsPersistence;
 
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
 import com.google.inject.Inject;
@@ -31,11 +34,15 @@ import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoDatabase;
 import com.mongodb.client.model.changestream.ChangeStreamDocument;
 import com.mongodb.client.model.changestream.OperationType;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import lombok.extern.slf4j.Slf4j;
 import org.mongodb.morphia.annotations.Entity;
 
@@ -45,9 +52,9 @@ public class ChangeTracker {
   @Inject private ChangeDataCaptureServiceConfig mainConfiguration;
   @Inject private ChangeEventFactory changeEventFactory;
   @Inject private MongoConfig mongoConfig;
+  @Inject private WingsPersistence wingsPersistence;
   private ExecutorService executorService;
-  private Set<ChangeTrackingTask> changeTrackingTasks;
-  private Set<Future<?>> changeTrackingTasksFuture;
+  private Set<Future<ChangeTrackingInfo<?>>> changeTrackingTasksFuture;
   private MongoClient mongoClient;
   private ReadPreference readPreference;
   private ClientSession clientSession;
@@ -112,35 +119,32 @@ public class ChangeTracker {
         .withReadPreference(readPreference);
   }
 
-  private void createChangeStreamTasks(Set<ChangeTrackingInfo<?>> changeTrackingInfos) {
-    changeTrackingTasks = new HashSet<>();
-    for (ChangeTrackingInfo<?> changeTrackingInfo : changeTrackingInfos) {
-      MongoDatabase mongoDatabase =
-          connectToMongoDatabase(getChangeDataCaptureDataStore(changeTrackingInfo.getMorphiaClass()));
+  private ChangeTrackingTask createChangeStreamTask(ChangeTrackingInfo<?> changeTrackingInfo) {
+    MongoDatabase mongoDatabase =
+        connectToMongoDatabase(getChangeDataCaptureDataStore(changeTrackingInfo.getMorphiaClass()));
 
-      MongoCollection<DBObject> collection =
-          mongoDatabase.getCollection(getCollectionName(changeTrackingInfo.getMorphiaClass()))
-              .withDocumentClass(DBObject.class)
-              .withReadPreference(readPreference);
+    MongoCollection<DBObject> collection =
+        mongoDatabase.getCollection(getCollectionName(changeTrackingInfo.getMorphiaClass()))
+            .withDocumentClass(DBObject.class)
+            .withReadPreference(readPreference);
 
-      log.info("Connection details for mongo collection {}", collection.getReadPreference());
+    log.info("Connection details for mongo collection {}", collection.getReadPreference());
 
-      ChangeStreamSubscriber changeStreamSubscriber = getChangeStreamSubscriber(changeTrackingInfo);
-      ChangeTrackingTask changeTrackingTask = new ChangeTrackingTask(
-          changeStreamSubscriber, collection, clientSession, changeTrackingInfo.getResumeToken());
-      changeTrackingTasks.add(changeTrackingTask);
-    }
+    ChangeStreamSubscriber changeStreamSubscriber = getChangeStreamSubscriber(changeTrackingInfo);
+    String token = getResumeToken(changeTrackingInfo.getMorphiaClass());
+    return new ChangeTrackingTask(
+        changeStreamSubscriber, collection, clientSession, token, changeTrackingInfo.getMorphiaClass());
   }
 
   private void openChangeStreams(Set<ChangeTrackingInfo<?>> changeTrackingInfos) {
-    executorService =
-        Executors.newFixedThreadPool(8, new ThreadFactoryBuilder().setNameFormat("change-tracker-%d").build());
-    createChangeStreamTasks(changeTrackingInfos);
+    executorService = Executors.newFixedThreadPool(
+        changeTrackingInfos.size(), new ThreadFactoryBuilder().setNameFormat("change-tracker-%d").build());
     changeTrackingTasksFuture = new HashSet<>();
 
     if (!executorService.isShutdown()) {
-      for (ChangeTrackingTask changeTrackingTask : changeTrackingTasks) {
-        Future f = executorService.submit(changeTrackingTask);
+      for (ChangeTrackingInfo<?> changeTrackingInfo : changeTrackingInfos) {
+        ChangeTrackingTask changeTrackingTask = createChangeStreamTask(changeTrackingInfo);
+        Future<ChangeTrackingInfo<?>> f = executorService.submit(changeTrackingTask, changeTrackingInfo);
         changeTrackingTasksFuture.add(f);
       }
     }
@@ -151,13 +155,33 @@ public class ChangeTracker {
         || changeStreamDocument.getOperationType() == OperationType.DELETE;
   }
 
+  private <T extends PersistentEntity> boolean hasTrackedFieldBeenChanged(
+      ChangeEvent<T> changeEvent, Class<T> subscribedClass) {
+    ChangeDataCapture[] annotations = subscribedClass.getAnnotationsByType(ChangeDataCapture.class);
+    Set<String> subscribedFields =
+        Arrays.stream(annotations).map(ChangeDataCapture::fields).flatMap(Stream::of).collect(Collectors.toSet());
+
+    if (subscribedFields.isEmpty()) {
+      return true;
+    }
+
+    if (changeEvent.getChangeType() == ChangeType.UPDATE && changeEvent.getChanges() != null) {
+      Set<String> changedFields = changeEvent.getChanges().keySet();
+      return !Collections.disjoint(changedFields, subscribedFields);
+    }
+
+    return true;
+  }
+
   private <T extends PersistentEntity> ChangeStreamSubscriber getChangeStreamSubscriber(
       ChangeTrackingInfo<T> changeTrackingInfo) {
     return changeStreamDocument -> {
       if (shouldProcessChange(changeStreamDocument)) {
         ChangeEvent<T> changeEvent =
             changeEventFactory.fromChangeStreamDocument(changeStreamDocument, changeTrackingInfo.getMorphiaClass());
-        changeTrackingInfo.getChangeSubscriber().onChange(changeEvent);
+        if (hasTrackedFieldBeenChanged(changeEvent, changeTrackingInfo.getMorphiaClass())) {
+          changeTrackingInfo.getChangeSubscriber().onChange(changeEvent);
+        }
       }
     };
   }
@@ -167,12 +191,37 @@ public class ChangeTracker {
   }
 
   public boolean checkIfAnyChangeTrackerIsAlive() {
-    for (Future<?> f : changeTrackingTasksFuture) {
-      if (!f.isDone()) {
-        return true;
+    changeTrackingTasksFuture =
+        changeTrackingTasksFuture.stream().map(this::recreateTaskIfCompleted).collect(Collectors.toSet());
+    return changeTrackingTasksFuture.stream().anyMatch(f -> !f.isDone());
+  }
+
+  private Future<ChangeTrackingInfo<?>> recreateTaskIfCompleted(Future<ChangeTrackingInfo<?>> future) {
+    if (future.isDone() && !executorService.isShutdown()) {
+      try {
+        ChangeTrackingInfo<?> info = future.get();
+        ChangeTrackingTask newTask =
+            createChangeStreamTask(getChangeTrackingInfo(info.getMorphiaClass(), info.getChangeSubscriber()));
+        return executorService.submit(newTask, info);
+      } catch (Exception e) {
+        log.warn("Failed to recreate change stream tracker thread", e);
       }
     }
-    return false;
+    return future;
+  }
+
+  private <T extends PersistentEntity> ChangeTrackingInfo<T> getChangeTrackingInfo(
+      Class subscribedClass, ChangeSubscriber changeSubscriber) {
+    return new ChangeTrackingInfo<T>(subscribedClass, changeSubscriber);
+  }
+
+  private String getResumeToken(Class<?> morphiaClass) {
+    CDCStateEntity cdcStateEntityState = wingsPersistence.get(CDCStateEntity.class, morphiaClass.getCanonicalName());
+    String token = null;
+    if (cdcStateEntityState != null) {
+      token = cdcStateEntityState.getLastSyncedToken();
+    }
+    return token;
   }
 
   public void stop() {

@@ -31,7 +31,6 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.cache.CacheConfig;
 import io.harness.cache.CacheConfig.CacheConfigBuilder;
 import io.harness.cache.CacheModule;
-import io.harness.capability.CapabilityModule;
 import io.harness.cf.AbstractCfModule;
 import io.harness.cf.CfClientConfig;
 import io.harness.cf.CfMigrationConfig;
@@ -93,6 +92,8 @@ import io.harness.waiter.OrchestrationNotifyEventListener;
 import software.wings.DataStorageMode;
 import software.wings.WingsTestModule;
 import software.wings.app.AuthModule;
+import software.wings.app.ExecutorConfig;
+import software.wings.app.ExecutorsConfig;
 import software.wings.app.GcpMarketplaceIntegrationModule;
 import software.wings.app.GeneralNotifyEventListener;
 import software.wings.app.IndexMigratorModule;
@@ -318,7 +319,6 @@ public class WingsRule implements MethodRule, InjectorRuleMixin, MongoRuleMixin 
     configuration.getPortal().setJwtExternalServiceSecret("JWT_EXTERNAL_SERVICE_SECRET");
     configuration.getPortal().setJwtPasswordSecret(JWT_PASSWORD_SECRET);
     configuration.getPortal().setJwtNextGenManagerSecret("dummy_key");
-    configuration.getPortal().setJwtManagerServiceSecret("dummy_key");
     configuration.getPortal().setOptionalDelegateTaskRejectAtLimit(10000);
     configuration.getPortal().setImportantDelegateTaskRejectAtLimit(50000);
     configuration.getPortal().setCriticalDelegateTaskRejectAtLimit(100000);
@@ -327,6 +327,9 @@ public class WingsRule implements MethodRule, InjectorRuleMixin, MongoRuleMixin 
         MongoConfig.builder().uri(getProperty("mongoUri", "mongodb://localhost:27017/" + dbName)).build());
     configuration.getBackgroundSchedulerConfig().setAutoStart(getProperty("setupScheduler", "false"));
     configuration.getServiceSchedulerConfig().setAutoStart(getProperty("setupScheduler", "false"));
+
+    configuration.setExecutorsConfig(
+        ExecutorsConfig.builder().dataReconciliationExecutorConfig(ExecutorConfig.builder().build()).build());
 
     configuration.setGrpcDelegateServiceClientConfig(
         GrpcClientConfig.builder().target("localhost:9880").authority("localhost").build());
@@ -379,9 +382,7 @@ public class WingsRule implements MethodRule, InjectorRuleMixin, MongoRuleMixin 
     ServiceHttpClientConfig ngManagerServiceHttpClientConfig =
         ServiceHttpClientConfig.builder().baseUrl("http://localhost:7457/").build();
     configuration.setNgManagerServiceHttpClientConfig(ngManagerServiceHttpClientConfig);
-    ServiceHttpClientConfig managerServiceHttpClientConfig =
-        ServiceHttpClientConfig.builder().baseUrl("http://localhost:3457/").build();
-    configuration.setManagerServiceHttpClientConfig(managerServiceHttpClientConfig);
+
     configuration.setDistributedLockImplementation(DistributedLockImplementation.NOOP);
     configuration.setEventsFrameworkConfiguration(
         EventsFrameworkConfiguration.builder()
@@ -476,7 +477,6 @@ public class WingsRule implements MethodRule, InjectorRuleMixin, MongoRuleMixin 
     modules.add(TestMongoModule.getInstance());
     modules.add(new SpringPersistenceTestModule());
     modules.add(new DelegateServiceModule());
-    modules.add(new CapabilityModule());
     modules.add(new WingsModule((MainConfiguration) configuration, StartupMode.MANAGER));
     modules.add(new SimpleTotpModule());
     modules.add(new IndexMigratorModule());

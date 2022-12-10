@@ -36,9 +36,9 @@ import software.wings.beans.HostConnectionAttributes;
 import software.wings.beans.HostReachabilityInfo;
 import software.wings.beans.HostValidationResponse;
 import software.wings.beans.SSHVaultConfig;
-import software.wings.beans.SettingAttribute;
 import software.wings.beans.WinRmConnectionAttributes;
 import software.wings.beans.command.CommandExecutionContext;
+import software.wings.beans.dto.SettingAttribute;
 import software.wings.beans.infrastructure.Host;
 import software.wings.service.intfc.security.EncryptionService;
 import software.wings.service.intfc.security.SecretManagementDelegateService;
@@ -54,6 +54,7 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
@@ -127,16 +128,21 @@ public class HostValidationServiceImpl implements HostValidationService {
     } else if (settingValue instanceof HostConnectionAttributes) {
       port = ((HostConnectionAttributes) settingValue).getSshPort();
     }
-    final int portf = port;
+    return validateReachability(hostNames, port);
+  }
 
-    List<HostReachabilityInfo> result = new ArrayList<>();
-    for (String host : hostNames) {
-      result.add(HostReachabilityInfo.builder()
+  public List<HostReachabilityInfo> validateReachability(List<String> hostNames, int port) {
+    if (hostNames.isEmpty()) {
+      return Collections.emptyList();
+    } else {
+      return hostNames.stream()
+          .map(host
+              -> HostReachabilityInfo.builder()
                      .hostName(host)
-                     .reachable(SocketConnectivityCapabilityCheck.connectableHost(host, portf))
-                     .build());
+                     .reachable(SocketConnectivityCapabilityCheck.connectableHost(host, port))
+                     .build())
+          .collect(Collectors.toList());
     }
-    return result;
   }
 
   private HostValidationResponse validateHostSsh(

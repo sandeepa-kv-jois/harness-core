@@ -25,8 +25,11 @@ import io.harness.beans.FileContentBatchResponse;
 import io.harness.category.element.UnitTests;
 import io.harness.connector.service.scm.ScmDelegateClient;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
+import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketUsernameTokenApiAccessDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubTokenSpecDTO;
+import io.harness.delegate.beans.connector.scm.gitlab.GitlabApiAccessType;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabTokenSpecDTO;
 import io.harness.exception.GitClientException;
@@ -40,13 +43,18 @@ import software.wings.WingsBaseTest;
 import software.wings.beans.GitConfig;
 import software.wings.beans.GitConfig.ProviderType;
 import software.wings.beans.GitFileConfig;
-import software.wings.beans.SettingAttribute;
 import software.wings.beans.command.ExecutionLogCallback;
+import software.wings.beans.dto.SettingAttribute;
 import software.wings.beans.yaml.GitFetchFilesResult;
 
 import java.io.File;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
+import lombok.SneakyThrows;
+import org.apache.commons.io.FileUtils;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
@@ -84,27 +92,30 @@ public class ScmFetchFilesHelperTest extends WingsBaseTest {
         .when(scmDelegateClient)
         .processScmRequest(any());
     spyScmFetchFilesHelper.downloadFilesUsingScm("manifests", gitFileConfig, gitConfig, logCallback);
-    File file = new File("manifests/test2/path.txt");
+    File file = new File("manifests/test/test2/path.txt");
     assertThat(file.exists()).isTrue();
   }
 
   @Test
+  @SneakyThrows(IOException.class)
   @Owner(developers = TMACARI)
   @Category(UnitTests.class)
   public void testShouldDownloadFilesUsingScmByFolderRootPath() {
     ScmFetchFilesHelper spyScmFetchFilesHelper = spy(scmFetchFilesHelper);
+    String encodedValue = Base64.getEncoder().encodeToString("content: abc".getBytes(StandardCharsets.UTF_8));
     LogCallback logCallback = mock(ExecutionLogCallback.class);
     GitConfig gitConfig = GitConfig.builder().repoUrl("helm-url").build();
     GitFileConfig gitFileConfigSlashRootPath = GitFileConfig.builder().filePath("/").build();
     GitFileConfig gitFileConfigDotRootPath = GitFileConfig.builder().filePath(".").build();
     doReturn(GithubConnectorDTO.builder().build()).when(spyScmFetchFilesHelper).getScmConnector(any());
     doReturn(GitlabConnectorDTO.builder().build()).when(spyScmFetchFilesHelper).getScmConnector(any());
+    doReturn(BitbucketConnectorDTO.builder().build()).when(spyScmFetchFilesHelper).getScmConnector(any());
     when(scmDelegateClient.processScmRequest(any()))
         .thenReturn(FileContentBatchResponse.builder()
                         .fileBatchContentResponse(FileBatchContentResponse.newBuilder()
                                                       .addFileContents(FileContent.newBuilder()
                                                                            .setStatus(200)
-                                                                           .setContent("content")
+                                                                           .setContent(encodedValue)
                                                                            .setPath("test2/path.txt")
                                                                            .build())
                                                       .build())
@@ -113,7 +124,7 @@ public class ScmFetchFilesHelperTest extends WingsBaseTest {
                 .fileBatchContentResponse(FileBatchContentResponse.newBuilder()
                                               .addFileContents(FileContent.newBuilder()
                                                                    .setStatus(200)
-                                                                   .setContent("content")
+                                                                   .setContent(encodedValue)
                                                                    .setPath("test3/path.txt")
                                                                    .build())
                                               .build())
@@ -124,9 +135,12 @@ public class ScmFetchFilesHelperTest extends WingsBaseTest {
     File file2 = new File("manifests/test3/path.txt");
     assertThat(file.exists()).isTrue();
     assertThat(file2.exists()).isTrue();
+    assertThat(FileUtils.readFileToString(file, StandardCharsets.UTF_8)).isEqualTo("content: abc");
+    assertThat(FileUtils.readFileToString(file2, StandardCharsets.UTF_8)).isEqualTo("content: abc");
   }
 
   @Test
+  @SneakyThrows(IOException.class)
   @Owner(developers = TMACARI)
   @Category(UnitTests.class)
   public void testShouldDownloadFilesUsingScmByFilepath() {
@@ -151,6 +165,7 @@ public class ScmFetchFilesHelperTest extends WingsBaseTest {
     spyScmFetchFilesHelper.downloadFilesUsingScm("manifests", gitFileConfig, gitConfig, logCallback);
     File file = new File("manifests/test/test2/path.txt");
     assertThat(file.exists()).isTrue();
+    assertThat(FileUtils.readFileToString(file, StandardCharsets.UTF_8)).isEqualTo("content");
   }
 
   @Test
@@ -212,16 +227,25 @@ public class ScmFetchFilesHelperTest extends WingsBaseTest {
     assertThat(scmFetchFilesHelper.shouldUseScm(
                    true, GitConfig.builder().sshSettingAttribute(null).providerType(ProviderType.GIT).build()))
         .isFalse();
+    assertThat(scmFetchFilesHelper.shouldUseScm(
+                   true, GitConfig.builder().sshSettingAttribute(null).providerType(ProviderType.BITBUCKET).build()))
+        .isTrue();
     assertThat(scmFetchFilesHelper.shouldUseScm(false,
                    GitConfig.builder()
-                       .sshSettingAttribute(SettingAttribute.Builder.aSettingAttribute().build())
+                       .sshSettingAttribute(SettingAttribute.builder().build())
                        .providerType(ProviderType.GITHUB)
                        .build()))
         .isFalse();
     assertThat(scmFetchFilesHelper.shouldUseScm(false,
                    GitConfig.builder()
-                       .sshSettingAttribute(SettingAttribute.Builder.aSettingAttribute().build())
+                       .sshSettingAttribute(SettingAttribute.builder().build())
                        .providerType(ProviderType.GITLAB)
+                       .build()))
+        .isFalse();
+    assertThat(scmFetchFilesHelper.shouldUseScm(false,
+                   GitConfig.builder()
+                       .sshSettingAttribute(SettingAttribute.builder().build())
+                       .providerType(ProviderType.BITBUCKET)
                        .build()))
         .isFalse();
     assertThat(scmFetchFilesHelper.shouldUseScm(
@@ -229,6 +253,9 @@ public class ScmFetchFilesHelperTest extends WingsBaseTest {
         .isFalse();
     assertThat(scmFetchFilesHelper.shouldUseScm(
                    false, GitConfig.builder().sshSettingAttribute(null).providerType(ProviderType.GITLAB).build()))
+        .isFalse();
+    assertThat(scmFetchFilesHelper.shouldUseScm(
+                   false, GitConfig.builder().sshSettingAttribute(null).providerType(ProviderType.BITBUCKET).build()))
         .isFalse();
   }
 
@@ -257,8 +284,26 @@ public class ScmFetchFilesHelperTest extends WingsBaseTest {
                    .getTokenRef()
                    .getDecryptedValue())
         .isEqualTo("password".toCharArray());
-
+    assertThat(((GitlabConnectorDTO) gitLabScmConnector).getApiAccess().getType()).isEqualTo(GitlabApiAccessType.TOKEN);
     assertThat(scmFetchFilesHelper.getScmConnector(GitConfig.builder().providerType(ProviderType.GIT).build()))
         .isNull();
+
+    ScmConnector bitBucketScmConnector = scmFetchFilesHelper.getScmConnector(GitConfig.builder()
+                                                                                 .repoUrl("BitbucketURL")
+                                                                                 .password("password".toCharArray())
+                                                                                 .username("username")
+                                                                                 .providerType(ProviderType.BITBUCKET)
+                                                                                 .build());
+    assertThat(bitBucketScmConnector.getUrl()).isEqualTo("BitbucketURL");
+    assertThat(
+        ((BitbucketUsernameTokenApiAccessDTO) ((BitbucketConnectorDTO) bitBucketScmConnector).getApiAccess().getSpec())
+            .getTokenRef()
+            .getDecryptedValue())
+        .isEqualTo("password".toCharArray());
+    assertThat(
+        ((BitbucketUsernameTokenApiAccessDTO) ((BitbucketConnectorDTO) bitBucketScmConnector).getApiAccess().getSpec())
+            .getUsernameRef()
+            .getDecryptedValue())
+        .isEqualTo("username".toCharArray());
   }
 }

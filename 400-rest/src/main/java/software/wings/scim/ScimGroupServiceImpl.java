@@ -69,6 +69,7 @@ public class ScimGroupServiceImpl implements ScimGroupService {
   @Override
   public ScimListResponse<ScimGroup> searchGroup(String filter, String accountId, Integer count, Integer startIndex) {
     startIndex = startIndex == null ? 0 : startIndex;
+    Integer tempStartIndex = startIndex == 0 ? 0 : startIndex - 1;
     count = count == null ? MAX_RESULT_COUNT : count;
     ScimListResponse<ScimGroup> searchGroupResponse = new ScimListResponse<>();
     log.info("SCIM: Searching groups in account {} with filter: {}", accountId, filter);
@@ -80,6 +81,7 @@ public class ScimGroupServiceImpl implements ScimGroupService {
         String[] split = filter.split(" eq ");
         String operand = split[1];
         searchQuery = operand.substring(1, operand.length() - 1);
+        log.info("SCIM: Search query is {}, for accountId {}", searchQuery, accountId);
       } catch (Exception ex) {
         log.error("SCIM: Failed to process for account {} group search query: {} ", accountId, filter, ex);
       }
@@ -88,7 +90,7 @@ public class ScimGroupServiceImpl implements ScimGroupService {
     List<ScimGroup> groupList = new ArrayList<>();
 
     try {
-      groupList = searchUserGroupByGroupName(accountId, searchQuery, count, startIndex);
+      groupList = searchUserGroupByGroupName(accountId, searchQuery, count, tempStartIndex);
       groupList.forEach(searchGroupResponse::resource);
     } catch (WingsException ex) {
       log.info("SCIM: Search in account {} for group , query: {}", accountId, searchQuery, ex);
@@ -97,6 +99,9 @@ public class ScimGroupServiceImpl implements ScimGroupService {
     searchGroupResponse.startIndex(startIndex);
     searchGroupResponse.itemsPerPage(count);
     searchGroupResponse.totalResults(groupList.size());
+    log.info("SCIM: Search Group Response is {}, for accountId {}",
+        searchGroupResponse.getResources().stream().map(ScimGroup::getDisplayName).collect(Collectors.toList()),
+        accountId);
     return searchGroupResponse;
   }
 
@@ -140,7 +145,8 @@ public class ScimGroupServiceImpl implements ScimGroupService {
 
     UpdateOperations<UserGroup> updateOperations = wingsPersistence.createUpdateOperations(UserGroup.class);
     updateDisplayName(scimGroup, userGroup, updateOperations);
-    updateMembers(scimGroup, updateOperations);
+    log.info("SCIM: SCIM Group {} is being synced, for accountId {}", scimGroup.getDisplayName(), accountId);
+    updateMembers(scimGroup, updateOperations, accountId);
 
     wingsPersistence.update(userGroup, updateOperations);
     log.info("SCIM: Update group call successful accountId {}, groupId  {}, group resource: {}", accountId, groupId,
@@ -148,8 +154,10 @@ public class ScimGroupServiceImpl implements ScimGroupService {
     return Response.status(Status.OK).entity(scimGroup).build();
   }
 
-  private void updateMembers(ScimGroup scimGroup, UpdateOperations<UserGroup> updateOperations) {
+  private void updateMembers(ScimGroup scimGroup, UpdateOperations<UserGroup> updateOperations, String accountId) {
     updateOperations.set(UserGroupKeys.memberIds, getMembersOfUserGroup(scimGroup));
+    log.info("SCIM: Member userIds provided by the SCIM Provider are {}, for account {}",
+        getMembersOfUserGroup(scimGroup), accountId);
   }
 
   @Override
@@ -192,8 +200,9 @@ public class ScimGroupServiceImpl implements ScimGroupService {
   public Response updateGroup(String groupId, String accountId, PatchRequest patchRequest) {
     String operation = isNotEmpty(patchRequest.getOperations()) ? patchRequest.getOperations().toString() : null;
     String schemas = isNotEmpty(patchRequest.getSchemas()) ? patchRequest.getSchemas().toString() : null;
-    log.info("Patch Request Logging\nOperations {}\n, Schemas {}\n,External Id {}\n, Meta {}", operation, schemas,
-        patchRequest.getExternalId(), patchRequest.getMeta());
+    log.info(
+        "SCIM: Updating Group: Patch Request Logging\nOperations {}\n, Schemas {}\n,External Id {}\n, Meta {}, for accountId {}",
+        operation, schemas, patchRequest.getExternalId(), patchRequest.getMeta(), accountId);
     UserGroup existingGroup = userGroupService.get(accountId, groupId);
 
     if (existingGroup == null) {
@@ -218,7 +227,7 @@ public class ScimGroupServiceImpl implements ScimGroupService {
         }
         case ADD:
         case ADD_OKTA: {
-          updateNewMemberIds(userIdsFromOperation, newMemberIds);
+          updateNewMemberIds(userIdsFromOperation, newMemberIds, accountId);
           break;
         }
         case REMOVE:
@@ -251,7 +260,8 @@ public class ScimGroupServiceImpl implements ScimGroupService {
     return Response.status(Status.NO_CONTENT).build();
   }
 
-  private void updateNewMemberIds(Set<String> userIdsFromOperation, Set<String> newMemberIds) {
+  private void updateNewMemberIds(Set<String> userIdsFromOperation, Set<String> newMemberIds, String accountId) {
+    log.info("SCIM: User Ids received from SCIM provider are {}, for accountId {}", userIdsFromOperation, accountId);
     for (String userId : userIdsFromOperation) {
       User user = wingsPersistence.get(User.class, userId);
       if (user != null) {
@@ -278,8 +288,7 @@ public class ScimGroupServiceImpl implements ScimGroupService {
     }
 
     if (!"members".equals(patchOperation.getPath())) {
-      log.error(
-          "SCIM: Expect operation only on the members. Received it in path: {}, for accountId: {}, for GroupId {}",
+      log.warn("SCIM: Expect operation only on the members. Received it in path: {}, for accountId: {}, for GroupId {}",
           patchOperation.getPath(), accountId, groupId);
       return Collections.emptySet();
     }
@@ -302,6 +311,7 @@ public class ScimGroupServiceImpl implements ScimGroupService {
   public ScimGroup getGroup(String groupId, String accountId) {
     UserGroup userGroup = userGroupService.get(accountId, groupId);
     if (userGroup == null) {
+      log.info("SCIM: UserGroup with id {} is not found in account {}", groupId, accountId);
       throw new UnauthorizedException(EXC_MSG_GROUP_DOESNT_EXIST, GROUP);
     }
     ScimGroup scimGroup = buildGroupResponse(userGroup);
@@ -365,7 +375,8 @@ public class ScimGroupServiceImpl implements ScimGroupService {
                               .memberIds(getMembersOfUserGroup(groupQuery))
                               .importedByScim(true)
                               .build();
-
+    log.info("SCIM: User ids received for account {} from SCIM provider are {}", accountId,
+        getMembersOfUserGroup(groupQuery));
     userGroupService.save(userGroup);
 
     groupQuery.setId(userGroup.getUuid());

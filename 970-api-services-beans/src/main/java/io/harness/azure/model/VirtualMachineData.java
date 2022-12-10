@@ -16,4 +16,14 @@ import lombok.Data;
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class VirtualMachineData {
   private String hostName;
+  private String address;
+  private String privateIp;
+  private String publicIp;
+
+  public String getAddress() {
+    if (address == null) {
+      return hostName;
+    }
+    return address;
+  }
 }

@@ -9,10 +9,13 @@ package io.harness.user.remote;
 
 import static io.harness.annotations.dev.HarnessTeam.PL;
 
+import io.harness.NGCommonEntityConstants;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.beans.PageResponse;
 import io.harness.ng.core.dto.ProjectDTO;
+import io.harness.ng.core.dto.ResponseDTO;
 import io.harness.ng.core.dto.UserInviteDTO;
+import io.harness.ng.core.dto.UsersCountDTO;
 import io.harness.ng.core.user.PasswordChangeDTO;
 import io.harness.ng.core.user.PasswordChangeResponse;
 import io.harness.ng.core.user.TwoFactorAuthMechanismInfo;
@@ -41,6 +44,8 @@ public interface UserClient {
   String SEARCH_TERM_KEY = "searchTerm";
   String USERS_SEARCH_API = "ng/user/search";
   String USERS_API = "ng/user";
+
+  String USERS_AGGREGATE_API = "user";
   String USERS_API_OAUTH = "ng/user/oauth";
   String USERS_SIGNUP_INVITE_API = "ng/user/signup-invite";
   String USER_SIGNUP_COMMUNITY = "ng/user/signup-invite/community";
@@ -53,6 +58,8 @@ public interface UserClient {
   String USER_SAFE_DELETE = "ng/user/safeDelete/{userId}";
   String UPDATE_USER_API = "ng/user/user";
   String CREATE_USER_VIA_INVITE = "ng/user/invites/create-user";
+  String CHECK_USER_LIMIT = "ng/user/limit-check";
+
   String USER_TWO_FACTOR_AUTH_SETTINGS = "ng/user/two-factor-auth/{auth-mechanism}";
   String USER_ENABLE_TWO_FACTOR_AUTH = "ng/user/enable-two-factor-auth";
   String USER_DISABLE_TWO_FACTOR_AUTH = "ng/user/disable-two-factor-auth";
@@ -70,6 +77,9 @@ public interface UserClient {
   Call<RestResponse<SignupInviteDTO>> createNewSignupInvite(@Body SignupInviteDTO userRequest);
 
   @GET(USERS_SIGNUP_INVITE_API) Call<RestResponse<SignupInviteDTO>> getSignupInvite(@Query("email") String email);
+
+  @GET(CHECK_USER_LIMIT)
+  Call<RestResponse<Boolean>> checkUserLimit(@Query("accountId") String accountId, @Query("email") String email);
 
   @PUT(USERS_SIGNUP_INVITE_API) Call<RestResponse<UserInfo>> completeSignupInvite(@Query("email") String email);
 
@@ -108,8 +118,9 @@ public interface UserClient {
   @PUT(UPDATE_USER_API) Call<RestResponse<Optional<UserInfo>>> updateUser(@Body UserInfo userInfo);
 
   @PUT(CREATE_USER_VIA_INVITE)
-  Call<RestResponse<Boolean>> createUserAndCompleteNGInvite(
-      @Body UserInviteDTO userInviteDTO, @Query("isScimInvite") boolean isScimInvite);
+  Call<RestResponse<Boolean>> createUserAndCompleteNGInvite(@Body UserInviteDTO userInviteDTO,
+      @Query("isScimInvite") boolean isScimInvite,
+      @Query("shouldSendTwoFactorAuthResetEmail") boolean shouldSendTwoFactorAuthResetEmail);
 
   @GET(USER_IN_ACCOUNT_VERIFICATION)
   Call<RestResponse<Boolean>> isUserInAccount(
@@ -148,4 +159,8 @@ public interface UserClient {
   @GET(ALL_PROJECTS_ACCESSIBLE_TO_USER_API)
   Call<RestResponse<List<ProjectDTO>>> getUserAllProjectsInfo(
       @Query(value = "accountId") String accountId, @Query(value = "userId") String userId);
+
+  @GET(USERS_AGGREGATE_API + "/users-count")
+  Call<ResponseDTO<UsersCountDTO>> getUsersCount(@Query(NGCommonEntityConstants.ACCOUNT_KEY) String accountIdentifier,
+      @Query(value = "startTime") long startInterval, @Query(value = "endTime") long endInterval);
 }

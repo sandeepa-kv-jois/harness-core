@@ -8,6 +8,7 @@
 package io.harness.cdng.service.beans;
 
 import io.harness.beans.ExecutionStrategyType;
+import io.harness.data.structure.EmptyPredicate;
 import io.harness.ng.core.k8s.ServiceSpecType;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -29,10 +30,16 @@ public enum ServiceDefinitionType {
       Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.DEFAULT), ServiceSpecType.NATIVE_HELM),
 
   @JsonProperty(ServiceSpecType.SSH)
-  SSH(ServiceSpecType.SSH, Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.SSH),
+  SSH(ServiceSpecType.SSH,
+      Lists.newArrayList(ExecutionStrategyType.DEFAULT, ExecutionStrategyType.BASIC, ExecutionStrategyType.ROLLING,
+          ExecutionStrategyType.CANARY),
+      ServiceSpecType.SSH),
 
   @JsonProperty(ServiceSpecType.WINRM)
-  WINRM(ServiceSpecType.WINRM, Lists.newArrayList(ExecutionStrategyType.DEFAULT), ServiceSpecType.WINRM),
+  WINRM(ServiceSpecType.WINRM,
+      Lists.newArrayList(ExecutionStrategyType.DEFAULT, ExecutionStrategyType.BASIC, ExecutionStrategyType.ROLLING,
+          ExecutionStrategyType.CANARY),
+      ServiceSpecType.WINRM),
 
   @JsonProperty(ServiceSpecType.SERVERLESS_AWS_LAMBDA)
   SERVERLESS_AWS_LAMBDA("Serverless Aws Lambda",
@@ -43,7 +50,35 @@ public enum ServiceDefinitionType {
   AZURE_WEBAPP("Azure Web Apps",
       Lists.newArrayList(ExecutionStrategyType.BASIC, ExecutionStrategyType.BLUE_GREEN, ExecutionStrategyType.CANARY,
           ExecutionStrategyType.DEFAULT),
-      ServiceSpecType.AZURE_WEBAPP);
+      ServiceSpecType.AZURE_WEBAPP),
+
+  @JsonProperty(ServiceSpecType.CUSTOM_DEPLOYMENT)
+  CUSTOM_DEPLOYMENT(ServiceSpecType.CUSTOM_DEPLOYMENT, Lists.newArrayList(ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.CUSTOM_DEPLOYMENT),
+
+  @JsonProperty(ServiceSpecType.ECS)
+  ECS("ECS",
+      Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.CANARY, ExecutionStrategyType.BLUE_GREEN,
+          ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.ECS),
+
+  @JsonProperty(ServiceSpecType.ELASTIGROUP)
+  ELASTIGROUP(ServiceSpecType.ELASTIGROUP,
+      Lists.newArrayList(ExecutionStrategyType.CANARY, ExecutionStrategyType.BLUE_GREEN, ExecutionStrategyType.BASIC,
+          ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.ELASTIGROUP),
+
+  @JsonProperty(ServiceSpecType.TAS)
+  TAS(ServiceSpecType.TAS,
+      Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.CANARY, ExecutionStrategyType.BLUE_GREEN,
+          ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.TAS),
+
+  @JsonProperty(ServiceSpecType.ASG)
+  ASG(ServiceSpecType.ASG,
+      Lists.newArrayList(ExecutionStrategyType.ROLLING, ExecutionStrategyType.CANARY, ExecutionStrategyType.BLUE_GREEN,
+          ExecutionStrategyType.DEFAULT),
+      ServiceSpecType.ASG);
 
   /*
   //Unsupported for now
@@ -69,6 +104,9 @@ public enum ServiceDefinitionType {
 
   @JsonCreator(mode = JsonCreator.Mode.DELEGATING)
   public static ServiceDefinitionType getServiceDefinitionType(@JsonProperty("type") String yamlName) {
+    if (EmptyPredicate.isEmpty(yamlName)) {
+      return null;
+    }
     for (ServiceDefinitionType serviceDefinitionType : ServiceDefinitionType.values()) {
       if (serviceDefinitionType.yamlName.equalsIgnoreCase(yamlName)) {
         return serviceDefinitionType;

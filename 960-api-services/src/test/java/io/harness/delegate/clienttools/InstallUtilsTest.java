@@ -25,9 +25,6 @@ import static io.harness.rule.OwnerRule.MARKO;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.CALLS_REAL_METHODS;
-import static org.powermock.api.mockito.PowerMockito.doNothing;
-import static org.powermock.api.mockito.PowerMockito.doReturn;
-import static org.powermock.api.mockito.PowerMockito.mockStatic;
 
 import io.harness.CategoryTest;
 import io.harness.annotations.dev.OwnedBy;
@@ -36,23 +33,24 @@ import io.harness.category.element.UnitTests;
 import io.harness.delegate.configuration.DelegateConfiguration;
 import io.harness.rule.Owner;
 
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
+import org.mockito.MockedStatic;
+import org.mockito.Mockito;
+import org.mockito.stubbing.Answer;
 import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 @OwnedBy(DEL)
-@RunWith(PowerMockRunner.class)
 @PrepareForTest({InstallUtils.class})
 public class InstallUtilsTest extends CategoryTest {
   private static final String PWD = Paths.get(".").toAbsolutePath().normalize().toString();
 
   private static final String DEFAULT_KUSTOMIZE_3_PATH = PWD + "/client-tools/kustomize/v3.5.4/kustomize";
   private static final String DEFAULT_KUSTOMIZE_4_PATH = PWD + "/client-tools/kustomize/v4.0.0/kustomize";
-  private static final String DEFAULT_SCM_PATH = PWD + "/client-tools/scm/36d92fd8/scm";
+  private static final String DEFAULT_SCM_PATH = PWD + "/client-tools/scm/9ddfb2b9/scm";
   private static final String DEFAULT_OC_PATH = PWD + "/client-tools/oc/v4.2.16/oc";
   private static final String DEFAULT_TFCONFIG_INSPECT_1_0_PATH =
       PWD + "/client-tools/tf-config-inspect/v1.0/terraform-config-inspect";
@@ -64,17 +62,23 @@ public class InstallUtilsTest extends CategoryTest {
   private static final String DEFAULT_HELM_3_PATH = PWD + "/client-tools/helm/v3.1.2/helm";
   private static final String DEFAULT_HELM_2_PATH = PWD + "/client-tools/helm/v2.13.1/helm";
   private static final String DEFAULT_PYWINRM_PATH = PWD + "/client-tools/harness-pywinrm/v0.4-dev/harness-pywinrm";
-  private static final String DEFAULT_GOTEMPLATE_PATH = PWD + "/client-tools/go-template/v0.4/go-template";
+  private static final String DEFAULT_GOTEMPLATE_PATH = PWD + "/client-tools/go-template/v0.4.1/go-template";
   private static final String DEFAULT_KUBECTL_1_19_PATH = PWD + "/client-tools/kubectl/v1.19.2/kubectl";
   private static final String DEFAULT_KUBECTL_1_13_PATH = PWD + "/client-tools/kubectl/v1.13.2/kubectl";
 
+  private static final Answer<Void> VOID_ANSWER = (Answer<Void>) invocation -> null;
+
+  MockedStatic<InstallUtils> installUtilsMockedStatic;
+
   @Before
   public void setUp() throws Exception {
-    mockStatic(InstallUtils.class, CALLS_REAL_METHODS);
-    doReturn(true).when(InstallUtils.class, "validateToolExists", any(), any());
-    // None of the tools are on the $PATH
-    doReturn(false).when(InstallUtils.class, "runToolCommand", any(), any());
-    doNothing().when(InstallUtils.class, "initTool", any(), any());
+    installUtilsMockedStatic = Mockito.mockStatic(InstallUtils.class, CALLS_REAL_METHODS);
+    installUtilsMockedStatic.when(() -> InstallUtils.validateToolExists(any(), any())).thenReturn(true);
+    installUtilsMockedStatic.when(() -> InstallUtils.runToolCommand(any(), any())).thenReturn(false);
+    installUtilsMockedStatic.when(() -> InstallUtils.initTool(any(), any())).thenAnswer(VOID_ANSWER);
+
+    MockedStatic<Files> filesMocked = Mockito.mockStatic(Files.class);
+    filesMocked.when(() -> Files.exists(any())).thenReturn(true);
   }
 
   @Test
@@ -179,17 +183,20 @@ public class InstallUtilsTest extends CategoryTest {
   @Test
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
-  public void whenToolsOnPathThenReturnBinaryName() throws Exception {
-    final DelegateConfiguration customConfig =
-        DelegateConfiguration.builder().managerUrl("localhost").clientToolsDownloadDisabled(true).build();
+  public void whenToolsOnPathAndImmutableThenReturnBinaryName() throws Exception {
+    final DelegateConfiguration customConfig = DelegateConfiguration.builder()
+                                                   .managerUrl("localhost")
+                                                   .clientToolsDownloadDisabled(true)
+                                                   .isImmutable(true)
+                                                   .build();
 
-    doReturn(true).when(InstallUtils.class, "runToolCommand", any(), any());
+    installUtilsMockedStatic.when(() -> InstallUtils.runToolCommand(any(), any())).thenReturn(true);
 
     setupClientTools(customConfig);
 
     assertThat(getPath(KUBECTL, KubectlVersion.V1_13)).isEqualTo(KUBECTL.getBinaryName());
     assertThat(getPath(KUBECTL, KubectlVersion.V1_19)).isEqualTo(KUBECTL.getBinaryName());
-    assertThat(getPath(GO_TEMPLATE, GoTemplateVersion.V0_4)).isEqualTo(GO_TEMPLATE.getBinaryName());
+    assertThat(getPath(GO_TEMPLATE, GoTemplateVersion.V0_4_1)).isEqualTo(GO_TEMPLATE.getBinaryName());
     assertThat(getPath(HARNESS_PYWINRM, HarnessPywinrmVersion.V0_4)).isEqualTo(HARNESS_PYWINRM.getBinaryName());
     assertThat(getPath(HELM, HelmVersion.V2)).isEqualTo(HELM.getBinaryName());
     assertThat(getPath(HELM, HelmVersion.V3)).isEqualTo(HELM.getBinaryName());
@@ -212,6 +219,39 @@ public class InstallUtilsTest extends CategoryTest {
   @Test
   @Owner(developers = MARKO)
   @Category(UnitTests.class)
+  public void whenToolsOnPathAndNonImmutableThenIgnore() throws Exception {
+    final DelegateConfiguration customConfig =
+        DelegateConfiguration.builder().managerUrl("localhost").clientToolsDownloadDisabled(true).build();
+
+    installUtilsMockedStatic.when(() -> InstallUtils.runToolCommand(any(), any())).thenReturn(true);
+
+    setupClientTools(customConfig);
+
+    assertThat(getPath(KUBECTL, KubectlVersion.V1_13)).isEqualTo(DEFAULT_KUBECTL_1_13_PATH);
+    assertThat(getPath(KUBECTL, KubectlVersion.V1_19)).isEqualTo(DEFAULT_KUBECTL_1_19_PATH);
+    assertThat(getPath(GO_TEMPLATE, GoTemplateVersion.V0_4_1)).isEqualTo(DEFAULT_GOTEMPLATE_PATH);
+    assertThat(getPath(HARNESS_PYWINRM, HarnessPywinrmVersion.V0_4)).isEqualTo(DEFAULT_PYWINRM_PATH);
+    assertThat(getPath(HELM, HelmVersion.V2)).isEqualTo(DEFAULT_HELM_2_PATH);
+    assertThat(getPath(HELM, HelmVersion.V3)).isEqualTo(DEFAULT_HELM_3_PATH);
+    assertThat(getPath(HELM, HelmVersion.V3_8)).isEqualTo(DEFAULT_HELM_38_PATH);
+    assertThat(getLatestVersionPath(CHARTMUSEUM)).isEqualTo(DEFAULT_CHARTMUSEUM_0_12_PATH);
+    assertThat(getPath(CHARTMUSEUM, ChartmuseumVersion.V0_8)).isEqualTo(DEFAULT_CHARTMUSEUM_0_8_PATH);
+    assertThat(getPath(CHARTMUSEUM, ChartmuseumVersion.V0_12)).isEqualTo(DEFAULT_CHARTMUSEUM_0_12_PATH);
+    assertThat(getLatestVersionPath(TERRAFORM_CONFIG_INSPECT)).isEqualTo(DEFAULT_TFCONFIG_INSPECT_1_1_PATH);
+    assertThat(getPath(TERRAFORM_CONFIG_INSPECT, TerraformConfigInspectVersion.V1_0))
+        .isEqualTo(DEFAULT_TFCONFIG_INSPECT_1_0_PATH);
+    assertThat(getPath(TERRAFORM_CONFIG_INSPECT, TerraformConfigInspectVersion.V1_1))
+        .isEqualTo(DEFAULT_TFCONFIG_INSPECT_1_1_PATH);
+    assertThat(getPath(OC, OcVersion.V4_2)).isEqualTo(DEFAULT_OC_PATH);
+    assertThat(getLatestVersionPath(KUSTOMIZE)).isEqualTo(DEFAULT_KUSTOMIZE_4_PATH);
+    assertThat(getPath(KUSTOMIZE, KustomizeVersion.V3)).isEqualTo(DEFAULT_KUSTOMIZE_3_PATH);
+    assertThat(getPath(KUSTOMIZE, KustomizeVersion.V4)).isEqualTo(DEFAULT_KUSTOMIZE_4_PATH);
+    assertThat(getPath(SCM, ScmVersion.DEFAULT)).isEqualTo(DEFAULT_SCM_PATH);
+  }
+
+  @Test
+  @Owner(developers = MARKO)
+  @Category(UnitTests.class)
   public void whenSetupClientToolsThenDefaultPathsSet() {
     final DelegateConfiguration delegateConfiguration = DelegateConfiguration.builder()
                                                             .managerUrl("localhost")
@@ -223,7 +263,7 @@ public class InstallUtilsTest extends CategoryTest {
 
     assertThat(getPath(KUBECTL, KubectlVersion.V1_13)).isEqualTo(DEFAULT_KUBECTL_1_13_PATH);
     assertThat(getPath(KUBECTL, KubectlVersion.V1_19)).isEqualTo(DEFAULT_KUBECTL_1_19_PATH);
-    assertThat(getPath(GO_TEMPLATE, GoTemplateVersion.V0_4)).isEqualTo(DEFAULT_GOTEMPLATE_PATH);
+    assertThat(getPath(GO_TEMPLATE, GoTemplateVersion.V0_4_1)).isEqualTo(DEFAULT_GOTEMPLATE_PATH);
     assertThat(getPath(HARNESS_PYWINRM, HarnessPywinrmVersion.V0_4)).isEqualTo(DEFAULT_PYWINRM_PATH);
     assertThat(getPath(HELM, HelmVersion.V2)).isEqualTo(DEFAULT_HELM_2_PATH);
     assertThat(getPath(HELM, HelmVersion.V3)).isEqualTo(DEFAULT_HELM_3_PATH);

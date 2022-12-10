@@ -7,19 +7,27 @@
 
 package io.harness.cistatus.service.azurerepo;
 
+import static io.harness.threading.Morpheus.sleep;
+
 import static java.lang.String.format;
 
 import io.harness.cistatus.StatusCreationResponse;
 import io.harness.exception.InvalidRequestException;
 import io.harness.network.Http;
+import io.harness.pms.yaml.ParameterField;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.inject.Singleton;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import lombok.extern.slf4j.Slf4j;
+import okhttp3.MediaType;
+import okhttp3.RequestBody;
+import org.json.JSONObject;
 import retrofit2.Response;
 import retrofit2.Retrofit;
 import retrofit2.converter.jackson.JacksonConverterFactory;
@@ -28,6 +36,14 @@ import retrofit2.converter.jackson.JacksonConverterFactory;
 @Slf4j
 public class AzureRepoServiceImpl implements AzureRepoService {
   private static final String STATE = "state";
+  private static final String MERGE_COMMIT_MESSAGE = "Harness: Updating config overrides";
+  private static final String MERGE_STATUS = "completed";
+  private static final String MERGED = "merged";
+  public static final String BYPASS_POLICY = "bypassPolicy";
+  public static final String BYPASS_REASON = "bypassReason";
+
+  private static final Duration RETRY_SLEEP_DURATION = Duration.ofSeconds(2);
+  private static final int MAX_ATTEMPTS = 10;
 
   @Override
   public boolean sendStatus(AzureRepoConfig azureRepoConfig, String userName, String token, String sha, String org,
@@ -42,9 +58,85 @@ public class AzureRepoServiceImpl implements AzureRepoService {
 
       return statusCreationResponseResponse.isSuccessful();
     } catch (Exception e) {
-      log.error("Failed to post commit status request to Azure repo with url {} and sha {} ",
-          azureRepoConfig.getAzureRepoUrl(), sha, e);
-      return false;
+      throw new InvalidRequestException(
+          format("Failed to send status for AzureRepo url %s and sha %s ", azureRepoConfig.getAzureRepoUrl(), sha), e);
+    }
+  }
+
+  @Override
+  public JSONObject mergePR(AzureRepoConfig azureRepoConfig, String token, String sha, String org, String project,
+      String repo, String prNumber, boolean deleteSourceBranch, Map<String, Object> apiParamOptions) {
+    log.info("Merging PR for sha {}", sha);
+
+    JSONObject commitId = new JSONObject();
+    commitId.put("commitId", sha);
+
+    JSONObject mergeStrategy = new JSONObject();
+    mergeStrategy.put("mergeStrategy", "1");
+    mergeStrategy.put("mergeCommitMessage", MERGE_COMMIT_MESSAGE);
+    mergeStrategy.put("deleteSourceBranch", deleteSourceBranch);
+
+    addBypassParams(apiParamOptions, mergeStrategy);
+
+    JSONObject lastMergeSourceCommit = new JSONObject();
+    lastMergeSourceCommit.put("lastMergeSourceCommit", commitId);
+    lastMergeSourceCommit.put("status", MERGE_STATUS);
+    lastMergeSourceCommit.put("completionOptions", mergeStrategy);
+
+    try {
+      Response<Object> response = null;
+
+      int i = MAX_ATTEMPTS;
+      while (i > 0) {
+        response = getAzureRepoRestClient(azureRepoConfig)
+                       .mergePR(getAuthToken(token), org, project, repo, prNumber,
+                           RequestBody.create(
+                               MediaType.parse("application/json; charset=utf-8"), lastMergeSourceCommit.toString()))
+                       .execute();
+        i--;
+        // This error code denotes that the base branch has been modified. This can happen if two merge requests
+        // are sent for the same branch but the first one has not yet complete and second request reached the provider.
+        if (response.code() != 405) {
+          break;
+        }
+        log.info(format(
+            "Received code %s, retrying attempt %s after sleeping for %s", response.code(), i, RETRY_SLEEP_DURATION));
+        sleep(RETRY_SLEEP_DURATION);
+      }
+
+      JSONObject json = new JSONObject();
+      if (response.isSuccessful()) {
+        log.info("Response from Azure Repo Merge {}", response.body().toString());
+        json.put("sha", ((LinkedHashMap) response.body()).get("mergeId"));
+        json.put(MERGED, true);
+      } else {
+        JSONObject errObject = new JSONObject(response.errorBody().string());
+        log.warn(
+            "Merge Request for merging Azure repo with url {} and sha {} returned with response code {} and message {}",
+            azureRepoConfig.getAzureRepoUrl(), sha, response.code(), errObject.get("message"));
+        json.put("error", errObject.get("message"));
+        json.put("code", response.code());
+        json.put(MERGED, false);
+      }
+      return json;
+    } catch (Exception e) {
+      log.error("Failed to merge pull request to Azure repo with url {} and sha {} ", azureRepoConfig.getAzureRepoUrl(),
+          sha, e);
+      JSONObject json = new JSONObject();
+      json.put(MERGED, false);
+      json.put("error", e.getMessage());
+      return json;
+    }
+  }
+
+  @VisibleForTesting
+  void addBypassParams(Map<String, Object> apiParamOptions, JSONObject mergeStrategy) {
+    if (apiParamOptions.get(BYPASS_POLICY) != null) {
+      mergeStrategy.put(
+          BYPASS_POLICY, Boolean.valueOf((String) (((ParameterField) apiParamOptions.get(BYPASS_POLICY)).getValue())));
+    }
+    if (apiParamOptions.get(BYPASS_REASON) != null) {
+      mergeStrategy.put(BYPASS_REASON, ((ParameterField) apiParamOptions.get(BYPASS_REASON)).getValue());
     }
   }
 

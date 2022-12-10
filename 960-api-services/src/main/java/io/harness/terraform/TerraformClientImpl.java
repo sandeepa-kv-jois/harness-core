@@ -28,7 +28,9 @@ import io.harness.exception.runtime.TerraformCliRuntimeException;
 import io.harness.logging.CommandExecutionStatus;
 import io.harness.logging.LogCallback;
 import io.harness.logging.NoopExecutionCallback;
+import io.harness.logging.PlanHumanReadableOutputStream;
 import io.harness.logging.PlanJsonLogOutputStream;
+import io.harness.logging.PlanLogOutputStream;
 import io.harness.terraform.beans.TerraformVersion;
 import io.harness.terraform.request.TerraformApplyCommandRequest;
 import io.harness.terraform.request.TerraformDestroyCommandRequest;
@@ -45,6 +47,7 @@ import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.TimeoutException;
+import java.util.regex.Pattern;
 import javax.annotation.Nonnull;
 import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +57,8 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 @Singleton
 @OwnedBy(CDP)
 public class TerraformClientImpl implements TerraformClient {
+  private static final Pattern TF_LOG_LINE_PATTERN =
+      Pattern.compile("\\[(?:TRACE|DEBUG|INFO|WARN|ERROR|CRITICAL)\\]\\s?(.+?)?:");
   public static final String TARGET_PARAM = "-target=";
   public static final String VAR_FILE_PARAM = "-var-file=";
 
@@ -187,12 +192,52 @@ public class TerraformClientImpl implements TerraformClient {
       String message = format(messageFormat, version.getMajor(), version.getMinor(), version.getPatch());
       executionLogCallback.saveExecutionLog(
           color("\n" + message + "\n", Yellow, Bold), WARN, CommandExecutionStatus.SKIPPED);
+      planJsonLogOutputStream.setTfPlanShowJsonStatus(CommandExecutionStatus.SKIPPED);
       return CliResponse.builder().commandExecutionStatus(CommandExecutionStatus.SKIPPED).build();
     }
-
+    planJsonLogOutputStream.setTfPlanShowJsonStatus(CommandExecutionStatus.SUCCESS);
     String command = "terraform show -json " + planName;
     return executeTerraformCLICommand(command, timeoutInMillis, envVariables, scriptDirectory, executionLogCallback,
         command, planJsonLogOutputStream);
+  }
+
+  @Nonnull
+  @Override
+  public CliResponse show(String planName, long timeoutInMillis, Map<String, String> envVariables,
+      String scriptDirectory, @Nonnull LogCallback executionLogCallback,
+      @Nonnull PlanLogOutputStream planLogOutputStream) throws InterruptedException, TimeoutException, IOException {
+    TerraformVersion version = version(timeoutInMillis, scriptDirectory);
+    String command = null;
+    if (!version.minVersion(0, 12)) {
+      String messageFormat = "Terraform plan json export not supported in v%d.%d.%d. Minimum version is v0.12.x. "
+          + "Using regular (no json) terraform plan";
+      String message = format(messageFormat, version.getMajor(), version.getMinor(), version.getPatch());
+      executionLogCallback.saveExecutionLog(
+          color("\n" + message + "\n", Yellow, Bold), WARN, CommandExecutionStatus.SKIPPED);
+      command = format("terraform show %s", planName);
+    } else {
+      command = format("terraform show -json %s", planName);
+    }
+
+    return executeTerraformCLICommand(
+        command, timeoutInMillis, envVariables, scriptDirectory, executionLogCallback, command, planLogOutputStream);
+  }
+
+  @Nonnull
+  @Override
+  @VisibleForTesting
+  public CliResponse prepareHumanReadablePlan(String planName, long timeoutInMillis, Map<String, String> envVariables,
+      String scriptDirectory, @Nonnull LogCallback executionLogCallback,
+      @Nonnull PlanHumanReadableOutputStream planHumanReadableOutputStream)
+      throws InterruptedException, TimeoutException, IOException {
+    String command = null;
+    String message = "Generating Human Readable Plan";
+    executionLogCallback.saveExecutionLog(
+        color("\n" + message + "\n", Yellow, Bold), WARN, CommandExecutionStatus.SKIPPED);
+    command = format("terraform show %s", planName);
+
+    return executeTerraformCLICommand(command, timeoutInMillis, envVariables, scriptDirectory, executionLogCallback,
+        command, planHumanReadableOutputStream);
   }
 
   @Nonnull
@@ -284,7 +329,8 @@ public class TerraformClientImpl implements TerraformClient {
           noDirExistErrorMsg);
     }
 
-    return cliHelper.executeCliCommand(
-        command, timeoutInMillis, envVariables, scriptDirectory, executionLogCallBack, loggingCommand, logOutputStream);
+    return cliHelper.executeCliCommand(command, timeoutInMillis, envVariables, scriptDirectory, executionLogCallBack,
+        loggingCommand, logOutputStream,
+        logLine -> isNotEmpty(logLine) && !TF_LOG_LINE_PATTERN.matcher(logLine).find());
   }
 }

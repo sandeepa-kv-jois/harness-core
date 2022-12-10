@@ -11,6 +11,7 @@ import static io.harness.annotations.dev.HarnessTeam.CDC;
 import static io.harness.beans.FeatureName.TIMEOUT_FAILURE_SUPPORT;
 import static io.harness.rule.OwnerRule.DINESH;
 import static io.harness.rule.OwnerRule.GEORGE;
+import static io.harness.rule.OwnerRule.LUCAS_SALES;
 import static io.harness.rule.OwnerRule.MARKO;
 import static io.harness.rule.OwnerRule.MILOS;
 import static io.harness.rule.OwnerRule.PRABU;
@@ -21,7 +22,7 @@ import static software.wings.api.ServiceTemplateElement.Builder.aServiceTemplate
 import static software.wings.beans.Application.Builder.anApplication;
 import static software.wings.beans.Environment.Builder.anEnvironment;
 import static software.wings.beans.Variable.VariableBuilder.aVariable;
-import static software.wings.beans.artifact.Artifact.Builder.anArtifact;
+import static software.wings.persistence.artifact.Artifact.Builder.anArtifact;
 import static software.wings.sm.ContextElement.ARTIFACT;
 import static software.wings.sm.StateExecutionInstance.Builder.aStateExecutionInstance;
 import static software.wings.sm.states.HttpState.Builder.aHttpState;
@@ -68,7 +69,7 @@ import io.harness.category.element.UnitTests;
 import io.harness.context.ContextElementType;
 import io.harness.delegate.beans.DelegateTaskDetails;
 import io.harness.delegate.beans.DelegateTaskPackage;
-import io.harness.delegate.task.DelegateRunnableTask;
+import io.harness.delegate.task.common.DelegateRunnableTask;
 import io.harness.exception.FailureType;
 import io.harness.ff.FeatureFlagService;
 import io.harness.http.HttpServiceImpl;
@@ -835,5 +836,36 @@ public class HttpStateTest extends WingsBaseTest {
         .queueTask(any(DelegateTask.class));
 
     return httpState;
+  }
+
+  @Test
+  @Owner(developers = LUCAS_SALES)
+  @Category(UnitTests.class)
+  public void shouldFailOnSocketTimeoutWithEmptyAssertion() throws IllegalAccessException {
+    wireMockRule.stubFor(get(urlEqualTo("/health/status"))
+                             .withHeader("Content-Type", equalTo("application/xml"))
+                             .withHeader("Accept", equalTo("*/*"))
+                             .willReturn(aResponse().withFixedDelay(2000)));
+
+    HttpState httpState = getHttpState(httpStateBuilder.but().withSocketTimeoutMillis(1000), context);
+    httpState.setAssertion("");
+    FieldUtils.writeField(httpState, "stateExecutionService", stateExecutionService, true);
+
+    ExecutionResponse response = httpState.execute(context);
+    assertThat(response).isNotNull().extracting(ExecutionResponse::isAsync).isEqualTo(true);
+
+    response = asyncExecutionResponse;
+    assertThat(response.getStateExecutionData())
+        .isNotNull()
+        .isInstanceOf(HttpStateExecutionData.class)
+        .isEqualToComparingOnlyGivenFields(HttpStateExecutionData.builder()
+                                               .assertionStatus("FAILED")
+                                               .httpResponseCode(500)
+                                               .httpResponseBody("SocketTimeoutException: Read timed out")
+                                               .build(),
+            "httpUrl", "assertionStatus", "httpResponseCode", "httpResponseBody");
+    assertThat(response.getFailureTypes()).containsOnly(FailureType.TIMEOUT_ERROR);
+    verify(activityHelperService).createAndSaveActivity(any(), any(), any(), any(), any());
+    verify(activityHelperService).updateStatus(ACTIVITY_ID, APP_ID, ExecutionStatus.FAILED);
   }
 }

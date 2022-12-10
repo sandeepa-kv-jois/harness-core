@@ -30,6 +30,12 @@ fi
 
 export JAVA_OPTS="-Xmx${MEMORY} -XX:+HeapDumpOnOutOfMemoryError -Xloggc:mygclogfilename.gc $GC_PARAMS $JAVA_ADVANCED_FLAGS"
 
+if [[ "${ENABLE_REMOTE_DEBUG}" == "true" ]]; then
+  export REMOTE_DEBUG="-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=localhost:5005"
+  export JAVA_OPTS="$REMOTE_DEBUG $JAVA_OPTS"
+  echo "Enabled remote debug"
+fi
+
 if [[ "${ENABLE_APPDYNAMICS}" == "true" ]]; then
     mkdir /opt/harness/AppServerAgent-1.8-21.11.2.33305 && unzip AppServerAgent-1.8-21.11.2.33305.zip -d /opt/harness/AppServerAgent-1.8-21.11.2.33305
     node_name="-Dappdynamics.agent.nodeName=$(hostname)"
@@ -48,6 +54,16 @@ if [[ "${ENABLE_MONITORING}" == "true" ]] ; then
     echo "Monitoring  is enabled"
     JAVA_OPTS="$JAVA_OPTS ${MONITORING_FLAGS}"
     echo "Using inspectIT Java Agent"
+fi
+
+if [[ "${ENABLE_OPENTELEMETRY}" == "true" ]] ; then
+    echo "OpenTelemetry is enabled"
+    JAVA_OPTS=$JAVA_OPTS" -javaagent:/opt/harness/opentelemetry-javaagent.jar -Dotel.service.name=${OTEL_SERVICE_NAME:-ng-manager}"
+
+    if [ -n "$OTEL_EXPORTER_OTLP_ENDPOINT" ]; then
+        JAVA_OPTS=$JAVA_OPTS" -Dotel.exporter.otlp.endpoint=$OTEL_EXPORTER_OTLP_ENDPOINT "
+    fi
+    echo "Using OpenTelemetry Java Agent"
 fi
 
 if [[ "${DEPLOY_MODE}" == "KUBERNETES" || "${DEPLOY_MODE}" == "KUBERNETES_ONPREM" || "${DEPLOY_VERSION}" == "COMMUNITY" ]]; then

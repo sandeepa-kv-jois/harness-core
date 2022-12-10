@@ -39,8 +39,8 @@ import io.harness.delegate.task.TaskParameters;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
-import io.harness.expression.ExpressionReflectionUtils;
 import io.harness.ff.FeatureFlagService;
+import io.harness.reflection.ExpressionReflectionUtils;
 import io.harness.serializer.KryoSerializer;
 import io.harness.tasks.ResponseData;
 
@@ -130,7 +130,8 @@ public class ShellScriptProvisionState extends State implements SweepingOutputSt
             .textVariables(infrastructureProvisionerService.extractTextVariables(variables, context))
             .encryptedVariables(infrastructureProvisionerService.extractEncryptedTextVariables(
                 variables, context.getAppId(), context.getWorkflowExecutionId()))
-            .timeoutInMillis(TimeUnit.MINUTES.toMillis(TIMEOUT_IN_MINUTES))
+            .timeoutInMillis(Math.max(
+                defaultIfNullTimeout(DEFAULT_ASYNC_CALL_TIMEOUT), TimeUnit.MINUTES.toMillis(TIMEOUT_IN_MINUTES)))
             .accountId(context.getAccountId())
             .appId(context.getAppId())
             .activityId(activityId)

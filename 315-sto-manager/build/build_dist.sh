@@ -23,15 +23,19 @@ then
     echo ${PURPOSE} > purpose.txt
 fi
 
-cp ${HOME}/.bazel-dirs/bin/315-sto-manager/module_deploy.jar sto-manager-capsule.jar
-cp ../../315-sto-manager/sto-manager-config.yml .
+cp ${HOME}/.bazel-dirs/bin/315-sto-manager/app/module_deploy.jar sto-manager-capsule.jar
+cp ../../315-sto-manager/config/sto-manager-config.yml .
 cp ../../keystore.jks .
-cp ../../315-sto-manager/key.pem .
-cp ../../315-sto-manager/cert.pem .
-cp ../../315-sto-manager/src/main/resources/redisson-jcache.yaml .
+cp ../../315-sto-manager/config/key.pem .
+cp ../../315-sto-manager/config/cert.pem .
+cp ../../315-sto-manager/app/src/main/resources/redisson-jcache.yaml .
+cp ../../315-sto-manager/app/src/main/resources/enterprise-redisson-jcache.yaml .
 
 cp ../../315-sto-manager/build/container/Dockerfile-stomanager-service-jenkins-k8-openjdk ./Dockerfile
 cp ../../315-sto-manager/build/container/Dockerfile-stomanager-service-jenkins-k8-gcr-openjdk ./Dockerfile-gcr
+cp ../../315-sto-manager/build/container/Dockerfile-stomanager-ubi ./Dockerfile-gcr-ubi
+cp ../../dockerization/base-images/apm/inject-onprem-apm-bins-into-dockerimage.sh .
+cp ../../dockerization/base-images/apm/inject-saas-apm-bins-into-dockerimage.sh .
 cp -r ../../315-sto-manager/build/container/scripts/ .
 java -jar sto-manager-capsule scan-classpath-metadata
 

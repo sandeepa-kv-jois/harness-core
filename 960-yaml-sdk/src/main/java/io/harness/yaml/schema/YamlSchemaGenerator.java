@@ -21,6 +21,7 @@ import static io.harness.yaml.schema.beans.SchemaConstants.INTEGER_TYPE_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.ITEMS_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.MIN_LENGTH_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.NUMBER_STRING_WITH_EXPRESSION_PATTERN;
+import static io.harness.yaml.schema.beans.SchemaConstants.NUMBER_STRING_WITH_EXPRESSION_PATTERN_WITH_EMPTY_VALUE;
 import static io.harness.yaml.schema.beans.SchemaConstants.NUMBER_TYPE_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.OBJECT_TYPE_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.ONE_OF_NODE;
@@ -28,6 +29,7 @@ import static io.harness.yaml.schema.beans.SchemaConstants.PATTERN_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.PROPERTIES_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.REF_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.REQUIRED_NODE;
+import static io.harness.yaml.schema.beans.SchemaConstants.RUNTIME_BUT_NOT_EXECUTION_TIME_PATTERN;
 import static io.harness.yaml.schema.beans.SchemaConstants.RUNTIME_INPUT_PATTERN;
 import static io.harness.yaml.schema.beans.SchemaConstants.SCHEMA_NODE;
 import static io.harness.yaml.schema.beans.SchemaConstants.STRING_TYPE_NODE;
@@ -81,6 +83,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -97,15 +100,15 @@ public class YamlSchemaGenerator {
   List<YamlSchemaRootClass> rootClasses;
 
   public Map<EntityType, JsonNode> generateYamlSchema() {
-    Map<EntityType, JsonNode> schema = new HashMap<>();
-    for (YamlSchemaRootClass rootSchemaClass : rootClasses) {
+    Map<EntityType, JsonNode> schema = new ConcurrentHashMap<>();
+    rootClasses.forEach(rootSchemaClass -> {
       final Map<String, JsonNode> stringJsonNodeMap = generateJsonSchemaForRootClass(
           YamlSchemaConfiguration.builder().build(), swaggerGenerator, rootSchemaClass.getClazz());
       if (stringJsonNodeMap.size() != 1 || stringJsonNodeMap.get(YamlConstants.SCHEMA_FILE_NAME) == null) {
         throw new YamlSchemaException("Issue occurred while generation of schema.");
       }
       schema.put(rootSchemaClass.getEntityType(), stringJsonNodeMap.get(YamlConstants.SCHEMA_FILE_NAME));
-    }
+    });
     return schema;
   }
 
@@ -575,9 +578,23 @@ public class YamlSchemaGenerator {
         objectNode.put(TYPE_NODE, STRING_TYPE_NODE);
         objectNode.put(PATTERN_NODE, NUMBER_STRING_WITH_EXPRESSION_PATTERN);
         return objectNode;
+      case numberStringWithEmptyValue:
+        objectNode.put(TYPE_NODE, STRING_TYPE_NODE);
+        objectNode.put(PATTERN_NODE, NUMBER_STRING_WITH_EXPRESSION_PATTERN_WITH_EMPTY_VALUE);
+        return objectNode;
+
+      case runtimeButNotExecutionTime:
+        /*
+        added to support runtime field type, like <+input>. This includes allowedValues and default value. But the value
+        can not be execution time input.
+         */
+        objectNode.put(TYPE_NODE, STRING_TYPE_NODE);
+        objectNode.put(PATTERN_NODE, RUNTIME_BUT_NOT_EXECUTION_TIME_PATTERN);
+        objectNode.put(MIN_LENGTH_NODE, 1);
+        return objectNode;
       case expression:
         /*
-        added to support runtime field type, like <+input>
+        added to support expression pattern. like <+exp.val>. This includes runtime input pattern as well(<+input>).
          */
         objectNode.put(TYPE_NODE, STRING_TYPE_NODE);
         objectNode.put(PATTERN_NODE, EXPRESSION_PATTERN);
@@ -585,7 +602,8 @@ public class YamlSchemaGenerator {
         return objectNode;
       case runtime:
         /*
-        added to support runtime field type, like <+input>
+        added to support runtime field type, like <+input>. This includes allowedValues and default value. It also
+        included the execution time fields, like<+input>.executionInput()
          */
         objectNode.put(TYPE_NODE, STRING_TYPE_NODE);
         objectNode.put(PATTERN_NODE, RUNTIME_INPUT_PATTERN);
@@ -702,7 +720,7 @@ public class YamlSchemaGenerator {
     final String fieldName = fieldSubtypeData.getFieldName();
     final ObjectNode fieldNode = (ObjectNode) propertiesNodeFromDefinitionNode.get(fieldName);
     if (fieldNode == null) {
-      log.error("We can have some error in schema of node {} with {}.", fieldName, fieldSubtypeData);
+      log.warn("We can have some error in schema of node {} with {}.", fieldName, fieldSubtypeData);
       return;
     }
     if (fieldNode.get(ONE_OF_NODE) != null) {

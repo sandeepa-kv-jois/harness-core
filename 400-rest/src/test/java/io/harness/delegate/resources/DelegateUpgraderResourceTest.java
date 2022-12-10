@@ -8,6 +8,7 @@
 package io.harness.delegate.resources;
 
 import static io.harness.annotations.dev.HarnessTeam.DEL;
+import static io.harness.rule.OwnerRule.ANUPAM;
 import static io.harness.rule.OwnerRule.ARPIT;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -18,6 +19,7 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.category.element.UnitTests;
 import io.harness.delegate.beans.UpgradeCheckResult;
 import io.harness.delegate.service.intfc.DelegateUpgraderService;
+import io.harness.metrics.intfc.DelegateMetricsService;
 import io.harness.rule.Owner;
 
 import javax.ws.rs.core.Application;
@@ -30,26 +32,26 @@ import org.glassfish.jersey.test.spi.TestContainerException;
 import org.glassfish.jersey.test.spi.TestContainerFactory;
 import org.junit.Test;
 import org.junit.experimental.categories.Category;
-import org.junit.runner.RunWith;
 import org.mockito.Mock;
-import org.mockito.runners.MockitoJUnitRunner;
 
 @OwnedBy(DEL)
-@RunWith(MockitoJUnitRunner.class)
 @Slf4j
 public class DelegateUpgraderResourceTest extends JerseyTest {
   private static final String ACCOUNT_ID = "account_id";
+
+  private static final String DELEGATE_GROUP_NAME = "delegate_group_name";
   private static final String DELEGATE_IMAGE_TAG = "harness/delegate:1";
   private static final String UPGRADER_IMAGE_TAG = "harness/upgrader:1";
 
   @Mock private DelegateUpgraderService upgraderService;
+  @Mock private DelegateMetricsService metricsService;
 
   @Override
   protected Application configure() {
-    // needs to initialize mocks here, even though we are using MockitoJUnitRunner class
+    // need to initialize mocks here, MockitoJUnitRunner won't help since this is not @Before, but happens only once.
     initMocks(this);
     final ResourceConfig resourceConfig = new ResourceConfig();
-    resourceConfig.register(new DelegateUpgraderResource(upgraderService));
+    resourceConfig.register(new DelegateUpgraderResource(upgraderService, metricsService));
     return resourceConfig;
   }
 
@@ -71,6 +73,25 @@ public class DelegateUpgraderResourceTest extends JerseyTest {
                                       + "&currentDelegateImageTag=" + DELEGATE_IMAGE_TAG)
                                   .request()
                                   .get();
+
+    assertThat(response.getStatus()).isEqualTo(200);
+    assertThat(response).isNotNull();
+  }
+
+  @Test
+  @Owner(developers = ANUPAM)
+  @Category(UnitTests.class)
+  public void testDelegateImageTagv2() {
+    lenient()
+        .when(upgraderService.getDelegateImageTag(ACCOUNT_ID, DELEGATE_IMAGE_TAG, DELEGATE_GROUP_NAME))
+        .thenReturn(new UpgradeCheckResult(DELEGATE_IMAGE_TAG, false));
+
+    final Response response =
+        client()
+            .target("/upgrade-check/delegate?accountId=" + ACCOUNT_ID + "&currentDelegateImageTag=" + DELEGATE_IMAGE_TAG
+                + "&delegateGroupName=" + DELEGATE_GROUP_NAME)
+            .request()
+            .get();
 
     assertThat(response.getStatus()).isEqualTo(200);
     assertThat(response).isNotNull();

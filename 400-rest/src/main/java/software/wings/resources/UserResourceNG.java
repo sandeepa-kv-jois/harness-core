@@ -247,9 +247,10 @@ public class UserResourceNG {
 
   @GET
   @Path("/{userId}")
-  public RestResponse<Optional<UserInfo>> getUser(@PathParam("userId") String userId) {
+  public RestResponse<Optional<UserInfo>> getUser(@PathParam("userId") String userId,
+      @QueryParam("includeSupportAccounts") @DefaultValue("true") Boolean includeSupportAccounts) {
     try {
-      User user = userService.get(userId);
+      User user = userService.get(userId, includeSupportAccounts);
       return new RestResponse<>(Optional.ofNullable(convertUserToNgUser(user)));
     } catch (UnauthorizedException ex) {
       log.warn("User is not found in database {}", userId);
@@ -260,7 +261,7 @@ public class UserResourceNG {
   @GET
   @Path("email/{emailId}")
   public RestResponse<Optional<UserInfo>> getUserByEmailId(@PathParam("emailId") String emailId) {
-    User user = userService.getUserByEmail(emailId);
+    User user = userService.getUserByEmail(emailId, false);
     return new RestResponse<>(Optional.ofNullable(convertUserToNgUser(user)));
   }
 
@@ -273,10 +274,18 @@ public class UserResourceNG {
 
   @PUT
   @Path("invites/create-user")
-  public RestResponse<Boolean> createUserForInvite(
-      @Body @NotNull UserInviteDTO userInvite, @QueryParam("isScimInvite") boolean isScimInvite) {
-    userService.completeNGInvite(userInvite, isScimInvite);
+  public RestResponse<Boolean> createUserForInvite(@Body @NotNull UserInviteDTO userInvite,
+      @QueryParam("isScimInvite") boolean isScimInvite,
+      @QueryParam("shouldSendTwoFactorAuthResetEmail") boolean shouldSendTwoFactorAuthResetEmail) {
+    userService.completeNGInvite(userInvite, isScimInvite, shouldSendTwoFactorAuthResetEmail);
     return new RestResponse<>(true);
+  }
+
+  @GET
+  @Path("limit-check")
+  public RestResponse<Boolean> getUserLimitCheckForAccount(
+      @QueryParam("accountId") String accountId, @QueryParam("email") String email) {
+    return new RestResponse<>(userService.checkIfUserLimitHasReached(accountId, email));
   }
 
   @PUT
@@ -334,8 +343,8 @@ public class UserResourceNG {
       if (user != null && user.getAccounts() != null) {
         isUserInAccount = user.getAccounts().stream().anyMatch(account -> account.getUuid().equals(accountId));
       }
-      if (!isUserInAccount && user != null && user.getSupportAccounts() != null) {
-        isUserInAccount = user.getSupportAccounts().stream().anyMatch(account -> account.getUuid().equals(accountId));
+      if (!isUserInAccount && user != null) {
+        isUserInAccount = userService.ifUserHasAccessToSupportAccount(userId, accountId);
       }
       if (!isUserInAccount) {
         log.error(String.format("User %s does not belong to account %s", userId, accountId));

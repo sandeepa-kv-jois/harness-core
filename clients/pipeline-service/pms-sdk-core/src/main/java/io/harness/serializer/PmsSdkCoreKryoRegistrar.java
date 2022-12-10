@@ -9,8 +9,14 @@ package io.harness.serializer;
 
 import static io.harness.annotations.dev.HarnessTeam.PIPELINE;
 
+import io.harness.advisers.manualIntervention.ManualInterventionAdviserRollbackParameters;
+import io.harness.advisers.nextstep.NextStepAdviserParameters;
+import io.harness.advisers.retry.RetryAdviserRollbackParameters;
+import io.harness.advisers.rollback.OnFailRollbackParameters;
+import io.harness.advisers.rollback.RollbackStrategy;
 import io.harness.annotations.dev.OwnedBy;
 import io.harness.async.AsyncResponseCallback;
+import io.harness.pms.sdk.core.adviser.ProceedWithDefaultAdviserParameters;
 import io.harness.pms.sdk.core.adviser.abort.OnAbortAdviserParameters;
 import io.harness.pms.sdk.core.adviser.fail.OnFailAdviserParameters;
 import io.harness.pms.sdk.core.adviser.ignore.IgnoreAdviserParameters;
@@ -22,11 +28,16 @@ import io.harness.pms.sdk.core.data.ExecutionSweepingOutput;
 import io.harness.pms.sdk.core.execution.AsyncSdkProgressCallback;
 import io.harness.pms.sdk.core.execution.AsyncSdkResumeCallback;
 import io.harness.pms.sdk.core.execution.AsyncSdkSingleCallback;
+import io.harness.pms.sdk.core.execution.AsyncTimeoutResponseData;
 import io.harness.pms.sdk.core.plan.PlanNode;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
 import io.harness.pms.sdk.core.steps.io.StatusNotifyResponseData;
 import io.harness.pms.sdk.core.steps.io.StepResponse.StepOutcome;
 import io.harness.pms.sdk.core.steps.io.StepResponseNotifyData;
+import io.harness.steps.fork.ForkStepParameters;
+import io.harness.steps.matrix.StrategyMetadata;
+import io.harness.steps.section.chain.SectionChainPassThroughData;
+import io.harness.steps.section.chain.SectionChainStepParameters;
 
 import com.esotericsoftware.kryo.Kryo;
 
@@ -54,5 +65,18 @@ public class PmsSdkCoreKryoRegistrar implements KryoRegistrar {
     kryo.register(AsyncSdkProgressCallback.class, 88205);
     kryo.register(AsyncSdkSingleCallback.class, 88206);
     kryo.register(AsyncResponseCallback.class, 88407);
+
+    kryo.register(RetryAdviserRollbackParameters.class, 87801);
+    kryo.register(RollbackStrategy.class, 87802);
+    kryo.register(OnFailRollbackParameters.class, 87803);
+    kryo.register(ManualInterventionAdviserRollbackParameters.class, 87804);
+    kryo.register(NextStepAdviserParameters.class, 87805);
+
+    kryo.register(ForkStepParameters.class, 3211);
+    kryo.register(SectionChainStepParameters.class, 3214);
+    kryo.register(SectionChainPassThroughData.class, 3217);
+    kryo.register(StrategyMetadata.class, 878001);
+    kryo.register(ProceedWithDefaultAdviserParameters.class, 878018);
+    kryo.register(AsyncTimeoutResponseData.class, 878019);
   }
 }

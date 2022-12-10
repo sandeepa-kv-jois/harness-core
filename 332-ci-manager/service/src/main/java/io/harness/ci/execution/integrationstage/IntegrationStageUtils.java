@@ -11,13 +11,17 @@ import static io.harness.beans.execution.WebhookEvent.Type.BRANCH;
 import static io.harness.beans.execution.WebhookEvent.Type.PR;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveOSType;
 import static io.harness.beans.serializer.RunTimeInputHandler.resolveStringParameter;
+import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.HOSTED_VM;
 import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.KUBERNETES_DIRECT;
 import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.KUBERNETES_HOSTED;
 import static io.harness.beans.yaml.extended.infrastrucutre.Infrastructure.Type.VM;
 import static io.harness.ci.commonconstants.CIExecutionConstants.AZURE_REPO_BASE_URL;
+import static io.harness.ci.commonconstants.CIExecutionConstants.DEFAULT_BUILD_MULTIPLIER;
 import static io.harness.ci.commonconstants.CIExecutionConstants.GIT_URL_SUFFIX;
 import static io.harness.ci.commonconstants.CIExecutionConstants.IMAGE_PATH_SPLIT_REGEX;
+import static io.harness.ci.commonconstants.CIExecutionConstants.MACOS_BUILD_MULTIPLIER;
 import static io.harness.ci.commonconstants.CIExecutionConstants.PATH_SEPARATOR;
+import static io.harness.ci.commonconstants.CIExecutionConstants.WINDOWS_BUILD_MULTIPLIER;
 import static io.harness.data.structure.EmptyPredicate.isEmpty;
 import static io.harness.data.structure.EmptyPredicate.isNotEmpty;
 import static io.harness.delegate.beans.connector.ConnectorType.AZURE_REPO;
@@ -44,8 +48,10 @@ import io.harness.beans.execution.PRWebhookEvent;
 import io.harness.beans.execution.WebhookExecutionSource;
 import io.harness.beans.plugin.compatible.PluginCompatibleStep;
 import io.harness.beans.serializer.RunTimeInputHandler;
-import io.harness.beans.stages.IntegrationStageConfig;
+import io.harness.beans.stages.IntegrationStageNode;
+import io.harness.beans.steps.CIAbstractStepNode;
 import io.harness.beans.steps.CIStepInfo;
+import io.harness.beans.steps.stepinfo.BackgroundStepInfo;
 import io.harness.beans.steps.stepinfo.InitializeStepInfo;
 import io.harness.beans.steps.stepinfo.PluginStepInfo;
 import io.harness.beans.steps.stepinfo.RunStepInfo;
@@ -53,7 +59,10 @@ import io.harness.beans.steps.stepinfo.RunTestsStepInfo;
 import io.harness.beans.yaml.extended.infrastrucutre.Infrastructure;
 import io.harness.beans.yaml.extended.infrastrucutre.K8sDirectInfraYaml;
 import io.harness.beans.yaml.extended.infrastrucutre.OSType;
+import io.harness.beans.yaml.extended.platform.ArchType;
 import io.harness.ci.buildstate.ConnectorUtils;
+import io.harness.ci.buildstate.InfraInfoUtils;
+import io.harness.ci.license.CILicenseService;
 import io.harness.ci.pipeline.executions.beans.CIImageDetails;
 import io.harness.ci.pipeline.executions.beans.CIInfraDetails;
 import io.harness.ci.pipeline.executions.beans.CIScmDetails;
@@ -61,6 +70,7 @@ import io.harness.ci.pipeline.executions.beans.TIBuildDetails;
 import io.harness.ci.states.RunStep;
 import io.harness.ci.states.RunTestsStep;
 import io.harness.ci.utils.WebhookTriggerProcessorUtils;
+import io.harness.cimanager.stages.IntegrationStageConfig;
 import io.harness.delegate.beans.ci.pod.ConnectorDetails;
 import io.harness.delegate.beans.connector.ConnectorType;
 import io.harness.delegate.beans.connector.docker.DockerConnectorDTO;
@@ -72,23 +82,25 @@ import io.harness.delegate.beans.connector.scm.bitbucket.BitbucketConnectorDTO;
 import io.harness.delegate.beans.connector.scm.genericgitconnector.GitConfigDTO;
 import io.harness.delegate.beans.connector.scm.github.GithubConnectorDTO;
 import io.harness.delegate.beans.connector.scm.gitlab.GitlabConnectorDTO;
+import io.harness.delegate.task.citasks.cik8handler.params.CIConstants;
 import io.harness.exception.InvalidArgumentsException;
 import io.harness.exception.InvalidRequestException;
 import io.harness.exception.WingsException;
 import io.harness.exception.ngexception.CIStageExecutionException;
 import io.harness.git.GitClientHelper;
+import io.harness.jackson.JsonNodeUtils;
 import io.harness.k8s.model.ImageDetails;
+import io.harness.licensing.Edition;
+import io.harness.licensing.beans.summary.LicensesWithSummaryDTO;
 import io.harness.ng.core.BaseNGAccess;
 import io.harness.plancreator.execution.ExecutionWrapperConfig;
-import io.harness.plancreator.stages.stage.StageElementConfig;
 import io.harness.plancreator.steps.ParallelStepElementConfig;
-import io.harness.plancreator.steps.StepElementConfig;
 import io.harness.plancreator.steps.StepGroupElementConfig;
 import io.harness.pms.contracts.plan.ExecutionTriggerInfo;
-import io.harness.pms.contracts.plan.PlanCreationContextValue;
 import io.harness.pms.contracts.plan.TriggerType;
 import io.harness.pms.contracts.triggers.ParsedPayload;
 import io.harness.pms.contracts.triggers.TriggerPayload;
+import io.harness.pms.sdk.core.plan.creation.beans.PlanCreationContext;
 import io.harness.pms.yaml.ParameterField;
 import io.harness.pms.yaml.YamlNode;
 import io.harness.pms.yaml.YamlUtils;
@@ -98,16 +110,24 @@ import io.harness.yaml.extended.ci.codebase.CodeBase;
 import io.harness.yaml.extended.ci.codebase.impl.BranchBuildSpec;
 import io.harness.yaml.extended.ci.codebase.impl.PRBuildSpec;
 import io.harness.yaml.extended.ci.codebase.impl.TagBuildSpec;
+import io.harness.yaml.utils.JsonPipelineUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 
 @OwnedBy(HarnessTeam.CI)
+@Slf4j
 public class IntegrationStageUtils {
   private static final String TAG_EXPRESSION = "<+trigger.tag>";
   private static final String BRANCH_EXPRESSION = "<+trigger.branch>";
@@ -116,8 +136,8 @@ public class IntegrationStageUtils {
   private static final String HARNESS_HOSTED = "Harness Hosted";
   private static final String SELF_HOSTED = "Self Hosted";
 
-  public static IntegrationStageConfig getIntegrationStageConfig(StageElementConfig stageElementConfig) {
-    return (IntegrationStageConfig) stageElementConfig.getStageType();
+  public static IntegrationStageConfig getIntegrationStageConfig(IntegrationStageNode stageNode) {
+    return stageNode.getIntegrationStageConfig();
   }
 
   public static ParallelStepElementConfig getParallelStepElementConfig(ExecutionWrapperConfig executionWrapperConfig) {
@@ -128,9 +148,9 @@ public class IntegrationStageUtils {
     }
   }
 
-  public static StepElementConfig getStepElementConfig(ExecutionWrapperConfig executionWrapperConfig) {
+  public static CIAbstractStepNode getStepNode(ExecutionWrapperConfig executionWrapperConfig) {
     try {
-      return YamlUtils.read(executionWrapperConfig.getStep().toString(), StepElementConfig.class);
+      return YamlUtils.read(executionWrapperConfig.getStep().toString(), CIAbstractStepNode.class);
     } catch (Exception ex) {
       throw new CIStageExecutionException("Failed to deserialize ExecutionWrapperConfig step node", ex);
     }
@@ -154,22 +174,24 @@ public class IntegrationStageUtils {
 
   public static ExecutionSource buildExecutionSource(ExecutionTriggerInfo executionTriggerInfo,
       TriggerPayload triggerPayload, String identifier, ParameterField<Build> parameterFieldBuild,
-      String connectorIdentifier, ConnectorUtils connectorUtils, PlanCreationContextValue planCreationContextValue,
-      CodeBase codeBase) {
+      String connectorIdentifier, ConnectorUtils connectorUtils, PlanCreationContext ctx, CodeBase codeBase) {
     if (!executionTriggerInfo.getIsRerun()) {
       if (executionTriggerInfo.getTriggerType() == TriggerType.MANUAL
           || executionTriggerInfo.getTriggerType() == TriggerType.SCHEDULER_CRON) {
         return handleManualExecution(parameterFieldBuild, identifier);
       } else if (executionTriggerInfo.getTriggerType() == TriggerType.WEBHOOK) {
         ParsedPayload parsedPayload = triggerPayload.getParsedPayload();
-        if (treatWebhookAsManualExecutionWithContext(connectorIdentifier, connectorUtils, planCreationContextValue,
-                parsedPayload, codeBase, triggerPayload.getVersion())) {
+        if (treatWebhookAsManualExecutionWithContext(
+                connectorIdentifier, connectorUtils, ctx, parsedPayload, codeBase, triggerPayload.getVersion())) {
           return handleManualExecution(parameterFieldBuild, identifier);
         }
 
         return WebhookTriggerProcessorUtils.convertWebhookResponse(parsedPayload);
       } else if (executionTriggerInfo.getTriggerType() == TriggerType.WEBHOOK_CUSTOM) {
         return buildCustomExecutionSource(identifier, parameterFieldBuild);
+      } else {
+        throw new InvalidRequestException(
+            "CI stage cannot be triggered by trigger of type: " + executionTriggerInfo.getTriggerType());
       }
     } else {
       if (executionTriggerInfo.getRerunInfo().getRootTriggerType() == TriggerType.MANUAL
@@ -177,17 +199,18 @@ public class IntegrationStageUtils {
         return handleManualExecution(parameterFieldBuild, identifier);
       } else if (executionTriggerInfo.getRerunInfo().getRootTriggerType() == TriggerType.WEBHOOK) {
         ParsedPayload parsedPayload = triggerPayload.getParsedPayload();
-        if (treatWebhookAsManualExecutionWithContext(connectorIdentifier, connectorUtils, planCreationContextValue,
-                parsedPayload, codeBase, triggerPayload.getVersion())) {
+        if (treatWebhookAsManualExecutionWithContext(
+                connectorIdentifier, connectorUtils, ctx, parsedPayload, codeBase, triggerPayload.getVersion())) {
           return handleManualExecution(parameterFieldBuild, identifier);
         }
         return WebhookTriggerProcessorUtils.convertWebhookResponse(parsedPayload);
       } else if (executionTriggerInfo.getRerunInfo().getRootTriggerType() == TriggerType.WEBHOOK_CUSTOM) {
         return buildCustomExecutionSource(identifier, parameterFieldBuild);
+      } else {
+        throw new InvalidRequestException("CI stage cannot be triggered by trigger of type: "
+            + executionTriggerInfo.getRerunInfo().getRootTriggerType());
       }
     }
-
-    return null;
   }
 
   /* In case codebase and trigger connectors are different then treat it as manual execution
@@ -273,17 +296,16 @@ public class IntegrationStageUtils {
   }
 
   private static boolean treatWebhookAsManualExecutionWithContext(String connectorIdentifier,
-      ConnectorUtils connectorUtils, PlanCreationContextValue planCreationContextValue, ParsedPayload parsedPayload,
-      CodeBase codeBase, long version) {
-    BaseNGAccess baseNGAccess = IntegrationStageUtils.getBaseNGAccess(planCreationContextValue.getAccountIdentifier(),
-        planCreationContextValue.getOrgIdentifier(), planCreationContextValue.getProjectIdentifier());
+      ConnectorUtils connectorUtils, PlanCreationContext ctx, ParsedPayload parsedPayload, CodeBase codeBase,
+      long version) {
+    BaseNGAccess baseNGAccess = IntegrationStageUtils.getBaseNGAccess(
+        ctx.getAccountIdentifier(), ctx.getOrgIdentifier(), ctx.getProjectIdentifier());
 
     ConnectorDetails connectorDetails = connectorUtils.getConnectorDetails(baseNGAccess, connectorIdentifier);
     return treatWebhookAsManualExecution(connectorDetails, codeBase, parsedPayload, version);
   }
 
-  private static BaseNGAccess getBaseNGAccess(
-      String accountIdentifier, String orgIdentifier, String projectIdentifier) {
+  public static BaseNGAccess getBaseNGAccess(String accountIdentifier, String orgIdentifier, String projectIdentifier) {
     return BaseNGAccess.builder()
         .accountIdentifier(accountIdentifier)
         .orgIdentifier(orgIdentifier)
@@ -292,7 +314,15 @@ public class IntegrationStageUtils {
   }
 
   public static String getGitURL(CodeBase ciCodebase, GitConnectionType connectionType, String url) {
-    String gitUrl = retrieveGenericGitConnectorURL(ciCodebase, connectionType, url);
+    if (ciCodebase == null) {
+      throw new IllegalArgumentException("CI codebase spec is not set");
+    }
+    String repoName = ciCodebase.getRepoName().getValue();
+    return getGitURL(repoName, connectionType, url);
+  }
+
+  public static String getGitURL(String repoName, GitConnectionType connectionType, String url) {
+    String gitUrl = retrieveGenericGitConnectorURL(repoName, connectionType, url);
 
     if (!gitUrl.endsWith(GIT_URL_SUFFIX) && !gitUrl.contains(AZURE_REPO_BASE_URL)) {
       gitUrl += GIT_URL_SUFFIX;
@@ -300,22 +330,14 @@ public class IntegrationStageUtils {
     return gitUrl;
   }
 
-  public static String retrieveGenericGitConnectorURL(
-      CodeBase ciCodebase, GitConnectionType connectionType, String url) {
+  public static String retrieveGenericGitConnectorURL(String repoName, GitConnectionType connectionType, String url) {
     String gitUrl = "";
     if (connectionType == GitConnectionType.REPO) {
       gitUrl = url;
     } else if (connectionType == GitConnectionType.PROJECT || connectionType == GitConnectionType.ACCOUNT) {
-      if (ciCodebase == null) {
-        throw new IllegalArgumentException("CI codebase spec is not set");
-      }
-
-      if (isEmpty(ciCodebase.getRepoName().getValue())) {
+      if (isEmpty(repoName)) {
         throw new IllegalArgumentException("Repo name is not set in CI codebase spec");
       }
-
-      String repoName = ciCodebase.getRepoName().getValue();
-
       if (connectionType == GitConnectionType.PROJECT) {
         if (url.contains(AZURE_REPO_BASE_URL)) {
           gitUrl = GitClientHelper.getCompleteUrlForProjectLevelAzureConnector(url, repoName);
@@ -388,14 +410,14 @@ public class IntegrationStageUtils {
       }
     }
 
-    return null;
+    return ManualExecutionSource.builder().build();
   }
 
-  public static List<StepElementConfig> getAllSteps(List<ExecutionWrapperConfig> executionWrapperConfigs) {
-    List<StepElementConfig> stepElementConfigs = new ArrayList<>();
+  public static List<CIAbstractStepNode> getAllSteps(List<ExecutionWrapperConfig> executionWrapperConfigs) {
+    List<CIAbstractStepNode> stepNodes = new ArrayList<>();
 
     if (executionWrapperConfigs == null) {
-      return stepElementConfigs;
+      return stepNodes;
     }
 
     for (ExecutionWrapperConfig executionWrapper : executionWrapperConfigs) {
@@ -404,29 +426,77 @@ public class IntegrationStageUtils {
       }
 
       if (executionWrapper.getStep() != null && !executionWrapper.getStep().isNull()) {
-        stepElementConfigs.add(getStepElementConfig(executionWrapper));
+        stepNodes.add(getStepNode(executionWrapper));
       } else if (executionWrapper.getParallel() != null && !executionWrapper.getParallel().isNull()) {
         ParallelStepElementConfig parallelStepElementConfig = getParallelStepElementConfig(executionWrapper);
-        List<StepElementConfig> fromParallel = getAllSteps(parallelStepElementConfig.getSections());
-        stepElementConfigs.addAll(fromParallel);
+        List<CIAbstractStepNode> fromParallel = getAllSteps(parallelStepElementConfig.getSections());
+        stepNodes.addAll(fromParallel);
       } else if (executionWrapper.getStepGroup() != null && !executionWrapper.getStepGroup().isNull()) {
         StepGroupElementConfig stepGroupElementConfig = getStepGroupElementConfig(executionWrapper);
-        List<StepElementConfig> fromStepGroup = getAllSteps(stepGroupElementConfig.getSteps());
-        stepElementConfigs.addAll(fromStepGroup);
+        List<CIAbstractStepNode> fromStepGroup = getAllSteps(stepGroupElementConfig.getSteps());
+        stepNodes.addAll(fromStepGroup);
       }
     }
-    return stepElementConfigs;
+    return stepNodes;
+  }
+
+  public static void injectLoopEnvVariables(ExecutionWrapperConfig config) {
+    if (config == null) {
+      return;
+    }
+    // Read the envVariables from config, and inject Looping
+    // releated environment variables.
+    if (config.getStep() != null && !config.getStep().isNull()) {
+      JsonNode stepNode = config.getStep();
+      ObjectNode spec = (ObjectNode) stepNode.get("spec");
+      if (spec == null) {
+        return;
+      }
+      ObjectNode envVariables = (ObjectNode) spec.get("envVariables");
+      HashMap<String, String> envMap = new HashMap<>();
+      envMap.put("HARNESS_STAGE_INDEX", "<+stage.iteration>");
+      envMap.put("HARNESS_STAGE_TOTAL", "<+stage.iterations>");
+      envMap.put("HARNESS_STEP_INDEX", "<+step.iteration>");
+      envMap.put("HARNESS_STEP_TOTAL", "<+step.iterations>");
+      envMap.put("HARNESS_NODE_INDEX", "<+strategy.iteration>");
+      envMap.put("HARNESS_NODE_TOTAL", "<+strategy.iterations>");
+      if (envVariables == null) {
+        ObjectMapper mapper = new ObjectMapper();
+        JsonNode env = mapper.valueToTree(envMap);
+        spec.set("envVariables", env);
+      } else {
+        JsonNodeUtils.upsertPropertiesInJsonNode((ObjectNode) envVariables, envMap);
+      }
+    } else if (config.getParallel() != null && !config.getParallel().isNull()) {
+      ParallelStepElementConfig parallelStepElementConfig = getParallelStepElementConfig(config);
+      for (ExecutionWrapperConfig section : parallelStepElementConfig.getSections()) {
+        injectLoopEnvVariables(section);
+      }
+      JsonNode parallelNode = JsonPipelineUtils.asTree(parallelStepElementConfig);
+      ArrayNode arrayNode = JsonPipelineUtils.getMapper().createArrayNode();
+      for (ExecutionWrapperConfig section : parallelStepElementConfig.getSections()) {
+        arrayNode.add(JsonPipelineUtils.asTree(section));
+      }
+      config.setParallel(arrayNode);
+    } else if (config.getStepGroup() != null && !config.getStepGroup().isNull()) {
+      StepGroupElementConfig stepGroupElementConfig = getStepGroupElementConfig(config);
+      for (ExecutionWrapperConfig step : stepGroupElementConfig.getSteps()) {
+        injectLoopEnvVariables(step);
+      }
+      JsonNode stepGroupNode = JsonPipelineUtils.asTree(stepGroupElementConfig);
+      config.setStepGroup(stepGroupNode);
+    }
   }
 
   public static List<TIBuildDetails> getTiBuildDetails(InitializeStepInfo initializeStepInfo) {
     List<TIBuildDetails> tiBuildDetailsList = new ArrayList<>();
-    List<StepElementConfig> stepElementConfigs = getAllSteps(initializeStepInfo.getExecutionElementConfig().getSteps());
+    List<CIAbstractStepNode> stepNodes = getAllSteps(initializeStepInfo.getExecutionElementConfig().getSteps());
 
-    for (StepElementConfig stepElementConfig : stepElementConfigs) {
-      if (!(stepElementConfig.getStepSpecType() instanceof CIStepInfo)) {
+    for (CIAbstractStepNode stepNode : stepNodes) {
+      if (!(stepNode.getStepSpecType() instanceof CIStepInfo)) {
         continue;
       }
-      CIStepInfo ciStepInfo = (CIStepInfo) stepElementConfig.getStepSpecType();
+      CIStepInfo ciStepInfo = (CIStepInfo) stepNode.getStepSpecType();
       if (ciStepInfo.getStepType() == RunTestsStep.STEP_TYPE) {
         RunTestsStepInfo runTestsStepInfo = (RunTestsStepInfo) ciStepInfo;
         TIBuildDetails tiBuildDetails = TIBuildDetails.builder()
@@ -441,14 +511,14 @@ public class IntegrationStageUtils {
 
   public static List<CIImageDetails> getCiImageDetails(InitializeStepInfo initializeStepInfo) {
     List<CIImageDetails> imageDetailsList = new ArrayList<>();
-    List<StepElementConfig> stepElementConfigs = getAllSteps(initializeStepInfo.getExecutionElementConfig().getSteps());
+    List<CIAbstractStepNode> stepNodes = getAllSteps(initializeStepInfo.getExecutionElementConfig().getSteps());
     CIImageDetails imageDetails;
 
-    for (StepElementConfig stepElementConfig : stepElementConfigs) {
-      if (!(stepElementConfig.getStepSpecType() instanceof CIStepInfo)) {
+    for (CIAbstractStepNode stepNode : stepNodes) {
+      if (!(stepNode.getStepSpecType() instanceof CIStepInfo)) {
         continue;
       }
-      CIStepInfo ciStepInfo = (CIStepInfo) stepElementConfig.getStepSpecType();
+      CIStepInfo ciStepInfo = (CIStepInfo) stepNode.getStepSpecType();
       if (ciStepInfo.getStepType() == RunStep.STEP_TYPE) {
         imageDetails = getCiImageInfo(((RunStepInfo) ciStepInfo).getImage().getValue());
       } else if (ciStepInfo.getStepType() == RunTestsStep.STEP_TYPE) {
@@ -580,8 +650,8 @@ public class IntegrationStageUtils {
     ArrayList<String> connectorIdentifiers = new ArrayList<>();
     for (ExecutionWrapperConfig executionWrapper : wrappers) {
       if (executionWrapper.getStep() != null && !executionWrapper.getStep().isNull()) {
-        StepElementConfig stepElementConfig = IntegrationStageUtils.getStepElementConfig(executionWrapper);
-        String identifier = getConnectorIdentifier(stepElementConfig);
+        CIAbstractStepNode stepNode = IntegrationStageUtils.getStepNode(executionWrapper);
+        String identifier = getConnectorIdentifier(stepNode);
         if (identifier != null) {
           connectorIdentifiers.add(identifier);
         }
@@ -635,12 +705,15 @@ public class IntegrationStageUtils {
     return connectorIdentifiers;
   }
 
-  private static String getConnectorIdentifier(StepElementConfig stepElementConfig) {
+  private static String getConnectorIdentifier(CIAbstractStepNode stepElementConfig) {
     if (stepElementConfig.getStepSpecType() instanceof CIStepInfo) {
       CIStepInfo ciStepInfo = (CIStepInfo) stepElementConfig.getStepSpecType();
       switch (ciStepInfo.getNonYamlInfo().getStepInfoType()) {
         case RUN:
           return resolveConnectorIdentifier(((RunStepInfo) ciStepInfo).getConnectorRef(), ciStepInfo.getIdentifier());
+        case BACKGROUND:
+          return resolveConnectorIdentifier(
+              ((BackgroundStepInfo) ciStepInfo).getConnectorRef(), ciStepInfo.getIdentifier());
         case PLUGIN:
           return resolveConnectorIdentifier(
               ((PluginStepInfo) ciStepInfo).getConnectorRef(), ciStepInfo.getIdentifier());
@@ -650,6 +723,7 @@ public class IntegrationStageUtils {
         case DOCKER:
         case ECR:
         case GCR:
+        case ACR:
         case SAVE_CACHE_S3:
         case RESTORE_CACHE_S3:
         case RESTORE_CACHE_GCS:
@@ -658,6 +732,7 @@ public class IntegrationStageUtils {
         case UPLOAD_ARTIFACTORY:
         case UPLOAD_S3:
         case UPLOAD_GCS:
+        case GIT_CLONE:
           return resolveConnectorIdentifier(
               ((PluginCompatibleStep) ciStepInfo).getConnectorRef(), ciStepInfo.getIdentifier());
         default:
@@ -681,19 +756,30 @@ public class IntegrationStageUtils {
     String infraType = infrastructure.getType().getYamlName();
     String infraOSType = null;
     String infraHostType = null;
+    String infraOSArchType = ArchType.Amd64.toString();
 
-    if (infrastructure.getType() == KUBERNETES_DIRECT) {
+    Infrastructure.Type type = infrastructure.getType();
+    if (type == KUBERNETES_DIRECT) {
       infraOSType = getK8OS(infrastructure).toString();
       infraHostType = SELF_HOSTED;
-    } else if (infrastructure.getType() == VM) {
-      infraOSType = VmInitializeStepUtils.getVmOS(infrastructure).toString();
+    } else if (type == VM || type == Infrastructure.Type.DOCKER) {
+      infraOSType = InfraInfoUtils.getInfraOS(infrastructure).toString();
       infraHostType = SELF_HOSTED;
     } else if (infrastructure.getType() == KUBERNETES_HOSTED) {
       infraOSType = getK8OS(infrastructure).toString();
       infraHostType = HARNESS_HOSTED;
+    } else if (infrastructure.getType() == HOSTED_VM) {
+      infraOSType = VmInitializeUtils.getOS(infrastructure).toString();
+      infraOSArchType = VmInitializeUtils.getArchType(infrastructure).toString();
+      infraHostType = HARNESS_HOSTED;
     }
 
-    return CIInfraDetails.builder().infraType(infraType).infraOSType(infraOSType).infraHostType(infraHostType).build();
+    return CIInfraDetails.builder()
+        .infraType(infraType)
+        .infraOSType(infraOSType)
+        .infraHostType(infraHostType)
+        .infraArchType(infraOSArchType)
+        .build();
   }
 
   public static CIScmDetails getCiScmDetails(ConnectorUtils connectorUtils, ConnectorDetails connectorDetails) {
@@ -702,5 +788,35 @@ public class IntegrationStageUtils {
         .scmAuthType(connectorUtils.getScmAuthType(connectorDetails))
         .scmHostType(connectorUtils.getScmHostType(connectorDetails))
         .build();
+  }
+
+  public static Long getStageTtl(CILicenseService ciLicenseService, String accountId, Infrastructure infrastructure) {
+    if (infrastructure.getType() != HOSTED_VM && infrastructure.getType() != KUBERNETES_HOSTED) {
+      return CIConstants.STAGE_MAX_TTL_SECS;
+    }
+
+    LicensesWithSummaryDTO licensesWithSummaryDTO = ciLicenseService.getLicenseSummary(accountId);
+    if (licensesWithSummaryDTO != null && licensesWithSummaryDTO.getEdition() == Edition.FREE) {
+      return CIConstants.STAGE_MAX_TTL_SECS_HOSTED_FREE;
+    }
+    return CIConstants.STAGE_MAX_TTL_SECS;
+  }
+
+  public static Double getBuildTimeMultiplierForHostedInfra(Infrastructure infrastructure) {
+    CIInfraDetails ciInfraDetails = getCiInfraDetails(infrastructure);
+    switch (infrastructure.getType()) {
+      case KUBERNETES_HOSTED:
+      case HOSTED_VM:
+        switch (ciInfraDetails.getInfraOSType()) {
+          case "MacOs":
+            return MACOS_BUILD_MULTIPLIER;
+          case "Windows":
+            return WINDOWS_BUILD_MULTIPLIER;
+          default:
+            return DEFAULT_BUILD_MULTIPLIER;
+        }
+      default:
+    }
+    return DEFAULT_BUILD_MULTIPLIER;
   }
 }

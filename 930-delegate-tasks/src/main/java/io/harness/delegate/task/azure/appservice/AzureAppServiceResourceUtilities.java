@@ -8,6 +8,8 @@
 package io.harness.delegate.task.azure.appservice;
 
 import static io.harness.annotations.dev.HarnessTeam.CDP;
+import static io.harness.azure.model.AzureConstants.DEPLOYMENT_SLOT_PRODUCTION_NAME;
+import static io.harness.azure.model.AzureConstants.FETCH_ARTIFACT_FILE;
 import static io.harness.azure.model.AzureConstants.SHIFT_TRAFFIC_SLOT_NAME_BLANK_ERROR_MSG;
 import static io.harness.azure.model.AzureConstants.SOURCE_SLOT_NAME_BLANK_ERROR_MSG;
 import static io.harness.azure.model.AzureConstants.TARGET_SLOT_NAME_BLANK_ERROR_MSG;
@@ -22,7 +24,9 @@ import io.harness.azure.model.AzureAppServiceApplicationSetting;
 import io.harness.azure.model.AzureAppServiceConnectionString;
 import io.harness.delegate.task.azure.appservice.deployment.AzureAppServiceDeploymentService;
 import io.harness.delegate.task.azure.appservice.deployment.context.AzureAppServiceDeploymentContext;
-import io.harness.delegate.task.azure.common.AzureContainerRegistryService;
+import io.harness.delegate.task.azure.artifact.ArtifactDownloadContext;
+import io.harness.delegate.task.azure.artifact.AzurePackageArtifactConfig;
+import io.harness.delegate.task.azure.common.AutoCloseableWorkingDirectory;
 import io.harness.delegate.task.azure.common.AzureLogCallbackProvider;
 import io.harness.exception.InvalidArgumentsException;
 
@@ -30,21 +34,38 @@ import com.google.inject.Inject;
 import com.google.inject.Singleton;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 
 @OwnedBy(CDP)
 @Slf4j
 @Singleton
 public class AzureAppServiceResourceUtilities {
-  @Inject private AzureContainerRegistryService azureContainerRegistryService;
   @Inject protected AzureAppServiceDeploymentService azureAppServiceDeploymentService;
 
   private static final int defaultTimeoutInterval = 10;
 
+  public ArtifactDownloadContext toArtifactNgDownloadContext(AzurePackageArtifactConfig artifactConfig,
+      AutoCloseableWorkingDirectory workingDirectory, AzureLogCallbackProvider logCallbackProvider) {
+    return ArtifactDownloadContext.builder()
+        .artifactConfig(artifactConfig)
+        .commandUnitName(FETCH_ARTIFACT_FILE)
+        .workingDirectory(workingDirectory.workingDir())
+        .logCallbackProvider(logCallbackProvider)
+        .build();
+  }
+
   public void swapSlots(AzureWebClientContext webClientContext, AzureLogCallbackProvider logCallbackProvider,
       String deploymentSlot, String targetSlot, Integer timeoutIntervalInMin) {
+    if (DEPLOYMENT_SLOT_PRODUCTION_NAME.equalsIgnoreCase(deploymentSlot)) {
+      String initialTargetSlot = targetSlot;
+      targetSlot = deploymentSlot;
+      deploymentSlot = initialTargetSlot;
+    }
+
     AzureAppServiceDeploymentContext azureAppServiceDeploymentContext = new AzureAppServiceDeploymentContext();
     azureAppServiceDeploymentContext.setAzureWebClientContext(webClientContext);
     azureAppServiceDeploymentContext.setLogCallbackProvider(logCallbackProvider);
@@ -65,6 +86,44 @@ public class AzureAppServiceResourceUtilities {
       List<AzureAppServiceConnectionString> connectionStrings) {
     return connectionStrings.stream().collect(
         Collectors.toMap(AzureAppServiceConnectionString::getName, Function.identity()));
+  }
+
+  @Nullable
+  public Map<String, AzureAppServiceApplicationSetting> getAppSettingsToRemove(
+      @Nullable Set<String> prevExecutionAppSettingsNames,
+      Map<String, AzureAppServiceApplicationSetting> userAddedAppSettings) {
+    if (prevExecutionAppSettingsNames == null || userAddedAppSettings == null) {
+      return null;
+    }
+
+    return prevExecutionAppSettingsNames.stream()
+        .filter(name -> !userAddedAppSettings.containsKey(name))
+        // Value is not required to remove settings
+        .map(name -> AzureAppServiceApplicationSetting.builder().name(name).build())
+        .collect(Collectors.toMap(AzureAppServiceApplicationSetting::getName, Function.identity()));
+  }
+
+  @Nullable
+  public Map<String, AzureAppServiceConnectionString> getConnStringsToRemove(
+      @Nullable Set<String> prevExecutionConnStringsNames,
+      Map<String, AzureAppServiceConnectionString> userAddedConnStrings) {
+    if (prevExecutionConnStringsNames == null || userAddedConnStrings == null) {
+      return null;
+    }
+    return prevExecutionConnStringsNames.stream()
+        .filter(name -> !userAddedConnStrings.containsKey(name))
+        // Value is not required to remove settings
+        .map(name -> AzureAppServiceConnectionString.builder().name(name).build())
+        .collect(Collectors.toMap(AzureAppServiceConnectionString::getName, Function.identity()));
+  }
+
+  public Map<String, AzureAppServiceApplicationSetting> getAppSettingsToRemove(
+      Map<String, AzureAppServiceApplicationSetting> existingAppSettingsOnSlot,
+      Map<String, AzureAppServiceApplicationSetting> appSettingsToAdd) {
+    return existingAppSettingsOnSlot.entrySet()
+        .stream()
+        .filter(entry -> !appSettingsToAdd.containsKey(entry.getKey()))
+        .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
   }
 
   public void validateSlotShiftTrafficParameters(String webAppName, String deploymentSlot, double trafficPercent) {

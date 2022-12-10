@@ -37,6 +37,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 import org.apache.commons.lang3.reflect.FieldUtils;
 import org.junit.Before;
 import org.junit.Test;
@@ -74,7 +75,7 @@ public class InstanceSyncPerpetualTaskMigrationJobTest extends WingsBaseTest {
         mock(InstanceHandler.class, withSettings().extraInterfaces(InstanceSyncByPerpetualTaskHandler.class));
     when(instanceHandlerFactory.getInstanceHandler(any())).thenReturn(instanceHandler);
     when(((InstanceSyncByPerpetualTaskHandler) instanceHandler).getFeatureFlagToEnablePerpetualTaskForInstanceSync())
-        .thenReturn(MOVE_PCF_INSTANCE_SYNC_TO_PERPETUAL_TASK);
+        .thenReturn(Optional.of(MOVE_PCF_INSTANCE_SYNC_TO_PERPETUAL_TASK));
   }
 
   private Map<FeatureName, InstanceSyncByPerpetualTaskHandler> getEnablePerpetualTaskFeatureFlagsForInstanceSync() {
@@ -122,7 +123,7 @@ public class InstanceSyncPerpetualTaskMigrationJobTest extends WingsBaseTest {
     account2 = getAccount(AccountType.PAID);
     infrastructureMapping2 = mock(InfrastructureMapping.class);
 
-    when(accountService.listAllAccountWithDefaultsWithoutLicenseInfo()).thenReturn(Arrays.asList(account1, account2));
+    when(accountService.getAccountsWithBasicInfo(false)).thenReturn(Arrays.asList(account1, account2));
 
     when(appService.getAppIdsByAccountId(account1.getUuid())).thenReturn(Collections.singletonList("app1"));
     when(infrastructureMappingService.get("app1")).thenReturn(Collections.singletonList(infrastructureMapping1));

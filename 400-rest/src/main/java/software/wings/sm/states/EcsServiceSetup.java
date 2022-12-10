@@ -61,7 +61,6 @@ import software.wings.beans.InfrastructureMapping;
 import software.wings.beans.appmanifest.AppManifestKind;
 import software.wings.beans.appmanifest.ApplicationManifest;
 import software.wings.beans.appmanifest.StoreType;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.command.CommandUnitDetails.CommandUnitType;
 import software.wings.beans.command.ContainerSetupCommandUnitExecutionData;
 import software.wings.beans.command.EcsSetupParams;
@@ -75,6 +74,7 @@ import software.wings.helpers.ext.ecs.request.EcsServiceSetupRequest;
 import software.wings.helpers.ext.ecs.response.EcsCommandExecutionResponse;
 import software.wings.helpers.ext.ecs.response.EcsServiceSetupResponse;
 import software.wings.helpers.ext.k8s.request.K8sValuesLocation;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.service.impl.artifact.ArtifactCollectionUtils;
 import software.wings.service.intfc.ActivityService;
 import software.wings.service.intfc.AppService;
@@ -228,7 +228,9 @@ public class EcsServiceSetup extends State {
                   .async(true)
                   .taskType(GIT_FETCH_FILES_TASK.name())
                   .parameters(new Object[] {fetchFilesTaskParams})
-                  .timeout(TimeUnit.MINUTES.toMillis(GIT_FETCH_FILES_TASK_ASYNC_TIMEOUT))
+                  .timeout(TimeUnit.MINUTES.toMillis(Math.max(
+                      ecsStateHelper.renderTimeout(serviceSteadyStateTimeout, context, DEFAULT_AMI_ASG_TIMEOUT_MIN),
+                      GIT_FETCH_FILES_TASK_ASYNC_TIMEOUT)))
                   .build())
         .build();
   }
@@ -436,9 +438,9 @@ public class EcsServiceSetup extends State {
     ImageDetails imageDetails =
         artifactCollectionUtils.fetchContainerImageDetails(artifact, context.getWorkflowExecutionId());
     ContainerServiceElement containerServiceElement =
-        ecsStateHelper.buildContainerServiceElement(context, setupExecutionData, executionStatus, imageDetails,
-            getMaxInstances(), getFixedInstances(), getDesiredInstanceCount(), getResizeStrategy(),
-            ecsStateHelper.renderTimeout(serviceSteadyStateTimeout, context, DEFAULT_AMI_ASG_TIMEOUT_MIN), log);
+        ecsStateHelper.buildContainerServiceElement(context, setupExecutionData, imageDetails, getMaxInstances(),
+            getFixedInstances(), getDesiredInstanceCount(), getResizeStrategy(),
+            ecsStateHelper.renderTimeout(serviceSteadyStateTimeout, context, DEFAULT_AMI_ASG_TIMEOUT_MIN));
     ecsStateHelper.populateFromDelegateResponse(setupExecutionData, executionData, containerServiceElement);
     sweepingOutputService.save(
         context.prepareSweepingOutputBuilder(SweepingOutputInstance.Scope.WORKFLOW)

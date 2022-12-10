@@ -43,13 +43,13 @@ import software.wings.beans.AzureWebAppInfrastructureMapping;
 import software.wings.beans.InfrastructureMapping;
 import software.wings.beans.SettingAttribute;
 import software.wings.beans.WorkflowExecution;
-import software.wings.beans.artifact.Artifact;
 import software.wings.beans.infrastructure.instance.Instance;
 import software.wings.beans.infrastructure.instance.Instance.InstanceBuilder;
 import software.wings.beans.infrastructure.instance.info.AzureWebAppInstanceInfo;
 import software.wings.beans.infrastructure.instance.info.InstanceInfo;
 import software.wings.beans.infrastructure.instance.key.deployment.AzureWebAppDeploymentKey;
 import software.wings.beans.infrastructure.instance.key.deployment.DeploymentKey;
+import software.wings.persistence.artifact.Artifact;
 import software.wings.service.AzureWebAppInstanceSyncPerpetualTaskCreator;
 import software.wings.service.InstanceSyncPerpetualTaskCreator;
 import software.wings.service.intfc.azure.manager.AzureAppServiceManager;
@@ -433,8 +433,8 @@ public class AzureWebAppInstanceHandler extends InstanceHandler implements Insta
   }
 
   @Override
-  public FeatureName getFeatureFlagToEnablePerpetualTaskForInstanceSync() {
-    return AZURE_WEBAPP;
+  public Optional<FeatureName> getFeatureFlagToEnablePerpetualTaskForInstanceSync() {
+    return Optional.of(AZURE_WEBAPP);
   }
 
   @Override
@@ -523,8 +523,8 @@ public class AzureWebAppInstanceHandler extends InstanceHandler implements Insta
   }
 
   @Override
-  public FeatureName getFeatureFlagToStopIteratorBasedInstanceSync() {
-    return AZURE_WEBAPP;
+  public Optional<FeatureName> getFeatureFlagToStopIteratorBasedInstanceSync() {
+    return Optional.of(AZURE_WEBAPP);
   }
 
   @NotNull

@@ -59,11 +59,18 @@ public class AccountDTO {
   @Schema(description = "Specifies if NextGen is enabled for this Account.")
   @VariableExpression(skipVariableExpression = true)
   boolean isNextGenEnabled;
+  @Schema(description = "Specifies if Account is product-let.")
+  @VariableExpression(skipVariableExpression = true)
+  boolean isProductLed;
+  @Schema(description = "Specifies if Account has two factor authentication enforced.")
+  @VariableExpression(skipVariableExpression = true)
+  boolean isTwoFactorAdminEnforced;
 
   @Builder
   public AccountDTO(String identifier, String name, String companyName, String cluster,
       DefaultExperience defaultExperience, AuthenticationMechanism authenticationMechanism,
-      ServiceAccountConfig serviceAccountConfig, boolean isNextGenEnabled) {
+      ServiceAccountConfig serviceAccountConfig, boolean isNextGenEnabled, boolean isProductLed,
+      boolean isTwoFactorAdminEnforced) {
     this.identifier = identifier;
     this.name = name;
     this.companyName = companyName;
@@ -72,5 +79,7 @@ public class AccountDTO {
     this.authenticationMechanism = authenticationMechanism;
     this.isNextGenEnabled = isNextGenEnabled;
     this.serviceAccountConfig = serviceAccountConfig;
+    this.isProductLed = isProductLed;
+    this.isTwoFactorAdminEnforced = isTwoFactorAdminEnforced;
   }
 }

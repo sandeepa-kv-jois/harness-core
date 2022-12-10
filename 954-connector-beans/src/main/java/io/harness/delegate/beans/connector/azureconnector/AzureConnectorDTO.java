@@ -15,7 +15,10 @@ import io.harness.annotations.dev.OwnedBy;
 import io.harness.azure.AzureEnvironmentType;
 import io.harness.beans.DecryptableEntity;
 import io.harness.connector.DelegateSelectable;
+import io.harness.connector.ManagerExecutable;
 import io.harness.delegate.beans.connector.ConnectorConfigDTO;
+import io.harness.delegate.beans.connector.ConnectorConfigOutcomeDTO;
+import io.harness.delegate.beans.connector.azureconnector.outcome.AzureConnectorOutcomeDTO;
 import io.harness.exception.InvalidRequestException;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -37,13 +40,14 @@ import lombok.EqualsAndHashCode;
 @JsonIgnoreProperties(ignoreUnknown = true)
 @ApiModel("AzureConnector")
 @Schema(name = "AzureConnector", description = "This contains details of the Azure connector")
-public class AzureConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable {
+public class AzureConnectorDTO extends ConnectorConfigDTO implements DelegateSelectable, ManagerExecutable {
   @NotNull @Valid AzureCredentialDTO credential;
   Set<String> delegateSelectors;
   @Builder.Default
   @NotNull
   @Schema(description = "This specifies the Azure Environment type, which is AZURE by default.")
   private AzureEnvironmentType azureEnvironmentType;
+  @Builder.Default Boolean executeOnDelegate = true;
 
   @Override
   public List<DecryptableEntity> getDecryptableEntities() {
@@ -66,5 +70,15 @@ public class AzureConnectorDTO extends ConnectorConfigDTO implements DelegateSel
         && isEmpty(delegateSelectors)) {
       throw new InvalidRequestException(INHERIT_FROM_DELEGATE_TYPE_ERROR_MSG);
     }
+  }
+
+  @Override
+  public ConnectorConfigOutcomeDTO toOutcome() {
+    return AzureConnectorOutcomeDTO.builder()
+        .credential(this.credential.toOutcome())
+        .delegateSelectors(this.delegateSelectors)
+        .executeOnDelegate(this.executeOnDelegate)
+        .azureEnvironmentType(this.azureEnvironmentType)
+        .build();
   }
 }

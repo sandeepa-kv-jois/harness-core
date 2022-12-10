@@ -15,7 +15,9 @@ public enum AzureAdditionalParams {
   CONTAINER_REGISTRY("Container registry name"),
   SUBSCRIPTION_ID("Subscription ID"),
   RESOURCE_GROUP("Resource group name"),
-  WEB_APP_NAME("Web App name");
+  WEB_APP_NAME("Web App name"),
+  OS_TYPE("OS type"),
+  HOST_CONNECTION_TYPE("Host connection type");
 
   private final String resourceName;
 

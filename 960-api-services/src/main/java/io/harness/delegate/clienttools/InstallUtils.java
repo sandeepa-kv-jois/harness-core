@@ -43,6 +43,10 @@ import org.zeroturnaround.exec.stream.LogOutputStream;
 @OwnedBy(DEL)
 public class InstallUtils {
   private static final Table<ClientTool, ClientToolVersion, Path> toolPaths = HashBasedTable.create();
+  private static final String x86_64 = "x86_64";
+  private static final String aarch64 = "aarch64";
+  private static final String amd64 = "amd64";
+  private static final String arm64 = "arm64";
 
   public static String getPath(final ClientTool tool, final ClientToolVersion version) {
     final Path toolPath = toolPaths.get(tool, version);
@@ -138,11 +142,13 @@ public class InstallUtils {
       return Paths.get(customPathStr).normalize().toAbsolutePath();
     }
 
-    // 2. Check if the tool is on $PATH
-    final Path toolName = Paths.get(tool.getBinaryName());
-    if (runToolCommand(toolName, tool.getValidateCommandArgs())) {
-      log.info("{} Tool is found on $PATH", tool.getBinaryName());
-      return toolName;
+    // 2. Check if the tool is on $PATH (only for immutable delegate)
+    if (configuration.isImmutable()) {
+      final Path toolName = Paths.get(tool.getBinaryName());
+      if (runToolCommand(toolName, tool.getValidateCommandArgs())) {
+        log.info("{} Tool is found on $PATH", tool.getBinaryName());
+        return toolName;
+      }
     }
 
     // 3. Check if tool is already installed
@@ -194,11 +200,11 @@ public class InstallUtils {
   private static String getDownloadUrl(
       final ClientTool tool, final ClientToolVersion toolVersion, final DelegateConfiguration configuration) {
     if (configuration.isUseCdn()) {
-      return join(
-          "/", configuration.getCdnUrl(), String.format(tool.getCdnPath(), toolVersion.getVersion(), getOsPath()));
+      return join("/", configuration.getCdnUrl(),
+          String.format(tool.getCdnPath(), toolVersion.getVersion(), getOsPath(), getArchPath()));
     }
     return getManagerBaseUrl(configuration.getManagerUrl())
-        + String.format(tool.getOnPremPath(), toolVersion.getVersion(), getOsPath());
+        + String.format(tool.getOnPremPath(), toolVersion.getVersion(), getOsPath(), getArchPath());
   }
 
   private static String getCustomPath(
@@ -250,7 +256,7 @@ public class InstallUtils {
     return runToolCommand(toolPath, tool.getValidateCommandArgs());
   }
 
-  private static boolean runToolCommand(final Path toolPath, final String script) {
+  static boolean runToolCommand(final Path toolPath, final String script) {
     final String command = String.format("%s %s", toolPath, script);
     try {
       return runCommand(null, command);
@@ -299,5 +305,18 @@ public class InstallUtils {
       return "darwin";
     }
     return "linux";
+  }
+
+  private static String getArchPath() {
+    if (SystemUtils.IS_OS_MAC) {
+      return amd64;
+    }
+    if (x86_64.equals(SystemUtils.OS_ARCH) || amd64.equals(SystemUtils.OS_ARCH)) {
+      return amd64;
+    } else if (aarch64.equals(SystemUtils.OS_ARCH) || arm64.equals(SystemUtils.OS_ARCH)) {
+      return arm64;
+    } else {
+      throw new UnsupportedOperationException("Unsupported arch");
+    }
   }
 }

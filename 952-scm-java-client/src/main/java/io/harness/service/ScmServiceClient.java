@@ -16,6 +16,10 @@ import io.harness.beans.gitsync.GitFileDetails;
 import io.harness.beans.gitsync.GitFilePathDetails;
 import io.harness.beans.gitsync.GitPRCreateRequest;
 import io.harness.beans.gitsync.GitWebhookDetails;
+import io.harness.beans.request.GitFileRequest;
+import io.harness.beans.request.ListFilesInCommitRequest;
+import io.harness.beans.response.GitFileResponse;
+import io.harness.beans.response.ListFilesInCommitResponse;
 import io.harness.delegate.beans.connector.scm.ScmConnector;
 import io.harness.product.ci.scm.proto.CompareCommitsResponse;
 import io.harness.product.ci.scm.proto.CreateBranchResponse;
@@ -41,6 +45,7 @@ import io.harness.product.ci.scm.proto.ListBranchesWithDefaultResponse;
 import io.harness.product.ci.scm.proto.ListCommitsInPRResponse;
 import io.harness.product.ci.scm.proto.ListCommitsResponse;
 import io.harness.product.ci.scm.proto.ListWebhooksResponse;
+import io.harness.product.ci.scm.proto.RefreshTokenResponse;
 import io.harness.product.ci.scm.proto.SCMGrpc;
 import io.harness.product.ci.scm.proto.UpdateFileResponse;
 
@@ -49,11 +54,11 @@ import java.util.Set;
 
 @OwnedBy(DX)
 public interface ScmServiceClient {
-  CreateFileResponse createFile(
-      ScmConnector scmConnector, GitFileDetails gitFileDetails, SCMGrpc.SCMBlockingStub scmBlockingStub);
+  CreateFileResponse createFile(ScmConnector scmConnector, GitFileDetails gitFileDetails,
+      SCMGrpc.SCMBlockingStub scmBlockingStub, boolean useGitClient);
 
-  UpdateFileResponse updateFile(
-      ScmConnector scmConnector, GitFileDetails gitFileDetails, SCMGrpc.SCMBlockingStub scmBlockingStub);
+  UpdateFileResponse updateFile(ScmConnector scmConnector, GitFileDetails gitFileDetails,
+      SCMGrpc.SCMBlockingStub scmBlockingStub, boolean useGitClient);
 
   DeleteFileResponse deleteFile(
       ScmConnector scmConnector, GitFileDetails gitFileDetails, SCMGrpc.SCMBlockingStub scmBlockingStub);
@@ -73,15 +78,18 @@ public interface ScmServiceClient {
   FindFilesInBranchResponse findFilesInBranch(
       ScmConnector scmConnector, String branch, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
-  FindFilesInCommitResponse findFilesInCommit(
+  FindFilesInCommitResponse listFilesInCommit(
       ScmConnector scmConnector, GitFilePathDetails gitFilePathDetails, SCMGrpc.SCMBlockingStub scmBlockingStub);
+
+  ListFilesInCommitResponse listFilesInCommit(
+      ScmConnector scmConnector, ListFilesInCommitRequest request, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
   FindFilesInPRResponse findFilesInPR(ScmConnector scmConnector, int prNumber, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
   GetLatestCommitResponse getLatestCommit(
       ScmConnector scmConnector, String branch, String ref, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
-  FindFilesInCommitResponse findFilesInCommit(
+  FindFilesInCommitResponse listFilesInCommit(
       ScmConnector scmConnector, String commitHash, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
   ListBranchesResponse listBranches(ScmConnector scmConnector, SCMGrpc.SCMBlockingStub scmBlockingStub);
@@ -95,6 +103,9 @@ public interface ScmServiceClient {
       ScmConnector scmConnector, long prNumber, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
   FileContentBatchResponse listFiles(
+      ScmConnector connector, Set<String> foldersList, String branch, SCMGrpc.SCMBlockingStub scmBlockingStub);
+
+  FileContentBatchResponse listFilesV2(
       ScmConnector connector, Set<String> foldersList, String branch, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
   FileContentBatchResponse listFoldersFilesByCommitId(
@@ -144,6 +155,12 @@ public interface ScmServiceClient {
   CreatePRResponse createPullRequestV2(ScmConnector scmConnector, String sourceBranchName, String targetBranchName,
       String prTitle, SCMGrpc.SCMBlockingStub scmBlockingStub);
 
+  RefreshTokenResponse refreshToken(ScmConnector scmConnector, String clientId, String clientSecret, String endpoint,
+      String refreshToken, SCMGrpc.SCMBlockingStub scmBlockingStub);
+
   GetLatestCommitOnFileResponse getLatestCommitOnFile(
       ScmConnector scmConnector, String branchName, String filepath, SCMGrpc.SCMBlockingStub scmBlockingStub);
+
+  GitFileResponse getFile(
+      ScmConnector scmConnector, GitFileRequest gitFileContentRequest, SCMGrpc.SCMBlockingStub scmBlockingStub);
 }

@@ -11,12 +11,15 @@ import static io.harness.annotations.dev.HarnessTeam.CDP;
 
 import io.harness.annotation.RecasterAlias;
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.cdng.artifact.outcome.ArtifactOutcome;
 import io.harness.cdng.infra.beans.AzureWebAppInfrastructureOutcome;
 import io.harness.cdng.manifest.yaml.storeConfig.StoreConfig;
 import io.harness.delegate.beans.logstreaming.CommandUnitsProgress;
 import io.harness.delegate.task.azure.appservice.AzureAppServicePreDeploymentData;
 import io.harness.delegate.task.azure.appservice.settings.AppSettingsFile;
 import io.harness.pms.sdk.core.steps.io.PassThroughData;
+
+import software.wings.beans.TaskType;
 
 import java.util.Map;
 import lombok.Builder;
@@ -34,4 +37,6 @@ public class AzureSlotDeploymentPassThroughData implements PassThroughData {
   Map<String, StoreConfig> unprocessedConfigs;
   AzureAppServicePreDeploymentData preDeploymentData;
   CommandUnitsProgress commandUnitsProgress;
+  ArtifactOutcome primaryArtifactOutcome;
+  @Builder.Default String taskType = TaskType.AZURE_WEB_APP_TASK_NG.name();
 }

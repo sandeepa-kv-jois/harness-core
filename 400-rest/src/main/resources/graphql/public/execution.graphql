@@ -18,7 +18,9 @@ extend type Query {
 
 input ExecutionFilter {
   execution: IdFilter
+  # application: IdFilter is deprecated please use applicationId: String instead.
   application: IdFilter
+  applicationId: String
   service: IdFilter
   cloudProvider: IdFilter
   environment: IdFilter
@@ -34,6 +36,8 @@ input ExecutionFilter {
   creationTime: TimeFilter
   pipelineExecutionId: IdFilter
   tag: DeploymentTagFilter
+  artifactBuildNo: IdFilter
+  helmChartVersion: IdFilter
 }
 
 input DeploymentTagFilter {
@@ -168,6 +172,8 @@ type WorkflowExecution implements Execution {
   tags: [DeploymentTag]
 
   failureDetails: String
+
+  inputVariables: [InputVariable]
 }
 
 # Type for pipeline execution
@@ -248,6 +254,7 @@ type WorkflowStageExecution implements PipelineStageExecution {
   status: ExecutionStatus
   # List of runtime variables
   runtimeInputVariables: [Variable]
+  inputVariables: [InputVariable]
 }
 
 enum ApprovalStepType {

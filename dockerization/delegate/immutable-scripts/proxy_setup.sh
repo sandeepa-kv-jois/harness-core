@@ -4,6 +4,20 @@
 # that can be found in the licenses directory at the root of this repository, also available at
 # https://polyformproject.org/wp-content/uploads/2020/05/PolyForm-Free-Trial-1.0.0.txt.
 
+if [[ $KUBERNETES_SERVICE_HOST != "" ]]; then
+  if [[ $NO_PROXY == "" ]]; then
+    export NO_PROXY=$KUBERNETES_SERVICE_HOST
+  else
+    export NO_PROXY="$NO_PROXY,$KUBERNETES_SERVICE_HOST"
+  fi
+fi
+
+DOCKER_PROXY_SECRET_FILE="/run/secrets/proxy.config"
+if [ "$DELEGATE_TYPE" == "DOCKER" ] && [ -e "$DOCKER_PROXY_SECRET_FILE" ]; then
+  echo "Docker delegate: copy proxy config mounted at ""$DOCKER_PROXY_SECRET_FILE"
+  cp "$DOCKER_PROXY_SECRET_FILE" 'proxy.config'
+fi
+
 if [ ! -e proxy.config ]; then
   echo "PROXY_HOST='$PROXY_HOST'" > proxy.config
   echo "PROXY_PORT='$PROXY_PORT'" >> proxy.config

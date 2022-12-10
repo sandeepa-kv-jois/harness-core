@@ -7,12 +7,16 @@
 
 package io.harness.connector;
 
-import static io.harness.AuthorizationServiceHeader.CE_NEXT_GEN;
 import static io.harness.annotations.dev.HarnessTeam.DX;
+import static io.harness.authorization.AuthorizationServiceHeader.CE_NEXT_GEN;
 
 import io.harness.annotations.dev.OwnedBy;
+import io.harness.artifacts.docker.client.DockerRestClientFactory;
+import io.harness.artifacts.docker.client.DockerRestClientFactoryImpl;
 import io.harness.aws.AwsClient;
 import io.harness.aws.AwsClientImpl;
+import io.harness.azure.client.AzureAuthorizationClient;
+import io.harness.azure.impl.AzureAuthorizationClientImpl;
 import io.harness.cistatus.service.GithubService;
 import io.harness.cistatus.service.GithubServiceImpl;
 import io.harness.connector.heartbeat.ConnectorValidationParamsProvider;
@@ -20,6 +24,7 @@ import io.harness.connector.impl.ConnectorActivityServiceImpl;
 import io.harness.connector.impl.ConnectorFilterServiceImpl;
 import io.harness.connector.impl.ConnectorHeartbeatServiceImpl;
 import io.harness.connector.impl.DefaultConnectorServiceImpl;
+import io.harness.connector.impl.GoogleSecretManagerConnectorServiceImpl;
 import io.harness.connector.impl.NGConnectorSecretManagerServiceImpl;
 import io.harness.connector.impl.NGHostServiceImpl;
 import io.harness.connector.mappers.ConnectorDTOToEntityMapper;
@@ -32,6 +37,7 @@ import io.harness.connector.services.ConnectorActivityService;
 import io.harness.connector.services.ConnectorFilterService;
 import io.harness.connector.services.ConnectorHeartbeatService;
 import io.harness.connector.services.ConnectorService;
+import io.harness.connector.services.GoogleSecretManagerConnectorService;
 import io.harness.connector.services.NGConnectorSecretManagerService;
 import io.harness.connector.services.NGHostService;
 import io.harness.connector.task.ConnectorValidationHandler;
@@ -41,13 +47,23 @@ import io.harness.delegate.task.scm.ScmDelegateClientImpl;
 import io.harness.filter.FilterType;
 import io.harness.filter.FiltersModule;
 import io.harness.filter.mapper.FilterPropertiesMapper;
+import io.harness.gcp.client.GcpClient;
+import io.harness.gcp.impl.GcpClientImpl;
 import io.harness.git.GitClientV2;
 import io.harness.git.GitClientV2Impl;
 import io.harness.impl.scm.ScmServiceClientImpl;
 import io.harness.ng.core.accountsetting.services.NGAccountSettingService;
 import io.harness.ng.core.accountsetting.services.NGAccountSettingServiceImpl;
+import io.harness.pcf.CfCliClient;
+import io.harness.pcf.CfDeploymentManager;
+import io.harness.pcf.CfDeploymentManagerImpl;
+import io.harness.pcf.CfSdkClient;
+import io.harness.pcf.cfcli.client.CfCliClientImpl;
+import io.harness.pcf.cfsdk.CfSdkClientImpl;
 import io.harness.persistence.HPersistence;
 import io.harness.service.ScmServiceClient;
+import io.harness.spotinst.SpotInstHelperServiceDelegate;
+import io.harness.spotinst.SpotInstHelperServiceDelegateImpl;
 
 import com.google.inject.AbstractModule;
 import com.google.inject.multibindings.MapBinder;
@@ -113,7 +129,14 @@ public class ConnectorModule extends AbstractModule {
     bind(ConnectorFilterService.class).to(ConnectorFilterServiceImpl.class);
     bind(ConnectorHeartbeatService.class).to(ConnectorHeartbeatServiceImpl.class);
     bind(AwsClient.class).to(AwsClientImpl.class);
+    bind(GcpClient.class).to(GcpClientImpl.class);
+    bind(AzureAuthorizationClient.class).to(AzureAuthorizationClientImpl.class);
+    bind(SpotInstHelperServiceDelegate.class).to(SpotInstHelperServiceDelegateImpl.class);
+    bind(CfDeploymentManager.class).to(CfDeploymentManagerImpl.class);
+    bind(CfCliClient.class).to(CfCliClientImpl.class);
+    bind(CfSdkClient.class).to(CfSdkClientImpl.class);
     bind(NGGitService.class).to(NGGitServiceImpl.class);
+    bind(DockerRestClientFactory.class).to(DockerRestClientFactoryImpl.class);
     bind(GitClientV2.class).to(GitClientV2Impl.class);
     bind(ScmDelegateClient.class).to(ScmDelegateClientImpl.class);
     bind(NGConnectorSecretManagerService.class).to(NGConnectorSecretManagerServiceImpl.class);
@@ -121,6 +144,7 @@ public class ConnectorModule extends AbstractModule {
     bind(ScmServiceClient.class).to(ScmServiceClientImpl.class);
     bind(NGAccountSettingService.class).to(NGAccountSettingServiceImpl.class);
     bind(NGHostService.class).to(NGHostServiceImpl.class);
+    bind(GoogleSecretManagerConnectorService.class).to(GoogleSecretManagerConnectorServiceImpl.class);
     MapBinder<String, FilterPropertiesMapper> filterPropertiesMapper =
         MapBinder.newMapBinder(binder(), String.class, FilterPropertiesMapper.class);
     filterPropertiesMapper.addBinding(FilterType.CONNECTOR.toString()).to(ConnectorFilterPropertiesMapper.class);

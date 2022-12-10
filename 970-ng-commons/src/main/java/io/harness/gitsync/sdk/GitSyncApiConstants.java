@@ -25,8 +25,16 @@ public class GitSyncApiConstants {
   public static final String RESOLVED_CONFLICT_COMMIT_ID = "resolvedConflictCommitId";
   public static final String FOLDER_PATH = "rootFolder";
   public static final String NEW_BRANCH = "isNewBranch";
+  public static final String FORCE_IMPORT = "isForceImport";
+
   public static final String TARGET_BRANCH_FOR_PR = "targetBranchForPr";
   public static final String DEFAULT_FROM_OTHER_REPO = "getDefaultFromOtherRepo";
+  public static final String PARENT_ENTITY_REPO_URL = "parentEntityRepoURL";
+  public static final String PARENT_ENTITY_CONNECTOR_REF = "parentEntityConnectorRef";
+  public static final String PARENT_ENTITY_REPO_NAME = "parentEntityRepoName";
+  public static final String PARENT_ENTITY_ACCOUNT_IDENTIFIER = "parentEntityAccountIdentifier";
+  public static final String PARENT_ENTITY_ORG_IDENTIFIER = "parentEntityOrgIdentifier";
+  public static final String PARENT_ENTITY_PROJECT_IDENTIFIER = "parentEntityProjectIdentifier";
   public static final String BASE_BRANCH = "baseBranch";
   public static final String PR_TITLE = "prTitle";
   public static final String ENTITY_TYPE = "entityType";
