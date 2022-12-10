@@ -7,7 +7,7 @@ metadata:
     backstage.io/techdocs-ref: dir:./access-control
     harness.io/project-url: https://stage.harness.io/ng/#/account/wFHXHD0RRQWoO8tIZT5YVw/ci/orgs/Harness/projects/RELEASEBUILDS/dashboard
     harness.io/ci-pipelineIds: AccessControlUBISaaSReleaseBuild,cutAccessControlRelease,AccessControlUBIOnPremReleaseBuild 
-    github.com/project-slug: sandeepa-kv-jois/harness-core
+    github.com/project-slug: harness/harness-core
     github.com/project-readme-path: access-control/README.md
   name: access-control
   tags:
@@ -29,7 +29,7 @@ metadata:
     backstage.io/techdocs-ref: dir:./platform-service
     harness.io/project-url: https://stage.harness.io/ng/#/account/wFHXHD0RRQWoO8tIZT5YVw/ci/orgs/Harness/projects/RELEASEBUILDS/dashboard
     harness.io/ci-pipelineIds: PlatformServiceUBISaaSReleaseBuild,CutPlatformServiceReleaseBranch,PlatformServiceUBIOnPremReleaseBuild
-    github.com/project-slug: sandeepa-kv-jois/harness-core
+    github.com/project-slug: harness/harness-core
     github.com/project-readme-path: platform-service/README.md 
   name: platform-service
   tags:
