@@ -1,0 +1,16 @@
+---
+kind: "Component"
+spec:
+  type: "Service"
+  lifecycle: "Unknown"
+  owner: "Unknown"
+  system: "Ramya"
+apiVersion: "backstage.io/v1alpha1"
+metadata:
+  name: "testser"
+  description: "da"
+  tags: []
+  annotations:
+    harness.io/cd-serviceId: "testser"
+    harness.io/project-url: "https://app.harness.io/ng/account/BF2rGtGIR-24B_62z-64DQ/home/orgs/default/projects/Ramya/details"
+

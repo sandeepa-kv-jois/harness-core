@@ -1,0 +1,15 @@
+---
+kind: "Component"
+spec:
+  type: "Service"
+  lifecycle: "Unknown"
+  owner: "Unknown"
+  system: "ProjectForSanityTesting"
+apiVersion: "backstage.io/v1alpha1"
+metadata:
+  name: "Kustomize_with_Patches"
+  tags: []
+  annotations:
+    harness.io/cd-serviceId: "Kustomize_with_Patches"
+    harness.io/project-url: "https://app.harness.io/ng/account/BF2rGtGIR-24B_62z-64DQ/home/orgs/OrgForPRODSanity/projects/ProjectForSanityTesting/details"
+

@@ -1,0 +1,11 @@
+---
+kind: "System"
+spec:
+  owner: "Unknown"
+  domain: "OrgForPRODSanity"
+apiVersion: "backstage.io/v1alpha1"
+metadata:
+  name: "HarnessTemplateTest"
+  description: ""
+  tags: []
+

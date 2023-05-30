@@ -1,0 +1,15 @@
+---
+kind: "Component"
+spec:
+  type: "Service"
+  lifecycle: "Unknown"
+  owner: "Unknown"
+  system: "ProjectNGGovernanceEguasGcW8Z"
+apiVersion: "backstage.io/v1alpha1"
+metadata:
+  name: "ServiceNgEhXzmY6c2l"
+  tags: []
+  annotations:
+    harness.io/cd-serviceId: "ServiceNgEhXzmY6c2l"
+    harness.io/project-url: "https://app.harness.io/ng/account/BF2rGtGIR-24B_62z-64DQ/home/orgs/Pipelines_NonK8s_Organisation/projects/ProjectNGGovernanceEguasGcW8Z/details"
+

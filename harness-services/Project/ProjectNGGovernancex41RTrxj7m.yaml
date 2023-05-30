@@ -1,0 +1,11 @@
+---
+kind: "System"
+spec:
+  owner: "Unknown"
+  domain: "Pipelines_NonK8s_Organisation"
+apiVersion: "backstage.io/v1alpha1"
+metadata:
+  name: "ProjectNGGovernancex41RTrxj7m"
+  description: "$description"
+  tags: []
+

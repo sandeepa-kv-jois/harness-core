@@ -1,0 +1,12 @@
+---
+kind: "Component"
+spec:
+  type: "Service"
+  lifecycle: "Unknown"
+  owner: "Unknown"
+  system: "Unknown"
+apiVersion: "backstage.io/v1alpha1"
+metadata:
+  name: "svc1"
+  tags: []
+
