@@ -1,0 +1,44 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: CICDTest
+  description: test service
+  annotations:
+    harness.io/project-url: https://app.harness.io/ng/account/vpCkHKsDSxK9_KYfjCTMKA/home/orgs/default/projects/IDP_UI/pipelines
+    harness.io/ci-pipelineIds: Build_IDP_UI_App
+    harness.io/cd-serviceId: idp
+    harness.io/project-url-qa: https://qa.harness.io/ng/account/Vp0XSI5MSgiF9p8lIIpThg/cd/orgs/default/projects/IDPdeploy/pipelines
+    harness.io/project-url-stress: https://stress.harness.io/ng/account/rzjR8UyZTpOAd6SLDfdBuw/cd/orgs/default/projects/boo/pipelines
+    harness.io/project-url-stage: https://stage.harness.io/ng/account/wFHXHD0RRQWoO8tIZT5YVw/cd/orgs/Harness/projects/Operations/deployments
+    harness.io/projects-stage: Operations,RELEASEBUILDS
+    harness.io/ci-pipelineIds-stage: IDPUIBuildRelease,IDPAdminBuildRelease,IDPAdminCutBranch,IDP_Service,IDP_Admin
+    harness.io/cd-serviceId-stage: idpservice
+  tags:
+    - java
+    - data
+  links:
+    - url: https://example.com/user
+      title: Examples Users
+      icon: user
+    - url: https://example.com/group
+      title: Example Group
+      icon: group
+    - url: https://example.com/cloud
+      title: Link with Cloud Icon
+      icon: cloud
+    - url: https://example.com/dashboard
+      title: Dashboard
+      icon: dashboard
+    - url: https://example.com/help
+      title: Support
+      icon: help
+    - url: https://example.com/web
+      title: Website
+      icon: web
+    - url: https://example.com/alert
+      title: Alerts
+      icon: alert
+spec:
+  type: service
+  lifecycle: experimental
+  owner: team-a
