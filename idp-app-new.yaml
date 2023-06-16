@@ -11,7 +11,7 @@ metadata:
   tags: [javascript]
   description: IDP microfrontend which has both Backstage UI and Backend components
   annotations:
-    harness.io/ci-pipelineIds: test_aws
+    harness.io/ci-pipelineIds: test_aws,blue_green_canary_ecs_pipeline
     harness.io/project-url: "https://app.harness.io/ng/account/wFHXHD0RRQWoO8tIZT5YVw/cd/orgs/default/projects/pragyesh_project/deployments"
     jira/project-key: IDP
     github.com/project-slug: harness/harness-idp
