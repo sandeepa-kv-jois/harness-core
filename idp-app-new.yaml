@@ -7,7 +7,7 @@ spec:
   system: "IDP_UI"
 apiVersion: "backstage.io/v1alpha1"
 metadata:
-  name: "idpapp"
+  name: "idpapp_new"
   tags: [javascript]
   description: IDP microfrontend which has both Backstage UI and Backend components
   annotations:
