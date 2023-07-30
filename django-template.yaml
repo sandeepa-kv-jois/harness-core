@@ -1,7 +1,7 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: Create a Django app
+  name: CreateaDjangoapp
   title: Create a Django app
   description: An template for the scaffolder that creates a Django service
   tags:
