@@ -8,7 +8,7 @@ metadata:
     - django
     - harness
 spec:
-  owner: bhavya.sinha@harness.io
+  owner: sandeepa.kv@harness.io
   type: service
   parameters:
     - title: Django Service Details
