@@ -1,8 +1,8 @@
 apiVersion: scaffolder.backstage.io/v1beta3
 kind: Template
 metadata:
-  name: pipelinetemplateexample
-  title: Pipeline Template Example
+  name: Create a Django app
+  title:  Create a Django app
   description: An template for the scaffolder that creates a Django service
   tags:
     - django
@@ -11,89 +11,111 @@ spec:
   owner: bhavya.sinha@harness.io
   type: service
   parameters:
-  - title: Django Service Details
-    required:
-      - name
-      - repository
-      - isPublish
-    properties:
-      name:
-        title: Name of your Django Service
-        type: string
-        description: Unique name of the service
-      repository:
-        title: Name of the Repository
-        type: string
-        description: This will be the name of Repository on Github
-      isPublish:
-        title: Do you wish to publish the internal registry?
-        type: boolean
-      token:
-        title: Harness Token
-        type: string
-        ui:widget: password
-        ui:field: HarnessAuthToken
-  - title: Service Infrastructure Details
-    required:
-      - provider
-      - db
-      - cache
-      - lint
-      - owner
-    properties:
-      provider:
-        title: Choose a cloud provider for Deployment
-        type: string
-        enum:
-          - GCP
-          - AWS
-        default: GCP
-      db:
-        title: Choose a Database Type for the Service
-        type: string
-        enum:
-          - None
-          - MySQL
-          - Postgres
-          - MongoDB
-        default: None
-      cache:
-        title: Choose a caching system for the Service
-        type: string
-        enum:
-          - None
-          - Redis
-        default: None
-      lint:
-        title: Choose a Python linter for the Service
-        type: string
-        enum:
-          - None
-          - Black
-          - Flake8
-        default: None
-      owner:
-        title: Choose an Owner for the Service
-        type: string
-        ui:field: OwnerPicker
-        ui:options:
-          allowedKinds:
-            - Group
-steps:
-  - id: trigger
-    name: Creating Your Django Service
-    action: trigger:harness-custom-pipeline
-    input:
-      url: https://qa.harness.io/ng/account/px7xd_BFRCi-pfWPYXVjvw/home/orgs/default/projects/IDP_Test/pipelines/Django_Service/pipeline-studio/?storeType=INLINE
-      inputset:
-        provider: ${{ parameters.provider }}
-        db: ${{ parameters.db }}
-        cache: ${{ parameters.cache }}
-        lint: ${{ parameters.lint }}
-        name: ${{ parameters.name }}
-        repository: ${{ parameters.repository }}
+    - title: Django Service Details
+      required:
+        - name
+        - repository
+        - isPublish
+      properties:
+        name:
+          title: Name of your Django Service
+          type: string
+          description: Unique name of the service
+        repository:
+          title: Name of the Repository
+          type: string
+          description: This will be the name of Repository on Github
+        isPublish:
+          title: Do you wish to publish the internal registry?
+          type: boolean
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+    - title: Service Infrastructure Details
+      required:
+        - provider
+        - db
+        - cache
+        - lint
+        - owner
+      properties:
+        provider:
+          title: Choose a cloud provider for Deployment
+          type: string
+          enum: ['GCP', 'AWS']
+          default: GCP
+        db:
+          title: Choose a Database Type for the Service
+          type: string
+          enum: ['None', 'MySQL', 'Postgres', 'MongoDB']
+          default: None
+        cache:
+          title: Choose a caching system for the Service
+          type: string
+          enum: ['None', 'Redis']
+          default: None
+        lint:
+          title: Choose a Python linter for the Service
+          type: string
+          enum: ['None', 'Black', 'Flake8']
+          default: None
+        owner:
+          title: Choose an Owner for the Service
+          type: string
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+        secret:
+          title: Enter Secret Name
+          type: string
+          description: This will be secret name
+        secretValue:
+          title: Secret Value
+          type: string
+          ui:widget: password
+  steps:
+    - id: createsecret
+      name: Create Harness Secret
+      action: harness:create-secret
+      input:
+        url: 'https://stress.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/home/orgs/default/projects/IDPTest/pipelines/Django_Service_Bhavya/pipeline-studio/?storeType=INLINE'
+        inputParameters:
+          name: ${{ parameters.secret }}
+          value: ${{ parameters.secretValue }}
+        apikey: ${{ parameters.token }}
+    - id: trigger
+      name: Creating Your Django Service
+      action: trigger:harness-custom-pipeline
+      input:
+        url: 'https://stress.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/home/orgs/default/projects/IDPTest/pipelines/Django_Service_Bhavya/pipeline-studio/?storeType=INLINE'
+        inputset:
+          provider: ${{ parameters.provider }}
+          db: ${{ parameters.db }}
+          cache: ${{ parameters.cache }}
+          lint: ${{ parameters.lint }}
+          name: ${{ parameters.name }}
+          repository: ${{ parameters.repository }}
+          secret: ${{ steps.createsecret.output.SecretIdentifier }}
+        apikey: ${{ parameters.token }}
+    - id: register
+      name: Register
+      action: catalog:register
+      input:
+        catalogInfoUrl: https://github.com/bhavya-sinha/${{ parameters.repository }}/blob/main/catalog-info.yaml
+    - id: deletesecret
+      name: Deletes a Harness Secret
+      action: harness:delete-secret
+      input:
+        url: 'https://stress.harness.io/ng/account/zEaak-FLS425IEO7OLzMUg/home/orgs/default/projects/IDPTest/pipelines/Django_Service_Bhavya/pipeline-studio/?storeType=INLINE'
+        secretIdentifier: ${{ steps.createsecret.output.SecretIdentifier }}
       apikey: ${{ parameters.token }}
-output:
-  links:
-    - title: Pipeline Details
-      url: ${{ steps.trigger.output.PipelineUrl }}
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}
+      - title: Open in catalog
+        icon: catalog
+        entityRef: ${{ steps.register.output.entityRef }}
