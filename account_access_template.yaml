@@ -3,7 +3,7 @@ kind: Template
 metadata:
   name: accountaccess
   title: Provide access to Harness account
-  description: An template for providing access to Harness account
+  description: Template for providing access to Harness account
   tags:
     - access
     - harness
