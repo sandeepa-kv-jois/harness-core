@@ -12,6 +12,7 @@ metadata:
     gitlab.com/project-id: '43877214'
     jira/project-key: IDP
     jenkins.io/github-folder: 'CDS-68313'
+    pagerduty.com/service-id: PT5E123
     firehydrant.com/service-name: 'python-pipeline-samples'
     backstage.io/kubernetes-label-selector: 'app=idp-ui'
     backstage.io/kubernetes-namespace: '63feee14cbf66e3c798c4bdc'
