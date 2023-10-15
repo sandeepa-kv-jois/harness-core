@@ -1,0 +1,53 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: devspace-build
+  title: Trigger build for services
+  description: Template for building services
+  tags:
+    - builds
+    - harness
+spec:
+  owner: sandeepa.kv@harness.io
+  type: service
+  parameters:
+    - title: Trigger build
+      required:
+        - Services
+        - Build_Docker_Image
+      properties:
+        Services:
+          title: servicename@branchname
+          type: string
+          description: services to build e.g. 1. Comma separated list of servicename@branchname 2. harnesscore@branchname
+        Build_Docker_Image:
+          title: Choose true or false
+          type: string
+          enum:
+            - true
+            - false
+          default: false   
+          description: true or false
+        Docker_Image_To_Use:
+          title: Docker image to use
+          type: string
+          description: Specify the docker image tag when you want to build only helm chart with specific image
+        token:
+          title: Harness Token
+          type: string
+          ui:widget: password
+          ui:field: HarnessAuthToken
+  steps:
+    - id: trigger
+      name: Trigger build
+      action: trigger:harness-custom-pipeline
+      input:
+        url: 'https://app.harness.io/ng/account/vpCkHKsDSxK9_KYfjCTMKA/home/orgs/default/projects/DevSpaces/pipelines/Build_Services/pipeline-studio/?storeType=REMOTE&connectorRef=harnessplinfra&repoName=harness-pl-infra&branch=master'
+        inputset:
+          Services: ${{ parameters.Services }}
+          Build_Docker_Image: ${{ parameters.Build_Docker_Image }}
+        apikey: ${{ parameters.token }}   
+  output:
+    links:
+      - title: Pipeline Details
+        url: ${{ steps.trigger.output.PipelineUrl }}       
