@@ -24,8 +24,8 @@ spec:
           title: Choose true or false
           type: string
           enum:
-            - true
-            - false
+            - "true"
+            - "false"
           default: false   
           description: true or false
         Docker_Image_To_Use:
