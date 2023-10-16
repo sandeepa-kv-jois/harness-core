@@ -21,7 +21,7 @@ spec:
           type: string
           description: services to build e.g. 1. Comma separated list of servicename@branchname 2. harnesscore@branchname
         Build_Docker_Image:
-          title: Choose true or false
+          title: Build Docker image
           type: string
           enum:
             - "true"
