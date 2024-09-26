@@ -1,0 +1,4 @@
+version: v1
+directories:
+  - 160-stress-tester/src/main/proto
+  - 920-delegate-service-beans/src/main/proto
