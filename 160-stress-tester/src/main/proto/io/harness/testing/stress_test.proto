@@ -9,7 +9,7 @@ package io.harness.testing;
 
 option java_multiple_files = true;
 
-import "920-delegate-service-beans/src/main/proto/io/harness/delegate/delegate_service.proto";
+import "io/harness/delegate/delegate_service.proto";
 
 // The stages of a delegate stress test
 // Next ID: 2
@@ -34,5 +34,5 @@ message DelegateTaskStressTestStage {
   // the number of iterations to fire off per second. Recommended to not go
   // above 40 per stage, and 100 at any given time to give time for the stub to
   // actually fire off the task
-  int32 qps = 4;
+  int32 qps = 8;
 }
